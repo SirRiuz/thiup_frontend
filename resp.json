@@ -1,0 +1,166 @@
+{
+    "current_week_tasks": [
+        {
+            "state": "backlog",
+            "str_state": "Backlog",
+            "count_tasks": 0
+        },
+        {
+            "state": "queue",
+            "str_state": "Tasks pending 👨‍🦰 Alternova's approval",
+            "count_tasks": 0
+        },
+        {
+            "state": "rejected",
+            "str_state": "Rejected",
+            "count_tasks": 0
+        },
+        {
+            "state": "created",
+            "str_state": "Created",
+            "count_tasks": 0
+        },
+        {
+            "state": "in_progress",
+            "str_state": "In progress",
+            "count_tasks": 0
+        },
+        {
+            "state": "completed",
+            "str_state": "Completed",
+            "count_tasks": 1
+        },
+        {
+            "state": "turned_in",
+            "str_state": "Turned in",
+            "count_tasks": 0
+        }
+    ],
+    "tasks_assig_to_date": [
+        {
+            "average": 0,
+            "str_average": "0%",
+            "state": "Backlog",
+            "count_tasks": 0
+        },
+        {
+            "average": 0,
+            "str_average": "0%",
+            "state": "Queue",
+            "count_tasks": 0
+        },
+        {
+            "average": 0,
+            "str_average": "0%",
+            "state": "Rejected",
+            "count_tasks": 0
+        },
+        {
+            "average": 33,
+            "str_average": "33%",
+            "state": "Created",
+            "count_tasks": 1
+        },
+        {
+            "average": 0,
+            "str_average": "0%",
+            "state": "In progress",
+            "count_tasks": 0
+        },
+        {
+            "average": 33,
+            "str_average": "33%",
+            "state": "Completed",
+            "count_tasks": 1
+        },
+        {
+            "average": 33,
+            "str_average": "33%",
+            "state": "Turned in",
+            "count_tasks": 1
+        }
+    ],
+    "tasks_assig_by_range": {
+        "intervals_type": "weekly",
+        "str_date": "October 30 to 5, 2023",
+        "week_data": [
+            {
+                "date": {
+                    "str_date": "2023-10-30",
+                    "day_name": "Monday"
+                },
+                "tasks": {
+                    "added": 0,
+                    "completed": 1,
+                    "turned_in": 0
+                }
+            },
+            {
+                "date": {
+                    "str_date": "2023-10-31",
+                    "day_name": "Tuesday"
+                },
+                "tasks": {
+                    "added": 0,
+                    "completed": 0,
+                    "turned_in": 0
+                }
+            },
+            {
+                "date": {
+                    "str_date": "2023-11-01",
+                    "day_name": "Wednesday"
+                },
+                "tasks": {
+                    "added": 0,
+                    "completed": 0,
+                    "turned_in": 0
+                }
+            },
+            {
+                "date": {
+                    "str_date": "2023-11-02",
+                    "day_name": "Thursday"
+                },
+                "tasks": {
+                    "added": 0,
+                    "completed": 0,
+                    "turned_in": 0
+                }
+            },
+            {
+                "date": {
+                    "str_date": "2023-11-03",
+                    "day_name": "Friday"
+                },
+                "tasks": {
+                    "added": 0,
+                    "completed": 0,
+                    "turned_in": 0
+                }
+            },
+            {
+                "date": {
+                    "str_date": "2023-11-04",
+                    "day_name": "Saturday"
+                },
+                "tasks": {
+                    "added": 0,
+                    "completed": 0,
+                    "turned_in": 0
+                }
+            },
+            {
+                "date": {
+                    "str_date": "2023-11-05",
+                    "day_name": "Sunday"
+                },
+                "tasks": {
+                    "added": 0,
+                    "completed": 0,
+                    "turned_in": 0
+                }
+            }
+        ]
+    }
+}

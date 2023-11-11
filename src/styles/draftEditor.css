@@ -1,0 +1,17 @@
+.toolbar-item {
+  background: white;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.toolbar-item:hover {
+  background: #f5f5f5;
+}
+
+.DraftEditor-root {
+  font-size: 15px;
+}
+
+.public-DraftEditorPlaceholder-root{
+  font-size: 15px;
+}
