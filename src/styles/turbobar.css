@@ -1,13 +1,13 @@
 .turbo-progress-bar {
-    top: 0px;
-    left: 0px;
-    position: fixed;
-    width: 5%;
-    height: 6px;
-    background: #0076ff;
-    z-index: 2147483647;
-    transition:
-      width 300ms ease-out,
-      opacity 150ms 150ms ease-in;
-    transform: translate3d(0, 0, 0);
+  top: 0px;
+  left: 0px;
+  position: fixed;
+  width: 5%;
+  height: 6px;
+  background: #0076ff;
+  z-index: 2147483647;
+  transition:
+    width 300ms ease-out,
+    opacity 150ms 150ms ease-in;
+  transform: translate3d(0, 0, 0);
 }

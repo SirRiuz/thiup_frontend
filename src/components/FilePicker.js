@@ -1,8 +1,7 @@
 import { useState } from "react"
 import ".././styles/filePicker.css"
-import SvgUpload from "../assets/svg/SvgUpload";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { faUpload, faImage } from "@fortawesome/free-solid-svg-icons"
+import { faImage } from "@fortawesome/free-solid-svg-icons"
 
 
 const FILE_MAX_SIZE = 20 * 1024 * 1024;
