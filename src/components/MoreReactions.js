@@ -1,22 +1,21 @@
-import Popover from "@mui/material/Popover"
-import useReaction from "../hooks/useReaction"
+import Popover from "@mui/material/Popover";
+import useReaction from "../hooks/useReaction";
 
+const MoreReactions = (props) => {
+  const { reactions } = useReaction({ list: props.show });
+  const onSetReaction = (e) => props.onSelect(e);
 
-const MoreReactions = props => {
-  const { reactions } = useReaction({list: props.show})
-  const onSetReaction = e => props.onSelect(e)
-
-  return(
+  return (
     <div>
       <Popover
         id="id"
         anchorEl={props.anchorEl}
         onClose={props.onClose}
         open={props.show}
-        style={{marginTop:10}}
+        style={{ marginTop: 10 }}
         anchorOrigin={{
-          vertical: 'bottom',
-          horizontal: 'left',
+          vertical: "bottom",
+          horizontal: "left",
         }}
       >
         Reactions
@@ -27,7 +26,7 @@ const MoreReactions = props => {
         ))}
       </Popover>
     </div>
-  )
-}
+  );
+};
 
-export default MoreReactions
+export default MoreReactions;

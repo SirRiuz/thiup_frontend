@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 
-const getReactionService = props => {
+const getReactionService = () => {
   var url = `${process.env.REACT_APP_API_URL}/reactions/`
   return axios.get(url, {
     'Content-Type': 'application/json'})

@@ -1,7 +1,6 @@
 import ReactionPreview from './ReactionBox'
 import ProfileIcon from './ProfileIcon'
 import TextPreview from './TextPreview'
-import SvgPublic from '../assets/svg/SvgPublic'
 import SvgReply from '../assets/svg/SvgReply'
 import SvgReact from '../assets/svg/SvgReact'
 import { useState } from 'react'
@@ -81,10 +80,9 @@ const ThreadCard = props => {
       onMouseLeave={() => setShow(() => false)}
       onMouseEnter={() => setShow(() => true)}
       style={{
-        background: show ? 'rgb(243, 243, 247)' : 'rgb(252, 252, 253)',
         position: 'relative',
         boxShadow: `rgba(0, 0, 0, 0.06) 0px 0px 0px 1px, rgba(0, 0, 0, 0.08)
-                    0px 2px 8px, rgba(255, 255, 255, 0.08)
+                    0px 2px 5px, rgba(255, 255, 255, 0.08)
                     0px 0px 0px 1px inset`,
         ...props.style
       }}
@@ -111,7 +109,7 @@ const ThreadCard = props => {
           <div
             style={{
               display: 'flex',
-              gap: 4,
+              gap: 5,
               alignItems: 'center',
               alignContent: 'center',
               textAlign: 'center',
@@ -129,10 +127,10 @@ const ThreadCard = props => {
                 ...props.titleHashStyles
               }}
             >
-              @18ac3e73
+              @{props.response.mask.id.substring(0, 5)}
             </span>
-            <span className='thread-date'>16h</span>
-            {props.isHead && (<span className='thread-date'> · <SvgPublic /></span>)}
+            <span className='thread-date'>{props.response.create_at}</span>
+            {/* {props.isHead && (<span className='thread-date'> · <SvgPublic /></span>)} */}
           </div>
         </div>
         <div
@@ -141,7 +139,10 @@ const ThreadCard = props => {
               props.textFontSize : 15
           }}
         >
-          <TextPreview data={props.response.text} />
+          <TextPreview
+            search={props.search}
+            data={props.response.content}
+          />
         </div>
         <div
           style={{
@@ -150,7 +151,7 @@ const ThreadCard = props => {
             gap: 10
           }}
         >
-          <ReactionPreview
+          {/* <ReactionPreview
             selectReaction={selectReaction}
             last={props.response.last_reaction}
             thread={props.response.id}
@@ -161,7 +162,7 @@ const ThreadCard = props => {
             show={showReactModal}
             onClose={() => setShowReactModal(() => false)}
             onSelect={(reaction) => setSelectReaction(() => reaction)}
-          />
+          /> */}
         </div>
       </div>
     </div>

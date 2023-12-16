@@ -1,14 +1,18 @@
-import { RouterProvider, } from "react-router-dom"
-import router from "./router"
-import "./styles/index.css"
+import { QueryClientProvider } from "react-query";
+import { RouterProvider } from "react-router-dom";
+import { ReactQueryDevtools } from 'react-query/devtools'
+import { queryClient } from "./context/AplicationContext";
+import router from "./router";
+import "./styles/index.css";
 
 
-function App() {
+const App = () => {
   return (
-    <RouterProvider
-      router={router}
-    />
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+      <ReactQueryDevtools />
+    </QueryClientProvider>
   )
-}
+};
 
-export default App
+export default App;

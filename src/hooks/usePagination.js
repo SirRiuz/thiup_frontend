@@ -1,14 +1,13 @@
-import { paginationService } from "../services/pagination"
+import { paginationService } from "../services/pagination";
 
-const usePagination = props => {
+const usePagination = (props) => {
   const paginate = (next, callback) => {
-    if(next !== null) {
-      paginationService({next: next})
-        .then(res => callback(res.data))
+    if (next !== null) {
+      paginationService({ next: next }).then((res) => callback(res.data));
     }
-  }
+  };
 
-  return { paginate }
-}
+  return { paginate };
+};
 
-export default usePagination
+export default usePagination;

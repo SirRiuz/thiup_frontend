@@ -1,20 +1,20 @@
-const ReactionIcon = props => {
+const ReactionIcon = (props) => {
   return (
     <div
       onClick={props.onClick}
       style={{
-        background: 'rgb(248, 246, 255)',
-        color: 'rgb(107, 74, 252)',
-        display: 'flex',
-        justifyContent: 'center',
-        alignContent: 'center',
-        alignItems: 'center',
+        background: "rgb(248, 246, 255)",
+        color: "rgb(107, 74, 252)",
+        display: "flex",
+        justifyContent: "center",
+        alignContent: "center",
+        alignItems: "center",
         padding: 2,
         gap: 4,
         minWidth: 50,
-        cursor: 'pointer',
+        cursor: "pointer",
         borderRadius: 7,
-        ...props.style
+        ...props.style,
       }}
     >
       <div
@@ -22,17 +22,18 @@ const ReactionIcon = props => {
           width: 22,
           height: 22,
           borderRadius: 4,
-          backgroundPosition: 'center',
-          backgroundSize: 'contain',
-          backgroundRepeat: 'no-repeat',
+          backgroundPosition: "center",
+          backgroundSize: "contain",
+          backgroundRepeat: "no-repeat",
           backgroundImage: `url(${props.iconUrl})`,
-          ...props.style.iconStyle
+          ...props.style.iconStyle,
         }}
       />
-      <div><strong>{props.count}</strong></div>
+      <div>
+        <strong>{props.count}</strong>
+      </div>
     </div>
-  )
-}
+  );
+};
 
-export default ReactionIcon
-
+export default ReactionIcon;
