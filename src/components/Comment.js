@@ -14,13 +14,15 @@ const CommentBox = props => {
   const [files, _] = useState([])
   const { send } = useComment()
   const toSend = _ => {
-    if (props.onSend !== undefined)
+    if (props.onSend !== undefined) {
       props.onSend()
+    }
 
     send({
       files: files,
       thread: props.id,
-      text: data
+      text: text,
+      content: data
     }, (e) => {
       setLoad(() => false)
       setReset(() => true)
@@ -59,7 +61,9 @@ const CommentBox = props => {
               onFocus={() => setFocus(() => true)}
               onReset={() => setReset(() => false)}
               onChange={(context) => {
-                setText(() => context.text !== undefined ? context.text : "")
+                setText(() => context.text !== undefined
+                  ? context.text : "")
+
                 setData(() => context.data)
               }}
               onBlur={() => {

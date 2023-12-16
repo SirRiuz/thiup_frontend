@@ -1,13 +1,10 @@
-import { RotatingLines } from 'react-loader-spinner'
+import { RotatingLines } from "react-loader-spinner";
 
-
-const Button = props => {
-  const onClick = _ => {
-    if (props.isFocus && props.onClick
-      !== undefined &&
-      !props.isLoad)
-      props.onClick()
-  }
+const Button = (props) => {
+  const onClick = (_) => {
+    if (props.isFocus && props.onClick !== undefined && !props.isLoad)
+      props.onClick();
+  };
 
   return (
     <div
@@ -24,23 +21,28 @@ const Button = props => {
         height: 32,
         paddingLeft: 10,
         paddingRight: 10,
-        cursor: props.isFocus && !props.isLoad ?
-          "pointer" : "auto",
+        cursor: props.isFocus && !props.isLoad ? "pointer" : "auto",
         opacity: props.isFocus ? 1 : 0.5,
-        ...props.style
-      }}>
-      <span style={{ fontWeight: 600, fontSize: 13 }}
-      >
-        {props.isLoad ? (<RotatingLines
-          strokeColor="white"
-          strokeWidth="5"
-          animationDuration="0.75"
-          width="15"
-          visible={true}
-        />) : props.placeholder ? props.placeholder:"Comment"}
+        ...props.style,
+      }}
+    >
+      <span style={{ fontWeight: 600, fontSize: 13 }}>
+        {props.isLoad ? (
+          <RotatingLines
+            strokeColor="white"
+            strokeWidth="5"
+            animationDuration="0.75"
+            width="15"
+            visible={true}
+          />
+        ) : props.placeholder ? (
+          props.placeholder
+        ) : (
+          "Comment"
+        )}
       </span>
     </div>
-  )
-}
+  );
+};
 
-export default Button
+export default Button;

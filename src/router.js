@@ -1,39 +1,43 @@
-import { createBrowserRouter } from "react-router-dom"
-import { threadService } from "./services/thread"
+import { createBrowserRouter, useNavigate } from "react-router-dom"
+import { threadSearchService, threadService } from "./services/thread"
+import { queryClient } from "./context/AplicationContext"
 import Home from './screens/Home'
 import Thread from './screens/Thread'
+import Search from "./screens/Search"
+import Index from "./screens/Index";
 
 
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <Home/>,
+    element: <Index />,
+  }, {
+    path: "/home",
+    element: <Home />,
     loader: (async ({ params }) => {
-      console.log("snapshot")
-      var snapshot = localStorage.getItem("snapshot")
-      snapshot = JSON.parse(snapshot)
-      if (snapshot !== null) {
-        console.log("Si hay snapshow")
-        return new Promise((resolve, reject) => {
-          resolve({
-            data: snapshot.data,
-            location: snapshot.location})
-          localStorage.removeItem("snapshot")
-        })
-      }
-
-      return threadService({})
+      return queryClient.fetchQuery(["threads"], () =>
+        threadService({}).then((res) => res.data))
     })
   }, {
     path: "/t/:thread",
-    element: <Thread/>,
-    errorElement: (<h1>Not found</h1>),
-    loader:(async ({ params }) => {
-      return threadService({
-        id: params.thread})
+    element: <Thread />,
+    errorElement: (<h1>Sorry, this page isn't available.</h1>),
+    loader: (async ({ params }) => {
+      return queryClient.fetchQuery([params.thread], () =>
+        threadService({ id: params.thread }).then((res) => res.data))
     })
+  }, {
+    path: "/search/:query/",
+    element: <Search />,
+    errorElement: (<h1>Sorry, this page isn't available.</h1>),
+    loader: (async ({ params }) => {
+      return queryClient.fetchQuery([params.query], () =>
+        threadSearchService({ query: params.query }).then((res) => res.data))
+    })
+  }, {
+    path: "*",
+    element: <h1>Sorry, this page isn't available.</h1>
   }
 ])
 
 export default router
-  

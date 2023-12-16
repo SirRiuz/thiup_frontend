@@ -1,32 +1,28 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState } from "react";
 import {
   createReactionService,
-  getReactionService
-} from "../services/reaction"
+  getReactionService,
+} from "../services/reaction";
 
 
-const useReaction = props => {
-  const [reactions, setReactions] = useState(null)
+const useReaction = (props) => {
+  const [reactions, setReactions] = useState(null);
 
   useEffect(() => {
-    if(props.list && reactions === null)
-      getReactionService()
-        .then(res => {
-          setReactions(() => res.data)
-        })
+    if (props.list && reactions === null)
+      getReactionService().then((res) => {
+        setReactions(() => res.data);
+      });
+  }, [props.list]);
 
-  }, [props.list])
-
-  const react = e => {
+  const react = (e) => {
     createReactionService({
       reaction: e.reaction,
-      thread: e.thread
-    })
-  }
+      thread: e.thread,
+    });
+  };
 
+  return { react, reactions };
+};
 
-  return { react, reactions }
-
-}
-
-export default useReaction
+export default useReaction;

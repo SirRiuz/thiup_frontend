@@ -7,7 +7,7 @@ import useReaction from '../hooks/useReaction';
 
 const ReactionModal = props => {
   const { reactions } = useReaction({ list: props.show })
-  return props.show && reactions && (
+  return props.show && reactions !== null && (
     <Modal
       open
       onClose={props.onClose}
@@ -21,8 +21,10 @@ const ReactionModal = props => {
     >
       <Grid
         item
-        md={3}
-        xs={10}
+        lg={3}
+        md={6}
+        sm={6}
+        xs={11}
         style={{
           background: 'white',
           borderRadius: 11,

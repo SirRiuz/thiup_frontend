@@ -6,13 +6,15 @@ const useComment = props => {
     commentService({
       thread: data.thread,
       media: data.files.map((x, k) => x),
-      text: data.text})
+      text: data.text,
+      content: data.content
+    })
       .then(res => {
         callback(res)
       })
-      .catch(err => {})
-  } 
-  return {send}
+      .catch(err => { })
+  }
+  return { send }
 }
 
 export default useComment
