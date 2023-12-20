@@ -3,18 +3,19 @@ import useReaction from "../hooks/useReaction";
 import ReactionIcon from "./ReactionIcon";
 import "../styles/components/reactions.css";
 
+
 const ReactionPreview = (props) => {
   const { react } = useReaction({});
   const [focus, setFocus] = useState(props.last);
   const [reactions, _] = useState(props.data);
   const [selected, setSelected] = useState(null);
-  const isSelected =
-    selected !== null ? reactions.some((e) => e.id === selected.id) : false;
+  const isSelected = selected !== null ? reactions.some(
+    (e) => e.id === selected.id) : false;
 
   const onSetReaction = (e) => {
     react({
       thread: props.thread,
-      reaction: e.id,
+      reaction: e.id
     });
     setFocus((i) => (!(i === e.id) ? e.id : null));
   };
@@ -34,8 +35,8 @@ const ReactionPreview = (props) => {
           ? x.reaction_count
           : x.reaction_count - 1
         : x.id === focus
-        ? x.reaction_count + 1
-        : x.reaction_count;
+          ? x.reaction_count + 1
+          : x.reaction_count;
 
     return (
       cout >= 1 && (
@@ -63,7 +64,7 @@ const ReactionPreview = (props) => {
     );
   });
 
-  return (
+  return reactions.length > 0 && (
     <div style={{ display: "flex", gap: 10, marginTop: 15 }}>
       <div className="reaction-box-grup">
         {items}
@@ -81,7 +82,7 @@ const ReactionPreview = (props) => {
         )}
       </div>
     </div>
-  );
+  )
 };
 
 export default ReactionPreview;

@@ -1,15 +1,27 @@
 import { QueryClientProvider } from "react-query";
-import { RouterProvider } from "react-router-dom";
 import { ReactQueryDevtools } from 'react-query/devtools'
 import { queryClient } from "./context/AplicationContext";
-import router from "./router";
+import Home from "./screens/Home";
+import Index from "./screens/Index";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+} from "react-router-dom";
 import "./styles/index.css";
 
 
 const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
+      <BrowserRouter>
+        <Routes>
+
+          <Route path="/" element={<Index />} />
+          <Route path="/home" element={<Home />} />
+
+        </Routes>
+      </BrowserRouter>
       <ReactQueryDevtools />
     </QueryClientProvider>
   )

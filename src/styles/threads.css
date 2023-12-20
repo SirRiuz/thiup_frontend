@@ -6,15 +6,10 @@
   margin-bottom: 10px;
 }
 
-
-
-/* .response:hover {
-  background-color: rgb(243, 243, 247);
-} */
-
 .thread-date {
   color: rgb(111, 114, 123);
   line-height: 16px;
   font-size: 13px;
   font-weight: inherit;
 }
+

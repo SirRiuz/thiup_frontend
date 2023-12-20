@@ -51,6 +51,7 @@ const Thread = () => {
               iconSize={43}
               textFontSize={15}
               response={head}
+              showNewThread={true}
               onComment={() => setFocusBox(() => true)}
               style={{
                 padding: "24px 24px 24px",
@@ -63,7 +64,7 @@ const Thread = () => {
               }}
               flag={
                 <Flag
-                  code={"col"}
+                  code={head.mask.country_code}
                   height="10.5"
                   frameBorder={10}
                   style={{ borderRadius: 3.1192 }}
