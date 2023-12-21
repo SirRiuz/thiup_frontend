@@ -1,10 +1,11 @@
+import { useState } from 'react'
 import ReactionPreview from './ReactionBox'
 import ProfileIcon from './ProfileIcon'
 import TextPreview from './TextPreview'
 import SvgReply from '../assets/svg/SvgReply'
 import SvgReact from '../assets/svg/SvgReact'
-import { useState } from 'react'
 import ReactionModal from './ReactionModal'
+import Skeleton from '@mui/material/Skeleton';
 import '../styles/threads.css'
 
 
@@ -71,10 +72,51 @@ const ThreadFloatingMenu = props => {
   )
 }
 
+const ThreadCardSkeleton = props => {
+  return (
+    <div
+      style={{
+        position: 'relative',
+        boxShadow: `rgba(0, 0, 0, 0.06) 0px 0px 0px 1px, rgba(0, 0, 0, 0.08)
+              0px 2px 5px, rgba(255, 255, 255, 0.08)
+              0px 0px 0px 1px inset`,
+        ...props.style
+      }}
+    >
+      <div className='response-content'>
+        <div className='meta-thread'>
+          <Skeleton
+            variant="rounded"
+            width={45}
+            height={45}
+            style={{
+              background: '#EAEAEA',
+              borderRadius: 7.11
+            }}
+          />
+          <div className='meta-thread'>
+            <Skeleton style={{ background: '#EAEAEA' }} variant="text" width={70} />
+            <Skeleton style={{ background: '#EAEAEA' }} variant="text" width={40} />
+          </div>
+        </div>
+
+        <Skeleton style={{ background: '#EAEAEA' }} width={'100%'} />
+        <Skeleton style={{ background: '#EAEAEA' }} width={'100%'} />
+        <Skeleton style={{ background: '#EAEAEA' }} width={'50%'} />
+      </div>
+    </div>
+  )
+}
+
+
 const ThreadCard = props => {
   const [show, setShow] = useState(false)
   const [showReactModal, setShowReactModal] = useState(false)
   const [selectReaction, setSelectReaction] = useState(null)
+
+  if (props.skeleton)
+    return <ThreadCardSkeleton {...props} />
+
   return (
     <div
       onMouseLeave={() => setShow(() => false)}
@@ -130,7 +172,22 @@ const ThreadCard = props => {
               @{props.response.mask.id.substring(0, 5)}
             </span>
             <span className='thread-date'>{props.response.create_at}</span>
-            {/* {props.isHead && (<span className='thread-date'> · <SvgPublic /></span>)} */}
+            {props.showNewThread && props.response.is_new && (
+              <span
+                style={{
+                  marginLeft: 5,
+                  fontSize: 9,
+                  textTransform: 'uppercase',
+                  fontWeight: 700,
+                  padding: '2px 4px',
+                  color: 'white',
+                  backgroundColor: 'rgb(107, 74, 252)',
+                  borderRadius: '2.33456px',
+                }}
+              >
+                NEW
+              </span>
+            )}
           </div>
         </div>
         <div
@@ -151,7 +208,7 @@ const ThreadCard = props => {
             gap: 10
           }}
         >
-          {/* <ReactionPreview
+          <ReactionPreview
             selectReaction={selectReaction}
             last={props.response.last_reaction}
             thread={props.response.id}
@@ -162,7 +219,7 @@ const ThreadCard = props => {
             show={showReactModal}
             onClose={() => setShowReactModal(() => false)}
             onSelect={(reaction) => setSelectReaction(() => reaction)}
-          /> */}
+          />
         </div>
       </div>
     </div>

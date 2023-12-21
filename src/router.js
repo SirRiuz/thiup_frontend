@@ -1,4 +1,4 @@
-import { createBrowserRouter, useNavigate } from "react-router-dom"
+import { createBrowserRouter } from "react-router-dom"
 import { threadSearchService, threadService } from "./services/thread"
 import { queryClient } from "./context/AplicationContext"
 import Home from './screens/Home'

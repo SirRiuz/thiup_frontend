@@ -33,7 +33,7 @@ const ThreadResponses = (props) => {
                 />
               }
               style={{
-                padding: "16px 16px 5px",
+                padding: "16px 16px 15px",
                 color: "#2e2f33",
                 backgroundColor: "rgb(252, 252, 253)",
                 boxShadow: "0px 0px 0px white",
@@ -90,7 +90,7 @@ const ThreadResponseContent = (props) => {
           }
         }}
         style={{
-          padding: `24px 24px ${responses.length > 0 ? "0px" : "10px"}`,
+          padding: `24px 24px ${responses.length > 0 ? "0px" : "20px"}`,
           backgroundColor: "rgb(252, 252, 253)",
           boxShadow: "0px 0px 0px white",
           color: "#2e2f33",

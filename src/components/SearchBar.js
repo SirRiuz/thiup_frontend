@@ -11,9 +11,7 @@ const SearchBar = props => {
   const [text, setText] = useState(query?.length > 0 ? query : "")
 
   return (
-    <div
-      style={{ display: 'flex', gap: 5 }}
-    >
+    <div style={{ display: 'flex', gap: 5 }}>
       <SvgSearch />
       <input
         value={text}

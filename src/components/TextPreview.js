@@ -1,13 +1,15 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { 
-  Editor, 
-  EditorState, 
-  CompositeDecorator, 
-  convertFromRaw } from 'draft-js'
+import {
+  Editor,
+  EditorState,
+  CompositeDecorator,
+  convertFromRaw
+} from 'draft-js'
 
 
 const TextPreview = (props) => {
+
   const findHashtags = (contentBlock, callback) => {
     const text = contentBlock.getText()
     const hashtagRegex = /#([\w\u00C0-\u017F]+)/g;
@@ -17,10 +19,19 @@ const TextPreview = (props) => {
     }
   }
 
-  const findHello = (contentBlock, callback) => {
+  const findUrls = (contentBlock, callback) => {
+    const text = contentBlock.getText();
+    const urlRegex = /(?:https?|ftp):\/\/[^\s/$.?#].[^\s]*$/gi;
+    let match;
+    while ((match = urlRegex.exec(text)) !== null) {
+      callback(match.index, match.index + match[0].length, match);
+    }
+  };
+
+  const searchQuery = (contentBlock, callback) => {
+    let match;
     const text = contentBlock.getText();
     const dynamicTextRegex = new RegExp(`${props.search}`, 'gi');
-    let match;
     while ((match = dynamicTextRegex.exec(text)) !== null) {
       callback(match.index, match.index + match[0].length);
     }
@@ -28,6 +39,21 @@ const TextPreview = (props) => {
 
   const contentState = convertFromRaw(props.data)
   const decorator = new CompositeDecorator([
+    {
+      strategy: findUrls,
+      component: (props) => (
+        <a
+          target="_blank"
+          href={props.decoratedText}
+          style={{
+            color: 'rgb(107, 74, 252)',
+            textDecoration: 'none'
+          }}>
+
+          {new URL(props.decoratedText).host + "/..."}
+        </a>
+      ),
+    },
     {
       strategy: findHashtags,
       component: (props) => (
@@ -45,19 +71,22 @@ const TextPreview = (props) => {
       ),
     },
     {
-      strategy: findHello,
+      strategy: searchQuery,
       component: (props) => (
         <span
           style={{
             color: '#0f1419',
             fontWeight: 650
-          }}
-        >{props.children}
+          }}>
+
+          {props.children}
         </span>
       ),
     },
   ])
-  const state = EditorState.createWithContent(contentState, decorator)
+
+  const state = EditorState.createWithContent(
+    contentState, decorator)
 
   return (
     <Editor

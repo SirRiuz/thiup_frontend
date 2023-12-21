@@ -2,13 +2,13 @@ import axios from 'axios';
 
 
 const getReactionService = () => {
-  var url = `${process.env.REACT_APP_API_URL}/reactions/`
+  var url = `${process.env.REACT_APP_API_URL}/api/reactions/`
   return axios.get(url, {
     'Content-Type': 'application/json'})
 }
 
 const createReactionService = props => {
-  var url = props.id =`${process.env.REACT_APP_API_URL}/reactions/`
+  var url = props.id =`${process.env.REACT_APP_API_URL}/api/reactions/`
   const data = ({
     "reaction": props.reaction,
     "thread": props.thread})
