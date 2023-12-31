@@ -5,6 +5,7 @@ import ThreadCard from "./ThreadCard";
 import Flag from "react-world-flags";
 import "../styles/threads.css";
 
+
 const ThreadResponses = (props) => {
   const [focus, setFocus] = useState(false);
   return (
@@ -109,8 +110,7 @@ const ThreadResponseContent = (props) => {
           style={{
             paddingLeft: 20,
             paddingRight: 20,
-            marginBottom: 20,
-            marginTop: 10,
+            marginBottom: 17,
           }}
         >
           <div

@@ -57,7 +57,6 @@ const ThreadFloatingMenu = props => {
             height: 24,
             borderRadius: 6,
             cursor: 'pointer',
-
             justifyContent: 'center',
             alignContent: 'center',
             justifyItems: 'center',
@@ -171,7 +170,9 @@ const ThreadCard = props => {
             >
               @{props.response.mask.id.substring(0, 5)}
             </span>
-            <span className='thread-date'>{props.response.create_at}</span>
+            <span className='thread-date'>
+              {props.response.create_at}
+            </span>
             {props.showNewThread && props.response.is_new && (
               <span
                 style={{
@@ -225,6 +226,5 @@ const ThreadCard = props => {
     </div>
   )
 }
-
 
 export default ThreadCard

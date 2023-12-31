@@ -1,21 +1,20 @@
+import { useBottomScrollListener } from 'react-bottom-scroll-listener'
 import { Container, Grid } from "@mui/material"
 import { useEffect } from "react"
-import { useBottomScrollListener } from 'react-bottom-scroll-listener'
-import CommentBox from "./Comment"
 
 
 const Layout = props => {
-
   const scrollRef = useBottomScrollListener(() => {
-    if (props.onPaginate !== undefined)
+    if (props.onPaginate !== undefined) {
       props.onPaginate()
+    }
   })
 
   useEffect(() => {
-    if (props.content?.scrollY !== undefined) {
+    if (props.content?.scrollY) {
       scrollRef.current.scrollTo(0, props.content.scrollY)
     }
-  }, [])
+  }, [props.content?.scrollY])
 
   return (
     <Grid
@@ -27,7 +26,8 @@ const Layout = props => {
         lg={2}
         md={1}
         sm={1}
-        style={{ borderRight: 'solid 1px rgba(0, 0, 0, 0.1)' }}
+        children={props.left}
+        //style={{ borderRight: 'solid 1px rgba(0, 0, 0, 0.1)' }}
         display={{
           lg: 'block',
           md: 'block',
@@ -38,8 +38,9 @@ const Layout = props => {
       <Grid
         ref={scrollRef}
         onScroll={(e) => {
-          if (props.content?.onScroll !== undefined)
+          if (props.content?.onScroll !== undefined) {
             props.content.onScroll(e)
+          }
         }}
         item
         lg={8}
@@ -48,35 +49,34 @@ const Layout = props => {
         style={{
           overflowX: 'hidden',
           overflowY: 'scroll',
-          height: '100vh'
+          height: '100vh',
         }}
       >
         {/* <CommentBox></CommentBox> */}
         <div
           style={{
             display: 'flex',
-            borderBottom: 'solid 1px rgba(0, 0, 0, 0.1)',
+            //borderBottom: 'solid 1px rgba(0, 0, 0, 0.1)',
             position: 'sticky',
-            backgroundColor: 'rgba(244, 245, 245,0.85)',
+            backgroundColor: 'rgba(244, 245, 245,0.5)',
             zIndex: 999,
             minHeight: 56,
             width: '100%',
             top: 0,
             left: 0
           }}>
-          <div
-            children={props.head}
-            style={{
-              backdropFilter: 'blur(5px)',
-              flex: 1
-            }}
-          />
+          <div style={{ flex: 1, backdropFilter: 'blur(7px)' }}>
+            {props.head}
+          </div>
         </div>
 
         <Container
           maxWidth={'sm'}
           children={props.children}
-          style={{ marginTop: 40 }}
+          style={{
+            marginTop: 35,
+            marginBottom: 120
+          }}
         />
       </Grid>
 
@@ -86,9 +86,10 @@ const Layout = props => {
         md={1}
         sm={1}
         style={{
-          borderLeft: 'solid 1px rgba(0, 0, 0, 0.1)',
+          //borderLeft: 'solid 1px rgba(0, 0, 0, 0.1)',
           overflow: 'hidden',
         }}
+        children={props.rigth}
         display={{
           lg: 'block',
           md: 'block',
@@ -96,18 +97,6 @@ const Layout = props => {
           xs: 'none'
         }}
       >
-        <div
-          style={{
-            display: 'flex',
-            borderBottom: 'solid 1px rgba(0, 0, 0, 0.1)',
-            position: 'sticky',
-            zIndex: 999,
-            minHeight: 56,
-            width: '100%',
-            top: 0,
-            left: 0
-          }}>
-        </div>
       </Grid>
     </Grid>
   )

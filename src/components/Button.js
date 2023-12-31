@@ -12,6 +12,7 @@ const Button = (props) => {
       style={{
         display: "flex",
         alignItems: "center",
+        justifyContent: "center",
         backgroundColor: "rgb(107, 74, 252)",
         borderRadius: 5.77148,
         boxShadow: `rgba(107, 74, 252, 0.12) 
