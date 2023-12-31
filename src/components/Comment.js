@@ -5,6 +5,8 @@ import ProfileIcon from "./ProfileIcon"
 import { useState } from "react"
 
 
+const MAX_CHARACTER = 500
+
 const CommentBox = props => {
   const [isLoad, setLoad] = useState(false)
   const [reset, setReset] = useState(false)
@@ -35,15 +37,18 @@ const CommentBox = props => {
       style={{
         padding: '10px 16px 10px',
         display: 'flex',
+        flexDirection: 'column',
         gap: 12,
         justifyContent: 'flex-start',
         overflow: 'auto',
-        alignItems: focus || text.length > 0 ?
-          'start' : 'center',
+        // alignItems: focus || text.length > 0 ?
+        //   'start' : 'center',
         ...props.style
       }}
     >
-      <ProfileIcon iconSize={props.iconSize} />
+      {/* <div>
+        <ProfileIcon iconSize={props.iconSize} />
+      </div> */}
       <div style={{ flex: 1 }}>
         <div
           style={{
@@ -73,25 +78,44 @@ const CommentBox = props => {
               }}
             />
           </div>
-          {(!focus && text.length <= 0) && (
+          {/* {(!focus && text.length <= 0) && (
             <Button
               placeholder={props.btnPlaceholder}
             />
-          )}
+          )} */}
         </div>
         <div
           style={{
             display: 'flex',
+            justifyItems: 'center',
+            alignContent: 'center',
+            alignItems: 'center',
+            gap: 13,
             justifyContent: 'flex-end',
             marginTop: focus || text.length > 0 ?
               14 : 0
           }}
         >
-          {focus || text.length > 0 ? (
+          {/* focus || text.length > 0 ? */}
+          {true ? (
             <>
+              <span
+                style={{
+                  color: (MAX_CHARACTER - text.length) < 0 ? 'red' : '#999999',
+                  fontSize: 15,
+                  fontWeight: 400,
+                  fontStyle: 'normal',
+                  display: ((MAX_CHARACTER - text.length) <= 50) ||
+                    ((MAX_CHARACTER - text.length) <= 0) ? 'block' : 'none',
+                }}
+              >
+                {MAX_CHARACTER - text.length}
+              </span>
               <Button
                 placeholder={props.btnPlaceholder}
-                isFocus={text.length > 0}
+                isFocus={(text.length > 0) &&
+                  ((MAX_CHARACTER - text.length) >= 0)}
+
                 isLoad={isLoad}
                 onClick={() => {
                   setLoad(() => true)

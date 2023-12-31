@@ -57,6 +57,7 @@ const TextPreview = (props) => {
     {
       strategy: findHashtags,
       component: (props) => (
+        // TODO: REVIEW
         <Link
           to={`/explore/tags/${props.decoratedText.substring(1)}/`}
           style={{

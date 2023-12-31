@@ -1,34 +1,27 @@
+import { Link, useParams } from "react-router-dom"
+import { threadSearchService } from "../services/thread"
+import { paginationService } from "../services/pagination"
 import { queryClient } from "../context/AplicationContext"
-import { useQuery } from "react-query";
-import { threadService } from "../services/thread";
 import { useEffect, useState } from "react"
-import { paginationService } from "../services/pagination";
-import { Link } from "react-router-dom";
-import Layout from "../components/Layout";
-import ThreadCard from "../components/ThreadCard";
-import Flag from "react-world-flags";
-import ThreadSkeleton from "../components/ThreadSkeleton";
-import CommentBox from "../components/Comment"
+import { useQuery } from "react-query"
+import Layout from "../components/Layout"
+import ThreadCard from "../components/ThreadCard"
+import Flag from "react-world-flags"
+import ThreadSkeleton from "../components/ThreadSkeleton"
+
 
 var scrollTimer = -1;
 
-const Home = () => {
-  const [threads, setThreads] = useState([])
+const Tags = (props) => {
+  const { tag } = useParams()
   const [scrollIndex, setScrollIndex] = useState(0)
+  const [threads, setThreads] = useState([])
   const [next, setNext] = useState(null)
   const [isLoadPag, setIsPagLoad] = useState(false)
-  const { isLoading, data, isError } = useQuery(["threads"],
-    () => threadService({}).then((res) => res.data))
 
-  useEffect(() => {
-    if (data?.scrollIndex)
-      setScrollIndex(() => data?.scrollIndex)
-
-    if (data?.results) {
-      setNext(() => data.next)
-      setThreads(() => data.results)
-    }
-  }, [data])
+  const { data, isLoading, isError } = useQuery([tag],
+    () => threadSearchService({ type: "tag", query: tag }).then(
+      (res) => res.data))
 
   const feed = threads.map((x, k) => (
     <Link
@@ -60,6 +53,16 @@ const Home = () => {
     </Link>
   ))
 
+  useEffect(() => {
+    if (data?.scrollIndex)
+      setScrollIndex(() => data?.scrollIndex)
+
+    if (data?.results) {
+      setThreads(() => data.results)
+      setNext(() => data.next)
+    }
+  }, [data])
+
   return (
     <Layout
       content={{
@@ -67,15 +70,15 @@ const Home = () => {
         onScroll: (e) => {
           if (scrollTimer != -1) { clearTimeout(scrollTimer) }
           scrollTimer = window.setTimeout(() => {
-            const { data } = queryClient.getQueryState("threads")
+            const { data } = queryClient.getQueryState(tag)
             data["scrollIndex"] = e.target.scrollTop
-            queryClient.setQueriesData("threads", data)
+            queryClient.setQueriesData(tag, data)
           }, 500);
         }
       }}
       onPaginate={() => {
         try {
-          const { data } = queryClient.getQueryState(["threads"])
+          const { data } = queryClient.getQueryState(tag)
           if (next && !isLoadPag) {
             setIsPagLoad(() => true)
             paginationService({ next: next })
@@ -83,27 +86,23 @@ const Home = () => {
               .then(res => {
                 setNext(() => res.next)
                 setThreads(() => [...threads, ...res.results])
+
                 data.next = res.next
                 data.results = [...threads, ...res.results]
-                queryClient.setQueriesData("threads", data)
+                queryClient.setQueriesData(tag, data)
               })
               .finally(() => setIsPagLoad(() => false))
           }
-        } catch (e) { window.location = "/" }
+        } catch (e) {
+          console.log(e)
+        }
       }}
     >
-
-      <CommentBox
-        iconSize={43}
-        btnPlaceholder={'Post'}
-        placeholder={'Start a thread'}
-      />
-
-      {(isLoading || isError) && <ThreadSkeleton />}
-      {!isLoading && feed}
+      {(isError || isLoading) && <ThreadSkeleton />}
+      {!isLoading && !isError && feed}
       {isLoadPag && <ThreadSkeleton size={1} />}
     </Layout>
-  );
+  )
 }
 
-export default Home
+export default Tags

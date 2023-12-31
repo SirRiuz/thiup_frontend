@@ -82,7 +82,12 @@ const DraftEditor = (props) => {
       onMouseUpCapture={onSelectedText}
       onKeyUp={() => setLocation(() => null)}
     >
-      <div>
+      <div
+        style={{
+          overflowY: 'auto',
+          maxHeight: 700
+        }}
+      >
         <FloatingToolbar
           editorState={editorState}
           setEditorState={setEditorState}

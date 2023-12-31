@@ -1,7 +1,6 @@
 import axios from 'axios';
 
 
-
 const threadSearchService = props => {
   const TYPE = props?.type === 'tag' ? 'tag' : 'q'
   var url = `${process.env.REACT_APP_API_URL}/api/threads/?${TYPE}=${props?.query}`
