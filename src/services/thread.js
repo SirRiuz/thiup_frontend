@@ -1,16 +1,25 @@
 import axios from 'axios';
+import { decryptor } from './cripto';
 
 
-const threadSearchService = props => {
+const CRIPTO_CONTENT_TYPE = "application/raw"
+
+
+const threadSearchService = async (props) => {
   const TYPE = props?.type === 'tag' ? 'tag' : 'q'
-  var url = `${process.env.REACT_APP_API_URL}/api/threads/?${TYPE}=${props?.query}`
-  return axios.get(url, {
-    'Content-Type': 'application/json'
-  })
+  var url = `${process.env.REACT_APP_API_URL}/threads/?${TYPE}=${props?.query}`
+  var response = await axios.get(url)
+  if (response.headers["content-type"].indexOf(CRIPTO_CONTENT_TYPE) !== -1) {
+    response.data = decryptor({
+      payload: response.headers["x-response-payload"],
+      data: response.data
+    })
+  }
+  return response
 }
 
-const commentService = props => {
-  var url = props.id = `${process.env.REACT_APP_API_URL}/api/threads/`
+const commentService = async (props) => {
+  var url = props.id = `${process.env.REACT_APP_API_URL}/threads/`
   const data = ({
     "sub": props.thread,
     "media": props.media,
@@ -18,16 +27,29 @@ const commentService = props => {
     "content": props.content
   })
 
-  return axios.post(url, data, {
-    'Content-Type': 'application/json'
-  })
+  var response = await axios.post(url, data, { 'Content-Type': 'application/json' })
+  if (response.headers["content-type"].indexOf(CRIPTO_CONTENT_TYPE) !== -1) {
+    response.data = decryptor({
+      payload: response.headers["x-response-payload"],
+      data: response.data
+    })
+  }
+  return response
 }
 
-const threadService = (props) => {
+const threadService = async (props) => {
   var url = props.id !== undefined ?
-    `${process.env.REACT_APP_API_URL}/api/threads/${props.id}/responses/` :
-    `${process.env.REACT_APP_API_URL}/api/threads/`
-  return axios.get(url, {})
+    `${process.env.REACT_APP_API_URL}/threads/${props.id}/responses/` :
+    `${process.env.REACT_APP_API_URL}/threads/`
+
+  var response = await axios.get(url)
+  if (response.headers["content-type"].indexOf(CRIPTO_CONTENT_TYPE) !== -1) {
+    response.data = decryptor({
+      payload: response.headers["x-response-payload"],
+      data: response.data
+    })
+  }
+  return response
 }
 
 

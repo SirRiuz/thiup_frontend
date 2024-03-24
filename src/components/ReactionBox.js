@@ -1,88 +1,103 @@
-import { useEffect, useState } from "react";
-import useReaction from "../hooks/useReaction";
-import ReactionIcon from "./ReactionIcon";
-import "../styles/components/reactions.css";
+import { useEffect, useState } from "react"
+import { createReactionService } from "../services/reaction"
+import ReactionIcon from "./ReactionIcon"
+import styles from "../styles/components/ReactionBox.module.css"
+import ReactionModal from "./ReactionModal"
 
 
-const ReactionPreview = (props) => {
-  const { react } = useReaction({});
-  const [focus, setFocus] = useState(props.last);
-  const [reactions, _] = useState(props.data);
-  const [selected, setSelected] = useState(null);
-  const isSelected = selected !== null ? reactions.some(
-    (e) => e.id === selected.id) : false;
-
-  const onSetReaction = (e) => {
-    react({
-      thread: props.thread,
-      reaction: e.id
-    });
-    setFocus((i) => (!(i === e.id) ? e.id : null));
-  };
+export default function ReactionBox(props) {
+  const [reactions, _] = useState(props.reactions)
+  const [selected, setSelected] = useState(props.last_reaction)
+  const unusedReaction = reactions.filter((
+    reaction) => reaction.id === selected?.id).length == 0
 
   useEffect(() => {
-    if (props.selectReaction !== null) {
-      setSelected({ ...props.selectReaction, reaction_count: 0 });
-      onSetReaction(props.selectReaction);
-      props.onCompleteReaction();
+    setSelected(() => props.last_reaction)
+  }, [props.last_reaction])
+
+  const onReact = reaction => {
+    if (props.reactionable) {
+      createReactionService({
+        reaction: reaction?.id,
+        thread: props.thread,
+      })
+        .catch(() => {
+          setSelected(() => null)
+          props.onReact(null)
+        })
     }
-  }, [props.selectReaction]);
+    const current_reaction = reaction?.id
+      === selected?.id ? null : reaction
 
-  const items = reactions.map((x, k) => {
-    const cout =
-      props.last === x.id
-        ? x.id === focus
-          ? x.reaction_count
-          : x.reaction_count - 1
-        : x.id === focus
-          ? x.reaction_count + 1
-          : x.reaction_count;
+    reactions.map((r, k) => {
+      if (r.id === current_reaction?.id) {
+        r.reaction_count += 1
+      }
+      return r
+    })
 
-    return (
-      cout >= 1 && (
+    setSelected((last_reaction) => {
+      if (last_reaction) {
+        var new_re = reactions.map((x, k) => {
+          if (x.id === last_reaction.id) {
+            x.reaction_count -= 1
+          }
+          return x
+        })
+        new_re = new_re.filter((reaction) => reaction.reaction_count >= 1)
+      }
+      return current_reaction
+    })
+    props.onReact(current_reaction)
+  }
+
+  return (
+    <div className={styles.container}>
+      {reactions
+        .filter((reaction) => reaction.reaction_count >= 1)
+        .map(((reaction, key) => (
+          <ReactionIcon
+            key={key}
+            name={reaction.name}
+            url={`${process.env.REACT_APP_API_URL}${reaction.icon}`}
+            count={reaction.reaction_count}
+            onClick={_ => { onReact(reaction) }}
+            style={{
+              border:
+                reaction.id === selected?.id
+                  ? "solid .0625rem rgb(107, 74, 252)"
+                  : ".0625rem solid rgba(235, 235, 235, 1.00)",
+
+              background:
+                reaction.id === selected?.id
+                  ? "rgba(107, 74, 252, .05)"
+                  : "#FCFCFD"
+            }}
+          />
+        )))}
+
+      {selected && unusedReaction && (
         <ReactionIcon
-          key={k}
-          iconUrl={`${process.env.REACT_APP_API_URL}${x.icon}`}
-          count={cout}
+          count={1}
+          onClick={() => onReact(selected)}
+          name={selected.name}
+          url={`${process.env.REACT_APP_API_URL}${selected.icon}`}
           style={{
-            border:
-              x.id === focus
-                ? "solid 1.5px rgb(107, 74, 252)"
-                : "1.5px solid rgb(218, 210, 254)",
-
-            background:
-              x.id === focus
-                ? "rgba(107, 74, 252, .05)"
-                : "rgba(248, 246, 255, 1)",
-          }}
-          onClick={() => {
-            onSetReaction(x);
-            setSelected(() => null);
+            border: "solid 1.5px rgb(107, 74, 252)",
+            background: "rgba(107, 74, 252, .05)"
           }}
         />
-      )
-    );
-  });
+      )}
 
-  return reactions.length > 0 && (
-    <div style={{ display: "flex", gap: 10, marginTop: 15 }}>
-      <div className="reaction-box-grup">
-        {items}
-        {selected !== null && selected.id === focus && !isSelected && (
-          <ReactionIcon
-            style={{ border: "solid 1.5px rgb(107, 74, 252)" }}
-            onClick={() => onSetReaction(selected)}
-            iconUrl={`${process.env.REACT_APP_API_URL}${selected.icon}`}
-            count={
-              selected.id === focus
-                ? selected.reaction_count + 1
-                : selected.reaction_count
-            }
-          />
-        )}
-      </div>
+      <ReactionModal
+        show={props.openModal}
+        last_reaction={selected?.id}
+        onClose={props.onCloseModal}
+        onSelect={(reaction) => {
+          props.onCloseModal()
+          onReact(reaction)
+        }}
+      />
     </div>
   )
-};
-
-export default ReactionPreview;
+}

@@ -9,8 +9,13 @@ import ThreadCard from "../components/ThreadCard";
 import Flag from "react-world-flags";
 import ThreadSkeleton from "../components/ThreadSkeleton";
 import CommentBox from "../components/Comment"
+import styles from "../styles/screens/home.module.css"
+import SearchBar from "../components/SearchBar";
+import EndFeed from "../components/EndFeed";
+
 
 var scrollTimer = -1;
+
 
 const Home = () => {
   const [threads, setThreads] = useState([])
@@ -33,28 +38,29 @@ const Home = () => {
   const feed = threads.map((x, k) => (
     <Link
       key={k}
+      className={styles.thread}
       to={`/t/${x.short_id}/`}
-      style={{ textDecoration: "none" }}
     >
       <ThreadCard
-        iconSize={43}
-        textFontSize={15}
+        iconSize={40}
+        textFontSize={14}
         response={x}
-        useFloatingMenu={false}
         showNewThread={true}
+        repliesCount={x.responses_count}
         flag={(<Flag
           code="MX"
-          height="10.5"
+          height="11"
           frameBorder={9}
-          style={{ borderRadius: 3 }}
+          style={{ borderRadius: 3}}
         />)}
         style={{
-          padding: "23px 24px 24px",
-          borderRadius: 9,
-          backgroundColor: "rgb(251, 252, 253)",
-          marginBottom: 20,
-          color: "#1e2f33",
-          cursor: "pointer"
+          borderRadius: 10,
+          padding: "20px 20px 20px 20px",
+          color: "#2e2f33",
+          border: "solid 1px rgba(235, 235, 235, 1.00)",
+          marginBottom: !(k === threads.length - 1) ? 18 : 0,
+          cursor: "pointer",
+          background: "#FFFFFF"
         }}
       />
     </Link>
@@ -92,16 +98,31 @@ const Home = () => {
         } catch (e) { window.location = "/" }
       }}
     >
-
-      <CommentBox
-        iconSize={43}
-        btnPlaceholder={'Post'}
-        placeholder={'Start a thread'}
-      />
-
+      <SearchBar />
+      {!isLoading && feed && !isError && feed && (
+        <div
+          style={{
+            borderRadius: 10,
+            color: "#2e2f33",
+            border: "solid 1px rgb(229, 229, 229)",
+            marginBottom: 35,
+          }}
+        >
+          <CommentBox
+            iconSize={43}
+            btnPlaceholder={"Post"}
+            placeholder={"Start a thread"}
+          />
+        </div>
+      )}
       {(isLoading || isError) && <ThreadSkeleton />}
       {!isLoading && feed}
-      {isLoadPag && <ThreadSkeleton size={1} />}
+      {isLoadPag && (<ThreadSkeleton style={{ marginTop: 18 }} size={1} />)}
+      {next === null && !isLoading && threads.length >= 1 && (
+        <div style={{ height: 260 }}>
+          <EndFeed />
+        </div>
+      )}
     </Layout>
   );
 }

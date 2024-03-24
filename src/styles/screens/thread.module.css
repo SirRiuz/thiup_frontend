@@ -1,0 +1,33 @@
+.thread {
+  text-decoration: none;
+}
+
+.responsesCount {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 20px;
+  margin-top: 25px;
+  margin-bottom: 25px;
+  font-family: "Open Sans";
+}
+
+.container{
+}
+
+.threadContainer {
+  border-radius: 11px;
+  border: solid 1px rgba(235, 235, 235, 1.00);
+}
+
+.commentBoxContainer {
+  background: rgb(252, 252, 253);
+  padding-top: 13px;
+  padding-bottom: 13px;
+  border-radius: 11px;
+}
+
+.title {
+  font-weight: 600;
+  font-size: 15.5px;
+  font-family: "Open Sans";
+}

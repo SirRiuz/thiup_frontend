@@ -1,0 +1,20 @@
+.title {
+  font-weight: 600;
+  font-size: 15px;
+  font-family: "Open Sans";
+}
+
+.noDataResultContainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  align-items: center;
+  height: 50vh;
+}
+
+.suptitle {
+  color: #999999;
+  font-size: 13px;
+  font-family: "Open Sans";
+}

@@ -1,36 +1,40 @@
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
-import SvgSearch from "../assets/svg/SvgSearch"
+import HeadBar from "./HeadBar"
 
 
 const ENTER_KEY = "enter"
 
-const SearchBar = props => {
+export default function SearchBar(props) {
   const navigate = useNavigate()
-  const { query } = useParams();
+  const { query } = useParams()
   const [text, setText] = useState(query?.length > 0 ? query : "")
 
   return (
-    <div style={{ display: 'flex', gap: 5 }}>
-      <SvgSearch />
+    <HeadBar
+      styles={{
+        display: 'flex',
+        alignContent: 'center',
+        alignItems: 'center',
+        flex: 1,
+        gap: 15,
+        position: 'relative',
+        marginBottom: 5,
+        background: 'red'
+      }}
+    >
       <input
         value={text}
         type="text"
-        placeholder={props.placeholder ? props.placeholder : "Search"}
-        onChange={(e) => setText(e.target.value)}
-        style={{
-          flex: 1,
-          outline: 'none',
-          border: 'none',
-          background: 'transparent'
+        onChange={(e) => {
+          setText(e.target.value.replace("#", "").toLowerCase())
         }}
         onKeyDown={(e) => {
-          if ((e.key.toLowerCase() === ENTER_KEY) && (text !== query))
+          if ((e.key.toLowerCase() === ENTER_KEY) && text.length >= 1) {
             navigate(`/search/${text}/`)
+          }
         }}
       />
-    </div>
+    </HeadBar>
   )
 }
-
-export default SearchBar

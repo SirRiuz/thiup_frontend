@@ -95,6 +95,12 @@ const DraftEditor = (props) => {
           show={Boolean(editorLocation)}
         />
         <Editor
+          handlePastedFiles={() => {
+            alert("COPIADO")
+          }}
+          handleDroppedFiles={() => {
+            alert("File drop")
+          }}
           ref={editor}
           placeholder={
             props.placeholder !== undefined
