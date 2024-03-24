@@ -57,14 +57,15 @@ const TextPreview = (props) => {
     {
       strategy: findHashtags,
       component: (props) => (
-        // TODO: REVIEW
         <Link
-          to={`/explore/tags/${props.decoratedText.substring(1)}/`}
+          to={`/explore/tags/${props.decoratedText.substring(1).toLocaleLowerCase()}/`}
           style={{
             textDecoration: 'none',
             color: 'rgb(107, 74, 252)',
             cursor: 'pointer',
-            fontWeight: 550
+            fontSize: props.fontSize,
+            fontStyle: 'normal',
+            fontWeight: 500
           }}
         >
           {props.children}
@@ -77,7 +78,8 @@ const TextPreview = (props) => {
         <span
           style={{
             color: '#0f1419',
-            fontWeight: 650
+            fontSize: 14,
+            fontWeight: 700
           }}>
 
           {props.children}

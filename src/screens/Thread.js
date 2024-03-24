@@ -1,17 +1,61 @@
-import { paginationService } from "../services/pagination"
 import { useParams } from "react-router-dom"
 import { useEffect, useState } from "react"
 import { threadService } from "../services/thread"
 import { useQuery } from "react-query"
+import { Skeleton } from "@mui/material"
+import { paginationService } from "../services/pagination"
 import CommentBox from "../components/Comment"
 import TimeLine from "../components/TimeLine"
 import ThreadCard from "../components/ThreadCard"
 import Flag from "react-world-flags"
 import Layout from "../components/Layout"
 import ThreadSkeleton from "../components/ThreadSkeleton"
+import HeadBar from "../components/HeadBar"
+import GoBack from "../components/GoBack"
+import styles from "../styles/screens/thread.module.css"
+import ErrorMessage from "../components/ErrorMessage"
+import EndFeed from "../components/EndFeed"
+import Separator from "../components/Separator"
 
 
-const Thread = () => {
+const ThreadLoader = _ => (
+  <div>
+    <ThreadSkeleton style={{ marginBottom: 50 }} size={1} />
+    <ThreadSkeleton size={1} style={{ marginBottom: 0, borderRadius: '10px 10px 0px 0px' }} />
+    <ThreadSkeleton size={1} style={{ marginBottom: 0, borderRadius: '0px 0px 0px 0px', borderBottom: 'solid 0px white', borderTop: 'solid 0px white' }} />
+    <ThreadSkeleton size={1} style={{ marginBottom: 0, borderRadius: '0px 0px 10px 10px' }} />
+  </div>
+)
+
+
+const ThreadHead = props => (
+  <HeadBar
+    styles={{
+      display: "flex",
+      alignContent: "center",
+      alignItems: "center",
+      flex: 1,
+      gap: 10
+    }}
+  >
+    <GoBack />
+    {!props.isError && (props.isLoad ? (
+      <Skeleton
+        width={"60px"}
+        style={{ background: "#EAEAEA" }}
+      />
+    ) : (
+      <div>
+        <strong className={styles.title}>
+          Thread
+        </strong>
+      </div>
+    ))}
+  </HeadBar>
+)
+
+
+export default function Thread() {
   const { thread } = useParams()
   const [threads, setThreads] = useState([])
   const [head, setHead] = useState(null)
@@ -22,9 +66,9 @@ const Thread = () => {
   const { data, isLoading, isError } = useQuery(thread,
     () => threadService({ id: thread }).then((res) => res.data))
 
-  const onRefreshThread = (e) => {
-    setThreads(() => [...threads, e.data])
-    setCount((e) => e + 1)
+  const onRefreshThread = (thread) => {
+    setThreads(() => [...threads, thread])
+    setCount((e) => threads.length + 1)
   }
 
   useEffect(() => {
@@ -53,70 +97,53 @@ const Thread = () => {
         }
       }}
     >
-      {(isLoading || isError) && (
-        <div>
-          <ThreadSkeleton style={{ marginBottom: 60 }} size={1} />
-          <ThreadSkeleton size={3} />
-        </div>
-      )}
+      {<ThreadHead isLoad={isLoading} isError={isError} />}
+      {(isLoading) && (<ThreadLoader />)}
       {head && !isLoading && !isError && (
-        <div>
+        <div className={styles.container}>
           <ThreadCard
+            reactionable={true}
             isHead={true}
             iconSize={43}
-            textFontSize={15}
+            textFontSize={17}
+            useFloatingMenu={true}
             response={head}
             showNewThread={true}
             onComment={() => setFocusBox(() => true)}
             style={{
               borderRadius: 10,
-              padding: "24px 24px 24px",
-              backgroundColor: "rgb(252, 252, 253)",
+              padding: "20px 20px 20px 20px",
               color: "#2e2f33",
-              boxShadow: `rgba(0, 0, 0, 0.06) 0px 0px 0px 1px, rgba(0, 0, 0, 0.08)
-                0px 2px 8px, rgba(255, 255, 255, 0.08)
-                0px 0px 0px 1px inset`,
+              border: "solid 1px rgba(235, 235, 235, 1.00)",
+              marginBottom: 18
             }}
             flag={
               <Flag
-                code={head.mask.country_code}
+                code={"mx"}
                 height="10.5"
                 frameBorder={10}
                 style={{ borderRadius: 3.1192 }}
               />
             }
           />
-          <p
-            style={{
-              fontSize: 16,
-              fontWeight: 600,
-              lineHeight: "20px",
-              marginTop: 35,
-              marginBottom: 35
-            }}
-          >
+          <p className={styles.responsesCount}>
             {count > 0 ? count : ""} Comments
           </p>
-
-          <div
-            style={{
-              background: 'white',
-              borderRadius: 11,
-              boxShadow: `rgba(0, 0, 0, 0.06) 0px 0px 0px 1px, rgba(0, 0, 0, 0.08)
-              0px 2px 8px, rgba(255, 255, 255, 0.08)
-              0px 0px 0px 1px inset`
-            }}
-          >
+          <div className={styles.threadContainer}>
             <TimeLine parent={head} responses={threads} />
-            {isLoadPag && (<h1>LOAD SPINNER</h1>)}
-            <div
-              style={{
-                background: "rgb(252, 252, 253)",
-                padding: 13,
-                marginBottom: 150,
-                borderRadius: 11,
-              }}
-            >
+            {isLoadPag && (
+              <>
+                <ThreadSkeleton
+                  size={1}
+                  style={{
+                    marginBottom: 0,
+                    border: 'solid 1px white',
+                  }}
+                />
+                <Separator />
+              </>
+            )}
+            <div className={styles.commentBoxContainer}>
               <CommentBox
                 focus={focusBox}
                 placeholder={"Post your reply"}
@@ -124,20 +151,28 @@ const Thread = () => {
                 onComplete={onRefreshThread}
                 id={head.id}
                 onBlur={() => setFocusBox(() => false)}
-                style={{
-                  borderRadius: 6.5,
-                  background: "rgb(255, 255, 255)",
-                  boxShadow: `rgba(0, 0, 0, 0.05) 0px 2px 8px,
-                  rgba(0, 0, 0, 0.08) 0px 0px 0px 1px,
-                  rgba(255, 255, 255, 0.1) 0px 0px 0px 1px inset`
-                }}
+                style={{ borderRadius: 6.5 }}
               />
             </div>
           </div>
+          {next === null && !isLoading && (
+            <div style={{ height: 250 }}>
+              {threads.length >= 1 && (<EndFeed />)}
+            </div>
+          )}
         </div>
+      )}
+      {isError && (
+        <ErrorMessage
+          title={(<span>🔍 Post not available.</span>)}
+          description={(
+            <span style={{ fontSize: 15 }}>
+              We could not find a post associated with the
+              provided ID.
+            </span>
+          )}
+        />
       )}
     </Layout>
   )
 }
-
-export default Thread

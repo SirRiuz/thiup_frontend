@@ -1,19 +1,66 @@
-import { Link, useParams } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { Link, useParams } from "react-router-dom"
+import { useEffect, useState } from "react"
 import { queryClient } from "../context/AplicationContext"
-import { threadSearchService } from "../services/thread";
-import { paginationService } from "../services/pagination";
-import { useQuery } from "react-query";
-import Layout from "../components/Layout";
-import ThreadCard from "../components/ThreadCard";
-import Flag from "react-world-flags";
-import ThreadSkeleton from "../components/ThreadSkeleton";
+import { threadSearchService } from "../services/thread"
+import { paginationService } from "../services/pagination"
+import { useQuery } from "react-query"
+import { Skeleton } from "@mui/material"
+import Layout from "../components/Layout"
+import ThreadCard from "../components/ThreadCard"
+import Flag from "react-world-flags"
+import ThreadSkeleton from "../components/ThreadSkeleton"
+import HeadBar from "../components/HeadBar"
+import GoBack from "../components/GoBack"
+import EndFeed from "../components/EndFeed"
+import styles from "../styles/screens/search.module.css"
+import ErrorMessage from "../components/ErrorMessage"
 
 
-var scrollTimer = -1;
+var scrollTimer = -1
 
-const Search = () => {
-  const { query } = useParams();
+const ThreadHead = props => {
+  const { query } = useParams()
+  return (
+    <HeadBar
+      styles={{
+        display: "flex",
+        alignContent: "center",
+        alignItems: "center",
+        flex: 1,
+        gap: 10,
+        marginBottom: 5
+      }}
+    >
+      <GoBack />
+      <div>
+        <div>
+          {props.isLoad ? (
+            <Skeleton
+              width={"60px"}
+              style={{ backgroundColor: "#EAEAEA" }}
+            />
+          ) : (props.count >= 1 && (
+            <strong className={styles.title}>
+              "{query}"
+            </strong>
+          ))}
+        </div>
+
+        <div>
+          {props.isLoad ? null : (props.count >= 1 && (
+            <span className={styles.suptitle}>
+              {props.count} {props.count > 1 ? "posts" : "post"}
+            </span>
+          ))}
+        </div>
+      </div>
+    </HeadBar>
+  )
+}
+
+
+export default function Search() {
+  const { query } = useParams()
   const [scrollIndex, setScrollIndex] = useState(0)
   const [threads, setThreads] = useState([])
   const [next, setNext] = useState(null)
@@ -35,6 +82,7 @@ const Search = () => {
         response={x}
         useFloatingMenu={false}
         showNewThread={true}
+        repliesCount={x.responses_count}
         flag={(<Flag
           code="MX"
           height="10.5"
@@ -42,19 +90,20 @@ const Search = () => {
           style={{ borderRadius: 3 }}
         />)}
         style={{
-          padding: "23px 24px 24px",
-          borderRadius: 9,
-          backgroundColor: "rgb(251, 252, 253)",
-          marginBottom: 20,
-          color: "#1e2f33",
-          cursor: "pointer"
+          borderRadius: 10,
+          padding: "20px 20px 20px 20px",
+          color: "#2e2f33",
+          border: "solid 1px rgba(235, 235, 235, 1.00)",
+          marginBottom: !(k === threads.length - 1) ? 18 : 0,
+          cursor: "pointer",
+          background: "#FFFFFF"
         }}
       />
     </Link>
   ))
 
   useEffect(() => {
-    document.title = `${query} - Thiup`
+    document.title = `${query} - Search Results | Thiup`
     if (data?.scrollIndex)
       setScrollIndex(() => data?.scrollIndex)
 
@@ -74,13 +123,13 @@ const Search = () => {
             const { data } = queryClient.getQueryState(query)
             data["scrollIndex"] = e.target.scrollTop
             queryClient.setQueriesData(query, data)
-          }, 500);
+          }, 500)
         }
       }}
       onPaginate={() => {
         try {
           const { data } = queryClient.getQueryState(query)
-          if (next) {
+          if (next && !isLoadPag) {
             setIsPagLoad(() => true)
             paginationService({ next: next })
               .then((res) => res.data)
@@ -94,16 +143,30 @@ const Search = () => {
               })
               .finally(() => setIsPagLoad(() => false))
           }
-        } catch (e) {
-          console.log(e)
-        }
+        } catch (e) { window.location = "/" }
       }}
     >
+      <ThreadHead isLoad={isLoading} count={data?.count} />
       {(isError || isLoading) && <ThreadSkeleton />}
       {!isLoading && !isError && feed}
-      {isLoadPag && <ThreadSkeleton size={1} />}
+      {isLoadPag && <ThreadSkeleton style={{ marginTop: 18 }} size={1} />}
+      {next === null && !isLoading && threads.length >= 1 && (
+        <div style={{ height: 260 }}>
+          <EndFeed />
+        </div>
+      )}
+
+      {!isLoading && !isError && threads.length <= 0 && next === null && (
+        <ErrorMessage
+          title={(<span>🤷 Without result.</span>)}
+          description={(
+            <span style={{ fontSize: 15 }}>
+              We couldn"t find related posts for
+              <strong>"{query}".</strong>
+            </span>
+          )}
+        />
+      )}
     </Layout>
   )
-};
-
-export default Search;
+}
