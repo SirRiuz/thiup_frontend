@@ -28,6 +28,7 @@ function ThreadResponses(props) {
                 useFloatingMenu={true}
                 iconSize={23}
                 showNewThread={true}
+                showOp={true}
                 onComment={() => setFocus((e) => !e)}
                 flag={
                   <Flag
@@ -80,6 +81,7 @@ function ThreadResponseContent(props) {
         reactionable={true}
         response={props.data}
         showNewThread={true}
+        showOp={true}
         useFloatingMenu={true}
         flag={
           <Flag

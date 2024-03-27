@@ -1,5 +1,3 @@
-import ReactPlayer from "react-player";
-
 export default function MediaItem(props) {
   return (
     <div
@@ -7,7 +5,7 @@ export default function MediaItem(props) {
       style={{
 
         //background: "#" + ((1 << 24) * Math.random() | 0).toString(16).padStart(6, "0"),
-        backgroundImage:"url(https://pbs.twimg.com/media/GJVK0XKXsAAEueJ?format=jpg&name=large)",
+        backgroundImage:"url(https://pbs.twimg.com/media/GJiFBhiaQAItqm4?format=jpg&name=large)",
         backgroundPosition:'center',
         backgroundRepeat:'no-repeat',
         backgroundSize:'contain',

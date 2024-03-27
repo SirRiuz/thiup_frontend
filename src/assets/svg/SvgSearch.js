@@ -2,14 +2,19 @@ import * as React from "react"
 
 
 const SvgSearch = (props) => (
-  <svg width={20} height={20} fill="none" viewBox="0 0 16 16" {...props}>
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={16}
+    height={16}
+    fill="none"
+    {...props}
+  >
+    <circle cx={7.125} cy={7.125} r={6.125} stroke="rgba(201, 201, 201, .95)" strokeWidth={2} />
     <path
-      stroke="#000"
+      stroke="rgba(201, 201, 201, .95)"
       strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={1.5}
-      d="M6.5 10a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zm6 2.5L9 9"
-      vectorEffect="non-scaling-stroke"
+      strokeWidth={2}
+      d="m15 15-2.625-2.625"
     />
   </svg>
 )

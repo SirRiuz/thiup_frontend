@@ -5,6 +5,7 @@ import TextPreview from "./TextPreview"
 import ThreadFloatingMenu from "./ThreadFloatingMenu"
 import styles from "../styles/components/ThreadCard.module.css"
 import MediaLayout from "./MediaLayout"
+import { Tooltip } from "@mui/material"
 
 
 export default function ThreadCard(props) {
@@ -56,6 +57,15 @@ export default function ThreadCard(props) {
               NEW
             </span>
           )}
+
+          {props.showOp && (
+            <Tooltip arrow title="Thread creator">
+              <span className={styles.newThreadIndicator} style={{ background: '#272C30' }}>
+                OP
+              </span>
+            </Tooltip>
+          )}
+
         </div>
       </div>
       <div

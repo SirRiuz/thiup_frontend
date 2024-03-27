@@ -19,13 +19,14 @@ export default function CommentBox(props) {
   const [content, setContent] = useState("")
 
   const onComment = e => {
-    if(props.onComplete) {
+    if (props.onComplete) {
       props.onComplete(e)
     }
   }
 
   const onCreateThread = _ => {
     setReset(() => true)
+    setMedia(() => [])
     onComment(
       {
         "content": content,
@@ -76,13 +77,7 @@ export default function CommentBox(props) {
             />
           </div>
         </div>
-        <div
-          className={styles.commentOptions}
-          style={{
-            marginTop: focus || text.length > 0 ?
-              14 : 0
-          }}
-        >
+        <div className={styles.commentOptions}>
           <span
             className={styles.limitSizeText}
             style={{
@@ -93,11 +88,7 @@ export default function CommentBox(props) {
           >
             {MAX_CHARACTER - text.length}
           </span>
-
-          {/* <FilePicker
-            onChange={(data) => setMedia(() => data)}
-          /> */}
-
+          <FilePicker onChange={(data) => setMedia(() => data)}/>
           <Button
             isLoad={isLoad}
             placeholder={props.btnPlaceholder}

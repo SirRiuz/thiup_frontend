@@ -32,9 +32,11 @@ export default function MediaLayout(props) {
               ...calculateMediaItemStyles(i, l),
               backgroundSize: "cover"
             }}
-            onClick={() => { 
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
               setData(() => z)
-             }}
+            }}
           />
         ))}
       </div>
@@ -43,10 +45,11 @@ export default function MediaLayout(props) {
     meidaList = (
       <MediaItem
         data={props.data[0]}
-        onClick={(e) => { 
+        onClick={(e) => {
           e.preventDefault()
           e.stopPropagation()
-          setData(() => props.data[0]) }}
+          setData(() => props.data[0])
+        }}
         styles={{ height: 516, backgroundSize: "cover" }}
       />
     )
@@ -63,7 +66,8 @@ export default function MediaLayout(props) {
         onClose={(e) => {
           e.preventDefault()
           e.stopPropagation()
-          setData(() => null)}}
+          setData(() => null)
+        }}
       />
     </div>
   )
