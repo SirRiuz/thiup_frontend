@@ -26,6 +26,7 @@
   justify-items: center;
   align-content: center;
   align-items: center;
-  gap: 13px;
+  gap: 15px;
   justify-content: flex-end;
+  margin-top: 16px;
 }

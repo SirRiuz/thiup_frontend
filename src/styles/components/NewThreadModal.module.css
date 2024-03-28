@@ -1,0 +1,58 @@
+.modal {
+  display: flex;
+  justify-content: center;
+  align-content: center;
+  align-items: center;
+  backdrop-filter: blur(10px);
+}
+
+
+.container {
+  flex: 1;
+  background: white;
+  border-radius: 11px;
+  outline: none;
+  display: flex;
+  justify-content: center;
+  align-content: center;
+  align-items: center;
+  padding-top: 25px;
+  padding-bottom: 25px;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+.commentBoxContainer {
+  flex: 1;
+  border-radius: 10px;
+  color: #2e2f33;
+  background: white;
+}
+
+
+
+
+.header {
+    display: flex;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+  }
+
+  .closeButton {
+    display: flex;
+    justify-content: center;
+    align-content: center;
+    align-items: center;
+    width: 40px;
+    height: 40px;
+    margin-left: 15px;
+    margin-top: 15px;
+    border-radius: 100%;
+    cursor: pointer;
+  }
+
+  .closeButton:hover {
+    background: rgba(255, 255, 255, 0.095);
+  }
