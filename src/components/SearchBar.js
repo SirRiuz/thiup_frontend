@@ -1,60 +1,55 @@
-import { useRef, useState } from "react"
-import { useNavigate, useParams } from "react-router-dom"
-import styles from "../styles/components/SearchBar.module.css"
-import SvgSearch from "../assets/svg/SvgSearch"
-import SvgCloseText from "../assets/svg/SvgCloseText"
+import { useRef, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import styles from "../styles/components/SearchBar.module.css";
+import SvgSearch from "../assets/svg/SvgSearch";
+import SvgCloseText from "../assets/svg/SvgCloseText";
 
-
-const ENTER_KEY = "enter"
-
+const ENTER_KEY = "enter";
 
 export default function SearchBar(props) {
-  const navigate = useNavigate()
-  const { query } = useParams()
-  const [text, setText] = useState(query?.length > 0 ? query : "")
-  const [focus, setFocus] = useState(false)
-  const search = useRef(null)
+  const navigate = useNavigate();
+  const { query } = useParams();
+  const [text, setText] = useState(query?.length > 0 ? query : "");
+  const search = useRef(null);
 
   return (
     <div
       onClick={() => {
-        setFocus(() => true)
-        search.current.focus()
+        search.current.focus();
       }}
       style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignContent: 'center',
-        alignItems: 'center',
-        background: "#FCFCFD",
+        display: "flex",
+        justifyContent: "space-between",
+        alignContent: "center",
+        alignItems: "center",
+        background: "white",
         height: 55,
-        borderRadius: 12,
+        borderRadius: "max(0px, min(8px, -999900% + 1.05589e+07px)) / 8px",
         paddingLeft: 16,
         paddingRight: 16,
         gap: 10,
-        border: "solid 1px rgba(235, 235, 235, 1.00)",
-        boxShadow: focus ? "0px 12px 24px rgba(235, 235, 235, .65)": "0px 0px 0px red",
+        boxShadow: "rgba(0, 0, 0, .1) 0px 1px 2px 0px",
         ...props.styles,
       }}
     >
       <div
         style={{
-          display:'flex',
-          justifyContent:'center',
-          alignContent:'center',
-          alignItems:'center'
+          display: "flex",
+          justifyContent: "center",
+          alignContent: "center",
+          alignItems: "center",
         }}
       >
-        <SvgSearch/>
+        <SvgSearch />
       </div>
       <div
         style={{
-          display: 'flex',
+          display: "flex",
           flex: 1,
-          justifyContent:'center',
-          alignContent:'center',
-          alignItems:'center',
-          background:'red'
+          justifyContent: "center",
+          alignContent: "center",
+          alignItems: "center",
+          background: "red",
         }}
       >
         <input
@@ -63,21 +58,26 @@ export default function SearchBar(props) {
           placeholder="Search"
           value={text}
           type="text"
-          onBlur={() => setFocus(() => false)}
-          onChange={(e) => setText(e.target.value.replace("#", "").toLowerCase())}
+          onChange={(e) =>
+            setText(e.target.value.replace("#", "").toLowerCase())
+          }
           onKeyDown={(e) => {
-            if ((e.key.toLowerCase() === ENTER_KEY) && text.length >= 1) {
-              navigate(`/search/${text}/`)
+            if (e.key.toLowerCase() === ENTER_KEY && text.length >= 1) {
+              navigate(`/search/${text}/`);
             }
           }}
         />
       </div>
-      {(text.length > 0) && (
-        <div className={styles.clearSearch} onClick={(e) => {
-          setText(() => "")}}>
-          <SvgCloseText/>
+      {text.length > 0 && (
+        <div
+          className={styles.clearSearch}
+          onClick={() => {
+            setText(() => "");
+          }}
+        >
+          <SvgCloseText />
         </div>
       )}
     </div>
-  )
+  );
 }

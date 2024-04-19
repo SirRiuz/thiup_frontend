@@ -1,4 +1,4 @@
-import * as React from "react"
+import * as React from "react";
 const SvgReply = (props) => (
   <svg width={20} height={20} fill="none" viewBox="0 0 24 24" {...props}>
     <path
@@ -8,5 +8,5 @@ const SvgReply = (props) => (
       vectorEffect="non-scaling-stroke"
     />
   </svg>
-)
-export default SvgReply
+);
+export default SvgReply;

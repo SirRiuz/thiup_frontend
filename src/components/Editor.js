@@ -84,8 +84,8 @@ const DraftEditor = (props) => {
     >
       <div
         style={{
-          overflowY: 'auto',
-          maxHeight: 700
+          overflowY: "auto",
+          maxHeight: 700,
         }}
       >
         <FloatingToolbar
@@ -96,10 +96,10 @@ const DraftEditor = (props) => {
         />
         <Editor
           handlePastedFiles={() => {
-            alert("COPIADO")
+            alert("COPIADO");
           }}
           handleDroppedFiles={() => {
-            alert("File drop")
+            alert("File drop");
           }}
           ref={editor}
           placeholder={

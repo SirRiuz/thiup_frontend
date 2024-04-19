@@ -1,23 +1,21 @@
-import React from 'react'
-import { Link } from 'react-router-dom'
+import React from "react";
+import { Link } from "react-router-dom";
 import {
   Editor,
   EditorState,
   CompositeDecorator,
-  convertFromRaw
-} from 'draft-js'
-
+  convertFromRaw,
+} from "draft-js";
 
 const TextPreview = (props) => {
-
   const findHashtags = (contentBlock, callback) => {
-    const text = contentBlock.getText()
+    const text = contentBlock.getText();
     const hashtagRegex = /#([\w\u00C0-\u017F]+)/g;
-    let match
+    let match;
     while ((match = hashtagRegex.exec(text)) !== null) {
-      callback(match.index, match.index + match[0].length)
+      callback(match.index, match.index + match[0].length);
     }
-  }
+  };
 
   const findUrls = (contentBlock, callback) => {
     const text = contentBlock.getText();
@@ -31,13 +29,13 @@ const TextPreview = (props) => {
   const searchQuery = (contentBlock, callback) => {
     let match;
     const text = contentBlock.getText();
-    const dynamicTextRegex = new RegExp(`${props.search}`, 'gi');
+    const dynamicTextRegex = new RegExp(`${props.search}`, "gi");
     while ((match = dynamicTextRegex.exec(text)) !== null) {
       callback(match.index, match.index + match[0].length);
     }
-  }
+  };
 
-  const contentState = convertFromRaw(props.data)
+  const contentState = convertFromRaw(props.data);
   const decorator = new CompositeDecorator([
     {
       strategy: findUrls,
@@ -45,11 +43,14 @@ const TextPreview = (props) => {
         <a
           target="_blank"
           href={props.decoratedText}
+          onClick={(e) => {
+            e.stopPropagation();
+          }}
           style={{
-            color: 'rgb(107, 74, 252)',
-            textDecoration: 'none'
-          }}>
-
+            color: "rgb(107, 74, 252)",
+            textDecoration: "none",
+          }}
+        >
           {new URL(props.decoratedText).host + "/..."}
         </a>
       ),
@@ -58,14 +59,16 @@ const TextPreview = (props) => {
       strategy: findHashtags,
       component: (props) => (
         <Link
-          to={`/explore/tags/${props.decoratedText.substring(1).toLocaleLowerCase()}/`}
+          to={`/explore/tags/${props.decoratedText
+            .substring(1)
+            .toLocaleLowerCase()}/`}
           style={{
-            textDecoration: 'none',
-            color: 'rgb(107, 74, 252)',
-            cursor: 'pointer',
+            textDecoration: "none",
+            color: "rgb(107, 74, 252)",
+            cursor: "pointer",
             fontSize: props.fontSize,
-            fontStyle: 'normal',
-            fontWeight: 500
+            fontStyle: "normal",
+            fontWeight: 500,
           }}
         >
           {props.children}
@@ -77,27 +80,20 @@ const TextPreview = (props) => {
       component: (props) => (
         <span
           style={{
-            color: '#0f1419',
+            color: "#0f1419",
             fontSize: 14,
-            fontWeight: 700
-          }}>
-
+            fontWeight: 700,
+          }}
+        >
           {props.children}
         </span>
       ),
     },
-  ])
+  ]);
 
-  const state = EditorState.createWithContent(
-    contentState, decorator)
+  const state = EditorState.createWithContent(contentState, decorator);
 
-  return (
-    <Editor
-      editorState={state}
-      readOnly={true}
-    />
-  )
-}
+  return <Editor editorState={state} readOnly={true} />;
+};
 
-export default TextPreview
-
+export default TextPreview;

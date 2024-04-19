@@ -1,15 +1,13 @@
-import { Tooltip } from "@mui/material"
-import { RotatingLines } from "react-loader-spinner"
+import { Tooltip } from "@mui/material";
+import { RotatingLines } from "react-loader-spinner";
 
 const Button = (props) => {
   const onClick = (_) => {
-    if (props.isFocus && props.onClick && !props.isLoad)
-      props.onClick()
-  }
+    if (props.isFocus && props.onClick && !props.isLoad) props.onClick();
+  };
 
   return (
-    <Tooltip title={props.isFocus && !props.isLoad ?
-      "Comment" : null}>
+    <Tooltip title={props.isFocus && !props.isLoad ? "Comment" : null}>
       <div
         onClick={onClick}
         style={{
@@ -23,7 +21,6 @@ const Button = (props) => {
                       2px 8px, rgba(107, 74, 252, 0.12) 0px 2px 4px`,
           color: "rgb(239, 239, 241)",
           height: 32,
-          fontFamily: "Open Sans",
           paddingLeft: 10,
           paddingRight: 10,
           cursor: props.isFocus && !props.isLoad ? "pointer" : "auto",
@@ -48,7 +45,7 @@ const Button = (props) => {
         </span>
       </div>
     </Tooltip>
-  )
-}
+  );
+};
 
-export default Button
+export default Button;

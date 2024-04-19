@@ -1,7 +1,6 @@
 .title {
-  font-weight: 600;
+  font-weight: 700;
   font-size: 15px;
-  font-family: "Open Sans";
 }
 
 .noDataResultContainer {
@@ -13,9 +12,8 @@
   height: 50vh;
 }
 
-.suptitle {
-  color: #999999;
+.subtitle {
+  color: rgb(153, 153, 153);
   font-size: 12px;
-  opacity: .9;
-  font-family: "Open Sans";
+  opacity: 0.9;
 }

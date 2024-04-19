@@ -1,29 +1,28 @@
-import { useState } from "react"
-import CommentBox from "./Comment"
-import Separator from "./Separator"
-import ThreadCard from "./ThreadCard"
-import Flag from "react-world-flags"
-
+import { useState } from "react";
+import CommentBox from "./Comment";
+import Separator from "./Separator";
+import ThreadCard from "./ThreadCard";
+import Flag from "react-world-flags";
 
 function ThreadResponses(props) {
-  const [focus, setFocus] = useState(false)
+  const [focus, setFocus] = useState(false);
   return (
     props.responses.length > 0 && (
       <div
         style={{
-          borderRadius: 11,
-          border: "solid 1px rgba(235, 235, 235, 1.00)",
           margin: "10px 16px 20px",
           display: "flex",
+          background: "white",
           flexDirection: "column",
+          border: "solid 1px rgba(235, 235, 235, 1)",
+          borderRadius: "max(0px, min(8px, -999900% + 1.05589e+07px)) / 8px",
         }}
       >
         {props.responses
-          .filter(x => x)
+          .filter((x) => x)
           .map((x, k) => (
             <div key={k}>
               <ThreadCard
-                reactionable={true}
                 response={x}
                 useFloatingMenu={true}
                 iconSize={23}
@@ -32,10 +31,10 @@ function ThreadResponses(props) {
                 onComment={() => setFocus((e) => !e)}
                 flag={
                   <Flag
-                    code={"col"}
+                    code={"ve"}
                     height="8.5"
                     frameBorder={10}
-                    style={{ borderRadius: 3.1192 }}
+                    style={{ borderRadius: 3.1192, border: "solid 1px white" }}
                   />
                 }
                 style={{
@@ -51,8 +50,10 @@ function ThreadResponses(props) {
           style={{
             width: "100%",
             background: "rgb(252, 252, 253)",
-            borderRadius: "0px 0px 11px 11px",
             borderTop: "solid 1px rgba(235, 235, 235, 1.00)",
+            borderRadius: "max(0px, min(8px, -999900% + 1.05589e+07px)) / 8px",
+            borderTopLeftRadius: 0,
+            borderTopRightRadius: 0,
           }}
         >
           <CommentBox
@@ -60,25 +61,23 @@ function ThreadResponses(props) {
             focus={focus || props.focusBox}
             onComplete={(e) => props.onResponse(e)}
             onBlur={() => {
-              setFocus((_) => false)
-              if (props.onBlur !== undefined) props.onBlur()
+              setFocus((_) => false);
+              if (props.onBlur !== undefined) props.onBlur();
             }}
           />
         </div>
       </div>
     )
-  )
+  );
 }
 
-
 function ThreadResponseContent(props) {
-  const [show, setShow] = useState(false)
-  const [focus, setFocus] = useState(false)
-  const [responses, setResponses] = useState(props.data.responses)
+  const [show, setShow] = useState(false);
+  const [focus, setFocus] = useState(false);
+  const [responses, setResponses] = useState(props.data.responses);
   return (
     <>
       <ThreadCard
-        reactionable={true}
         response={props.data}
         showNewThread={true}
         showOp={true}
@@ -88,14 +87,14 @@ function ThreadResponseContent(props) {
             code={"col"}
             height="9"
             frameBorder={10}
-            style={{ borderRadius: 3.1192 }}
+            style={{ borderRadius: 3.1192, border: "solid 1px white" }}
           />
         }
         onComment={() => {
           if (responses.length <= 0) {
-            setShow((e) => !e)
+            setShow((e) => !e);
           } else {
-            setFocus(() => true)
+            setFocus(() => true);
           }
         }}
         style={{
@@ -124,7 +123,8 @@ function ThreadResponseContent(props) {
             style={{
               background: "rgb(252, 252, 253)",
               border: "solid 1px rgba(235, 235, 235, 1.00)",
-              borderRadius: 11
+              borderRadius:
+                "max(0px, min(8px, -999900% + 1.05589e+07px)) / 8px",
             }}
           >
             <CommentBox
@@ -138,15 +138,14 @@ function ThreadResponseContent(props) {
       )}
       <Separator />
     </>
-  )
+  );
 }
-
 
 export default function TimeLine(props) {
   return (
     <div style={{ display: "flex", flexDirection: "column" }}>
       {props.responses
-        .filter(x => x)
+        .filter((x) => x)
         .map((x, k) => (
           <ThreadResponseContent
             data={x}
@@ -157,5 +156,5 @@ export default function TimeLine(props) {
           />
         ))}
     </div>
-  )
+  );
 }
