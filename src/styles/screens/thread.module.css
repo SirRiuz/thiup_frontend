@@ -8,26 +8,25 @@
   line-height: 20px;
   margin-top: 25px;
   margin-bottom: 25px;
-  font-family: "Open Sans";
-}
-
-.container{
+  font-family: system-ui, -apple-system, "system-ui", Roboto, Helvetica, Arial,
+    sans-serif;
 }
 
 .threadContainer {
-  border-radius: 11px;
-  border: solid 1px rgba(235, 235, 235, 1.00);
+  border-radius: max(0px, min(8px, -999900% + 1.05589e7px)) / 8px;
+  box-shadow: rgba(0, 0, 0, 0.1) 0px 1px 2px 0px;
+  background: white;
 }
 
 .commentBoxContainer {
-  background: rgb(252, 252, 253);
+  background: white;
   padding-top: 13px;
   padding-bottom: 13px;
-  border-radius: 11px;
 }
 
 .title {
-  font-weight: 600;
-  font-size: 15.5px;
-  font-family: "Open Sans";
+  font-weight: 700;
+  font-size: 15px;
+  font-family: system-ui, -apple-system, "system-ui", Roboto, Helvetica, Arial,
+    sans-serif;
 }

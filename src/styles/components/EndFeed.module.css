@@ -9,7 +9,6 @@
 .text {
   font-size: 13.5px;
   color: #999999;
-  opacity: .9;
+  opacity: 0.9;
   font-style: normal;
-  font-family: "Open Sans";
 }

@@ -1,86 +1,77 @@
-import { useRef, useState } from "react"
-import SvgFiles from "../assets/svg/SvgFiles"
+import { useRef, useState } from "react";
+import { Tooltip } from "@mui/material";
+import SvgFiles from "../assets/svg/SvgFiles";
+import {
+  getResolutionOfImageOrVideo,
+  getPixelColorOfImage,
+} from "../utils/files";
 
-const FILE_MAX_SIZE = 20 * 1024 * 1024
+const FILE_MAX_SIZE = 20 * 1024 * 1024;
 
 export default function FilePicker(props) {
-  const [files, setFile] = useState([])
-  const hiddenFileInput = useRef(null)
-  const onDelete = (k) => setFile(
-    () => files.filter((el) => el !== files[k]))
+  const hiddenFileInput = useRef(null);
+  const handleClick = (event) => hiddenFileInput.current.click();
 
-  const onSetFile = (e) => {
+  const onSetFile = async (e) => {
     if (e.target.files.length >= 1) {
-      const file = e.target.files[0]
+      const file = e.target.files[0];
+      const is_video = file.type.startsWith("video");
+      const resolution = await getResolutionOfImageOrVideo(file);
+      var pixelColor = is_video ? "#161c1e" : await getPixelColorOfImage(file);
       encodeFile(file, (data) => {
-        const object = {
+        props.onSelectedFile({
+          data: data,
           type: file.type,
           name: file.name,
-          data: data,
-        }
-        setFile((x) => x.concat(object))
-        if (props.onChange) props.onChange(files.concat(object))
-      })
+          size: file.size,
+          resolution: resolution,
+          target_color: pixelColor,
+          is_video: is_video,
+        });
+      });
     }
-  }
+  };
 
   const encodeFile = (file, callback) => {
-    const reader = new FileReader()
+    const reader = new FileReader();
     reader.onload = function (event) {
-      const fileContent = event.target.result
-      const base64Content = btoa(fileContent)
+      const fileContent = event.target.result;
+      const base64Content = btoa(fileContent);
       if (file.size > FILE_MAX_SIZE) {
-        alert("EL archivo es demaciado grande!! sobrepasa el limite de 20 MB")
-        return
+        alert("The file is too large!! It exceeds the 20 MB limit.");
+        return;
       }
-      callback(base64Content)
-    }
-    reader.readAsBinaryString(file)
-  }
-
-  const handleClick = event => {
-    hiddenFileInput.current.click();    // ADDED
+      callback(base64Content);
+    };
+    reader.readAsBinaryString(file);
   };
 
   return (
-    <div>
+    <Tooltip title={!props.disabled ? "Attach file" : null}>
       <div>
-        <div
-          onClick={handleClick}
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignContent: 'center',
-            alignItems: 'center',
-            cursor:files.length >= 3 ? 'default':'pointer'
-          }}
-        >
-          <SvgFiles />
+        <div>
+          <div
+            onClick={handleClick}
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              alignContent: "center",
+              alignItems: "center",
+              cursor: props.disabled ? "default" : "pointer",
+            }}
+          >
+            <SvgFiles />
+          </div>
+          <input
+            ref={hiddenFileInput}
+            disabled={props.disabled}
+            onChange={onSetFile}
+            type="file"
+            accept="jpg, .jpeg, .png, .mp4"
+            style={{ display: "none" }}
+          />
         </div>
-        <input
-          ref={hiddenFileInput}
-          disabled={files.length >= 3}
-          onChange={onSetFile}
-          type="file"
-          accept="jpg, .jpeg, .png, .mp4"
-          style={{
-            display: "none"
-          }}
-        />
       </div>
-      <div
-        style={{
-          display: "flex",
-          gap: 10,
-          background: 'red'
-        }}
-      >
-        {files.map((x, k) => (
-          <span onClick={() => onDelete(k)} key={k}>
-            {x.name}
-          </span>
-        ))}
-      </div>
-    </div>
-  )
+    </Tooltip>
+  );
 }

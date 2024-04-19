@@ -1,56 +1,69 @@
-import axios from 'axios';
-import { decryptor } from './cripto';
+import { decrypt, getClientSing } from "./cripto";
+import axios from "axios";
 
+const CRYPTO_CONTENT_TYPE = "application/raw";
 
-const CRIPTO_CONTENT_TYPE = "application/raw"
-
-
-const threadSearchService = async (props) => {
-  const TYPE = props?.type === 'tag' ? 'tag' : 'q'
-  var url = `${process.env.REACT_APP_API_URL}/threads/?${TYPE}=${props?.query}`
-  var response = await axios.get(url)
-  if (response.headers["content-type"].indexOf(CRIPTO_CONTENT_TYPE) !== -1) {
-    response.data = decryptor({
+async function threadSearchService(props) {
+  const TYPE = props?.type === "tag" ? "tag" : "q";
+  var url = `${process.env.REACT_APP_API_URL}/threads/?${TYPE}=${props?.query}`;
+  var response = await axios.get(url, {
+    headers: {
+      "client-assertion": getClientSing(),
+    },
+  });
+  if (response.headers["content-type"].indexOf(CRYPTO_CONTENT_TYPE) !== -1) {
+    response.data = decrypt({
       payload: response.headers["x-response-payload"],
-      data: response.data
-    })
+      data: response.data,
+    });
   }
-  return response
+  return response;
 }
 
-const commentService = async (props) => {
-  var url = props.id = `${process.env.REACT_APP_API_URL}/threads/`
-  const data = ({
-    "sub": props.thread,
-    "media": props.media,
-    "text": props.text,
-    "content": props.content
-  })
-
-  var response = await axios.post(url, data, { 'Content-Type': 'application/json' })
-  if (response.headers["content-type"].indexOf(CRIPTO_CONTENT_TYPE) !== -1) {
-    response.data = decryptor({
+async function commentService(props) {
+  var url = (props.id = `${process.env.REACT_APP_API_URL}/threads/`);
+  var response = await axios.post(
+    url,
+    {
+      sub: props.thread,
+      media: props.media,
+      text: props.text,
+      content: props.content,
+    },
+    {
+      "Content-Type": "application/json",
+      headers: {
+        "client-assertion": getClientSing(),
+      },
+    }
+  );
+  if (response.headers["content-type"].indexOf(CRYPTO_CONTENT_TYPE) !== -1) {
+    response.data = decrypt({
       payload: response.headers["x-response-payload"],
-      data: response.data
-    })
+      data: response.data,
+    });
   }
-  return response
+  return response;
 }
 
-const threadService = async (props) => {
-  var url = props.id !== undefined ?
-    `${process.env.REACT_APP_API_URL}/threads/${props.id}/responses/` :
-    `${process.env.REACT_APP_API_URL}/threads/`
+async function threadService(props) {
+  var url =
+    props.id !== undefined
+      ? `${process.env.REACT_APP_API_URL}/threads/${props.id}/responses/`
+      : `${process.env.REACT_APP_API_URL}/threads/`;
 
-  var response = await axios.get(url)
-  if (response.headers["content-type"].indexOf(CRIPTO_CONTENT_TYPE) !== -1) {
-    response.data = decryptor({
+  var response = await axios.get(url, {
+    headers: {
+      "client-assertion": getClientSing(),
+    },
+  });
+  if (response.headers["content-type"].indexOf(CRYPTO_CONTENT_TYPE) !== -1) {
+    response.data = decrypt({
       payload: response.headers["x-response-payload"],
-      data: response.data
-    })
+      data: response.data,
+    });
   }
-  return response
+  return response;
 }
 
-
-export { threadService, commentService, threadSearchService }
+export { threadService, commentService, threadSearchService };

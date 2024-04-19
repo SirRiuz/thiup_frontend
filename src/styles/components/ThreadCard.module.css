@@ -16,18 +16,18 @@
 }
 
 .threadMask {
-  font-weight: 600;
+  font-weight: 700;
   font-size: 13px;
-  font-style: normal;
-  font-family: "Open Sans";
+  font-family: system-ui, -apple-system, "system-ui", Roboto, Helvetica, Arial,
+    sans-serif;
 }
 
 .threadDateInfo {
   font-size: 12px;
-  color: #999999;
-  opacity: .8;
-  font-style: normal;
-  font-family: "Open Sans";
+  color: rgb(153, 153, 153);
+  opacity: 1;
+  font-family: system-ui, -apple-system, "system-ui", Roboto, Helvetica, Arial,
+    sans-serif;
 }
 
 .newThreadIndicator {
@@ -35,22 +35,35 @@
   font-size: 9px;
   text-transform: uppercase;
   font-weight: 700;
-  padding: 2px 4px;
+  padding: 2px 6px;
   color: white;
   background-color: rgb(107, 74, 252);
   border-radius: 2.33456px;
   border-radius: 3px;
-  font-family: "Open Sans";
+  font-family: system-ui, -apple-system, "system-ui", Roboto, Helvetica, Arial,
+    sans-serif;
+}
+
+.opIndicator {
+  margin-left: 5px;
+  font-size: 9px;
+  text-transform: uppercase;
+  font-weight: 700;
+  padding: 2px 6px;
+  color: rgb(86, 59, 202);
+  background-color: rgb(240, 237, 255);
+  border-radius: 2.33456px;
+  border-radius: 3px;
+  font-family: system-ui, -apple-system, "system-ui", Roboto, Helvetica, Arial,
+    sans-serif;
 }
 
 .repliesCount {
   font-size: 12px;
   color: #999999;
   font-style: normal;
-  font-family: "Open Sans";
-  opacity: .8;
+  opacity: 1;
 }
-
 
 .repliesContainerCount {
   display: flex;
@@ -61,6 +74,6 @@
 
 .footer {
   display: flex;
-  color: rgba(0, 0, 0, .8);
+  color: rgba(0, 0, 0, 0.8);
   gap: 10px;
 }

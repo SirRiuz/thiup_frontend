@@ -1,5 +1,5 @@
-import { RichUtils } from "draft-js"
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
+import { RichUtils } from "draft-js";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faBold,
   faChevronDown,
@@ -14,11 +14,9 @@ import {
   faSuperscript,
   faTextWidth,
   faUnderline,
-} from "@fortawesome/free-solid-svg-icons"
-import React from "react"
-import styles from "../styles/components/FloatingToolbar.module.css"
-
-
+} from "@fortawesome/free-solid-svg-icons";
+import React from "react";
+import styles from "../styles/components/FloatingToolbar.module.css";
 
 const tools = [
   {
@@ -99,63 +97,65 @@ const tools = [
     method: "block",
     icon: <FontAwesomeIcon icon={faListOl} transform="grow-6" />,
   },
-]
+];
 
 const FloatingToolbar = (props) => {
   const applyStyle = (e, style, method) => {
-    e.preventDefault()
+    e.preventDefault();
     method === "block"
       ? props.setEditorState(
-        RichUtils.toggleBlockType(props.editorState, style)
-      )
+          RichUtils.toggleBlockType(props.editorState, style)
+        )
       : props.setEditorState(
-        RichUtils.toggleInlineStyle(props.editorState, style)
-      )
-  }
+          RichUtils.toggleInlineStyle(props.editorState, style)
+        );
+  };
 
   const isActive = (style, method) => {
     if (method === "block") {
-      const selection = props.editorState.getSelection()
+      const selection = props.editorState.getSelection();
       const blockType = props.editorState
         .getCurrentContent()
         .getBlockForKey(selection.getStartKey())
-        .getType()
-      return blockType === style
+        .getType();
+      return blockType === style;
     } else {
-      const currentStyle = props.editorState.getCurrentInlineStyle()
-      return currentStyle.has(style)
+      const currentStyle = props.editorState.getCurrentInlineStyle();
+      return currentStyle.has(style);
     }
-  }
+  };
 
-  return props.show && (
-    <div
-      className={styles.container}
-      style={{
-        top: props.data?.top - 45,
-        left: props.data?.left,
-      }}
-    >
-      {tools.map((item, idx) => (
-        <button
-          className="toolbar-item"
-          key={`${item.label}-${idx}`}
-          title={item.label}
-          onClick={(e) => applyStyle(e, item.style, item.method)}
-          onMouseDown={(e) => e.preventDefault()}
-          style={{
-            border: "none",
-            width: 24,
-            height: 24,
-            color: isActive(item.style, item.method)
-              ? "rgba(0, 0, 0, 1)"
-              : "rgba(0, 0, 0, 0.3)",
-          }}
-        >
-          {item.icon || item.label}
-        </button>
-      ))}
-    </div>
-  )
-}
+  return (
+    props.show && (
+      <div
+        className={styles.container}
+        style={{
+          top: props.data?.top - 45,
+          left: props.data?.left,
+        }}
+      >
+        {tools.map((item, idx) => (
+          <button
+            className="toolbar-item"
+            key={`${item.label}-${idx}`}
+            title={item.label}
+            onClick={(e) => applyStyle(e, item.style, item.method)}
+            onMouseDown={(e) => e.preventDefault()}
+            style={{
+              border: "none",
+              width: 24,
+              height: 24,
+              color: isActive(item.style, item.method)
+                ? "rgba(0, 0, 0, 1)"
+                : "rgba(0, 0, 0, 0.3)",
+            }}
+          >
+            {item.icon || item.label}
+          </button>
+        ))}
+      </div>
+    )
+  );
+};
 
-export default FloatingToolbar
+export default FloatingToolbar;

@@ -1,4 +1,4 @@
-import * as React from "react"
+import * as React from "react";
 
 const SvgClose = (props) => (
   <svg
@@ -16,5 +16,5 @@ const SvgClose = (props) => (
       d="M13 1 1 13M1 1l12 12"
     />
   </svg>
-)
-export default SvgClose
+);
+export default SvgClose;
