@@ -1,0 +1,14 @@
+.container {
+  display: flex;
+  justify-content: center;
+  align-content: center;
+  align-items: center;
+  margin-top: 50px;
+}
+
+.text {
+  font-size: 13.5px;
+  color: #999999;
+  opacity: 0.9;
+  font-style: normal;
+}

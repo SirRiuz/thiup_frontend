@@ -1,66 +1,99 @@
-import React from 'react'
-import { Editor, EditorState, CompositeDecorator, convertFromRaw } from 'draft-js'
-
+import React from "react";
+import { Link } from "react-router-dom";
+import {
+  Editor,
+  EditorState,
+  CompositeDecorator,
+  convertFromRaw,
+} from "draft-js";
 
 const TextPreview = (props) => {
   const findHashtags = (contentBlock, callback) => {
-    const text = contentBlock.getText()
-    const hashtagRegex = /#(\w+)/g
-    let match
+    const text = contentBlock.getText();
+    const hashtagRegex = /#([\w\u00C0-\u017F]+)/g;
+    let match;
     while ((match = hashtagRegex.exec(text)) !== null) {
-      callback(match.index, match.index + match[0].length)
+      callback(match.index, match.index + match[0].length);
     }
-  }
+  };
 
-  const handleKeyCommand = (command) => {
-    if (command === 'enter') {
-      const selection = state.getSelection()
-      const content = state.getCurrentContent()
-      const currentBlock = content.getBlockForKey(selection.getStartKey())
-      const hashtagText = currentBlock.getText().slice(
-        selection.getStartOffset(),
-        selection.getEndOffset()
-      )
-
-      if (hashtagText.startsWith('#')) {
-        window.location.href = `/search/tag/${hashtagText.substring(1)}/`
-        return 'handled'
-      }
+  const findUrls = (contentBlock, callback) => {
+    const text = contentBlock.getText();
+    const urlRegex = /(?:https?|ftp):\/\/[^\s/$.?#].[^\s]*$/gi;
+    let match;
+    while ((match = urlRegex.exec(text)) !== null) {
+      callback(match.index, match.index + match[0].length, match);
     }
+  };
 
-    return 'not-handled'
-  }
+  const searchQuery = (contentBlock, callback) => {
+    let match;
+    const text = contentBlock.getText();
+    const dynamicTextRegex = new RegExp(`${props.search}`, "gi");
+    while ((match = dynamicTextRegex.exec(text)) !== null) {
+      callback(match.index, match.index + match[0].length);
+    }
+  };
 
-  const handleHashtagClick = (props) => {
-    const hashtagText = props.decoratedText.substring(1)
-    window.location.href = `/search/tag/${hashtagText}/`
-  }
-  const contentState = convertFromRaw(JSON.parse(props.data))
+  const contentState = convertFromRaw(props.data);
   const decorator = new CompositeDecorator([
+    {
+      strategy: findUrls,
+      component: (props) => (
+        <a
+          target="_blank"
+          href={props.decoratedText}
+          onClick={(e) => {
+            e.stopPropagation();
+          }}
+          style={{
+            color: "rgb(107, 74, 252)",
+            textDecoration: "none",
+          }}
+        >
+          {new URL(props.decoratedText).host + "/..."}
+        </a>
+      ),
+    },
     {
       strategy: findHashtags,
       component: (props) => (
+        <Link
+          to={`/explore/tags/${props.decoratedText
+            .substring(1)
+            .toLocaleLowerCase()}/`}
+          style={{
+            textDecoration: "none",
+            color: "rgb(107, 74, 252)",
+            cursor: "pointer",
+            fontSize: props.fontSize,
+            fontStyle: "normal",
+            fontWeight: 500,
+          }}
+        >
+          {props.children}
+        </Link>
+      ),
+    },
+    {
+      strategy: searchQuery,
+      component: (props) => (
         <span
           style={{
-            color: 'rgb(107, 74, 252)',
-            cursor: 'pointer',
-            fontWeight: 550
+            color: "#0f1419",
+            fontSize: 14,
+            fontWeight: 700,
           }}
-          onClick={() => handleHashtagClick(props)}
         >
           {props.children}
         </span>
       ),
     },
-  ])
-  const state = EditorState.createWithContent(contentState, decorator)
-  return (
-    <Editor
-      editorState={state}
-      readOnly={true}
-      handleKeyCommand={handleKeyCommand}
-    />
-  )
-}
+  ]);
 
-export default TextPreview
+  const state = EditorState.createWithContent(contentState, decorator);
+
+  return <Editor editorState={state} readOnly={true} />;
+};
+
+export default TextPreview;

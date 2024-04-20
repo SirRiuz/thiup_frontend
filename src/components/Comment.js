@@ -1,56 +1,64 @@
-import useComment from "../hooks/useComment"
-import Button from "./Button"
-import DraftEditor from "./Editor"
-import ProfileIcon from "./ProfileIcon"
-import { useState } from "react"
+import { Snackbar } from "@mui/material";
+import { useState } from "react";
+import { commentService } from "../services/thread";
+import styles from "../styles/components/Comment.module.css";
+import Button from "./Button";
+import DraftEditor from "./Editor";
+import FilePicker from "./FilePicker";
+import MediaSelectedPreview from "./MediaSelectedPreview";
 
+const MAX_CHARACTER = 500;
 
-const CommentBox = props => {
-  const [isLoad, setLoad] = useState(false)
-  const [reset, setReset] = useState(false)
-  const [focus, setFocus] = useState(false)
-  const [text, setText] = useState("")
-  const [data, setData] = useState("")
-  const [files, _] = useState([])
-  const { send } = useComment()
-  const toSend = _ => {
-    if (props.onSend !== undefined)
-      props.onSend()
+export default function CommentBox(props) {
+  const [showError, setShowError] = useState(false);
+  const [isLoad, _] = useState(false);
+  const [reset, setReset] = useState(false);
+  const [focus, setFocus] = useState(false);
+  const [media, setMedia] = useState([]);
+  const [text, setText] = useState("");
+  const [content, setContent] = useState("");
 
-    send({
-      files: files,
+  const onComment = (e) => {
+    if (props.onComplete) {
+      props.onComplete(e);
+    }
+  };
+
+  const onCreateThread = (_) => {
+    setReset(() => true);
+    setMedia(() => []);
+    onComment({
+      content: content,
+      text: text,
+      responses: [],
+      reactions: [],
+      create_at: "loading ...",
+      mask: { miniature: "..." },
+      media: media.map((item) => ({
+        width: item.resolution.width,
+        height: item.resolution.height,
+        file: "...",
+        ...item,
+      })),
+    });
+
+    commentService({
+      media: media,
       thread: props.id,
-      text: data
-    }, (e) => {
-      setLoad(() => false)
-      setReset(() => true)
-      props.onComplete(e)
+      text: text,
+      content: content,
     })
-  }
+      .then(({ data }) => onComment(data))
+      .catch(() => {
+        onComment(null);
+        setShowError(() => true);
+      });
+  };
 
   return (
-    <div
-      style={{
-        padding: '10px 16px 10px',
-        display: 'flex',
-        gap: 12,
-        justifyContent: 'flex-start',
-        overflow: 'auto',
-        alignItems: focus || text.length > 0 ?
-          'start' : 'center',
-        ...props.style
-      }}
-    >
-      <ProfileIcon iconSize={props.iconSize} />
+    <div className={styles.container} style={{ ...props.style }}>
       <div style={{ flex: 1 }}>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignContent: 'center',
-            alignItems: 'center',
-          }}
-        >
+        <div className={styles.inputContainer}>
           <div style={{ flex: 1 }}>
             <DraftEditor
               reset={reset}
@@ -59,47 +67,55 @@ const CommentBox = props => {
               onFocus={() => setFocus(() => true)}
               onReset={() => setReset(() => false)}
               onChange={(context) => {
-                setText(() => context.text !== undefined ? context.text : "")
-                setData(() => context.data)
+                setContent(() => context.data);
+                setText(() => (context.text !== undefined ? context.text : ""));
               }}
               onBlur={() => {
-                setFocus(() => false)
-                if (props.onBlur !== undefined)
-                  props.onBlur()
+                setFocus(() => false);
+                if (props.onBlur !== undefined) props.onBlur();
               }}
             />
           </div>
-          {(!focus && text.length <= 0) && (
-            <Button
-              placeholder={props.btnPlaceholder}
-            />
-          )}
         </div>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'flex-end',
-            marginTop: focus || text.length > 0 ?
-              14 : 0
+        <MediaSelectedPreview
+          media={media}
+          onDropItem={(files) => {
+            setMedia(() => files);
           }}
-        >
-          {focus || text.length > 0 ? (
-            <>
-              <Button
-                placeholder={props.btnPlaceholder}
-                isFocus={text.length > 0}
-                isLoad={isLoad}
-                onClick={() => {
-                  setLoad(() => true)
-                  toSend()
-                }}
-              />
-            </>
-          ) : null}
+        />
+        <div className={styles.commentOptions}>
+          <span
+            className={styles.limitSizeText}
+            style={{
+              color: MAX_CHARACTER - text.length < 0 ? "red" : "#999999",
+              display:
+                MAX_CHARACTER - text.length <= 50 ||
+                MAX_CHARACTER - text.length <= 0
+                  ? "block"
+                  : "none",
+            }}
+          >
+            {MAX_CHARACTER - text.length}
+          </span>
+          <FilePicker
+            disabled={media.length >= 3}
+            onSelectedFile={(file) => setMedia((media) => media.concat(file))}
+          />
+          <Button
+            isLoad={isLoad}
+            placeholder={props.btnPlaceholder}
+            onClick={onCreateThread}
+            isFocus={text.length > 0 && MAX_CHARACTER - text.length >= 0}
+          />
         </div>
       </div>
+      <Snackbar
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        open={showError}
+        autoHideDuration={2000}
+        onClose={() => setShowError(false)}
+        message="An error occurred while processing the request."
+      />
     </div>
-  )
+  );
 }
-
-export default CommentBox

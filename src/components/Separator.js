@@ -1,15 +1,5 @@
+import styles from "../styles/components/Separator.module.css";
 
-const Separator = props => {
-  return (
-    <div
-      style={{
-        height: 1,
-        width: '100%',
-        background: '#e0e0e0',
-        ...props.style
-      }}
-    />
-  )
+export default function Separator(props) {
+  return <div className={styles.container} style={{ ...props.style }} />;
 }
-
-export default Separator

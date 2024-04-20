@@ -1,0 +1,11 @@
+.mediaLayoutContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.multiMedia {
+  display: flex;
+  justify-content: space-around;
+  gap: 4px;
+}

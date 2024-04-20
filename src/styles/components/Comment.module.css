@@ -1,0 +1,31 @@
+.container {
+  padding: 10px 16px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  justify-content: flex-start;
+  overflow: auto;
+}
+
+.inputContainer {
+  display: flex;
+  justify-content: space-between;
+  align-content: center;
+  align-items: center;
+}
+
+.limitSizeText {
+  font-size: 15px;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.commentOptions {
+  display: flex;
+  justify-items: center;
+  align-content: center;
+  align-items: center;
+  gap: 15px;
+  justify-content: flex-end;
+  margin-top: 16px;
+}

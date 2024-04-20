@@ -1,0 +1,19 @@
+.title {
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.noDataResultContainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  align-items: center;
+  height: 50vh;
+}
+
+.subtitle {
+  color: rgb(153, 153, 153);
+  font-size: 12px;
+  opacity: 0.9;
+}

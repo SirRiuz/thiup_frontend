@@ -1,172 +1,118 @@
-import ReactionPreview from './ReactionBox'
-import ProfileIcon from './ProfileIcon'
-import TextPreview from './TextPreview'
-import SvgPublic from '../assets/svg/SvgPublic'
-import SvgReply from '../assets/svg/SvgReply'
-import SvgReact from '../assets/svg/SvgReact'
-import { useState } from 'react'
-import ReactionModal from './ReactionModal'
-import '../styles/threads.css'
+import { Tooltip } from "@mui/material";
+import { useState } from "react";
+import ReactionBox from "./ReactionBox";
+import ProfileIcon from "./ProfileIcon";
+import TextPreview from "./TextPreview";
+import ThreadFloatingMenu from "./ThreadFloatingMenu";
+import styles from "../styles/components/ThreadCard.module.css";
+import MediaLayout from "./MediaLayout";
 
+export default function ThreadCard(props) {
+  const [show, setShow] = useState(false);
+  const [openReactMenu, setOpenReactMenu] = useState(false);
+  const [reactions, setReactions] = useState(props.response.reactions.length);
+  const [reaction_selected, setSelectedReaction] = useState(
+    props.response.last_reaction
+  );
 
-const ThreadFloatingMenu = props => {
-  const [focus, setFocus] = useState(null)
-  const MENU_ACTIONS = [
-    {
-      icon: <SvgReply />,
-      description: '',
-      method: props.onComment
-    }, {
-      icon: <SvgReact />,
-      description: '',
-      method: props.onReact
-    }
-  ]
-
-  return props.show && (
-    <div
-      style={{
-        display: 'flex',
-        position: 'absolute',
-        background: 'rgb(255, 255, 255)',
-        zIndex: 10,
-        right: 0,
-        gap: 5,
-        marginRight: 10,
-        marginTop: 10,
-        borderRadius: 8,
-        padding: 4,
-        boxShadow: `rgba(0, 0, 0, 0.06) 0px 4px 12px,
-          rgba(0, 0, 0, 0.24) 0px 0px 2px, rgba(255, 255, 255, 0.08)
-          0px 0px 0px 1px inset
-        `
-      }}
-    >
-      {MENU_ACTIONS.map((x, k) => (
-        <div
-          key={k}
-          onClick={x.method}
-          onMouseEnter={() => setFocus(() => k)}
-          onMouseLeave={() => setFocus(() => null)}
-          style={{
-            position: 'relative',
-            display: 'flex',
-            boxShadow: focus === k ? 'rgb(228, 229, 231) 0px 0px 0px 1px' : '',
-            background: focus === k ? 'rgb(242, 242, 243)' : '',
-            width: 24,
-            height: 24,
-            borderRadius: 6,
-            cursor: 'pointer',
-
-            justifyContent: 'center',
-            alignContent: 'center',
-            justifyItems: 'center',
-            alignItems: 'center',
-            textAlign: 'center',
-          }}
-        >
-          {x.icon}
-        </div>
-      ))}
-    </div>
-  )
-}
-
-const ThreadCard = props => {
-  const [show, setShow] = useState(false)
-  const [showReactModal, setShowReactModal] = useState(false)
-  const [selectReaction, setSelectReaction] = useState(null)
   return (
     <div
+      onClick={props.onClick}
       onMouseLeave={() => setShow(() => false)}
       onMouseEnter={() => setShow(() => true)}
-      style={{
-        background: show ? 'rgb(243, 243, 247)' : 'rgb(252, 252, 253)',
-        position: 'relative',
-        boxShadow: `rgba(0, 0, 0, 0.06) 0px 0px 0px 1px, rgba(0, 0, 0, 0.08)
-                    0px 2px 8px, rgba(255, 255, 255, 0.08)
-                    0px 0px 0px 1px inset`,
-        ...props.style
-      }}
-      onClick={() => {
-        if (props.onClick !== undefined) {
-          props.onClick()
-        }
-      }}
+      style={{ position: "relative", ...props.style }}
     >
-      {!(props.useFloatingMenu === false) && (
+      {props.useFloatingMenu && (
         <ThreadFloatingMenu
           show={show}
           onComment={props.onComment}
-          onReact={() => setShowReactModal((state) => !state)}
+          onReact={() => setOpenReactMenu(() => true)}
         />
       )}
-      <div className='response-content'>
-        <div className='meta-thread'>
-          <ProfileIcon
-            flag={props.flag}
-            iconSize={props.iconSize !== undefined ?
-              props.iconSize : 30}
-          />
-          <div
-            style={{
-              display: 'flex',
-              gap: 4,
-              alignItems: 'center',
-              alignContent: 'center',
-              textAlign: 'center',
-              justifyContent: 'center'
-            }}>
+
+      <div className={styles.header}>
+        <ProfileIcon
+          flag={props.flag}
+          iconSize={props.iconSize !== undefined ? props.iconSize : 30}
+          url={props.response.mask?.miniature}
+        />
+        <div className={styles.headerItems}>
+          {props.response.mask?.id && (
             <span
-              style={{
-                fontWeight: 600,
-                fontSize: 14,
-                color: '#2a251d',
-                fontStyle: 'normal',
-                fontFamily: `-apple-system, BlinkMacSystemFont, 'Segoe UI',
-                              Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans',
-                              'Helvetica Neue', sans-serif`,
-                ...props.titleHashStyles
-              }}
+              className={styles.threadMask}
+              style={{ ...props.titleHashStyles }}
             >
-              @18ac3e73
+              {`0x${props.response.mask.id.substring(0, 10).replace("-", "")}`}
             </span>
-            <span className='thread-date'>16h</span>
-            {props.isHead && (<span className='thread-date'> · <SvgPublic /></span>)}
-          </div>
+          )}
+          <span className={styles.threadDateInfo}>
+            {props.response.create_at}
+          </span>
+          {props.showNewThread && props.response.is_new && (
+            <span className={styles.newThreadIndicator}>NEW</span>
+          )}
+          {props.showOp && (
+            <Tooltip arrow title="Thread creator">
+              <span className={styles.opIndicator}>OP</span>
+            </Tooltip>
+          )}
         </div>
+      </div>
+
+      <div
+        style={{
+          fontSize: props.textFontSize !== undefined ? props.textFontSize : 15,
+        }}
+      >
+        <TextPreview
+          fontSize={props.textFontSize}
+          search={props.search}
+          data={props.response?.content}
+        />
+        {props.response?.media.length > 0 && (
+          <MediaLayout data={props.response.media} styles={{ marginTop: 8 }} />
+        )}
+      </div>
+
+      <div className={styles.footer}>
         <div
           style={{
-            fontSize: props.textFontSize !== undefined ?
-              props.textFontSize : 15
+            display: "flex",
+            alignContent: "center",
+            alignItems: "center",
+            flex: 1,
+            gap: reactions > 0 && props.repliesCount > 0 ? "5px" : "0px",
+            marginTop: reactions > 0 || props.repliesCount >  0 ? 9 : 0,
           }}
         >
-          <TextPreview data={props.response.text} />
-        </div>
-        <div
-          style={{
-            display: 'flex',
-            color: 'rgba(0, 0, 0, .8)',
-            gap: 10
-          }}
-        >
-          <ReactionPreview
-            selectReaction={selectReaction}
-            last={props.response.last_reaction}
+          <ReactionBox
+            openModal={openReactMenu}
             thread={props.response.id}
-            data={props.response.reactions}
-            onCompleteReaction={() => setShowReactModal(() => false)}
+            last_reaction={reaction_selected}
+            reactions={props.response.reactions}
+            enable={props.enableReactions}
+            onCloseModal={() => setOpenReactMenu(false)}
+            onReact={(reaction) => {
+              setReactions((count) => reaction ? count + 1 : count - 1);
+              setSelectedReaction(reaction);
+              if(props.onChangeReaction) {
+                props.onChangeReaction(reaction)
+              }
+            }}
           />
-          <ReactionModal
-            show={showReactModal}
-            onClose={() => setShowReactModal(() => false)}
-            onSelect={(reaction) => setSelectReaction(() => reaction)}
-          />
+          {reactions > 0 && props.repliesCount > 0 && (
+            <div className={styles.repliesCount}> · </div>
+          )}
+          <div className={styles.repliesContainerCount}>
+            {props.repliesCount > 0 && (
+              <span className={styles.repliesCount}>
+                {props.repliesCount}{" "}
+                {props.repliesCount > 1 ? "replies" : "reply"}
+              </span>
+            )}
+          </div>
         </div>
       </div>
     </div>
-  )
+  );
 }
-
-
-export default ThreadCard

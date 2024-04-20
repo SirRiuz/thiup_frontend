@@ -1,0 +1,28 @@
+.modalContainer {
+  display: flex;
+  position: absolute;
+  background: rgb(255, 255, 255);
+  z-index: 10;
+  right: 0;
+  gap: 5px;
+  margin-right: 10px;
+  margin-top: 10px;
+  border-radius: 8px;
+  padding: 4px;
+  box-shadow: rgba(0, 0, 0, 0.06) 0px 4px 12px, rgba(0, 0, 0, 0.24) 0px 0px 2px,
+    rgba(255, 255, 255, 0.08) 0px 0px 0px 1px inset;
+}
+
+.modalItem {
+  position: relative;
+  display: flex;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  justify-content: center;
+  align-content: center;
+  justify-items: center;
+  align-items: center;
+  text-align: center;
+}

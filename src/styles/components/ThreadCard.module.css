@@ -1,0 +1,79 @@
+.header {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  align-content: center;
+  margin-bottom: 10px;
+}
+
+.headerItems {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  align-content: center;
+  text-align: center;
+  justify-content: center;
+}
+
+.threadMask {
+  font-weight: 700;
+  font-size: 13px;
+  font-family: system-ui, -apple-system, "system-ui", Roboto, Helvetica, Arial,
+    sans-serif;
+}
+
+.threadDateInfo {
+  font-size: 12px;
+  color: rgb(153, 153, 153);
+  opacity: 1;
+  font-family: system-ui, -apple-system, "system-ui", Roboto, Helvetica, Arial,
+    sans-serif;
+}
+
+.newThreadIndicator {
+  margin-left: 5px;
+  font-size: 9px;
+  text-transform: uppercase;
+  font-weight: 700;
+  padding: 2px 6px;
+  color: white;
+  background-color: rgb(107, 74, 252);
+  border-radius: 2.33456px;
+  border-radius: 3px;
+  font-family: system-ui, -apple-system, "system-ui", Roboto, Helvetica, Arial,
+    sans-serif;
+}
+
+.opIndicator {
+  margin-left: 5px;
+  font-size: 9px;
+  text-transform: uppercase;
+  font-weight: 700;
+  padding: 2px 6px;
+  color: rgb(86, 59, 202);
+  background-color: rgb(240, 237, 255);
+  border-radius: 2.33456px;
+  border-radius: 3px;
+  font-family: system-ui, -apple-system, "system-ui", Roboto, Helvetica, Arial,
+    sans-serif;
+}
+
+.repliesCount {
+  font-size: 12px;
+  color: #999999;
+  font-style: normal;
+  opacity: 1;
+}
+
+.repliesContainerCount {
+  display: flex;
+  justify-content: center;
+  align-content: center;
+  align-items: center;
+}
+
+.footer {
+  display: flex;
+  color: rgba(0, 0, 0, 0.8);
+  gap: 10px;
+}
