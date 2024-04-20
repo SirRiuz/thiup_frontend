@@ -12,6 +12,7 @@ import styles from "../styles/screens/home.module.css";
 import SearchBar from "../components/SearchBar";
 import EndFeed from "../components/EndFeed";
 import CommentBox from "../components/Comment";
+import AdsCard from "../components/AdsCard";
 
 export default function Home() {
   var scrollTimer = -1;
@@ -53,7 +54,7 @@ export default function Home() {
         repliesCount={x.responses_count}
         flag={
           <Flag
-            code="MX"
+            code={x.mask.country_code}
             height="11"
             frameBorder={9}
             style={{ borderRadius: 3, border: "solid 1px white" }}
@@ -198,6 +199,18 @@ export default function Home() {
           size={1}
         />
       )}
+
+      {/* <AdsCard
+        style={{
+          color: "#2e2f33",
+          cursor: "pointer",
+          background: "#FFFFFF",
+          borderRadius: "max(0px, min(8px, -999900% + 1.05589e+07px)) / 8px",
+          boxShadow: "rgba(0, 0, 0, .1) 0px 1px 2px 0px",
+          padding: "20px 20px 20px 20px",
+          marginTop:25
+        }}
+      /> */}
 
       {next === null && !isLoading && threads.length >= 1 && (
         <div style={{ height: 260 }}>

@@ -31,7 +31,7 @@ function ThreadResponses(props) {
                 onComment={() => setFocus((e) => !e)}
                 flag={
                   <Flag
-                    code={"ve"}
+                    code={x.mask.country_code}
                     height="8.5"
                     frameBorder={10}
                     style={{ borderRadius: 3.1192, border: "solid 1px white" }}
@@ -84,7 +84,7 @@ function ThreadResponseContent(props) {
         useFloatingMenu={true}
         flag={
           <Flag
-            code={"col"}
+            code={props.data.mask.country_code}
             height="9"
             frameBorder={10}
             style={{ borderRadius: 3.1192, border: "solid 1px white" }}
