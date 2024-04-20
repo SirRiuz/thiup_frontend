@@ -144,7 +144,7 @@ export default function Thread() {
             }}
             flag={
               <Flag
-                code={"mx"}
+                code={head?.mask?.country_code}
                 height="10.5"
                 frameBorder={10}
                 style={{ borderRadius: 3.1192, border: "solid 1px white" }}
