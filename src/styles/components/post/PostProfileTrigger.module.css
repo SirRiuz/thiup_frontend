@@ -1,0 +1,16 @@
+/* PostProfileTrigger — wrapper that anchors the absolute hover card */
+
+.trigger {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.cardContainer {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 20;
+}

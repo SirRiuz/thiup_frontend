@@ -1,0 +1,180 @@
+/* PostReactionPicker — popover style à la Facebook/iMessage with warm palette */
+
+.wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.trigger {
+  padding: 4px 10px;
+  background: transparent;
+  border: 1px dashed #c4bfb1;
+  border-radius: 14px;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 12px;
+  color: #9b9591;
+  cursor: pointer;
+  line-height: 1;
+  transition: border-color 120ms ease, color 120ms ease, background 120ms ease;
+}
+
+.trigger:hover {
+  border-color: #9b9591;
+  color: #6b6b6b;
+}
+
+.triggerOpen {
+  background: #ebe7dd;
+  border-style: solid;
+  border-color: #a8a290;
+  color: #1a1a1a;
+}
+
+.popover {
+  position: absolute;
+  bottom: 36px;
+  /* left base: -8px — el componente lo ajusta inline (shift) para que el
+     popover SIEMPRE quede dentro del viewport (móvil con el '+' al borde). */
+  left: -8px;
+  /* Salvaguarda en pantallas ultra-angostas: nunca exceder el viewport. */
+  max-width: calc(100vw - 16px);
+  background: #fdfcf8;
+  border: 1px solid #e8e5dd;
+  border-radius: 28px;
+  padding: 6px 8px;
+  display: flex;
+  gap: 4px;
+  z-index: 10;
+  box-shadow: 0 2px 12px rgba(26, 26, 26, 0.04);
+  animation: pickerAppear 180ms ease forwards;
+  transform-origin: bottom left;
+}
+
+@keyframes pickerAppear {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* === Colita estilo burbuja de chat (apunta hacia el '+', abajo) ===
+   Truco de dos triángulos superpuestos: ::before (color del borde) detrás y
+   ::after (color del fondo) delante, 1.5px más arriba — los lados visibles
+   del pico quedan con el borde #e8e5dd y el relleno se funde con el popover
+   tapando su border-bottom en ese tramo (burbuja "abierta"). El `left` lo
+   pone el componente inline para apuntar al centro del '+', incluso cuando
+   el popover está desplazado por el fix de viewport. */
+
+/* El span tiene dimensiones REALES (18×9): su top coincide con el borde
+   inferior del popover, así la base del triángulo nace PEGADA al cuerpo
+   (antes width/height 0 + bottom -9px dejaban el pico flotando 9px abajo). */
+.tail {
+  position: absolute;
+  bottom: -9px;
+  width: 18px;
+  height: 9px;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.tail::before,
+.tail::after {
+  content: "";
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-color: transparent;
+  border-bottom: 0;
+}
+
+.tail::before {
+  top: 0;
+  left: 0;
+  border-width: 9px 9px 0 9px;
+  border-top-color: #e8e5dd; /* el borde del popover */
+}
+
+.tail::after {
+  /* 1.5px hacia ADENTRO del popover: el relleno tapa su border-bottom en
+     este tramo — conexión sin línea de separación (burbuja abierta). */
+  top: -1.5px;
+  left: 1px;
+  border-width: 8px 8px 0 8px;
+  border-top-color: #fdfcf8; /* el fondo del popover */
+}
+
+.option {
+  position: relative;
+  background: transparent;
+  border: 0;
+  padding: 6px 8px;
+  cursor: pointer;
+  border-radius: 50%;
+  font-size: 22px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 120ms ease, background 120ms ease;
+}
+
+.option:hover {
+  transform: scale(1.25);
+  background: #ebe7dd;
+}
+
+.option:active {
+  transform: scale(1.1);
+}
+
+/* Reacción actual del current user — resaltada dentro del picker. */
+.optionActive {
+  background: #ebe7dd;
+}
+
+.emoji {
+  line-height: 1;
+  display: inline-block;
+}
+
+.tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1a1a1a;
+  color: #fdfcf8;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  z-index: 11;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 120ms ease, visibility 120ms ease;
+}
+
+.tooltip::after {
+  content: "";
+  position: absolute;
+  bottom: -3px;
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+  width: 6px;
+  height: 6px;
+  background: #1a1a1a;
+}
+
+.option:hover .tooltip {
+  opacity: 1;
+  visibility: visible;
+}

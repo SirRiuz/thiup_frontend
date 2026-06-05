@@ -1,0 +1,51 @@
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: rgba(247, 245, 240, 0.92);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-bottom: 1px solid #ebe7dd;
+}
+
+.inner {
+  max-width: 740px;
+  margin: 0 auto;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.logo {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 14px;
+  font-weight: 700;
+  color: #1a1a1a;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  flex: none;
+}
+
+.logoUnderscore {
+  color: #c4bfb1;
+}
+
+.searchWrap {
+  flex: 1;
+  max-width: 380px;
+  position: relative;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.userAvatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 4px;
+  overflow: hidden;
+  flex: none;
+  cursor: pointer;
+}

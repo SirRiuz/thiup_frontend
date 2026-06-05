@@ -1,0 +1,115 @@
+/* App bar de búsqueda — sticky + glass, mismo patrón que el del thread.
+   OJO: backdrop-filter se rompe si un ancestro tiene overflow hidden/auto. */
+
+.appBar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: rgba(247, 245, 240, 0.85);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  border-bottom: 0.5px solid #e5e0d3;
+}
+
+/* Fallback: fondo sólido donde no hay backdrop-filter (legibilidad). */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .appBar {
+    background: #f7f5f0;
+  }
+}
+
+.inner {
+  max-width: 740px;
+  margin: 0 auto;
+  padding: 10px 20px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.backButton {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  color: #1a1a1a;
+  transition: background 200ms ease;
+}
+
+.backButton:hover {
+  background: #f0ece3;
+}
+
+/* Ancla del dropdown de sugerencias (absolute bajo el pill). */
+.pillWrap {
+  flex: 1;
+  position: relative;
+}
+
+.pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fdfcf8;
+  border: 0.5px solid #e5e0d3;
+  border-radius: 999px;
+  padding: 8px 12px;
+}
+
+.magnifier {
+  flex: none;
+  color: #a3a3a3;
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  outline: none;
+  font: inherit; /* los inputs no heredan font por defecto — fuerza Inter */
+  font-size: 14px;
+  color: #1a1a1a;
+  padding: 0;
+}
+
+.input::placeholder {
+  color: #a3a3a3;
+}
+
+.clearX {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #ebe7dd;
+  color: #a3a3a3;
+  border: 0;
+  border-radius: 50%;
+  padding: 0;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.clearX:hover {
+  background: #ddd8c8;
+  color: #6b6b6b;
+}
+
+/* 'N results' debajo del input, alineado con el pill (32px back + 12px gap). */
+.count {
+  margin: 6px 0 0 44px;
+  font-size: 12px;
+  color: #a3a3a3;
+}

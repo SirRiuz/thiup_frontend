@@ -1,0 +1,102 @@
+/* PostInitialSkeleton — skeleton del Post page durante el initial loading */
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.opCard {
+  padding: 24px 8px 20px;
+}
+
+.opHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.opBody {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.opReactionBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.opDivider {
+  height: 1px;
+  background: #ebe7dd;
+  margin: 0 8px;
+}
+
+.sortRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 8px 14px;
+}
+
+.repliesList {
+  display: flex;
+  flex-direction: column;
+}
+
+.bar {
+  background: #ebe7dd;
+  border-radius: 2px;
+  animation: initialSkeletonPulse 1.4s ease-in-out infinite;
+}
+
+.opIdenticon {
+  width: 40px;
+  height: 40px;
+  border-radius: 4px;
+  flex: none;
+}
+
+.opMaskId {
+  width: 72px;
+  height: 13px;
+}
+
+.opTime {
+  width: 32px;
+  height: 11px;
+}
+
+.opBodyLine {
+  height: 14px;
+}
+
+.line100 { width: 100%; }
+.line95 { width: 95%; }
+.line75 { width: 75%; }
+.line60 { width: 60%; }
+
+.opReactionPill {
+  width: 56px;
+  height: 28px;
+  border-radius: 14px;
+}
+
+.sortLabel {
+  width: 28px;
+  height: 10px;
+}
+
+.sortTab {
+  width: 54px;
+  height: 11px;
+}
+
+@keyframes initialSkeletonPulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}

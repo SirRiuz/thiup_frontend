@@ -1,5 +1,6 @@
-import JWT, { SupportedAlgorithms } from "expo-jwt";
+import JWT from "expo-jwt";
 import uuid from "react-uuid";
+import { API_SECRET_KEY } from "../settings";
 const CryptoJS = require("crypto-js");
 
 /**
@@ -65,7 +66,7 @@ function getClientSing() {
         seconds,
       payload: uuid(),
     },
-    process.env.REACT_APP_API_KEY
+    API_SECRET_KEY
   );
 }
 

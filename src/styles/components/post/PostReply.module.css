@@ -1,0 +1,222 @@
+.reply {
+  padding: 18px 0;
+  position: relative;
+}
+
+/* Separador full-width: el border vive en un ::after absoluto que se extiende
+ * -8px a cada lado para cancelar el padding horizontal del parent (.repliesList,
+ * padding: 0 8px) y llegar al borde de la columna. Mismo color/grosor/posición
+ * que el border-bottom original; no toca el box ni el contenido del reply. */
+.reply::after {
+  content: "";
+  position: absolute;
+  left: -8px;
+  right: -8px;
+  bottom: 0;
+  height: 1px;
+  background: #ebe7dd;
+}
+
+/* Último reply cuando el thread ya cargó completo (!hasMore): sin separador para
+ * no duplicar la línea con el divider '--end of thread--' que viene debajo. */
+.lastReply::after {
+  display: none;
+}
+
+.subReply {
+  padding: 16px 0 16px 28px;
+}
+
+/* Los sub-replies anidados NO llevan separador horizontal: se conectan solo con
+ * la línea vertical de threading. El ::after full-width de .reply cruzaría esa
+ * línea, así que lo anulamos aquí (los replies de nivel raíz sí lo conservan). */
+.subReply::after {
+  display: none;
+}
+
+/* Highlight temporal del reply recién creado: anillo + fondo warm que se
+ * desvanecen solos (~2.5s visibles + ~0.5s de fade). El scroll-to lleva al
+ * usuario aquí y el highlight le confirma "esto es lo que acabas de escribir".
+ * box-shadow inset (no border) para no desplazar el layout ni el threading. */
+.highlighted {
+  border-radius: 8px;
+  animation: replyHighlightFade 3s ease forwards;
+}
+
+@keyframes replyHighlightFade {
+  0%,
+  83% {
+    background-color: #f5ead5;
+    box-shadow: inset 0 0 0 2px #c5a572;
+  }
+  100% {
+    background-color: transparent;
+    box-shadow: inset 0 0 0 2px transparent;
+  }
+}
+
+.subVerticalLine {
+  position: absolute;
+  left: 8px;
+  top: 0;
+  /* Llega al borde inferior del box para empalmar con la línea del siguiente
+   * sub-reply (boxes adyacentes, sin margin) → threading line continuo. */
+  bottom: 0;
+  width: 1px;
+  background: #ddd8c8;
+}
+
+/* Último sub-reply de la cadena: no hay siguiente al cual conectar, así que la
+ * línea termina 12px antes del fondo (valor original) y no queda colgando. */
+.subVerticalLineLast {
+  bottom: 12px;
+}
+
+.subHorizontalConnector {
+  position: absolute;
+  left: 8px;
+  top: 26px;
+  width: 12px;
+  height: 1px;
+  background: #ddd8c8;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.maskId {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 11px;
+  color: #1a1a1a;
+  font-weight: 500;
+}
+
+.opBadge {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 9px;
+  color: #1a1a1a;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  padding: 1px 5px;
+  border: 1px solid #1a1a1a;
+  border-radius: 3px;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.divider {
+  color: #c4bfb1;
+  font-size: 11px;
+}
+
+.timestamp {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 11px;
+  color: #6b6b6b;
+}
+
+.subReply .timestamp,
+.subReply .divider {
+  font-size: 10px;
+}
+
+.parentRef {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 10px;
+  color: #9b9591;
+}
+
+.parentRefId {
+  color: #1a1a1a;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.body {
+  color: #1a1a1a;
+  font-size: 15px;
+  /* Métricas tipo Twitter/Chirp: 15/20px + tracking sutil (antes 1.6=24px). */
+  line-height: 20px;
+  letter-spacing: -0.01em;
+  margin: 0 0 12px;
+  /* Preserva los saltos de línea del usuario (el texto trae \n del backend) y
+   * parte palabras largas/URLs pegadas para que no desborden la columna. */
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+/* (El override .bodySubReply de 14px se eliminó: TODAS las respuestas, a
+   cualquier profundidad, usan el mismo .body 15/20px.) */
+
+/* Hashtag highlight — idéntico a /home-new (HomeFeedCard.hashtag). */
+.hashtag {
+  font-weight: 400;
+  color: #a85432;
+  cursor: pointer;
+}
+
+.hashtag:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.reactions {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.actions {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+.actionActive {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 11px;
+  color: #1a1a1a;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  transition: opacity 120ms ease;
+}
+
+.actionActive:hover {
+  opacity: 0.7;
+}
+
+.actionMuted {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 11px;
+  color: #6b6b6b;
+  transition: color 120ms ease;
+}
+
+.actionMuted:hover {
+  color: #1a1a1a;
+}
+
+/* === Hash hover underline (affordance) === */
+
+.maskId:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}

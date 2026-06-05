@@ -1,0 +1,63 @@
+.menu {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 0 8px;
+}
+
+.label {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #9b9591;
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 11px;
+  color: #9b9591;
+  font-weight: 400;
+  transition: color 120ms ease;
+}
+
+.tab:hover {
+  color: #1a1a1a;
+}
+
+.tabActive {
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+.tabDisabled {
+  opacity: 0.4;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* Mini spinner en la opción activa durante el reload (mismos valores que
+ * HomeFilterBar.tabSpinner para consistencia visual con /home-new). */
+.tabSpinner {
+  width: 9px;
+  height: 9px;
+  border: 1.2px solid rgba(26, 26, 26, 0.18);
+  border-top-color: #1a1a1a;
+  border-radius: 50%;
+  animation: tabSpinnerSpin 700ms linear infinite;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+@keyframes tabSpinnerSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

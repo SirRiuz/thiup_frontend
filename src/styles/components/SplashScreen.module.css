@@ -1,21 +1,63 @@
-.container {
+/* Splash — telón animado (estilo Threads), warm + Inter */
+
+/* Telón: cubre todo el viewport, opaco, bloquea eventos (pointer-events
+   auto + fixed por encima de todo). 100dvh para móvil (con fallback vh). */
+.curtain {
+  position: fixed;
+  inset: 0;
+  height: 100vh;
+  height: 100dvh;
+  z-index: 9999;
   display: flex;
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 99999;
-  justify-content: center;
-  align-content: center;
   align-items: center;
-  background: white;
+  justify-content: center;
+  background: #f7f5f0;
+  pointer-events: auto;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Helvetica, Arial, sans-serif;
+  opacity: 1;
+  transition: opacity 350ms ease;
 }
 
-.splash {
-  width: 100px;
-  height: 100px;
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: cover;
+/* Fade-out suave antes del unmount (lo dispara isLeaving). */
+.curtainLeaving {
+  opacity: 0;
+}
+
+/* PLACEHOLDER del logo (squircle). La animación va aquí: al reemplazar el
+   contenido por el logo real, éste hereda el pulso sin tocar nada. */
+.logoPlaceholder {
+  width: 72px;
+  height: 72px;
+  border-radius: 20px;
+  background: #fdfcf8;
+  border: 1.5px dashed #d5cfc0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: splashPulse 2.2s ease-in-out infinite;
+}
+
+.logoHint {
+  font-size: 10px;
+  color: #a3a3a3;
+}
+
+/* Animación A — fade + scale suave en loop mientras la app carga. */
+@keyframes splashPulse {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  25% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  75% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
 }

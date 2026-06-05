@@ -1,0 +1,52 @@
+.card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 16px 8px;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid #ebe7dd;
+  cursor: pointer;
+  text-align: left;
+  transition: background 120ms ease;
+}
+
+.card:hover {
+  background: rgba(235, 231, 221, 0.4);
+}
+
+.tagChip {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  background: #ebe7dd;
+  border: 1px solid #ddd8c8;
+  border-radius: 14px;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 13px;
+  color: #1a1a1a;
+  font-weight: 500;
+}
+
+.count {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 11px;
+  color: #9b9591;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Sparkline anclado a la derecha, ancho fijo para que no se deforme. */
+.spark {
+  margin-left: auto;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+}
+
+.highlight {
+  background: rgba(26, 26, 26, 0.1);
+  color: #1a1a1a;
+  padding: 0 2px;
+  border-radius: 2px;
+}

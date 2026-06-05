@@ -1,0 +1,74 @@
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+  padding: 0 8px;
+}
+
+.label {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #9b9591;
+  font-weight: 500;
+}
+
+.tab {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 11px;
+  color: #9b9591;
+  font-weight: 400;
+  transition: color 120ms ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tab:hover {
+  color: #1a1a1a;
+}
+
+.tabActive {
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+/* === Tab disabled during loading (o count en 0 en tabs con counts) === */
+
+.tabDisabled {
+  opacity: 0.4;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* === Count junto al label (tabs de búsqueda: posts 120 / tags 1 / ...) === */
+
+.count {
+  font-size: 10px;
+  color: #9b9591;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
+/* === Mini spinner shown next to the active tab during loading === */
+.tabSpinner {
+  width: 9px;
+  height: 9px;
+  border: 1.2px solid rgba(26, 26, 26, 0.18);
+  border-top-color: #1a1a1a;
+  border-radius: 50%;
+  animation: tabSpinnerSpin 700ms linear infinite;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+@keyframes tabSpinnerSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

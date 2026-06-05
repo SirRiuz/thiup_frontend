@@ -1,0 +1,85 @@
+/* Radio del Close You — chips mono uppercase como el resto de controles
+   del feed; activo en terracota cálido. Sin #FFFFFF. */
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px 10px;
+}
+
+.label {
+  flex-shrink: 0;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #a3a3a3;
+}
+
+.options {
+  display: flex;
+  gap: 6px;
+  /* UNA sola línea siempre: sin wrap (el "100 km" saltaba de línea en
+     pantallas pequeñas). Si no cabe, scroll horizontal discreto. */
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Firefox */
+  min-width: 0;
+}
+
+.options::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
+}
+
+.chip {
+  flex-shrink: 0; /* los chips no se comprimen ni se parten */
+  white-space: nowrap;
+  padding: 4px 10px;
+  border: 1px solid #e5e0d3;
+  border-radius: 999px;
+  background: transparent;
+  cursor: pointer;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  color: #666;
+  transition: color 120ms ease, border-color 120ms ease,
+    background 120ms ease;
+}
+
+.chip:hover:not(:disabled) {
+  color: #1a1a1a;
+  border-color: #c4bfb1;
+}
+
+/* Durante la recarga los chips solo bloquean la interacción — SIN
+   cambio visual (el opacity 0.6 destellaba toda la fila en cada
+   request: el parpadeo reportado). El feed ya comunica la carga con
+   su atenuado, igual que search. */
+.chip:disabled {
+  cursor: default;
+}
+
+.chipActive,
+.chipActive:hover:not(:disabled) {
+  background: #f3e3d3;
+  border-color: #b8845f;
+  color: #a85432;
+  font-weight: 600;
+}
+
+@media (max-width: 480px) {
+  .bar {
+    gap: 8px;
+    padding: 6px 6px 10px;
+  }
+
+  /* Compactos pero tappables (alto cómodo, padding lateral justo):
+     los 4 presets caben en una línea hasta en ~340px. */
+  .chip {
+    padding: 6px 8px;
+    font-size: 10px;
+    letter-spacing: 0.04em;
+  }
+}

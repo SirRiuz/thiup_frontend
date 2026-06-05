@@ -1,0 +1,282 @@
+/* PostCommentBox — caja de reply con overlay sincronizado para hashtags */
+
+.wrapper {
+  padding: 16px;
+  background: #fdfcf8;
+  border: 1px solid #e8e5dd;
+  border-radius: 8px;
+  /* margin-bottom generoso para que la caja no quede pegada al fondo del
+   * scroll (el .main del screen aporta su propio padding; esto se suma). */
+  margin: 0 8px 32px;
+}
+
+/* === Header "posting as @maskId" (alineado con HomeCompose) === */
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #ebe7dd;
+}
+
+.identiconWrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+  overflow: hidden;
+  flex: none;
+}
+
+.label {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 11px;
+  color: #1a1a1a;
+  font-weight: 500;
+}
+
+.maskId {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 11px;
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+/* === Textarea con overlay sincronizado === */
+
+.textareaWrapper {
+  position: relative;
+  width: 100%;
+}
+
+/* CRÍTICO: el overlay debe matchear pixel-perfect el textarea.
+ * font-size 14px aquí (no 15px como en HomeCompose) — el reply usa
+ * texto más pequeño que el compose del home. */
+.highlightLayer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow: hidden;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #1a1a1a;
+  padding: 4px 0 12px;
+  margin: 0;
+  border: 0;
+  box-sizing: border-box;
+  min-height: 24px;
+}
+
+/* NO usar font-weight aquí — desalinearia el caret del textarea invisible.
+ * Solo cambios que NO afectan glyph metrics: background + border-radius + color. */
+.highlightHashtag {
+  color: #1a1a1a;
+  background: rgba(26, 26, 26, 0.06);
+  border-radius: 2px;
+}
+
+.input {
+  width: 100%;
+  background: transparent;
+  border: 0;
+  outline: none;
+  resize: none;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.55;
+  color: transparent;
+  caret-color: #1a1a1a;
+  padding: 4px 0 12px;
+  min-height: 24px;
+  max-height: 140px;
+  overflow-y: hidden;
+  box-sizing: border-box;
+  transition: height 150ms ease;
+  position: relative;
+  z-index: 1;
+  display: block;
+}
+
+.input::placeholder {
+  color: #9b9591;
+}
+
+.input::selection {
+  background: rgba(26, 26, 26, 0.15);
+  color: transparent;
+}
+
+.input::-moz-selection {
+  background: rgba(26, 26, 26, 0.15);
+  color: transparent;
+}
+
+/* === Toolbar === */
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid #ebe7dd;
+}
+
+.attachButton {
+  background: transparent;
+  border: 1px solid #e8e5dd;
+  border-radius: 6px;
+  padding: 6px;
+  cursor: pointer;
+  color: #6b6b6b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.attachButton:hover {
+  background: #ebe7dd;
+  color: #1a1a1a;
+}
+
+.attachButton:disabled {
+  opacity: 0.4;
+  cursor: default;
+  pointer-events: none;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.tagsDetected {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 10px;
+  color: #9b9591;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.charCount {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 11px;
+  color: #9b9591;
+  font-variant-numeric: tabular-nums;
+}
+
+.charCountAtLimit {
+  color: #1a1a1a;
+}
+
+.submitButton {
+  background: #1a1a1a;
+  color: #fdfcf8;
+  border: 0;
+  border-radius: 6px;
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: opacity 120ms ease;
+}
+
+.submitButton:hover {
+  opacity: 0.85;
+}
+
+.submitButton:disabled {
+  opacity: 0.4;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* === File input oculto === */
+
+.hiddenFileInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* === Lista de attachments === */
+
+.attachmentsList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+/* === Error banner === */
+
+.errorBanner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: rgba(197, 48, 48, 0.08);
+  border: 1px solid rgba(197, 48, 48, 0.2);
+  border-radius: 6px;
+  margin-bottom: 12px;
+  animation: errorSlideIn 180ms ease-out;
+}
+
+@keyframes errorSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.errorIcon {
+  flex: none;
+}
+
+.errorText {
+  flex: 1;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 11px;
+  color: #c53030;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.errorClose {
+  background: transparent;
+  border: 0;
+  padding: 4px;
+  cursor: pointer;
+  color: #c53030;
+  flex: none;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 120ms ease, opacity 120ms ease;
+}
+
+.errorClose:hover {
+  background: rgba(197, 48, 48, 0.12);
+}

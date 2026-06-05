@@ -1,59 +1,89 @@
-body {
+/*
+ * Global styles (antes en src/theme/GlobalStyle.js con @emotion — portados a
+ * CSS plano para eliminar @emotion/@mui del bundle) + el @font-face de Inter
+ * (self-hosted — sin requests a Google, coherente con el enfoque de
+ * privacidad del proyecto).
+ */
+
+/* Inter variable (rsms.me/inter): un solo woff2 cubre los pesos 100-900.
+   Vive en src/fonts para que webpack lo bundlee (CRA no resuelve URLs
+   absolutas en CSS). font-display: swap evita el FOIT. */
+@font-face {
+  font-family: "Inter";
+  src: url("../fonts/InterVariable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* === Reset === */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
   margin: 0;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  -webkit-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
+  padding: 0;
 }
 
 html,
 body {
+  height: 100%;
+}
+
+body {
+  background: #ffffff;
+  color: #0f0f0f;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
   overscroll-behavior: none;
-  font-family: system-ui, -apple-system, "system-ui", Roboto, Helvetica, Arial,
-    sans-serif;
-  background: #f1f2f5;
 }
 
-.App {
-  display: flex;
-  height: 80vh;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  gap: 40px;
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
 }
 
-.stepper {
-  display: flex;
-  position: relative;
-  top: 0;
-  transition: top 200ms linear;
-  flex-direction: column;
+textarea,
+input {
+  font: inherit;
+  color: inherit;
 }
 
-.odometer {
-  height: 20px;
-  display: flex;
-  overflow: hidden;
+img,
+svg,
+video {
+  display: block;
+  max-width: 100%;
 }
 
-.stepper-value {
-  height: 20px;
-  line-height: 20px;
+::selection {
+  background: rgba(0, 0, 0, 0.1);
+  color: #0f0f0f;
 }
 
 ::-webkit-scrollbar {
   width: 8px;
+  height: 8px;
 }
 
-/* Track */
 ::-webkit-scrollbar-track {
-  background: #f1f2f5;
+  background: transparent;
 }
 
-/* Handle */
 ::-webkit-scrollbar-thumb {
-  background: #f1f2f5;
-  border-radius: 100px;
+  background: #e5e5e5;
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9b9a97;
 }

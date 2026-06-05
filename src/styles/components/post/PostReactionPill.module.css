@@ -1,0 +1,51 @@
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ebe7dd;
+  border: 1px solid #ddd8c8;
+  border-radius: 14px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease, transform 80ms ease;
+}
+
+.pill:active {
+  transform: scale(0.95);
+}
+
+.pill_op {
+  padding: 6px 12px;
+  font-size: 15px;
+}
+
+.pill_reply {
+  padding: 4px 10px;
+  font-size: 14px;
+}
+
+.pillActive {
+  background: #d4cfbf;
+  border-color: #a8a290;
+}
+
+.pill:hover:not(.pillActive) {
+  background: #e0dccc;
+  border-color: #c4bfb1;
+}
+
+.emoji {
+  line-height: 1;
+}
+
+.count {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 12px;
+  color: #1a1a1a;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.pillActive .count {
+  font-weight: 600;
+}

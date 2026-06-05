@@ -1,0 +1,489 @@
+.wrapper {
+  padding: 16px;
+  background: #fdfcf8;
+  border: 1px solid #e8e5dd;
+  border-radius: 8px;
+  margin-bottom: 24px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #ebe7dd;
+}
+
+.identiconWrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+  overflow: hidden;
+  flex: none;
+}
+
+.label {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 11px;
+  color: #1a1a1a;
+  font-weight: 500;
+}
+
+.maskId {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 11px;
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.tagsDetected {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 10px;
+  color: #9b9591;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+/* === Textarea con overlay sincronizado === */
+
+.textareaWrapper {
+  position: relative;
+  width: 100%;
+}
+
+/* CRÍTICO: el overlay debe matchear pixel-perfect el textarea.
+ * Cualquier diferencia en font-family, font-size, line-height, padding,
+ * white-space, word-wrap, box-sizing → desalinea las palabras. */
+.highlightLayer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow: hidden;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Helvetica, Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.55;
+  color: #1a1a1a;
+  padding: 4px 0 12px;
+  margin: 0;
+  border: 0;
+  box-sizing: border-box;
+  min-height: 60px;
+}
+
+/* NO usar font-weight aquí — el peso 600 desalinea el caret del textarea
+ * invisible (weight 400). Solo cambios que NO afectan glyph metrics:
+ * background + border-radius + color. */
+.highlightHashtag {
+  color: #1a1a1a;
+  background: rgba(26, 26, 26, 0.06);
+  border-radius: 2px;
+}
+
+.input {
+  width: 100%;
+  background: transparent;
+  border: 0;
+  outline: none;
+  resize: none;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Helvetica, Arial, sans-serif;
+  font-size: 15px;
+  line-height: 1.55;
+  color: transparent;
+  caret-color: #1a1a1a;
+  padding: 4px 0 12px;
+  min-height: 60px;
+  max-height: 200px;
+  overflow-y: hidden;
+  box-sizing: border-box;
+  transition: height 150ms ease;
+  position: relative;
+  z-index: 1;
+  display: block;
+}
+
+.input::placeholder {
+  color: #9b9591;
+}
+
+/* Selección visible aunque el color del texto sea transparente */
+.input::selection {
+  background: rgba(26, 26, 26, 0.15);
+  color: transparent;
+}
+
+.input::-moz-selection {
+  background: rgba(26, 26, 26, 0.15);
+  color: transparent;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid #ebe7dd;
+}
+
+.attachButton {
+  background: transparent;
+  border: 1px solid #e8e5dd;
+  border-radius: 6px;
+  padding: 6px;
+  cursor: pointer;
+  color: #6b6b6b;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.attachButton:hover {
+  background: #ebe7dd;
+  color: #1a1a1a;
+}
+
+.charCount {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 11px;
+  color: #9b9591;
+  font-variant-numeric: tabular-nums;
+}
+
+.charCountAtLimit {
+  color: #1a1a1a;
+}
+
+.submitButton {
+  background: #1a1a1a;
+  color: #fdfcf8;
+  border: 0;
+  border-radius: 6px;
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: opacity 120ms ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.submitButton:hover {
+  opacity: 0.85;
+}
+
+.submitButton:disabled {
+  opacity: 0.4;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* === Disabled state during submit === */
+.wrapper.disabled .input {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.wrapper.disabled .highlightLayer {
+  opacity: 0.6;
+}
+
+.wrapper.disabled .charCount {
+  opacity: 0.5;
+}
+
+.wrapper.disabled .attachButton {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* === Submit spinner === */
+.spinner {
+  width: 10px;
+  height: 10px;
+  border: 1.5px solid rgba(253, 252, 248, 0.35);
+  border-top-color: #fdfcf8;
+  border-radius: 50%;
+  animation: composeSpinnerSpin 700ms linear infinite;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+@keyframes composeSpinnerSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Keep the submit button visually active while submitting even though the
+ * wrapper is .disabled — the disabled attr handles real interactivity. */
+.wrapper.disabled .submitButton {
+  opacity: 0.8;
+}
+
+/* === Error banner === */
+.errorBanner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 16px;
+  padding: 11px 14px;
+  background: rgba(197, 48, 48, 0.06);
+  border: 1px solid rgba(197, 48, 48, 0.15);
+  border-radius: 8px;
+  animation: errorBannerSlideDown 220ms ease-out;
+}
+
+.errorIcon {
+  color: #c53030;
+  opacity: 0.75;
+  flex-shrink: 0;
+}
+
+.errorMessage {
+  flex: 1;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 11px;
+  line-height: 1.4;
+  color: #c53030;
+  opacity: 0.85;
+}
+
+.errorDismiss {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #c53030;
+  opacity: 0.5;
+  border-radius: 4px;
+  transition: opacity 120ms ease, background 120ms ease;
+  flex-shrink: 0;
+}
+
+.errorDismiss:hover {
+  opacity: 1;
+  background: rgba(197, 48, 48, 0.1);
+}
+
+@keyframes errorBannerSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Toggle de "compartir zona aproximada" (opt-in del autor, Close You).
+   Activo = el naranja cálido de la paleta; inactivo = gris discreto. */
+.locationButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #c4bfb1;
+  cursor: pointer;
+  transition: color 120ms ease, background 120ms ease;
+}
+
+.locationButton:hover {
+  color: #6b6b6b;
+  background: rgba(26, 26, 26, 0.05);
+}
+
+.locationButtonActive,
+.locationButtonActive:hover {
+  color: #a85432;
+  background: rgba(168, 84, 50, 0.1);
+}
+
+/* "La celda difuminada" — nota de privacidad del toggle de zona.
+   Micro-mapa de papel (retícula tenue + mancha cálida con blur real)
+   que MUESTRA el concepto: un área aproximada, nunca un punto. Borde
+   punteado estilo papel/recibo, compacto para no distraer del texto. */
+.privacyNote {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  /* margen inferior: respiro frente a las tabs del feed (no pegada) */
+  margin: 8px 0 14px;
+  padding: 8px 12px;
+  background: rgba(184, 132, 95, 0.04);
+  border: 1px dashed #d5cfc0;
+  border-radius: 8px;
+}
+
+.privacyMap {
+  flex-shrink: 0;
+  background: #fdfcf8;
+  border: 1px solid #ebe7dd;
+  border-radius: 6px;
+}
+
+.privacyText {
+  min-width: 0;
+}
+
+.privacyLine {
+  margin: 0 0 3px;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    system-ui, sans-serif;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #666;
+}
+
+/* El dato clave como chip terracota (estética de la paleta cálida). */
+.privacyChip {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: #f3e3d3;
+  color: #a85432;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* La garantía — el corazón del mensaje de confianza. */
+.privacyGuarantee {
+  margin: 0;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    system-ui, sans-serif;
+  font-size: 12.5px;
+  font-weight: 550;
+  color: #1a1a1a;
+}
+
+/* Microinteracción: el bloque entra suave y la zona "se asienta" (un
+   pulso de opacidad, UNA vez) al activar el opt-in. Discreto, y
+   respetando prefers-reduced-motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .privacyNote {
+    animation: privacyNoteIn 200ms ease-out;
+  }
+
+  .privacyZone {
+    animation: zoneSettle 900ms ease-out 1;
+  }
+}
+
+@keyframes privacyNoteIn {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes zoneSettle {
+  0% {
+    opacity: 0.25;
+  }
+  55% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 0.65;
+  }
+}
+
+.privacyZone {
+  opacity: 0.65;
+}
+
+/* Variante WARNING de la nota: mismo layout/tipografía, tinte y borde
+   terracota — advierte sin alarmar (el hilo sí se publicó). */
+.noteWarning {
+  background: rgba(168, 84, 50, 0.05);
+  border-color: #dcc0ad;
+}
+
+.noteWarning .privacyMap {
+  border-color: #e8d5c4;
+}
+
+/* Línea principal del aviso — paralela a .privacyGuarantee pero en el
+   color de aviso. */
+.warningPrimary {
+  margin: 0 0 3px;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    system-ui, sans-serif;
+  font-size: 12.5px;
+  font-weight: 550;
+  color: #a85432;
+}
+
+@media (max-width: 480px) {
+  .privacyNote {
+    padding: 8px 10px;
+  }
+}
+
+/* Toggle de zona con el permiso BLOQUEADO: no promete lo que no puede
+   cumplir — atenuado y not-allowed (el hint warning persistente guía). */
+.locationButtonBlocked,
+.locationButtonBlocked:hover {
+  color: #a3a3a3;
+  background: transparent;
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* 'x' de la nota de privacidad: discreta y proporcional, pero con área
+   táctil cómoda (28px). Cerrarla apaga el compartir zona. */
+.privacyClose {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: flex-start;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  margin-left: auto;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #a3a3a3;
+  cursor: pointer;
+  transition: color 120ms ease, background 120ms ease;
+}
+
+.privacyClose:hover {
+  color: #666;
+  background: rgba(26, 26, 26, 0.05);
+}
+
+.privacyClose:active {
+  color: #1a1a1a;
+}

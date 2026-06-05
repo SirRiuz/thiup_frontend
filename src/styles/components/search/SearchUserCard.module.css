@@ -1,0 +1,53 @@
+.card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 16px 8px;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid #ebe7dd;
+  cursor: pointer;
+  text-align: left;
+  transition: background 120ms ease;
+}
+
+.card:hover {
+  background: rgba(235, 231, 221, 0.4);
+}
+
+.identiconWrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  overflow: hidden;
+  flex: none;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.maskId {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 14px;
+  color: #1a1a1a;
+  font-weight: 500;
+}
+
+.meta {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 11px;
+  color: #6b6b6b;
+}
+
+.highlight {
+  background: rgba(26, 26, 26, 0.1);
+  color: #1a1a1a;
+  padding: 0 2px;
+  border-radius: 2px;
+}

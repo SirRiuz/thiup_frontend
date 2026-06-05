@@ -1,0 +1,123 @@
+/* PostProfileHoverCard — minimal vertical, warm palette */
+
+.card {
+  background: #fdfcf8;
+  border: 1px solid #e8e5dd;
+  border-radius: 10px;
+  padding: 18px;
+  min-width: 220px;
+  max-width: 240px;
+  text-align: center;
+  box-shadow: 0 4px 20px rgba(26, 26, 26, 0.06);
+  animation: hoverCardAppear 180ms ease-out;
+}
+
+@keyframes hoverCardAppear {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.identiconWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.identiconWrap > svg {
+  border-radius: 6px;
+}
+
+.hash {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 12px;
+  color: #1a1a1a;
+  font-weight: 600;
+  margin: 0 0 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.joined {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 10px;
+  color: #9b9591;
+  margin: 0 0 14px;
+}
+
+.stats {
+  display: flex;
+  gap: 0;
+  padding-top: 12px;
+  border-top: 1px solid #ebe7dd;
+}
+
+.stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: center;
+}
+
+.statValue {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 14px;
+  color: #1a1a1a;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.statLabel {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #9b9591;
+}
+
+.statDivider {
+  width: 1px;
+  background: #ebe7dd;
+  margin: 4px 0;
+  flex: none;
+}
+
+/* === Skeleton mientras cargan los datos reales (patrón warm del proyecto:
+   #ebe7dd + pulso de opacidad, como PostReplySkeleton) === */
+
+.skeletonBar {
+  display: inline-block;
+  background: #ebe7dd;
+  border-radius: 2px;
+  animation: hoverCardPulse 1.4s ease-in-out infinite;
+}
+
+.skeletonJoined {
+  width: 96px;
+  height: 10px;
+  margin: 2px 0 10px;
+}
+
+.skeletonStatValue {
+  width: 22px;
+  height: 12px;
+  margin-bottom: 2px;
+}
+
+@keyframes hoverCardPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}

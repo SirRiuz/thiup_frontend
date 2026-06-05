@@ -1,0 +1,87 @@
+/* HomeFeedCardSkeleton — placeholders durante el loading del feed */
+
+.skeleton {
+  padding: 18px 8px;
+  border-bottom: 1px solid #ebe7dd;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.stats {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.bar {
+  background: #ebe7dd;
+  border-radius: 2px;
+  animation: feedSkeletonPulse 1.4s ease-in-out infinite;
+}
+
+.identicon {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  border-radius: 3px;
+}
+
+.maskId {
+  width: 58px;
+  height: 11px;
+}
+
+.timestamp {
+  width: 26px;
+  height: 11px;
+}
+
+.trendingBadge {
+  width: 72px;
+  height: 14px;
+  border-radius: 3px;
+}
+
+.bodyLine {
+  height: 12px;
+}
+
+.line100 { width: 100%; }
+.line94 { width: 94%; }
+.line88 { width: 88%; }
+.line65 { width: 65%; }
+.line62 { width: 62%; }
+.line48 { width: 48%; }
+
+.statSmall {
+  width: 28px;
+  height: 11px;
+}
+
+.statMedium {
+  width: 36px;
+  height: 11px;
+}
+
+.statLarge {
+  width: 42px;
+  height: 11px;
+}
+
+@keyframes feedSkeletonPulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
