@@ -1,15 +1,17 @@
+import { useTranslation } from "react-i18next";
 import styles from "../../styles/components/home/HomeFeedCardSkeleton.module.css";
 
 /**
- * Skeleton placeholder que replica la estructura de HomeFeedCard.
+ * Skeleton placeholder that replicates the structure of HomeFeedCard.
  *
  * Props:
- *   variant: 'short' | 'medium' | 'long' — controla las líneas del body
- *            y la presencia del trending badge (solo en 'medium').
+ *   variant: 'short' | 'medium' | 'long' — controls the body lines and the
+ *            presence of the trending badge (only in 'medium').
  */
 function HomeFeedCardSkeleton({ variant = "medium" }) {
+  const { t } = useTranslation();
   return (
-    <div className={styles.skeleton} aria-busy="true" aria-label="Loading post">
+    <div className={styles.skeleton} aria-busy="true" aria-label={t("common.loadingPost")}>
       <div className={styles.header}>
         <div className={`${styles.bar} ${styles.identicon}`}></div>
         <div className={`${styles.bar} ${styles.maskId}`}></div>

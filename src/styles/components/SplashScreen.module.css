@@ -1,7 +1,7 @@
-/* Splash — telón animado (estilo Threads), warm + Inter */
+/* Splash — animated curtain (Threads style), warm + Inter */
 
-/* Telón: cubre todo el viewport, opaco, bloquea eventos (pointer-events
-   auto + fixed por encima de todo). 100dvh para móvil (con fallback vh). */
+/* Curtain: covers the whole viewport, opaque, blocks events (pointer-events
+   auto + fixed above everything). 100dvh for mobile (with vh fallback). */
 .curtain {
   position: fixed;
   inset: 0;
@@ -18,31 +18,17 @@
   transition: opacity 350ms ease;
 }
 
-/* Fade-out suave antes del unmount (lo dispara isLeaving). */
+/* Smooth fade-out before unmount (triggered by isLeaving). */
 .curtainLeaving {
   opacity: 0;
 }
 
-/* PLACEHOLDER del logo (squircle). La animación va aquí: al reemplazar el
-   contenido por el logo real, éste hereda el pulso sin tocar nada. */
-.logoPlaceholder {
-  width: 72px;
-  height: 72px;
-  border-radius: 20px;
-  background: #fdfcf8;
-  border: 1.5px dashed #d5cfc0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* Brand logo (squircle tile). The pulse animation lives here. */
+.logo {
   animation: splashPulse 2.2s ease-in-out infinite;
 }
 
-.logoHint {
-  font-size: 10px;
-  color: #a3a3a3;
-}
-
-/* Animación A — fade + scale suave en loop mientras la app carga. */
+/* Animation A — smooth fade + scale loop while the app loads. */
 @keyframes splashPulse {
   0% {
     opacity: 0;

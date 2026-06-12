@@ -1,13 +1,13 @@
 /**
- * Normaliza texto pegado de fuentes externas (X/Twitter, docs, paginas web)
- * para evitar artefactos:
- *   - CRLF / CR -> LF (saltos consistentes)
- *   - non-breaking space (U+00A0) -> espacio normal
- *   - caracteres zero-width invisibles (U+200B..U+200D, U+FEFF) -> eliminados
- *     (son la causa del "cursor raro" y de la desalineacion del overlay)
- *   - 3+ saltos seguidos -> 2 (evita huecos enormes, preserva parrafos)
+ * Normalizes text pasted from external sources (X/Twitter, docs, web pages)
+ * to avoid artifacts:
+ *   - CRLF / CR -> LF (consistent line breaks)
+ *   - non-breaking space (U+00A0) -> normal space
+ *   - invisible zero-width characters (U+200B..U+200D, U+FEFF) -> removed
+ *     (they cause the "weird cursor" and the overlay misalignment)
+ *   - 3+ consecutive breaks -> 2 (avoids huge gaps, preserves paragraphs)
  *
- * Preserva los saltos de linea intencionales: solo limpia el ruido.
+ * Preserves intentional line breaks: it only cleans up the noise.
  */
 export function normalizePastedText(text) {
   return (text || "")

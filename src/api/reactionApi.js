@@ -1,44 +1,44 @@
 /**
- * Llamadas al backend para reacciones, vía apiFetch (cifrado E2E intacto).
+ * Backend calls for reactions, via apiFetch (E2E encryption intact).
  *
- * Replica el contrato del legacy (src/services/reaction.js):
+ * Replicates the legacy contract (src/services/reaction.js):
  *
- *   GET  /reactions/            → catálogo de tipos de reacción [{ id, name, emoji }]
+ *   GET  /reactions/            → catalog of reaction types [{ id, name, emoji }]
  *   POST /reactions/ { reaction, thread }
  *
- * El POST es un único endpoint idempotente: el backend decide add / switch /
- * remove según el estado actual del user (modelo Facebook, 1 reacción por post).
- * El frontend SIEMPRE manda el id de la reacción clickeada — igual que el
- * legacy (ReactionBox.onReact llama createReactionService con el mismo id tanto
- * al reaccionar como al quitar). No hay DELETE ni PUT.
+ * The POST is a single idempotent endpoint: the backend decides add / switch /
+ * remove based on the user's current state (Facebook model, 1 reaction per post).
+ * The frontend ALWAYS sends the id of the clicked reaction — just like the
+ * legacy code (ReactionBox.onReact calls createReactionService with the same id both
+ * when reacting and when removing). There is no DELETE or PUT.
  */
 import { apiFetch } from "./client";
 
 const REACTIONS_ENDPOINT = "/reactions/";
 
 /**
- * Trae el catálogo de tipos de reacción disponibles. Se usa para resolver
- * el id de backend de un emoji que todavía no está presente en el post.
+ * Fetches the catalog of available reaction types. Used to resolve
+ * the backend id of an emoji that is not yet present on the post.
  *
- * @param {object} [options]  { signal } para AbortController.
+ * @param {object} [options]  { signal } for AbortController.
  * @returns {Promise<Array<{ id: any, name: string, emoji: string }>>}
  */
 export async function getReactions(options = {}) {
   const data = await apiFetch(`${REACTIONS_ENDPOINT}?_t=${Date.now()}`, {
     signal: options.signal,
   });
-  // El endpoint puede venir como array plano o como página DRF { results }.
+  // The endpoint may come as a flat array or as a DRF page { results }.
   return Array.isArray(data) ? data : data?.results || [];
 }
 
 /**
- * Aplica (o togglea) una reacción sobre un post. El backend resuelve si es
- * crear, cambiar o quitar según la reacción actual del user.
+ * Applies (or toggles) a reaction on a post. The backend resolves whether it is
+ * create, change, or remove based on the user's current reaction.
  *
  * @param {{ reactionId: any, postId: string }} params
- *   reactionId = id de backend del tipo de reacción.
- *   postId     = id del post/thread (campo `thread` en el payload legacy).
- * @returns {Promise<object>}  La respuesta del backend.
+ *   reactionId = backend id of the reaction type.
+ *   postId     = id of the post/thread (`thread` field in the legacy payload).
+ * @returns {Promise<object>}  The backend's response.
  */
 export function createReaction({ reactionId, postId }) {
   return apiFetch(REACTIONS_ENDPOINT, {

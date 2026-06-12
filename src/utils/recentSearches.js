@@ -1,13 +1,13 @@
 /**
- * Búsquedas recientes en localStorage.
+ * Recent searches in localStorage.
  *
- * Cada entrada: { text, type: 'query' | 'tag', timestamp } — el type permite
- * RE-ejecutar la búsqueda correcta al seleccionarla (query vs modo tag).
+ * Each entry: { text, type: 'query' | 'tag', timestamp } — the type allows
+ * RE-running the correct search when selecting it (query vs tag mode).
  *
- * Se guardan SOLO al ejecutar una búsqueda (Enter / seleccionar sugerencia),
- * nunca mientras se escribe. Máximo MAX_RECENT, sin duplicados (mismo
- * text+type), más reciente primero. Todo con try/catch: localStorage puede
- * estar deshabilitado o lleno — la app no debe romperse por eso.
+ * Saved ONLY when running a search (Enter / selecting a suggestion),
+ * never while typing. At most MAX_RECENT, no duplicates (same
+ * text+type), most recent first. All with try/catch: localStorage can
+ * be disabled or full — the app must not break because of that.
  */
 
 const STORAGE_KEY = "thiup:recent-searches";
@@ -27,7 +27,7 @@ function persist(entries) {
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
   } catch (err) {
-    /* storage lleno/deshabilitado: las recientes simplemente no persisten */
+    /* storage full/disabled: the recents simply don't persist */
   }
 }
 

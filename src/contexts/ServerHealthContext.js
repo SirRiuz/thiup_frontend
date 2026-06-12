@@ -9,28 +9,28 @@ import {
 import { checkServerHealth } from "../api/healthApi";
 
 /**
- * Estado global del health del servidor (Opción B):
- *   (a) verifica el healthcheck al cargar la app, y
- *   (b) re-verifica cuando cualquier request al backend falla con 5xx o con
- *       error de red (evento SERVER_ERROR_EVENT emitido por apiFetch).
+ * Global state of the server's health (Option B):
+ *   (a) checks the healthcheck when the app loads, and
+ *   (b) re-checks when any request to the backend fails with a 5xx or a
+ *       network error (SERVER_ERROR_EVENT event emitted by apiFetch).
  *
- * Re-VERIFICAR ante un 5xx (en vez de marcar down directo) evita falsos
- * positivos: un 500 puntual de un endpoint no significa que el servidor
- * esté caído — solo si el healthcheck también falla se muestra el Oops.
+ * RE-CHECKING on a 5xx (instead of marking down directly) avoids false
+ * positives: a one-off 500 from an endpoint doesn't mean the server is
+ * down — the Oops is only shown if the healthcheck also fails.
  *
- * La verificación inicial NO bloquea la app: isServerDown arranca en false y
- * el Oops solo aparece si el check confirma la caída.
+ * The initial check does NOT block the app: isServerDown starts at false and
+ * the Oops only appears if the check confirms the outage.
  */
 const ServerHealthContext = createContext(null);
 
-// Evento mínimo que apiFetch dispara ante 5xx / red caída (una línea allá,
-// cero acoplamiento con la lógica de cifrado).
+// Minimal event that apiFetch fires on a 5xx / network down (one line over
+// there, zero coupling with the encryption logic).
 export const SERVER_ERROR_EVENT = "thiup:server-error";
 
 export function ServerHealthProvider({ children }) {
   const [isServerDown, setIsServerDown] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
-  // Evita checks concurrentes (varios 5xx seguidos, doble click en retry).
+  // Avoids concurrent checks (several 5xx in a row, double-click on retry).
   const inFlightRef = useRef(false);
 
   const verify = useCallback(async () => {
@@ -43,12 +43,12 @@ export function ServerHealthProvider({ children }) {
     inFlightRef.current = false;
   }, []);
 
-  // (a) Verificación al cargar la app.
+  // (a) Check when the app loads.
   useEffect(() => {
     verify();
   }, [verify]);
 
-  // (b) Cualquier 5xx/red caída reportado por apiFetch => re-verificar.
+  // (b) Any 5xx/network down reported by apiFetch => re-check.
   useEffect(() => {
     const onServerError = () => verify();
     window.addEventListener(SERVER_ERROR_EVENT, onServerError);
@@ -58,8 +58,8 @@ export function ServerHealthProvider({ children }) {
   const value = {
     isServerDown,
     isChecking,
-    // 'Try again': re-verifica el healthcheck; si vuelve 200, isServerDown
-    // pasa a false y la app se muestra SIN recargar la página.
+    // 'Try again': re-checks the healthcheck; if it returns 200, isServerDown
+    // turns to false and the app is shown WITHOUT reloading the page.
     retry: verify,
   };
 
@@ -80,7 +80,7 @@ export function useServerHealth() {
   return ctx;
 }
 
-/** Renderiza `fallback` (la pantalla Oops) cuando el servidor está caído. */
+/** Renders `fallback` (the Oops screen) when the server is down. */
 export function ServerHealthGate({ fallback, children }) {
   const { isServerDown } = useServerHealth();
   return isServerDown ? fallback : children;

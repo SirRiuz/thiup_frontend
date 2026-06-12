@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import styles from "../../styles/components/post/PostLoadMoreButton.module.css";
 
 /**
@@ -7,13 +8,14 @@ import styles from "../../styles/components/post/PostLoadMoreButton.module.css";
  *
  * Props:
  *   - onClick: handler that kicks off the next batch fetch
- *   - label: optional override (default: "load more replies")
+ *   - label: optional override (default: el "load more replies" traducido)
  */
-function PostLoadMoreButton({ onClick, label = "load more replies" }) {
+function PostLoadMoreButton({ onClick, label }) {
+  const { t } = useTranslation();
   return (
     <div className={styles.wrapper}>
       <button type="button" className={styles.button} onClick={onClick}>
-        <span>{label}</span>
+        <span>{label || t("post.loadMoreReplies")}</span>
         <svg
           width="13"
           height="13"

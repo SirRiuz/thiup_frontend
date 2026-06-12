@@ -1,35 +1,39 @@
 import { useEffect, useLayoutEffect, useRef, useState, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import styles from "../../styles/components/post/PostReactionPicker.module.css";
 
+// `label` (in English) is the STABLE value that travels in the reaction's
+// payload; `labelKey` is only the VISIBLE text (tooltip/aria), translated.
 const REACTIONS = [
-  { id: "fire", emoji: "🔥", label: "fire" },
-  { id: "seen", emoji: "👁", label: "seen" },
-  { id: "solidarity", emoji: "✊", label: "solidarity" },
-  { id: "skeptical", emoji: "🤔", label: "skeptical" },
-  { id: "heartbreak", emoji: "💔", label: "heartbreak" },
+  { id: "fire", emoji: "🔥", label: "fire", labelKey: "reactions.fire" },
+  { id: "seen", emoji: "👁", label: "seen", labelKey: "reactions.seen" },
+  { id: "solidarity", emoji: "✊", label: "solidarity", labelKey: "reactions.solidarity" },
+  { id: "skeptical", emoji: "🤔", label: "skeptical", labelKey: "reactions.skeptical" },
+  { id: "heartbreak", emoji: "💔", label: "heartbreak", labelKey: "reactions.heartbreak" },
 ];
 
-// Margen mínimo del popover a los bordes del viewport.
+// Minimum margin from the popover to the viewport edges.
 const VIEWPORT_MARGIN = 8;
-// El offset base del CSS (.popover { left: -8px }).
+// The base offset from the CSS (.popover { left: -8px }).
 const BASE_LEFT_OFFSET = -8;
-// Clamp del pico: que no caiga sobre las esquinas redondeadas (radius 28px).
+// Clamp the tail: so it doesn't fall over the rounded corners (radius 28px).
 const TAIL_MIN_X = 24;
 
 function PostReactionPicker({ onSelect, contextId, currentReactionEmoji }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
-  // Desplazamiento horizontal para que el popover SIEMPRE quepa en el
-  // viewport, y posición X del pico (relativa al popover) para que la colita
-  // siga apuntando al '+' aunque el popover se haya desplazado.
+  // Horizontal shift so the popover ALWAYS fits in the viewport, and X
+  // position of the tail (relative to the popover) so the little tail keeps
+  // pointing at the '+' even if the popover has shifted.
   const [shiftX, setShiftX] = useState(0);
   const [tailX, setTailX] = useState(TAIL_MIN_X);
   const ref = useRef(null);
   const triggerRef = useRef(null);
   const popoverRef = useRef(null);
 
-  // Cálculo determinista e inmune al transform de la animación de entrada
-  // (offsetWidth = ancho de layout; rects del wrapper/trigger, no del
-  // popover escalado).
+  // Deterministic calculation, immune to the transform of the entry
+  // animation (offsetWidth = layout width; rects of the wrapper/trigger, not
+  // of the scaled popover).
   const recalcShift = useCallback(() => {
     const wrapper = ref.current;
     const trigger = triggerRef.current;
@@ -41,23 +45,23 @@ function PostReactionPicker({ onSelect, contextId, currentReactionEmoji }) {
     const maxLeft = window.innerWidth - VIEWPORT_MARGIN - width;
 
     let shift = 0;
-    if (baseLeft > maxLeft) shift = maxLeft - baseLeft; // se salía por la derecha
+    if (baseLeft > maxLeft) shift = maxLeft - baseLeft; // it was going off the right
     if (baseLeft + shift < VIEWPORT_MARGIN) {
-      shift = VIEWPORT_MARGIN - baseLeft; // nunca fuera por la izquierda
+      shift = VIEWPORT_MARGIN - baseLeft; // never off the left
     }
     setShiftX(shift);
 
-    // Pico apuntando al CENTRO del '+': su X es relativa al popover ya
-    // desplazado (no centrado fijo). Clamp para no pisar las esquinas
-    // redondeadas del popover.
+    // Tail pointing at the CENTER of the '+': its X is relative to the
+    // already-shifted popover (not fixed-centered). Clamp so it doesn't
+    // overlap the popover's rounded corners.
     const triggerRect = trigger.getBoundingClientRect();
     const triggerCenter = triggerRect.left + triggerRect.width / 2;
     const rawTailX = triggerCenter - (baseLeft + shift);
     setTailX(Math.max(TAIL_MIN_X, Math.min(width - TAIL_MIN_X, rawTailX)));
   }, []);
 
-  // Pre-paint: medir y reposicionar ANTES de pintar (sin flash). Re-cálculo
-  // en resize mientras esté abierto.
+  // Pre-paint: measure and reposition BEFORE painting (no flash). Recalculate
+  // on resize while open.
   useLayoutEffect(() => {
     if (!open) return undefined;
     recalcShift();
@@ -65,9 +69,9 @@ function PostReactionPicker({ onSelect, contextId, currentReactionEmoji }) {
     return () => window.removeEventListener("resize", recalcShift);
   }, [open, recalcShift]);
 
-  // Cerrar al hacer SCROLL: un popover anclado no debe quedar flotando
-  // desalineado cuando el contenido se mueve. capture:true porque el scroll
-  // NO burbujea — con captura se atrapa también el de contenedores internos.
+  // Close on SCROLL: an anchored popover shouldn't be left floating
+  // misaligned when the content moves. capture:true because scroll does NOT
+  // bubble — with capture it also catches that of inner containers.
   useEffect(() => {
     if (!open) return undefined;
     const close = () => setOpen(false);
@@ -104,7 +108,7 @@ function PostReactionPicker({ onSelect, contextId, currentReactionEmoji }) {
         type="button"
         className={`${styles.trigger} ${open ? styles.triggerOpen : ""}`}
         onClick={() => setOpen(!open)}
-        aria-label="Add reaction"
+        aria-label={t("post.addReaction")}
         aria-expanded={open}
         aria-haspopup="menu"
       >
@@ -127,15 +131,16 @@ function PostReactionPicker({ onSelect, contextId, currentReactionEmoji }) {
               }`}
               onClick={() => handleSelect(r)}
               role="menuitem"
-              aria-label={r.label}
+              aria-label={t(r.labelKey)}
             >
-              <span className={styles.tooltip}>{r.label}</span>
+              <span className={styles.tooltip}>{t(r.labelKey)}</span>
               <span className={styles.emoji}>{r.emoji}</span>
             </button>
           ))}
-          {/* Colita estilo burbuja de chat, apuntando hacia el '+' (abajo —
-              el popover se abre arriba del botón). Su left se calcula contra
-              el centro del trigger, así sigue apuntando aunque haya shift. */}
+          {/* Chat-bubble-style little tail, pointing toward the '+' (below —
+              the popover opens above the button). Its left is computed
+              against the trigger's center, so it keeps pointing even with a
+              shift. */}
           <span
             className={styles.tail}
             style={{ left: tailX }}

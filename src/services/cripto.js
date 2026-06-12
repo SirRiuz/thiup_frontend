@@ -1,18 +1,15 @@
-import JWT from "expo-jwt";
-import uuid from "react-uuid";
-import { API_SECRET_KEY } from "../settings";
 const CryptoJS = require("crypto-js");
 
 /**
- * Se encarga de decodificar la data que llega
- * del servidor.
+ * Decodes the data that arrives
+ * from the server.
  */
 const decodeData = (data) =>
   CryptoJS.enc.Base64.parse(data.split("").reverse().join(""));
 
 /**
- * Se encarga de deocificar la payload que llega
- * del servidor.
+ * Decodes the payload that arrives
+ * from the server.
  */
 function decodePayload(payload) {
   const REAL_PAYLOAD = payload.split("").reverse().join("");
@@ -24,8 +21,8 @@ function decodePayload(payload) {
 }
 
 /**
- * Se encarga de decodificar la informacion que
- * llega del servidor.
+ * Decrypts the information that
+ * arrives from the server.
  */
 function decrypt(props) {
   const { key, iv } = decodePayload(props.payload);
@@ -39,35 +36,32 @@ function decrypt(props) {
 }
 
 /**
- * Genera una firma criptografica aleatorea firmada
- * para que el backend pueda aceptar la peticion
+ * Cifra el body de un request — ESPEJO SIMÉTRICO EXACTO del decrypt de
+ * respuesta (mismo AES-CBC/PKCS7, mismo sobre base64 + reverse, formato
+ * key:iv invertido). NO es cripto nueva: es la dirección inversa del
+ * esquema que ya existe. La clave/iv se generan aquí (random) y viajan
+ * en el sobre → OPACIDAD de transporte, NO seguridad (TLS es la defensa
+ * real contra MITM).
+ *
+ * Devuelve { payload, data }: `payload` va en el header X-Request-Payload
+ * y `data` es el body (ciphertext base64 invertido); el backend lo
+ * descifra con el mismo formato (RequestDecryptMiddleware).
  */
-function getClientSing() {
-  var currentDateTime = new Date();
-  var year = currentDateTime.getFullYear();
-  var month = currentDateTime.getMonth() + 1;
-  var day = currentDateTime.getDate();
-  var hour = currentDateTime.getHours();
-  var minutes = currentDateTime.getMinutes();
-  var seconds = currentDateTime.getSeconds();
-  return JWT.encode(
-    {
-      timestamp:
-        year +
-        "-" +
-        month +
-        "-" +
-        day +
-        " " +
-        hour +
-        ":" +
-        minutes +
-        ":" +
-        seconds,
-      payload: uuid(),
-    },
-    API_SECRET_KEY
-  );
+function encrypt(plainString) {
+  const key = CryptoJS.lib.WordArray.random(16); // AES-128, igual que el BE
+  const iv = CryptoJS.lib.WordArray.random(16);
+  const cipher = CryptoJS.AES.encrypt(plainString, key, {
+    iv,
+    mode: CryptoJS.mode.CBC,
+    padding: CryptoJS.pad.Pkcs7,
+  });
+  const keyB64 = CryptoJS.enc.Base64.stringify(key);
+  const ivB64 = CryptoJS.enc.Base64.stringify(iv);
+  const ciphertextB64 = cipher.ciphertext.toString(CryptoJS.enc.Base64);
+  return {
+    payload: btoa(`${keyB64}:${ivB64}`).split("").reverse().join(""),
+    data: ciphertextB64.split("").reverse().join(""),
+  };
 }
 
-export { decrypt, getClientSing };
+export { decrypt, encrypt };

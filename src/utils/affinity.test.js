@@ -1,6 +1,6 @@
 /**
- * Tests del perfil de afinidad client-side (jsdom provee localStorage).
- * Verifican la cadena completa: interacción → storage → top tags.
+ * Tests for the client-side affinity profile (jsdom provides localStorage).
+ * They verify the full chain: interaction → storage → top tags.
  */
 import {
   addInteraction,
@@ -19,7 +19,7 @@ beforeEach(() => {
 test("addInteraction guarda los pesos en localStorage", () => {
   addInteraction(["censura", "peru"], AFFINITY_WEIGHTS.reaction);
 
-  // Persistido de verdad (no solo en memoria).
+  // Actually persisted (not just in memory).
   const raw = window.localStorage.getItem("thiup:affinity");
   expect(raw).toBeTruthy();
 
@@ -33,7 +33,7 @@ test("los pesos se acumulan por interacción (comentar 3, reaccionar 2, dwell 1)
   addInteraction(["censura"], AFFINITY_WEIGHTS.comment); // +3
   addInteraction(["censura"], AFFINITY_WEIGHTS.dwell); // +1
 
-  // ~6 (con el decay 0.99 aplicado a lo previo en cada suma).
+  // ~6 (with the 0.99 decay applied to the prior value on each addition).
   expect(getAffinityMap().censura).toBeGreaterThan(5.8);
   expect(getAffinityMap().censura).toBeLessThanOrEqual(6);
 });
@@ -45,7 +45,7 @@ test("getTopTags devuelve solo NOMBRES ordenados por peso — nunca pesos", () =
 
   const top = getTopTags(2);
   expect(top).toEqual(["censura", "peru"]);
-  // Solo strings: la firma de lo único que sale del dispositivo.
+  // Only strings: the signature of the only thing that leaves the device.
   top.forEach((t) => expect(typeof t).toBe("string"));
 });
 
@@ -88,20 +88,20 @@ test("tag existente suma peso (no duplica entrada); tag nuevo se crea", () => {
   addInteraction(extractTags("re: #mexico #canada"), 3);
 
   const map = getAffinityMap();
-  expect(Object.keys(map).length).toBe(2); // mexico + canada, sin dups
+  expect(Object.keys(map).length).toBe(2); // mexico + canada, no dups
   expect(map.mexico).toBeGreaterThan(4.9); // ~2*0.99 + 3
   expect(map.canada).toBeCloseTo(3);
 });
 
 test("tagsForContent: tags PROPIOS del reply; sin tags → fallback al hilo", () => {
-  // Reply con sus propios tags (cualquier nivel de anidación: la regla
-  // es la misma — solo importa el texto del contenido interactuado).
+  // Reply with its own tags (any nesting level: the rule
+  // is the same — only the text of the interacted content matters).
   expect(tagsForContent("re: vamos #canada #nyc #cali", ["encryption"]))
     .toEqual(["canada", "nyc", "cali"]);
-  // Reply sin tags → señal sobre el tema del hilo raíz.
+  // Reply without tags → signal about the root thread's topic.
   expect(tagsForContent("totalmente de acuerdo", ["encryption"]))
     .toEqual(["encryption"]);
-  // Sin tags en ningún lado → vacío (addInteraction hará no-op).
+  // No tags anywhere → empty (addInteraction will be a no-op).
   expect(tagsForContent("ok", [])).toEqual([]);
 });
 

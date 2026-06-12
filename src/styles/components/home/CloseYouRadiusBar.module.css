@@ -1,5 +1,5 @@
-/* Radio del Close You — chips mono uppercase como el resto de controles
-   del feed; activo en terracota cálido. Sin #FFFFFF. */
+/* Close You radius — mono uppercase chips like the rest of the feed
+   controls; active in warm terracotta. No #FFFFFF. */
 .bar {
   display: flex;
   align-items: center;
@@ -19,8 +19,8 @@
 .options {
   display: flex;
   gap: 6px;
-  /* UNA sola línea siempre: sin wrap (el "100 km" saltaba de línea en
-     pantallas pequeñas). Si no cabe, scroll horizontal discreto. */
+  /* ALWAYS a single line: no wrap (the "100 km" was wrapping on
+     small screens). If it doesn't fit, subtle horizontal scroll. */
   flex-wrap: nowrap;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
@@ -33,7 +33,7 @@
 }
 
 .chip {
-  flex-shrink: 0; /* los chips no se comprimen ni se parten */
+  flex-shrink: 0; /* the chips don't compress or break */
   white-space: nowrap;
   padding: 4px 10px;
   border: 1px solid #e5e0d3;
@@ -53,10 +53,10 @@
   border-color: #c4bfb1;
 }
 
-/* Durante la recarga los chips solo bloquean la interacción — SIN
-   cambio visual (el opacity 0.6 destellaba toda la fila en cada
-   request: el parpadeo reportado). El feed ya comunica la carga con
-   su atenuado, igual que search. */
+/* During reload the chips only block interaction — WITHOUT
+   visual change (opacity 0.6 made the whole row flash on every
+   request: the reported flicker). The feed already communicates loading
+   with its dimming, just like search. */
 .chip:disabled {
   cursor: default;
 }
@@ -75,8 +75,8 @@
     padding: 6px 6px 10px;
   }
 
-  /* Compactos pero tappables (alto cómodo, padding lateral justo):
-     los 4 presets caben en una línea hasta en ~340px. */
+  /* Compact but tappable (comfortable height, tight side padding):
+     the 4 presets fit on one line down to ~340px. */
   .chip {
     padding: 6px 8px;
     font-size: 10px;

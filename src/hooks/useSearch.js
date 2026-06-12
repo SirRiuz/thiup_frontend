@@ -9,81 +9,74 @@ import {
 import { useSearchCache } from "../contexts/SearchCacheContext";
 
 /**
- * State management de la búsqueda por query. Replica el patrón de FeedContext:
- *   - requestIdRef: solo el request más reciente actualiza state / apaga
- *     isLoading (evita race conditions al cambiar query o tab rápido).
- *   - cache busting (&_t) y paginación (next URL) vía searchApi.
- *   - loading diferenciado: isLoading + results vacíos => skeletons (lo decide
- *     la pantalla); isLoading + results presentes => dim (cambio de tab).
+ * State management for the search screen (Twitter/X model: a single fixed tab
+ * row). The tab is the SOURCE OF TRUTH driven by the URL (?tab=) and passed in;
+ * this hook only fetches the results for the current (query, tab).
  *
- * Preservación al volver (POP), patrón ThreadCacheContext: el estado se
- * lazy-inicializa desde SearchCacheContext, así el primer render ya pinta los
- * resultados (sin re-fetch) y el documento recupera su altura → el browser
- * restaura el scroll de forma nativa (ScrollToTop no interfiere en POP).
+ *   top    → posts ordered by precomputed MOMENTUM (-momentum_score)
+ *   latest → posts ordered chronologically (-create_at)
+ *   people → users
+ *   tags   → hashtags matching the query
  *
- * Un solo endpoint devuelve los counts de los 3 tipos + los resultados del tab
- * activo, así que las tabs muestran sus counts sin llamadas extra.
+ * 'top' and 'latest' are the SAME post search in two orders — sort is no longer
+ * a separate control, it's expressed as the two post tabs.
+ *
+ * Patterns kept from before: requestIdRef (only the most recent request writes
+ * state / clears isLoading — no races on quick query/tab changes); cache busting
+ * + pagination via searchApi; differentiated loading (empty => skeletons in the
+ * screen, present => dim on tab change); POP restoration from SearchCacheContext
+ * (lazy-init so the back navigation paints instantly, no re-fetch).
  */
 
-const EMPTY_COUNTS = { posts: 0, tags: 0, users: 0 };
+// Tab → backend params.
+const TYPE_OF = { top: "posts", latest: "posts", people: "users", tags: "tags" };
+const ORDERING_OF = { top: "-momentum_score", latest: "-create_at" };
 
-// Mapper de resultados por tab.
+// Results mapper per tab.
 const MAPPERS = {
-  posts: mapBackendPostToFrontend,
+  top: mapBackendPostToFrontend,
+  latest: mapBackendPostToFrontend,
+  people: mapBackendUserToFrontend,
   tags: mapBackendTagToFrontend,
-  users: mapBackendUserToFrontend,
 };
 
-// Clave de identidad por tab (para dedupe en loadMore, como hace el feed).
+// Identity key per tab (dedupe in loadMore, like the feed).
 const KEY_OF = {
-  posts: (p) => p.id,
+  top: (p) => p.id,
+  latest: (p) => p.id,
+  people: (u) => u.maskId,
   tags: (t) => t.name,
-  users: (u) => u.maskId,
 };
 
-function normalizeCounts(counts) {
-  if (!counts) return EMPTY_COUNTS;
-  return {
-    posts: counts.posts ?? 0,
-    tags: counts.tags ?? 0,
-    users: counts.users ?? 0,
-  };
-}
-
-export function useSearch(query) {
+export function useSearch(query, tab) {
   const { getCached, setCached } = useSearchCache();
-  // Para distinguir POP (back/forward: restaurar del cache) de PUSH/REPLACE
-  // (búsqueda fresca: fetch) cuando la query cambia SIN remount (la pantalla
-  // /search-new queda montada al navegar query↔tag).
+  // POP (back/forward to an already-loaded query|tab) restores from cache;
+  // PUSH/REPLACE (new search or tab change) fetches.
   const navigationType = useNavigationType();
 
   const trimmed = (query || "").trim();
-  const cacheKey = trimmed ? `q:${trimmed}` : null;
+  const activeTab = TYPE_OF[tab] ? tab : "top";
+  // Cache per (query, tab): each tab's results restore independently on POP.
+  const cacheKey = trimmed ? `q:${trimmed}|${activeTab}` : null;
 
-  // Snapshot del cache UNA sola vez al montar (lazy): si volvemos (POP) a una
-  // búsqueda ya hecha, el primer render sale con los resultados cacheados.
+  // Snapshot of the cache ONCE on mount (lazy): a POP back paints immediately.
   const [initialCache] = useState(() =>
     cacheKey ? getCached(cacheKey) : null
   );
 
-  const [activeTab, setActiveTab] = useState(
-    () => initialCache?.activeTab || "posts"
-  );
-  // Tab al que pertenecen los `results` actuales. Puede diferir de activeTab
-  // durante el cambio de tab: activeTab cambia al instante (highlight), pero
-  // results sigue siendo del tab anterior hasta que llega el fetch nuevo. La
-  // pantalla renderiza por loadedTab para no mezclar shapes (posts vs users).
-  const [loadedTab, setLoadedTab] = useState(
-    () => initialCache?.loadedTab || "posts"
-  );
   const [results, setResults] = useState(() => initialCache?.results || []);
-  const [counts, setCounts] = useState(
-    () => initialCache?.counts || EMPTY_COUNTS
+  // Tab the current `results` belong to. The screen renders by this (not the
+  // active tab) so a tab change never mixes shapes (posts vs users vs tags)
+  // during the in-flight fetch.
+  const [loadedTab, setLoadedTab] = useState(() =>
+    initialCache ? activeTab : null
   );
-  // Query al que pertenecen los counts actuales. Los counts son GLOBALES de
-  // la query (no del tab): cambiar de tab NO los invalida — siguen visibles y
-  // estables mientras llega el fetch del tab. Solo una query nueva los marca
-  // como pendientes (countsReady=false) hasta su primera respuesta.
+  // Counts of the 3 result types ({ posts, tags, users }) for the per-tab
+  // badges. GLOBAL to the query (every response carries all three), so they
+  // survive a tab change without flicker. `countsFor` ties them to the query
+  // that produced them: a NEW query invalidates them (badges hide) until its
+  // first response — never a stale or placeholder number.
+  const [counts, setCounts] = useState(() => initialCache?.counts || null);
   const [countsFor, setCountsFor] = useState(() =>
     initialCache ? trimmed : null
   );
@@ -91,62 +84,37 @@ export function useSearch(query) {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState(null);
   const [loadMoreError, setLoadMoreError] = useState(null);
-  const [hasMore, setHasMore] = useState(() =>
-    Boolean(initialCache?.nextUrl)
-  );
+  const [hasMore, setHasMore] = useState(() => Boolean(initialCache?.nextUrl));
   const [refetchKey, setRefetchKey] = useState(0);
 
   const nextUrlRef = useRef(initialCache?.nextUrl || null);
-  // Mismo patrón que FeedContext: contador incremental; solo el ID más alto
-  // (el más reciente) escribe state y apaga isLoading.
+  // Same pattern as FeedContext: only the highest (most recent) id writes state.
   const requestIdRef = useRef(0);
 
-  // Clave (query|tab|refetchKey) que el estado actual YA satisface — por el
-  // lazy-init del cache (POP back) o por un fetch exitoso previo. Si el
-  // effect corre para una clave ya satisfecha, NO re-fetchea (causa raíz del
-  // re-fetch al volver atrás). Una query/tab nueva o refetch() cambia la
-  // clave => fetch fresco.
+  // Key (query|tab|refetchKey) the current state already satisfies (cache
+  // lazy-init or a prior successful fetch): if it matches, no re-fetch on mount.
   const satisfiedKeyRef = useRef(
-    initialCache?.loadedTab
-      ? `${trimmed}|${initialCache.loadedTab}|0`
-      : null
+    initialCache ? `${trimmed}|${activeTab}|0` : null
   );
 
-  // Al cambiar el query empezamos una búsqueda nueva: volvemos al tab posts.
-  // Excepciones: (a) el primer run (montaje) — la tab viene del lazy-init del
-  // cache; (b) un POP a una query cacheada SIN remount (tag → back a query) —
-  // el fetch effect restaura la tab del cache, no hay que pisarla con posts.
-  const isFirstQueryRunRef = useRef(true);
-  useEffect(() => {
-    if (isFirstQueryRunRef.current) {
-      isFirstQueryRunRef.current = false;
-      return;
-    }
-    if (navigationType === "POP") {
-      const cached = cacheKey ? getCached(cacheKey) : null;
-      if (cached && cached.loadedTab) return;
-    }
-    setActiveTab("posts");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query]);
-
-  // Distinguen el MOTIVO de cada run del fetch effect: cambio de query
-  // (navegación) vs cambio de tab (interacción) vs refetch forzado.
-  const lastRunQueryRef = useRef(trimmed);
+  // Reason for each run: navigation (query/tab change) vs forced refetch.
+  const lastRunNavKeyRef = useRef(`${trimmed}|${activeTab}`);
   const lastRunRefetchKeyRef = useRef(0);
 
-  // Fetch de la primera página: corre al cambiar query, tab o refetchKey.
+  // First-page fetch: runs when query, tab or refetchKey changes.
   useEffect(() => {
-    const queryChanged = trimmed !== lastRunQueryRef.current;
+    const navKey = `${trimmed}|${activeTab}`;
+    const navChanged = navKey !== lastRunNavKeyRef.current;
     const refetchForced = refetchKey !== lastRunRefetchKeyRef.current;
-    lastRunQueryRef.current = trimmed;
+    lastRunNavKeyRef.current = navKey;
     lastRunRefetchKeyRef.current = refetchKey;
 
     if (!trimmed) {
       requestIdRef.current += 1;
       satisfiedKeyRef.current = null;
       setResults([]);
-      setCounts(EMPTY_COUNTS);
+      setLoadedTab(null);
+      setCounts(null);
       setCountsFor(null);
       setHasMore(false);
       setError(null);
@@ -155,32 +123,27 @@ export function useSearch(query) {
       return undefined;
     }
 
-    // STATE HIT: el estado actual ya es el de esta clave (lazy-init del
-    // montaje o run previo exitoso).
+    // STATE HIT: the current state is already that of this key.
     const runKey = `${trimmed}|${activeTab}|${refetchKey}`;
     if (satisfiedKeyRef.current === runKey) return undefined;
 
-    // CACHE HIT en POP SIN remount (query → tag → back: la pantalla quedó
-    // montada, así que el lazy-init no corre). Si la query a la que volvemos
-    // está cacheada, restauración COMPLETA (resultados, counts, tab) sin
-    // fetch. Solo aplica a cambios de QUERY por navegación POP — un cambio
-    // de tab, un refetch() o una búsqueda fresca (PUSH/REPLACE) sí fetchean.
-    if (queryChanged && !refetchForced && navigationType === "POP") {
+    // CACHE HIT on POP WITHOUT remount (back/forward to a loaded query|tab):
+    // full restoration without a fetch. Only navigation via POP — a fresh
+    // search, a tab change (PUSH/REPLACE) or refetch() do fetch.
+    if (navChanged && !refetchForced && navigationType === "POP") {
       const cached = getCached(cacheKey);
-      if (cached && cached.loadedTab) {
-        const restoredTab = cached.activeTab || cached.loadedTab;
-        requestIdRef.current += 1; // invalida cualquier fetch en vuelo
-        setActiveTab(restoredTab);
-        setLoadedTab(cached.loadedTab);
-        setResults(cached.results || []);
-        setCounts(cached.counts || EMPTY_COUNTS);
+      if (cached && cached.results) {
+        requestIdRef.current += 1; // invalidates any in-flight fetch
+        setResults(cached.results);
+        setLoadedTab(activeTab);
+        setCounts(cached.counts || null);
         setCountsFor(trimmed);
         nextUrlRef.current = cached.nextUrl || null;
         setHasMore(Boolean(cached.nextUrl));
         setError(null);
         setLoadMoreError(null);
         setIsLoading(false);
-        satisfiedKeyRef.current = `${trimmed}|${restoredTab}|${refetchKey}`;
+        satisfiedKeyRef.current = runKey;
         return undefined;
       }
     }
@@ -195,16 +158,28 @@ export function useSearch(query) {
       setLoadMoreError(null);
       try {
         const data = await fetchSearch({
+          // Same query for every tab so the backend's counts (computed per
+          // request from `q`) stay consistent across tabs. The leading '#' is
+          // normalized for TAG matching on the backend (tags are stored
+          // without '#'), so '#dns' and 'dns' find the same tag and yield the
+          // same tags count — without varying the query per tab.
           query: trimmed,
-          type: activeTab,
+          type: TYPE_OF[activeTab],
+          ordering: ORDERING_OF[activeTab],
           signal: controller.signal,
         });
         if (requestId !== requestIdRef.current) return;
         const mapper = MAPPERS[activeTab];
         setResults((data.results || []).map(mapper));
         setLoadedTab(activeTab);
-        setCounts(normalizeCounts(data.counts));
-        setCountsFor(trimmed);
+        if (data.counts) {
+          setCounts({
+            posts: data.counts.posts ?? 0,
+            tags: data.counts.tags ?? 0,
+            users: data.counts.users ?? 0,
+          });
+          setCountsFor(trimmed);
+        }
         nextUrlRef.current = data.next || null;
         setHasMore(Boolean(data.next));
         satisfiedKeyRef.current = runKey;
@@ -222,40 +197,21 @@ export function useSearch(query) {
 
     run();
     return () => controller.abort();
-    // navigationType/getCached/cacheKey solo se leen dentro de los guards;
-    // los triggers reales del effect son query, tab y refetchKey.
+    // navigationType/getCached/cacheKey are only read inside the guards; the
+    // effect's real triggers are query, tab and refetchKey.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trimmed, activeTab, refetchKey]);
 
-  // Sync al cache (un solo punto de escritura, como useThread): cada vez que
-  // el estado pertenece a la query actual (countsFor === trimmed), persistirlo
-  // para que el POP back lo restaure completo (incluida la paginación).
+  // Sync to the cache (single write point): persist the loaded tab's state so a
+  // POP back restores it completely (pagination included).
   useEffect(() => {
-    if (!cacheKey || countsFor !== trimmed) return;
+    if (!cacheKey || loadedTab !== activeTab) return;
     setCached(cacheKey, {
       results,
       counts,
-      activeTab,
-      loadedTab,
       nextUrl: nextUrlRef.current,
     });
-  }, [
-    cacheKey,
-    trimmed,
-    countsFor,
-    results,
-    counts,
-    activeTab,
-    loadedTab,
-    hasMore,
-    setCached,
-  ]);
-
-  // Cambia de tab => refetchea los resultados de ese tab (con loading => dim,
-  // los results del tab anterior se mantienen mientras carga, como el feed).
-  const selectTab = useCallback((tab) => {
-    setActiveTab(tab);
-  }, []);
+  }, [cacheKey, activeTab, loadedTab, results, counts, hasMore, setCached]);
 
   const loadMore = useCallback(async () => {
     if (!nextUrlRef.current || isLoadingMore || isLoading) return;
@@ -285,19 +241,15 @@ export function useSearch(query) {
     setRefetchKey((k) => k + 1);
   }, []);
 
-  const totalCount = counts.posts + counts.tags + counts.users;
-  // true cuando los counts pertenecen a la query actual: cambiar de tab no lo
-  // apaga (counts estables, sin parpadeo); una query nueva sí, hasta cargar.
-  const countsReady = Boolean(trimmed) && countsFor === trimmed;
+  // Expose counts ONLY when they belong to the current query — during a new
+  // query's load they're stale, so the screen hides the badges.
+  const currentCounts =
+    trimmed && countsFor === trimmed ? counts : null;
 
   return {
-    activeTab,
     loadedTab,
-    selectTab,
     results,
-    counts,
-    countsReady,
-    totalCount,
+    counts: currentCounts,
     isLoading,
     isLoadingMore,
     error,

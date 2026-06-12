@@ -1,5 +1,6 @@
+import { useTranslation } from "react-i18next";
 import MaskAvatar from "../MaskAvatar";
-// PostMoreMenu (los tres puntos) oculto temporalmente — se usará más adelante.
+// PostMoreMenu (the three dots) temporarily hidden — will be used later.
 // import PostMoreMenu from "./PostMoreMenu";
 import PostProfileTrigger from "./PostProfileTrigger";
 import PostReactionPicker from "./PostReactionPicker";
@@ -26,13 +27,14 @@ function PostReply({
   onReplyClick,
   onHashtagClick,
 }) {
+  const { t } = useTranslation();
   const isSubReply = Boolean(parentId);
   const identiconSize = isSubReply ? 18 : 20;
   const replyClassName = `${styles.reply} ${isSubReply ? styles.subReply : ""} ${
     isLast ? styles.lastReply : ""
   } ${isHighlighted ? styles.highlighted : ""}`;
-  // Mismo tamaño en TODOS los niveles de anidamiento (15/20px, como las de
-  // primer nivel) — antes las sub-replies bajaban a 14px.
+  // Same size at ALL nesting levels (15/20px, like the first-level ones) —
+  // previously the sub-replies dropped to 14px.
   const bodyClassName = styles.body;
 
   return (
@@ -65,7 +67,7 @@ function PostReply({
           </>
         )}
         <span className={styles.spacer} />
-        {/* Oculto temporalmente — se usará más adelante:
+        {/* Temporarily hidden — will be used later:
         <PostMoreMenu maskId={mask?.id} /> */}
       </div>
 
@@ -81,6 +83,7 @@ function PostReply({
             key={r.emoji}
             emoji={r.emoji}
             count={r.count}
+            name={r.name}
             active={r.userReacted}
             variant="reply"
             onClick={() =>
@@ -116,7 +119,7 @@ function PostReply({
             <polyline points="9 17 4 12 9 7" />
             <path d="M20 18v-2a4 4 0 0 0-4-4H4" />
           </svg>
-          reply
+          {t("post.reply")}
         </button>
       </div>
     </div>

@@ -45,9 +45,9 @@
   color: #6b6b6b;
 }
 
+/* Search match — emphasis from weight, no background (same color as the text). */
 .highlight {
-  background: rgba(26, 26, 26, 0.1);
-  color: #1a1a1a;
-  padding: 0 2px;
-  border-radius: 2px;
+  background: none;
+  color: inherit;
+  font-weight: 700;
 }

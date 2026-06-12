@@ -16,31 +16,36 @@ import {
   queryGeolocationPermission,
   subscribeGeolocationPermission,
 } from "../utils/geoPermission";
+import { getCoarsePosition } from "../utils/robustGeolocation";
+import { prependToMyThreadsCache } from "../hooks/useMyThreads";
 
 const FeedContext = createContext(null);
 
 const POSTS_ENDPOINT = "/threads/";
-// Los dos feeds del home — MISMO motor en el backend (umbral + momentum +
-// gracia + paginación POST); cambian filtro y boost:
-//   For You  → tags de afinidad + región (personal)
-//   Close You → celdas geohash ~10km + proximidad (geográfico)
+// The home's two feeds — SAME engine in the backend (threshold + momentum +
+// grace + POST pagination); the filter and boost change:
+//   For You  → affinity tags + region (personal)
+//   Close You → ~10km geohash cells + proximity (geographic)
 const FORYOU_ENDPOINT = "/threads/foryou/";
 const CLOSEYOU_ENDPOINT = "/threads/closeyou/";
 
 export function FeedProvider({ children }) {
   const [posts, setPosts] = useState([]);
-  // Tab activa del home: For You (default) | Close You.
+  // Active home tab: For You (default) | Close You.
   const [feedTab, setFeedTab] = useState("foryou");
-  // Estado del opt-in de ubicación del Close You:
-  // idle | prompt (pedir permiso) | locating | ready | denied | unsupported
+  // State of the Close You location opt-in:
+  // idle | prompt (ask permission) | locating | ready | denied | unsupported
   const [closeYouStatus, setCloseYouStatus] = useState("idle");
-  // Celda geohash del lector (precisión 5, fuzzeada) — EFÍMERA: vive
-  // SOLO en memoria (ref), jamás en localStorage ni persistida: no se
-  // construye ningún mapa de ubicaciones de personas. El backend genera
-  // el grid del radio a partir de ella.
+  // Reader's geohash cell (precision 5, fuzzed) — EPHEMERAL: it lives
+  // ONLY in memory (ref), never in localStorage nor persisted: no map of
+  // people's locations is built. The backend generates the radius grid
+  // from it.
   const closeYouCellRef = useRef(null);
-  // Radio del Close You (km). Se persiste SOLO el número (no es dato
-  // sensible) para recordar la preferencia entre sesiones.
+  // Counter of Close You geolocation attempts: only the most recent attempt
+  // writes state (the robust strategy can take a while).
+  const closeYouGeoAttemptRef = useRef(0);
+  // Close You radius (km). ONLY the number is persisted (it's not sensitive
+  // data) to remember the preference between sessions.
   const [closeYouRadius, setCloseYouRadiusState] = useState(() => {
     try {
       const saved = parseFloat(
@@ -50,7 +55,7 @@ export function FeedProvider({ children }) {
         return Math.min(100, Math.max(15, saved));
       }
     } catch (err) {
-      /* sin storage */
+      /* no storage */
     }
     return 15;
   });
@@ -62,34 +67,34 @@ export function FeedProvider({ children }) {
   const [hasMore, setHasMore] = useState(false);
   const [hasInitialized, setHasInitialized] = useState(false);
   const [refetchKey, setRefetchKey] = useState(0);
-  // Paginación POST: el body del feed (lang/region/tags) se fija en el
-  // fetch inicial y loadMore re-POSTea el MISMO body a ?page=N+1 (el
-  // ?page= es corto y no sensible; los tags van siempre en el body).
+  // POST pagination: the feed body (lang/region/tags) is fixed on the
+  // initial fetch and loadMore re-POSTs the SAME body to ?page=N+1 (the
+  // ?page= is short and not sensitive; the tags always go in the body).
   const feedBodyRef = useRef({});
   const feedEndpointRef = useRef(FORYOU_ENDPOINT);
   const pageRef = useRef(1);
   const hasNextPageRef = useRef(false);
-  // Counter incremental: cada request del initial fetch obtiene un ID único.
-  // Solo el request con el ID más alto (el más reciente) actualiza state y
-  // apaga isLoading. Reemplaza el patrón `let cancelled = false`, que podía
-  // dejar isLoading stuck en true si el último fetch también se cancelaba.
+  // Incremental counter: each initial-fetch request gets a unique ID.
+  // Only the request with the highest ID (the most recent) updates state and
+  // turns off isLoading. Replaces the `let cancelled = false` pattern, which
+  // could leave isLoading stuck on true if the last fetch was also cancelled.
   const requestIdRef = useRef(0);
-  // Firma de los top tags usados en el ÚLTIMO fetch. Si el perfil de
-  // afinidad cambió mientras el usuario navegaba (interactuó en un thread),
-  // ensureLoaded dispara una recarga dim al volver al home — así la
-  // personalización se ve en la misma sesión, sin esperar un reload.
+  // Signature of the top tags used in the LAST fetch. If the affinity profile
+  // changed while the user was navigating (they interacted in a thread),
+  // ensureLoaded triggers a dim reload on returning to the home — so the
+  // personalization shows in the same session, without waiting for a reload.
   const lastTagsSignatureRef = useRef(null);
 
-  // Fetch initial — solo corre cuando hasInitialized se vuelve true.
-  // Evita un fetch al cargar la app si el usuario nunca visita /home-new.
+  // Initial fetch — only runs when hasInitialized becomes true.
+  // Avoids a fetch on app load if the user never visits /home-new.
   useEffect(() => {
     if (!hasInitialized) return undefined;
-    // Close You sin celdas → no hay nada que pedir todavía (el área del
-    // feed muestra el gate de opt-in / denied en HomeNew). CLAVE: apagar
-    // isLoading aquí — en la entrada FRÍA por URL (?tab=cy), ensureLoaded
-    // acababa de encenderla (anti-flash del For You) y este return
-    // temprano la dejaba atascada en true para siempre, congelando las
-    // tabs (HomeFilterBar ignora clicks mientras isLoading) y el spinner.
+    // Close You with no cells → there's nothing to request yet (the feed
+    // area shows the opt-in / denied gate in HomeNew). KEY: turn off
+    // isLoading here — on a COLD entry via URL (?tab=cy), ensureLoaded had
+    // just turned it on (For You anti-flash) and this early return left it
+    // stuck on true forever, freezing the tabs (HomeFilterBar ignores
+    // clicks while isLoading) and the spinner.
     if (feedTab === "closeyou" && !closeYouCellRef.current) {
       setIsLoading(false);
       return undefined;
@@ -104,20 +109,20 @@ export function FeedProvider({ children }) {
       setError(null);
       setLoadMoreError(null);
       try {
-        // POST con los params del feed en el BODY — PRIVACIDAD: los tags
-        // revelan intereses y en GET quedaban en los access logs de
-        // nginx/proxies (la URL se loggea; el body no). Se envían SOLO
-        // los nombres de los top tags del perfil de afinidad — efímeros;
-        // el mapa completo y sus pesos NUNCA salen del dispositivo (ver
-        // src/utils/affinity.js). Sin tags (usuario nuevo) → body sin
-        // tags → top global (cold start). lang/region vienen de
-        // navigator.language, sin GeoIP. Sin `_t`: POST no se cachea.
+        // POST with the feed params in the BODY — PRIVACY: the tags
+        // reveal interests and in a GET they ended up in nginx/proxies'
+        // access logs (the URL is logged; the body isn't). ONLY the names
+        // of the affinity profile's top tags are sent — ephemeral; the
+        // full map and its weights NEVER leave the device (see
+        // src/utils/affinity.js). No tags (new user) → body with no
+        // tags → global top (cold start). lang/region come from
+        // navigator.language, no GeoIP. No `_t`: POST is not cached.
         let endpoint;
         let body;
         if (feedTab === "closeyou") {
-          // Close You: SOLO la celda del lector (efímera, de memoria) +
-          // el radio elegido — sin tags ni región: es geográfico, no
-          // personal. El backend expande el grid adaptativo.
+          // Close You: ONLY the reader's cell (ephemeral, in memory) +
+          // the chosen radius — no tags or region: it's geographic, not
+          // personal. The backend expands the adaptive grid.
           endpoint = CLOSEYOU_ENDPOINT;
           body = {
             geohash: closeYouCellRef.current,
@@ -153,7 +158,7 @@ export function FeedProvider({ children }) {
         setHasMore(false);
         hasNextPageRef.current = false;
       } finally {
-        // Solo el request más reciente apaga isLoading.
+        // Only the most recent request turns off isLoading.
         if (requestId === requestIdRef.current) setIsLoading(false);
       }
     }
@@ -164,19 +169,19 @@ export function FeedProvider({ children }) {
     };
   }, [hasInitialized, refetchKey, feedTab]);
 
-  // Lazy init trigger — HomeNew lo llama al montar.
-  // Idempotente: en montajes posteriores hasInitialized ya es true → no
-  // refetch... SALVO que el perfil de afinidad haya cambiado desde el
-  // último fetch (el usuario reaccionó/comentó/leyó en un thread): en ese
-  // caso recarga con los tags frescos. Es una recarga DIM (hay posts
-  // visibles → feedItemsReloading), no skeletons, y solo si de verdad
-  // cambió la firma — volver al home sin interacciones nuevas no refetchea
-  // (la restauración de scroll del back-nav queda intacta).
-  // setIsLoading(true) sincrónico evita el flash de empty-state entre el
-  // setHasInitialized y el commit del fetch effect.
+  // Lazy init trigger — HomeNew calls it on mount.
+  // Idempotent: on later mounts hasInitialized is already true → no
+  // refetch... UNLESS the affinity profile changed since the last fetch
+  // (the user reacted/commented/read in a thread): in that case it reloads
+  // with the fresh tags. It's a DIM reload (there are visible posts →
+  // feedItemsReloading), not skeletons, and only if the signature really
+  // changed — returning to the home with no new interactions doesn't refetch
+  // (the back-nav scroll restoration stays intact).
+  // The synchronous setIsLoading(true) avoids the empty-state flash between
+  // setHasInitialized and the commit of the fetch effect.
   const ensureLoaded = useCallback(() => {
     if (hasInitialized) {
-      // La firma de afinidad solo aplica al For You (Close You no usa tags).
+      // The affinity signature only applies to For You (Close You doesn't use tags).
       if (feedTab === "foryou") {
         const signature = getTopTags(TOP_TAGS_COUNT).join(",");
         if (signature !== lastTagsSignatureRef.current) {
@@ -189,19 +194,34 @@ export function FeedProvider({ children }) {
     setIsLoading(true);
   }, [hasInitialized, feedTab]);
 
-  // Opt-in del lector: pedir ubicación, fuzzear + codificar a celdas
-  // geohash GRUESAS (precisión 5) y consultar. Las coords se descartan
-  // al instante; las celdas viven solo en memoria (efímeras). El ÚNICO
-  // recuerdo persistente es el booleano de que el usuario optó
-  // (fallback para navegadores sin Permissions API) — jamás la zona.
+  // Reader opt-in: ask for location, fuzz + encode to COARSE geohash cells
+  // (precision 5) and query. The coords are discarded instantly; the cells
+  // live only in memory (ephemeral). The ONLY persistent memory is the
+  // boolean that the user opted in (fallback for browsers without the
+  // Permissions API) — never the area.
+  //
+  // The acquisition is ROBUST (getCoarsePosition): low accuracy + cache +
+  // backoff retries on POSITION_UNAVAILABLE/TIMEOUT (WebKit's transient
+  // kCLErrorLocationUnknown) + a watchPosition fallback. The error state is
+  // only shown after EXHAUSTING the whole strategy; with this, a
+  // CoreLocation hiccup no longer breaks Close You with the permission
+  // granted.
+  //
+  // Anti-stale guard: the strategy can take several seconds — if the user
+  // re-triggers (Try again / re-enter), only the most recent attempt writes
+  // state.
   const enableCloseYou = useCallback(() => {
     if (typeof navigator === "undefined" || !navigator.geolocation) {
       setCloseYouStatus("unsupported");
       return;
     }
     setCloseYouStatus("locating");
-    navigator.geolocation.getCurrentPosition(
+    closeYouGeoAttemptRef.current += 1;
+    const attemptId = closeYouGeoAttemptRef.current;
+
+    getCoarsePosition().then(
       (position) => {
+        if (attemptId !== closeYouGeoAttemptRef.current) return;
         closeYouCellRef.current = geohashForPosition(
           position.coords.latitude,
           position.coords.longitude
@@ -209,32 +229,32 @@ export function FeedProvider({ children }) {
         try {
           window.localStorage.setItem("thiup:closeyou-optin", "true");
         } catch (err) {
-          /* sin storage: el opt-in no se recuerda, nada se rompe */
+          /* no storage: the opt-in isn't remembered, nothing breaks */
         }
         setCloseYouStatus("ready");
         setRefetchKey((k) => k + 1);
       },
       (geoError) => {
-        // code 1 = PERMISSION_DENIED (bloqueado a nivel navegador →
-        // instrucciones de ajustes). code 2/3 (sin señal / timeout) son
-        // TRANSITORIOS → estado "error" con retry: mostrar "blocked"
-        // ahí era engañoso.
+        if (attemptId !== closeYouGeoAttemptRef.current) return;
+        // code 1 = PERMISSION_DENIED (blocked at the browser level →
+        // settings instructions; NEVER retried). Any other error reaches
+        // here only after exhausting retries + fallback → "error" state
+        // with retry.
         setCloseYouStatus(
           geoError && geoError.code === 1 ? "denied" : "error"
         );
-      },
-      { maximumAge: 300000, timeout: 10000 }
+      }
     );
   }, []);
 
-  // "Try again" del estado de error/bloqueado: re-verifica el estado
-  // REAL del permiso y actúa según corresponda:
-  //   prompt  → getCurrentPosition REABRE el diálogo nativo del navegador
-  //   granted → reintento directo (recupera timeouts / falta de señal)
-  //   denied  → el navegador NO permite reabrir el diálogo: se queda en
-  //             el estado con las instrucciones de ajustes
-  //   sin Permissions API → intento directo (abre el diálogo si está
-  //             sin decidir; si está bloqueado, el error lo captura)
+  // "Try again" from the error/blocked state: re-checks the REAL state of
+  // the permission and acts accordingly:
+  //   prompt  → getCurrentPosition REOPENS the browser's native dialog
+  //   granted → direct retry (recovers from timeouts / lack of signal)
+  //   denied  → the browser does NOT allow reopening the dialog: it stays
+  //             in the state with the settings instructions
+  //   no Permissions API → direct attempt (opens the dialog if it's
+  //             undecided; if it's blocked, the error captures it)
   const retryCloseYou = useCallback(async () => {
     setCloseYouStatus("locating");
     const state = await queryGeolocationPermission();
@@ -245,8 +265,8 @@ export function FeedProvider({ children }) {
     enableCloseYou();
   }, [enableCloseYou]);
 
-  // Cambia el radio del Close You: clamp 15-100, persiste el número y
-  // recarga el feed (dim, sin parpadeo) si la tab está activa.
+  // Changes the Close You radius: clamp 15-100, persists the number and
+  // reloads the feed (dim, no flicker) if the tab is active.
   const setCloseYouRadius = useCallback((km) => {
     const clamped = Math.min(100, Math.max(15, Number(km) || 15));
     closeYouRadiusRef.current = clamped;
@@ -254,21 +274,21 @@ export function FeedProvider({ children }) {
     try {
       window.localStorage.setItem("thiup:closeyou-radius", String(clamped));
     } catch (err) {
-      /* sin storage: no persiste, no rompe */
+      /* no storage: doesn't persist, doesn't break */
     }
     setRefetchKey((k) => k + 1);
   }, []);
 
-  // Decide qué mostrar al entrar a Close You SIN celdas, consultando el
-  // estado REAL del permiso (Permissions API — es estado del navegador,
-  // no ubicación: no toca la privacidad):
-  //   granted → ubicación directa, SIN re-mostrar el prompt (el bug)
-  //   prompt  → opt-in explicativo (el navegador preguntará al activar)
-  //   denied  → estado "bloqueado, actívalo en ajustes" (re-pedir es
-  //             imposible a nivel navegador)
-  // Sin Permissions API (Safari viejo) → si el usuario ya optó antes
-  // (flag), intentar directo (si el permiso sigue concedido no
-  // re-pregunta); si no, prompt.
+  // Decides what to show on entering Close You WITHOUT cells, by querying
+  // the REAL state of the permission (Permissions API — it's browser state,
+  // not location: it doesn't touch privacy):
+  //   granted → direct location, WITHOUT re-showing the prompt (the bug)
+  //   prompt  → explanatory opt-in (the browser will ask on activation)
+  //   denied  → "blocked, enable it in settings" state (re-asking is
+  //             impossible at the browser level)
+  // Without the Permissions API (old Safari) → if the user already opted in
+  // before (flag), try directly (if the permission is still granted it
+  // doesn't re-ask); otherwise, prompt.
   const resolveCloseYouEntry = useCallback(async () => {
     const state = await queryGeolocationPermission();
 
@@ -285,7 +305,7 @@ export function FeedProvider({ children }) {
       return;
     }
 
-    // Fallback sin Permissions API.
+    // Fallback without the Permissions API.
     let optedBefore = false;
     try {
       optedBefore =
@@ -300,10 +320,10 @@ export function FeedProvider({ children }) {
     }
   }, [enableCloseYou]);
 
-  // Permiso EN VIVO: si el usuario lo cambia en los ajustes del
-  // navegador, el estado del Close You no se queda stale — conceder
-  // estando en el gate bloqueado carga el feed; bloquear invalida las
-  // celdas y muestra el gate correcto en la próxima entrada.
+  // LIVE permission: if the user changes it in the browser's settings,
+  // the Close You state doesn't go stale — granting while on the blocked
+  // gate loads the feed; blocking invalidates the cells and shows the
+  // correct gate on the next entry.
   const feedTabRef = useRef(feedTab);
   useEffect(() => {
     feedTabRef.current = feedTab;
@@ -319,7 +339,7 @@ export function FeedProvider({ children }) {
       if (state === "granted") {
         if (status === "denied" || status === "unsupported") {
           if (feedTabRef.current === "closeyou") {
-            // Estaba mirando el gate bloqueado: cargar directo.
+            // Was looking at the blocked gate: load directly.
             enableCloseYou();
           } else {
             setCloseYouStatus("idle");
@@ -336,9 +356,9 @@ export function FeedProvider({ children }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Cambio de tab del home. Close You sin celdas → resolver primero el
-  // estado real del permiso (sin re-mostrar prompts innecesarios). La
-  // recarga entre tabs es DIM (posts visibles), mismo patrón del resto.
+  // Home tab change. Close You with no cells → first resolve the real
+  // state of the permission (without re-showing unnecessary prompts). The
+  // reload between tabs is DIM (posts visible), same pattern as the rest.
   const selectFeedTab = useCallback((tab) => {
     if (tab === feedTab) return;
     if (tab === "closeyou" && !closeYouCellRef.current) {
@@ -355,9 +375,9 @@ export function FeedProvider({ children }) {
     if (!hasNextPageRef.current || isLoadingMore || isLoading) return;
     setIsLoadingMore(true);
     try {
-      // Siguiente página: re-POST del MISMO body del feed (lang/region/
-      // tags congelados en el fetch inicial — la página N debe ser
-      // coherente con la 1) a ?page=N+1.
+      // Next page: re-POST of the SAME feed body (lang/region/tags
+      // frozen on the initial fetch — page N must be consistent with
+      // page 1) to ?page=N+1.
       const nextPage = pageRef.current + 1;
       const data = await apiFetch(
         `${feedEndpointRef.current}?page=${nextPage}`,
@@ -397,14 +417,14 @@ export function FeedProvider({ children }) {
     const payload = {
       text: trimmed,
       content: buildDraftJsContent(trimmed),
-      // El hilo queda etiquetado con el idioma/región de quien lo crea
-      // (navigator.language): language alimenta el filtro de idioma del
-      // For You; region el boost regional. Sin GeoIP.
+      // The thread is tagged with the language/region of whoever creates it
+      // (navigator.language): language feeds For You's language filter;
+      // region the regional boost. No GeoIP.
       language: getLanguage(),
       region: getCountryCode(),
     };
-    // geohash: SOLO si el autor activó compartir ubicación (opt-in).
-    // Llega ya grueso (precisión 5) y fuzzeado desde HomeCompose.
+    // geohash: ONLY if the author enabled location sharing (opt-in).
+    // It arrives already coarse (precision 5) and fuzzed from HomeCompose.
     if (geohash) payload.geohash = geohash;
 
     const created = await apiFetch(POSTS_ENDPOINT, {
@@ -416,6 +436,9 @@ export function FeedProvider({ children }) {
     setPosts((prev) =>
       prev.some((p) => p.id === mapped.id) ? prev : [mapped, ...prev]
     );
+    // Same prepend to the My threads cache: the new thread shows up in the
+    // user's list when they visit it — freshness without extra requests.
+    prependToMyThreadsCache(mapped);
     return mapped;
   }, []);
 

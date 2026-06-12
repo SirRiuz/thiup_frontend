@@ -22,11 +22,11 @@ import { useThreadCache } from "../contexts/ThreadCacheContext";
 import { buildDraftJsContent } from "../utils/draftjs";
 
 /**
- * Resuelve el id de backend del tipo de reacción clickeado. El picker usa ids
- * semánticos ("fire", "seen", …), pero el POST /reactions/ necesita el id real.
- *   1. Si el emoji ya está en el post, su reacción trae el id de backend.
- *   2. Si no, lo buscamos en el catálogo (/reactions/) por emoji o por name.
- * Devuelve null si no se puede resolver (sin catálogo y emoji nuevo).
+ * Resolves the backend id of the clicked reaction type. The picker uses
+ * semantic ids ("fire", "seen", …), but POST /reactions/ needs the real id.
+ *   1. If the emoji is already on the post, its reaction carries the backend id.
+ *   2. Otherwise, we look it up in the catalog (/reactions/) by emoji or by name.
+ * Returns null if it can't be resolved (no catalog and a new emoji).
  */
 function resolveReactionId(clicked, post, catalog) {
   const onPost = (post.reactions || []).find(
@@ -43,14 +43,14 @@ function resolveReactionId(clicked, post, catalog) {
 }
 
 /**
- * Encapsula todo el state del thread de /post/:id/.
+ * Encapsulates all the state of the /post/:id/ thread.
  *
- * Es un hook local (no Context global como FeedContext) porque cada visita a un
- * thread es un fetch fresco e independiente — no hay nada que persistir entre
- * navegaciones. Pero el patrón interno anti-race (requestIdRef), el cache
- * busting y el manejo de errores se replican exactos de FeedContext.
+ * It's a local hook (not a global Context like FeedContext) because each visit
+ * to a thread is a fresh, independent fetch — there's nothing to persist
+ * between navigations. But the internal anti-race pattern (requestIdRef), the
+ * cache busting and the error handling are replicated exactly from FeedContext.
  *
- * @param {string} threadId  uid del thread (de useParams).
+ * @param {string} threadId  thread uid (from useParams).
  * @returns {{
  *   thread: object|null, replies: object[],
  *   isLoading: boolean, isLoadingMore: boolean, isCreatingReply: boolean,
@@ -58,8 +58,8 @@ function resolveReactionId(clicked, post, catalog) {
  *   createReply: Function, loadMore: Function, retry: Function
  * }}
  */
-// Mapea la opción de sort de la UI al query param `ordering` del backend.
-// Mismas etiquetas y mapeo que buildOrderingParam de FeedContext (/home-new):
+// Maps the UI sort option to the backend's `ordering` query param.
+// Same labels and mapping as FeedContext's buildOrderingParam (/home-new):
 // trending/newest/oldest.
 function buildReplyOrdering(sortBy) {
   switch (sortBy) {
@@ -73,20 +73,20 @@ function buildReplyOrdering(sortBy) {
   }
 }
 
-// Inserta un reply nuevo en la posición correcta de la lista plana (que está en
-// orden DFS: cada parent seguido de su subtree). Un sub-reply se inserta DESPUÉS
-// del subtree completo de su parent → queda agrupado bajo él como el hermano más
-// reciente, NO al final de todo el thread. Un reply de primer nivel va al final
-// (comportamiento previo). Maneja profundidad arbitraria.
+// Inserts a new reply at the correct position in the flat list (which is in
+// DFS order: each parent followed by its subtree). A sub-reply is inserted
+// AFTER its parent's full subtree → it gets grouped under it as the most
+// recent sibling, NOT at the end of the whole thread. A top-level reply goes
+// at the end (previous behavior). Handles arbitrary depth.
 function insertReply(list, newReply) {
   const parentId = newReply.parentId;
   if (!parentId) return [...list, newReply];
 
   const parentIdx = list.findIndex((r) => r.id === parentId);
-  if (parentIdx === -1) return [...list, newReply]; // fallback defensivo
+  if (parentIdx === -1) return [...list, newReply]; // defensive fallback
 
-  // Los descendientes del parent son contiguos en DFS: avanzamos mientras el
-  // siguiente item cuelgue de algún id ya visto del subtree.
+  // The parent's descendants are contiguous in DFS: we advance while the
+  // next item hangs off some id already seen in the subtree.
   const subtree = new Set([parentId]);
   let insertAt = parentIdx + 1;
   while (insertAt < list.length && subtree.has(list[insertAt].parentId)) {
@@ -99,11 +99,11 @@ function insertReply(list, newReply) {
 export function useThread(threadId) {
   const { getCachedThread, setCachedThread } = useThreadCache();
 
-  // Lazy init desde el cache: si volvemos (POP) a un thread ya visitado, el
-  // contenido está presente en el PRIMER render. Esto es lo que permite que el
-  // browser restaure el scroll de forma nativa (igual que /home-new): si el
-  // contenido apareciera recién en un effect, el body tendría altura 0 en el
-  // primer paint y la restauración fallaría.
+  // Lazy init from the cache: if we return (POP) to an already-visited thread,
+  // the content is present on the FIRST render. This is what lets the browser
+  // restore the scroll natively (same as /home-new): if the content only
+  // appeared in an effect, the body would have height 0 on the first paint and
+  // the restoration would fail.
   const initialCache = getCachedThread(threadId);
 
   const [thread, setThread] = useState(() => initialCache?.thread || null);
@@ -120,31 +120,32 @@ export function useThread(threadId) {
   );
   const [refetchKey, setRefetchKey] = useState(0);
 
-  // Sorting de replies (trending/newest/oldest), igual que selectSort de FeedContext.
+  // Replies sorting (trending/newest/oldest), same as FeedContext's selectSort.
   const [sortBy, setSortBy] = useState(
     () => initialCache?.sortBy || "trending"
   );
-  // sortKey fuerza el refetch incluso al re-clickear la misma opción (igual que
-  // el refetchKey del FeedContext). isReloadingReplies = recarga por sort con
-  // replies ya visibles → dim, NO skeletons.
+  // sortKey forces the refetch even when re-clicking the same option (same as
+  // FeedContext's refetchKey). isReloadingReplies = sort reload with replies
+  // already visible → dim, NOT skeletons.
   const [sortKey, setSortKey] = useState(0);
   const [isReloadingReplies, setIsReloadingReplies] = useState(false);
-  // Ref del sortBy actual: el fetch effect lo lee sin añadir sortBy a sus deps
-  // (evita doble disparo y closures stale). Marca si el próximo run del effect
-  // es un cambio de sort (dim) vs una navegación/retry (skeleton + cache).
+  // Ref of the current sortBy: the fetch effect reads it without adding sortBy
+  // to its deps (avoids a double trigger and stale closures). Marks whether the
+  // effect's next run is a sort change (dim) vs a navigation/retry (skeleton +
+  // cache).
   const sortByRef = useRef(sortBy);
   const isSortChangeRef = useRef(false);
 
-  // next de DRF: ref en vez de state porque no necesita causar re-render.
+  // DRF's next: a ref instead of state because it doesn't need to cause a re-render.
   const nextUrlRef = useRef(initialCache?.nextUrl || null);
-  // Counter incremental anti-race: cada initial fetch obtiene un id único y
-  // solo el más reciente escribe state / apaga isLoading. (Igual que FeedContext.)
+  // Incremental anti-race counter: each initial fetch gets a unique id and only
+  // the most recent one writes state / turns off isLoading. (Same as FeedContext.)
   const requestIdRef = useRef(0);
-  // Catálogo de tipos de reacción (emoji ↔ id de backend), cargado una vez.
+  // Catalog of reaction types (emoji ↔ backend id), loaded once.
   const reactionCatalogRef = useRef([]);
-  // postIds con un toggle de reacción en vuelo — guard anti doble-click.
+  // postIds with a reaction toggle in flight — anti double-click guard.
   const togglingRef = useRef(new Set());
-  // Evita escribir state tras desmontar (await del POST de reacción en curso).
+  // Avoids writing state after unmount (the reaction POST's await is in progress).
   const isMountedRef = useRef(true);
 
   useEffect(() => {
@@ -154,26 +155,26 @@ export function useThread(threadId) {
     };
   }, []);
 
-  // Espejo de `replies` para leer el estado actual fuera de los updaters de
-  // setState (createReply necesita ubicar el parent sin meter `replies` en sus
-  // deps, que lo recrearía en cada cambio).
+  // Mirror of `replies` to read the current state outside the setState updaters
+  // (createReply needs to locate the parent without putting `replies` in its
+  // deps, which would recreate it on every change).
   const repliesRef = useRef(replies);
   useEffect(() => {
     repliesRef.current = replies;
   }, [replies]);
 
-  // Tags del hilo RAÍZ (perfil de afinidad client-side): ref para que los
-  // callbacks (createReply, toggleReaction) los lean sin closures stale.
-  // Reaccionar/comentar un reply también alimenta los tags del hilo raíz —
-  // la señal de interés es sobre el tema del hilo.
+  // Tags of the ROOT thread (client-side affinity profile): a ref so the
+  // callbacks (createReply, toggleReaction) read them without stale closures.
+  // Reacting to / commenting on a reply also feeds the root thread's tags —
+  // the interest signal is about the thread's topic.
   const threadTagsRef = useRef([]);
   useEffect(() => {
     threadTagsRef.current = thread ? extractTags(thread.text) : [];
   }, [thread]);
 
-  // Catálogo de reacciones: una sola carga por montaje del hook. Sin cache
-  // busting agresivo (cambia rarísimo); fallo silencioso (las reacciones ya
-  // presentes en el post igual traen su id de backend).
+  // Reactions catalog: a single load per hook mount. No aggressive cache
+  // busting (it changes very rarely); silent failure (the reactions already
+  // present on the post carry their backend id anyway).
   useEffect(() => {
     const controller = new AbortController();
     getReactions({ signal: controller.signal })
@@ -184,18 +185,18 @@ export function useThread(threadId) {
     return () => controller.abort();
   }, []);
 
-  // Fetch del thread — corre al montar, al cambiar threadId, al retry(), y al
-  // cambiar el sort (selectSort bumpea sortKey).
+  // Thread fetch — runs on mount, when threadId changes, on retry(), and when
+  // the sort changes (selectSort bumps sortKey).
   useEffect(() => {
     if (!threadId) return undefined;
 
-    // ¿Este run es un cambio de sort? (lo marca selectSort). Lo consumimos aquí.
+    // Is this run a sort change? (set by selectSort). We consume it here.
     const isSortChange = isSortChangeRef.current;
     isSortChangeRef.current = false;
 
-    // CACHE HIT: thread ya visitado → restaurar sin re-fetch (causa raíz del bug
-    // al volver). Solo en navegación: un sort change SIEMPRE refetchea (reordena
-    // fresco) y retry() nunca cachea errores.
+    // CACHE HIT: already-visited thread → restore without re-fetch (root cause
+    // of the bug on return). Only on navigation: a sort change ALWAYS refetches
+    // (fresh reorder) and retry() never caches errors.
     if (!isSortChange) {
       const cached = getCachedThread(threadId);
       if (cached && cached.thread) {
@@ -213,9 +214,9 @@ export function useThread(threadId) {
       }
     }
 
-    // FETCH FRESH (anti-race con requestIdRef + cache busting + ordering). En un
-    // sort change usamos isReloadingReplies (dim, replies visibles); si no,
-    // isLoading (skeletons en initial load). El sync effect persiste al cache.
+    // FETCH FRESH (anti-race with requestIdRef + cache busting + ordering). On a
+    // sort change we use isReloadingReplies (dim, replies visible); otherwise
+    // isLoading (skeletons on initial load). The sync effect persists to the cache.
     requestIdRef.current += 1;
     const requestId = requestIdRef.current;
     const controller = new AbortController();
@@ -242,8 +243,8 @@ export function useThread(threadId) {
       } catch (err) {
         if (requestId !== requestIdRef.current) return;
         if (err && err.name === "AbortError") return;
-        // En un sort change conservamos los replies actuales (solo se quita el
-        // dim); el error state full-screen es solo para la carga inicial.
+        // On a sort change we keep the current replies (only the dim is
+        // removed); the full-screen error state is only for the initial load.
         if (!isSortChange) {
           setError(err);
           setThread(null);
@@ -252,7 +253,7 @@ export function useThread(threadId) {
           nextUrlRef.current = null;
         }
       } finally {
-        // Solo el request más reciente apaga los flags de carga.
+        // Only the most recent request turns off the loading flags.
         if (requestId === requestIdRef.current) {
           setIsLoading(false);
           setIsReloadingReplies(false);
@@ -264,8 +265,8 @@ export function useThread(threadId) {
     return () => controller.abort();
   }, [threadId, refetchKey, sortKey, getCachedThread]);
 
-  // selectSort: cambia el sort y SIEMPRE dispara un refetch (incluso al
-  // re-clickear la misma opción), igual que selectSort de FeedContext.
+  // selectSort: changes the sort and ALWAYS triggers a refetch (even when
+  // re-clicking the same option), same as FeedContext's selectSort.
   const selectSort = useCallback((newSort) => {
     setSortBy(newSort);
     sortByRef.current = newSort;
@@ -273,11 +274,11 @@ export function useThread(threadId) {
     setSortKey((k) => k + 1);
   }, []);
 
-  // Sync del cache: cada vez que cambia el thread cargado (fetch, loadMore,
-  // createReply, toggleReaction optimista) escribimos la foto actual al cache,
-  // indexada por threadId. Así, al volver, el contenido —incluidos replies
-  // paginados y reacciones— está disponible al instante. Un solo punto de
-  // escritura evita olvidar sincronizar en alguna mutación concreta.
+  // Cache sync: whenever the loaded thread changes (fetch, loadMore,
+  // createReply, optimistic toggleReaction) we write the current snapshot to
+  // the cache, indexed by threadId. This way, on return, the content —including
+  // paginated replies and reactions— is available instantly. A single write
+  // point avoids forgetting to sync on some specific mutation.
   useEffect(() => {
     if (!threadId || !thread) return;
     setCachedThread(threadId, {
@@ -290,8 +291,8 @@ export function useThread(threadId) {
   }, [threadId, thread, replies, hasMore, sortBy, setCachedThread]);
 
   const loadMore = useCallback(async () => {
-    // Guard: no paginar sin next, ni con un fetch (inicial o de paginación)
-    // ya en vuelo.
+    // Guard: don't paginate without next, nor with a fetch (initial or
+    // pagination) already in flight.
     if (!nextUrlRef.current || isLoadingMore || isLoading) return;
     setIsLoadingMore(true);
     try {
@@ -304,18 +305,18 @@ export function useThread(threadId) {
       nextUrlRef.current = data.next || null;
       setHasMore(Boolean(data.next));
     } catch (err) {
-      // La paginación falla en silencio: el usuario puede reintentar el click.
-      // El botón vuelve a aparecer porque hasMore sigue true.
+      // Pagination fails silently: the user can retry the click.
+      // The button reappears because hasMore is still true.
     } finally {
       setIsLoadingMore(false);
     }
   }, [isLoadingMore, isLoading]);
 
   /**
-   * Crea una respuesta. parentId = threadId para un comment directo, o el id de
-   * un reply para un sub-comment. Bottom-insert al success, replicando el
-   * legacy (onRefreshThread hace threads.concat(nuevo)). Preserva el texto en
-   * error (re-lanza para que PostCommentBox no limpie el textarea).
+   * Creates a reply. parentId = threadId for a direct comment, or a reply's id
+   * for a sub-comment. Bottom-insert on success, replicating the legacy
+   * (onRefreshThread does threads.concat(new)). Preserves the text on error
+   * (re-throws so PostCommentBox doesn't clear the textarea).
    */
   const createReply = useCallback(
     async ({ parentId, text }) => {
@@ -332,10 +333,10 @@ export function useThread(threadId) {
           content: buildDraftJsContent(trimmed),
         });
 
-        // Un sub-reply (parentId distinto del thread) se etiqueta con su parent
-        // para que la UI lo indente y muestre "re: <mask>". El parent se ubica
-        // vía repliesRef (estado actual) para poder mapear fuera del updater y
-        // retornar el reply nuevo (lo usa Post.js para scroll + highlight).
+        // A sub-reply (parentId different from the thread) is tagged with its
+        // parent so the UI indents it and shows "re: <mask>". The parent is
+        // located via repliesRef (current state) so we can map outside the
+        // updater and return the new reply (used by Post.js for scroll + highlight).
         const isSubReply = targetParentId !== threadId;
         const parent = isSubReply
           ? repliesRef.current.find((r) => r.id === targetParentId)
@@ -344,22 +345,22 @@ export function useThread(threadId) {
           parentId: isSubReply ? targetParentId : null,
           parentMaskId: parent?.mask?.id || null,
         });
-        // Inserción POSICIONAL: agrupa el sub-reply bajo su parent (no al final
-        // del thread). insertReply respeta el orden DFS de la lista plana.
+        // POSITIONAL insertion: groups the sub-reply under its parent (not at
+        // the end of the thread). insertReply respects the flat list's DFS order.
         setReplies((prev) =>
           prev.some((r) => r.id === mapped.id) ? prev : insertReply(prev, mapped)
         );
-        // Solo en el path de éxito: el reply (directo o sub) cuenta como una
-        // respuesta del thread → +1 al total que muestra el app bar. Vive en
-        // thread.replyCount, así que el sync effect lo persiste al cache solo.
+        // Only on the success path: the reply (direct or sub) counts as a
+        // thread reply → +1 to the total shown by the app bar. It lives in
+        // thread.replyCount, so the sync effect persists it to the cache on its own.
         setThread((t) =>
           t ? { ...t, replyCount: (t.replyCount ?? 0) + 1 } : t
         );
-        // Afinidad (client-side, solo localStorage): comentar es la señal
-        // más fuerte de interés. Se registran los tags del contenido AL
-        // QUE se responde: un reply de cualquier nivel (parent, resuelto
-        // arriba desde la lista plana) o el hilo raíz para comentarios
-        // directos. Reply sin tags → fallback a los del hilo.
+        // Affinity (client-side, localStorage only): commenting is the
+        // strongest interest signal. We record the tags of the content being
+        // replied to: a reply of any level (the parent, resolved above from
+        // the flat list) or the root thread for direct comments. A reply with
+        // no tags → fallback to the thread's.
         addInteraction(
           parent
             ? tagsForContent(parent.text, threadTagsRef.current)
@@ -378,20 +379,20 @@ export function useThread(threadId) {
   );
 
   /**
-   * Togglea la reacción del current user sobre un post (thread o reply).
-   * Optimistic update inmediato + POST /reactions/ + rollback en error.
-   * postId puede ser thread.id o el id de un reply. clicked = { id, emoji, label }.
+   * Toggles the current user's reaction on a post (thread or reply).
+   * Immediate optimistic update + POST /reactions/ + rollback on error.
+   * postId can be thread.id or a reply's id. clicked = { id, emoji, label }.
    */
   const toggleReaction = useCallback(
     async (postId, clicked) => {
       if (!postId || !clicked) return;
-      // Guard anti doble-click: ignora si ya hay un toggle en vuelo para este post.
+      // Anti double-click guard: ignore if there's already a toggle in flight for this post.
       if (togglingRef.current.has(postId)) return;
 
-      // Localiza el post (thread principal o un reply) y snapshot para rollback.
+      // Locate the post (main thread or a reply) and snapshot for rollback.
       const isThread = thread && thread.id === postId;
       const target = isThread ? thread : replies.find((r) => r.id === postId);
-      if (!target) return; // no encontrado (o thread aún cargando)
+      if (!target) return; // not found (or thread still loading)
 
       const reactionId = resolveReactionId(
         clicked,
@@ -399,14 +400,14 @@ export function useThread(threadId) {
         reactionCatalogRef.current
       );
       if (reactionId == null) {
-        // Sin id de backend no podemos persistir → no hacemos un optimistic
-        // que no se podría guardar.
+        // Without a backend id we can't persist → we don't do an optimistic
+        // update that couldn't be saved.
         // eslint-disable-next-line no-console
         console.warn("No backend reaction id for emoji:", clicked.emoji);
         return;
       }
 
-      // Snapshot del estado previo (para rollback) y cálculo del nuevo estado.
+      // Snapshot of the previous state (for rollback) and computation of the new state.
       const prevReactions = target.reactions;
       const prevCUR = target.currentUserReaction ?? null;
       const nextReactions = applyToggle(prevReactions, clicked);
@@ -426,20 +427,20 @@ export function useThread(threadId) {
         }
       };
 
-      // 1. Optimistic: la UI se actualiza al instante.
+      // 1. Optimistic: the UI updates instantly.
       togglingRef.current.add(postId);
       writePost(nextReactions, nextCUR);
 
       try {
-        // 2. Persistir. El backend decide add/switch/remove según el estado del user.
+        // 2. Persist. The backend decides add/switch/remove based on the user's state.
         await createReaction({ reactionId, postId });
-        // Afinidad (client-side, solo localStorage): cuenta solo al AÑADIR
-        // una reacción nueva (nextCUR pasa de null/otro emoji a este) — un
-        // toggle-off (quitar la reacción) no es señal de interés.
-        // Se registran los tags del CONTENIDO reaccionado: el hilo o el
-        // reply de CUALQUIER nivel (target ya está resuelto arriba, venga
-        // de la lista plana de replies o sea el hilo raíz). Reply sin
-        // tags → fallback a los del hilo (señal sobre el tema).
+        // Affinity (client-side, localStorage only): counts only when ADDING
+        // a new reaction (nextCUR goes from null/another emoji to this one) — a
+        // toggle-off (removing the reaction) is not an interest signal.
+        // We record the tags of the REACTED content: the thread or the reply
+        // of ANY level (target is already resolved above, whether it comes
+        // from the flat replies list or is the root thread). A reply with no
+        // tags → fallback to the thread's (signal about the topic).
         if (nextCUR && nextCUR !== prevCUR) {
           addInteraction(
             tagsForContent(target.text, threadTagsRef.current),
@@ -447,7 +448,7 @@ export function useThread(threadId) {
           );
         }
       } catch (err) {
-        // 3. Rollback silencioso — es una micro-interacción, sin banner intrusivo.
+        // 3. Silent rollback — it's a micro-interaction, no intrusive banner.
         if (isMountedRef.current) writePost(prevReactions, prevCUR);
         // eslint-disable-next-line no-console
         console.warn("Reaction failed, rolled back:", err);
@@ -458,7 +459,7 @@ export function useThread(threadId) {
     [thread, replies]
   );
 
-  // Re-dispara el initial fetch bumpeando refetchKey (igual que FeedContext).
+  // Re-triggers the initial fetch by bumping refetchKey (same as FeedContext).
   const retry = useCallback(() => setRefetchKey((k) => k + 1), []);
 
   return {

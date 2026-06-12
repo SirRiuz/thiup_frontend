@@ -1,48 +1,48 @@
 /**
- * Perfil de afinidad de tags — 100% client-side.
+ * Tag affinity profile — 100% client-side.
  *
- * PRIVACIDAD (principio inviolable): este mapa { tag: peso } vive SOLO en
- * localStorage del dispositivo. NUNCA se envía completo al servidor ni se
- * persiste en el backend. Lo único que sale del dispositivo son los top
- * N tags como parámetro de query EFÍMERO del For You — indistinguible de
- * una búsqueda por tags. Si comprometen el servidor, no hay perfil que
- * filtrar.
+ * PRIVACY (inviolable principle): this { tag: weight } map lives ONLY in
+ * the device's localStorage. It is NEVER sent in full to the server nor
+ * persisted in the backend. The only thing that leaves the device is the top
+ * N tags as an EPHEMERAL query parameter for the For You — indistinguishable
+ * from a tag search. If the server is compromised, there is no profile to
+ * leak.
  *
- * Mismo patrón defensivo que recentSearches.js: localStorage puede estar
- * deshabilitado o lleno — la app nunca se rompe por eso.
+ * Same defensive pattern as recentSearches.js: localStorage can be
+ * disabled or full — the app never breaks because of that.
  */
 
 import { HASHTAG_RE } from "./hashtags";
 
 const STORAGE_KEY = "thiup:affinity";
 
-// ── Pesos por interacción (ajustables) ────────────────────────────────
-// Comentar es la señal más fuerte (esfuerzo), reaccionar media, leer
-// (dwell) la más débil. Abrir-y-salir no suma nada.
+// ── Weights per interaction (tunable) ─────────────────────────────────
+// Commenting is the strongest signal (effort), reacting medium, reading
+// (dwell) the weakest. Open-and-leave adds nothing.
 export const AFFINITY_WEIGHTS = {
   comment: 3,
   reaction: 2,
   dwell: 1,
 };
 
-// Dwell: tiempo VISIBLE en el thread para contar como "leyó" (~25s).
+// Dwell: VISIBLE time on the thread to count as "read" (~25s).
 export const DWELL_THRESHOLD_MS = 25000;
 
-// Cuántos top tags se envían al For You (solo los nombres, nunca pesos).
-// Con POST no hay límite de URL: el cap es por COSTO de la query en el
-// backend (filtrar/contar contra muchos tags pesa en la Raspberry).
+// How many top tags are sent to the For You (only the names, never weights).
+// With POST there is no URL limit: the cap is by query COST on the
+// backend (filtering/counting against many tags is heavy on the Raspberry).
 export const TOP_TAGS_COUNT = 10;
 
-// Decay ligero: al registrar una interacción, los pesos existentes se
-// multiplican por DECAY — los intereses recientes pesan más que los
-// viejos sin necesidad de timestamps.
+// Light decay: when recording an interaction, the existing weights are
+// multiplied by DECAY — recent interests weigh more than old
+// ones without needing timestamps.
 const DECAY = 0.99;
 
-// Cap del mapa: nos quedamos con los MAX_TAGS de mayor peso para que el
-// perfil no crezca sin límite en localStorage.
+// Map cap: we keep the MAX_TAGS with the highest weight so the
+// profile doesn't grow without bound in localStorage.
 const MAX_TAGS = 50;
 
-/** Lee el mapa { tag: peso } desde localStorage. Nunca lanza. */
+/** Reads the { tag: weight } map from localStorage. Never throws. */
 export function getAffinityMap() {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
@@ -59,14 +59,14 @@ function persist(map) {
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(map));
   } catch (err) {
-    /* storage lleno/deshabilitado: la afinidad simplemente no persiste */
+    /* storage full/disabled: the affinity simply doesn't persist */
   }
 }
 
 /**
- * Extrae los tags de un texto de hilo, normalizados (sin '#', lowercase,
- * sin duplicados). Mismo regex que el resto del frontend y que el backend
- * (los Tag se guardan lowercase). Hilos sin tags → [].
+ * Extracts the tags from a thread's text, normalized (no '#', lowercase,
+ * no duplicates). Same regex as the rest of the frontend and as the backend
+ * (Tags are stored lowercase). Threads without tags → [].
  */
 export function extractTags(text) {
   const matches = (text || "").match(HASHTAG_RE) || [];
@@ -74,11 +74,11 @@ export function extractTags(text) {
 }
 
 /**
- * Tags del contenido con el que se interactúa (hilo O reply de cualquier
- * nivel): los PROPIOS de su texto; si no tiene, cae a `fallbackTags`
- * (los del hilo raíz — reaccionar a un reply sin tags sigue siendo señal
- * sobre el tema del hilo). Única regla compartida: no duplicar lógica
- * entre hilo y replies.
+ * Tags of the content being interacted with (thread OR reply of any
+ * level): its OWN tags from its text; if it has none, falls back to
+ * `fallbackTags` (the root thread's — reacting to a reply without tags is
+ * still a signal about the thread's topic). Single shared rule: don't
+ * duplicate logic between thread and replies.
  */
 export function tagsForContent(text, fallbackTags = []) {
   const own = extractTags(text);
@@ -86,9 +86,9 @@ export function tagsForContent(text, fallbackTags = []) {
 }
 
 /**
- * Registra una interacción: suma `weight` a CADA tag del contenido
- * (creando la entrada si no existe). Robusto: acepta array o string
- * suelto, ignora vacíos y duplicados. Sin tags → no-op.
+ * Records an interaction: adds `weight` to EACH tag of the content
+ * (creating the entry if it doesn't exist). Robust: accepts an array or a
+ * loose string, ignores empties and duplicates. No tags → no-op.
  */
 export function addInteraction(tags, weight) {
   if (typeof tags === "string") tags = [tags];
@@ -96,7 +96,7 @@ export function addInteraction(tags, weight) {
 
   const map = getAffinityMap();
 
-  // Decay: lo viejo pierde relevancia frente a lo nuevo.
+  // Decay: the old loses relevance against the new.
   for (const key of Object.keys(map)) {
     map[key] = map[key] * DECAY;
   }
@@ -107,7 +107,7 @@ export function addInteraction(tags, weight) {
     map[clean] = (map[clean] || 0) + weight;
   }
 
-  // Cap: conservar solo los MAX_TAGS más pesados.
+  // Cap: keep only the MAX_TAGS heaviest ones.
   const entries = Object.entries(map)
     .sort((a, b) => b[1] - a[1])
     .slice(0, MAX_TAGS);
@@ -116,9 +116,9 @@ export function addInteraction(tags, weight) {
 }
 
 /**
- * Top n tags por peso — SOLO los nombres, los pesos jamás salen de aquí.
- * Mapa vacío (usuario nuevo) → [] → el For You sirve el top global
- * (cold start de FASE 1, sin cambios).
+ * Top n tags by weight — ONLY the names, the weights never leave here.
+ * Empty map (new user) → [] → the For You serves the global top
+ * (PHASE 1 cold start, unchanged).
  */
 export function getTopTags(n = TOP_TAGS_COUNT) {
   return Object.entries(getAffinityMap())
@@ -127,7 +127,7 @@ export function getTopTags(n = TOP_TAGS_COUNT) {
     .map(([tag]) => tag);
 }
 
-/** Borra el perfil (utilidad para debug / ajustes de privacidad futuros). */
+/** Clears the profile (utility for debug / future privacy settings). */
 export function clearAffinity() {
   persist({});
 }

@@ -1,0 +1,5 @@
+/* BrandLogo — thread + dot icon (inline SVG). The block display avoids the
+   inline-svg baseline gap inside flex/grid containers. */
+.logo {
+  display: block;
+}

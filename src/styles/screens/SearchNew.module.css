@@ -10,14 +10,22 @@
   padding: 24px 20px 60px;
 }
 
+/* Sort dropdown row (tag feed): its own line, right-aligned — the sort control
+   never shares the tab row. */
+.sortRow {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}
+
 .results {
   display: flex;
   flex-direction: column;
   transition: opacity 200ms ease;
 }
 
-/* Dim al cambiar de tab (mismo patrón que el feed): se mantienen los
-   resultados anteriores atenuados mientras llega el fetch del nuevo tab. */
+/* Dim on tab change (same pattern as the feed): the previous results are
+   kept dimmed while the new tab's fetch arrives. */
 .resultsReloading {
   opacity: 0.5;
   pointer-events: none;

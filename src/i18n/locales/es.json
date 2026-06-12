@@ -1,0 +1,228 @@
+{
+  "common": {
+    "tryAgain": "reintentar",
+    "back": "Atrás",
+    "backToHome": "Volver al inicio",
+    "loading": "cargando",
+    "retrying": "Reintentando...",
+    "dismissError": "Descartar error",
+    "closeError": "Cerrar error",
+    "loadingPost": "Cargando publicación",
+    "loadingReply": "Cargando respuesta",
+    "loadingThread": "Cargando hilo",
+    "tagsDetected_one": "{{count}} etiqueta detectada",
+    "tagsDetected_other": "{{count}} etiquetas detectadas",
+    "charCount": "{{count}} / {{max}}"
+  },
+  "nav": {
+    "primary": "Principal",
+    "home": "Inicio",
+    "search": "Buscar",
+    "myThreads": "Mis hilos",
+    "menu": "Menú",
+    "about": "Acerca de",
+    "languages": "Idioma"
+  },
+  "language": {
+    "title": "Idioma",
+    "description": "Elige el idioma de la interfaz.",
+    "english": "English",
+    "spanish": "Español",
+    "close": "Cerrar",
+    "current": "Idioma actual"
+  },
+  "splash": {
+    "loading": "Cargando"
+  },
+  "welcome": {
+    "title": "Bienvenido a Thiup",
+    "mission": "Un espacio anónimo para hablar libremente de lo que importa — tu privacidad es lo primero.",
+    "rulesHeader": "Algunas cosas para tener en cuenta",
+    "button": "Entendido",
+    "rules": {
+      "anonymity": {
+        "lead": "Mantén el anonimato.",
+        "text": "Nunca compartas datos que te identifiquen a ti o a otros."
+      },
+      "respect": {
+        "lead": "Sé respetuoso.",
+        "text": "Este es un espacio para voces honestas, no para el acoso."
+      },
+      "protect": {
+        "lead": "Protéjanse entre todos.",
+        "text": "Nada de doxxing ni de exponer identidades."
+      },
+      "minors": {
+        "lead": "Protege a los menores.",
+        "text": "El contenido que sexualice o dañe a niños nunca se permite y será eliminado."
+      }
+    }
+  },
+  "home": {
+    "tabForYou": "para ti",
+    "tabCloseYou": "cerca de ti",
+    "filterLabel": "feed",
+    "sortTrending": "tendencia",
+    "sortNewest": "recientes",
+    "sortOldest": "antiguos",
+    "noPostsTitle": "Aún no hay publicaciones",
+    "noPostsSubtitle": "sé el primero en iniciar un hilo",
+    "newThread": "nuevo hilo",
+    "endOfFeed": "fin del feed",
+    "loadingMore": "Cargando más publicaciones"
+  },
+  "compose": {
+    "postingAs": "publicando como",
+    "postingAsPlaceholder": "publicando como …",
+    "placeholder": "Inicia un hilo...",
+    "post": "publicar",
+    "posting": "publicando",
+    "locationDefault": "comparte tu zona aproximada al publicar (para Cerca de ti) — nunca tu ubicación exacta",
+    "locationActive": "compartiendo tu zona aproximada (~5 km, difuminada) — haz clic para desactivar",
+    "locationBlocked": "la ubicación está bloqueada — actívala en los ajustes de tu navegador",
+    "cannotShareTitle": "No se pudo compartir tu zona",
+    "cannotShareBody": "No pudimos obtener tu ubicación — inténtalo de nuevo.",
+    "blockedTitle": "La ubicación está bloqueada",
+    "blockedBody": "Actívala en los ajustes de tu navegador para adjuntar tu zona.",
+    "unsupportedBody": "la ubicación necesita un navegador compatible sobre https o localhost.",
+    "postedWithoutAreaTitle": "Publicado sin tu zona",
+    "postedWithoutAreaDenied": "La ubicación está bloqueada — actívala en los ajustes de tu navegador.",
+    "postedWithoutAreaTimeout": "No pudimos obtener tu ubicación a tiempo.",
+    "postedWithoutAreaUnsupported": "Tu navegador no admite la ubicación.",
+    "privacyNoteLead": "Ubicación difuminada en una zona de",
+    "privacyNoteChip": "~5 km",
+    "privacyGuarantee": "tu punto exacto nunca se guarda",
+    "stopSharing": "Dejar de compartir mi zona"
+  },
+  "closeYou": {
+    "findingTitle": "buscando tu zona…",
+    "findingBody": "calculando tu celda aproximada (~5 km) — tus coordenadas nunca salen de este dispositivo",
+    "errorTitle": "no pudimos cargar tu zona",
+    "errorBody": "Algo salió mal al obtener tu ubicación. Puedes intentarlo de nuevo.",
+    "blockedTitle": "la ubicación está bloqueada",
+    "blockedBody": "Activa la ubicación para este sitio en los ajustes de tu navegador para usar Cerca de ti, luego inténtalo de nuevo.",
+    "unsupportedTitle": "la ubicación no es compatible",
+    "unsupportedBody": "Prueba un navegador con soporte de geolocalización para usar Cerca de ti.",
+    "promptTitle": "mira qué está pasando cerca de ti",
+    "promptBody": "Cerca de ti usa una zona aproximada — una celda de ~5 km, difuminada al azar — nunca tu ubicación exacta. Tu zona no se guarda en ningún servidor: se usa para la consulta y luego se descarta.",
+    "enable": "activar ubicación",
+    "notNow": "ahora no",
+    "within": "dentro de",
+    "radiusChip": "{{km}} km"
+  },
+  "search": {
+    "placeholder": "Buscar en Thiup",
+    "label": "Buscar",
+    "clearText": "Borrar texto de búsqueda",
+    "tabTop": "destacados",
+    "tabLatest": "recientes",
+    "tabPeople": "personas",
+    "tabTags": "etiquetas",
+    "tabWithCount": "{{label}}, {{countLabel}} resultados",
+    "documentTitle": "{{query}} - Búsqueda / Thiup",
+    "documentTitleEmpty": "Búsqueda / Thiup",
+    "noResultsTitle": "No se encontraron resultados",
+    "noResultsSubtitle": "prueba con otras palabras o explora las tendencias",
+    "searchForLead": "Buscar",
+    "removeRecent": "Quitar {{text}} de búsquedas recientes",
+    "clearAll": "Borrar todo",
+    "badgeRecent": "reciente",
+    "badgeTag": "etiqueta",
+    "badgeNew": "nuevo",
+    "badgeTrending": "tendencia",
+    "badgePost": "publicación"
+  },
+  "post": {
+    "threadTitle": "Hilo",
+    "postedAgo": "publicado hace {{time}}",
+    "noReplies": "Aún no hay respuestas",
+    "replyCount_one": "{{count}} respuesta",
+    "replyCount_other": "{{count}} respuestas",
+    "reply": "responder",
+    "replies": "respuestas",
+    "addReaction": "Añadir reacción",
+    "endOfThread": "fin del hilo",
+    "loadMoreReplies": "cargar más respuestas",
+    "sort": "ordenar",
+    "sortTrending": "tendencia",
+    "sortNewest": "recientes",
+    "sortOldest": "antiguos",
+    "replyingTo": "respondiendo a",
+    "cancelReplyingTo": "Cancelar respuesta a",
+    "couldNotLoad": "No se pudo cargar este hilo.",
+    "commentPlaceholderUser": "Escribe tu respuesta...",
+    "commentPlaceholderDefault": "Responde a este hilo...",
+    "replying": "respondiendo…",
+    "replyError": "No se pudo publicar tu respuesta. Inténtalo de nuevo.",
+    "fileTooLarge": "{{name}} es demasiado grande (máx. 10MB)",
+    "fileUnsupported": "{{name}} no es un tipo de archivo compatible",
+    "maxFiles": "Solo se permiten {{max}} archivos"
+  },
+  "postNotFound": {
+    "title": "Hilo no encontrado",
+    "subtitleWithId": "No pudimos encontrar <chip>{{shortId}}</chip> — puede que se haya eliminado.",
+    "subtitle": "Puede que este hilo se haya eliminado."
+  },
+  "moreMenu": {
+    "more": "Más opciones",
+    "copyId": "copiar id",
+    "share": "compartir",
+    "report": "reportar"
+  },
+  "attachment": {
+    "cancelUpload": "Cancelar subida",
+    "remove": "Quitar adjunto"
+  },
+  "reactions": {
+    "fire": "fuego",
+    "seen": "visto",
+    "solidarity": "solidaridad",
+    "skeptical": "escéptico",
+    "heartbreak": "desamor"
+  },
+  "profile": {
+    "posts": "publicaciones",
+    "replies": "respuestas",
+    "joined": "se unió {{date}}",
+    "unknown": "desconocido"
+  },
+  "myThreads": {
+    "title": "Mis hilos",
+    "subtitle": "Hilos que has iniciado, los más recientes primero",
+    "emptyTitle": "Aún no has creado ningún hilo",
+    "emptyBody": "Inicia una conversación desde el feed de inicio — tus hilos aparecerán aquí."
+  },
+  "notFound": {
+    "code": "404",
+    "title": "Aquí no hay nada",
+    "subtitle": "Esta página se perdió en el vacío. Vamos a llevarte de vuelta."
+  },
+  "serverError": {
+    "title": "Algo salió mal",
+    "body": "Nuestros servidores están teniendo un momento. Es cosa nuestra, no tuya — inténtalo de nuevo en un rato.",
+    "checking": "Comprobando...",
+    "tryAgain": "Intentar de nuevo",
+    "code": "error 503 · servicio no disponible"
+  },
+  "feedError": {
+    "title": "No se pudo conectar con el servidor",
+    "subtitle": "Revisa tu conexión e inténtalo de nuevo",
+    "cloudAria": "Conexión con la nube perdida"
+  },
+  "retryBanner": {
+    "connectionAria": "Conexión perdida",
+    "generic": "No se pudo conectar con el servidor — revisa tu conexión",
+    "serverIssues": "El servidor tiene problemas",
+    "tooManyRequests": "Demasiadas solicitudes — espera un momento",
+    "couldNotLoadMore": "No se pudieron cargar más publicaciones"
+  },
+  "errors": {
+    "network": "No se pudo conectar con el servidor — revisa tu conexión",
+    "badRequest": "No se pudo crear la publicación — revisa tu texto e inténtalo de nuevo",
+    "unauthorized": "Tu sesión expiró — recarga la página",
+    "forbidden": "No tienes permiso para publicar",
+    "rateLimit": "Estás publicando demasiado rápido — espera un momento",
+    "server": "Algo salió mal de nuestro lado — inténtalo de nuevo en un momento",
+    "generic": "Algo salió mal — inténtalo de nuevo"
+  }
+}

@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import styles from "../../styles/components/post/PostMoreMenu.module.css";
 
 function PostMoreMenu({ maskId }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
@@ -38,7 +40,7 @@ function PostMoreMenu({ maskId }) {
         type="button"
         className={`${styles.trigger} ${open ? styles.triggerOpen : ""}`}
         onClick={() => setOpen(!open)}
-        aria-label="More options"
+        aria-label={t("moreMenu.more")}
         aria-expanded={open}
         aria-haspopup="menu"
       >
@@ -79,7 +81,7 @@ function PostMoreMenu({ maskId }) {
               <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
               <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
             </svg>
-            copy id
+            {t("moreMenu.copyId")}
           </button>
 
           <button
@@ -102,7 +104,7 @@ function PostMoreMenu({ maskId }) {
               <polyline points="16 6 12 2 8 6" />
               <line x1="12" x2="12" y1="2" y2="15" />
             </svg>
-            share
+            {t("moreMenu.share")}
           </button>
 
           <div className={styles.divider} role="separator" aria-hidden="true" />
@@ -126,7 +128,7 @@ function PostMoreMenu({ maskId }) {
               <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
               <line x1="4" x2="4" y1="22" y2="15" />
             </svg>
-            report
+            {t("moreMenu.report")}
           </button>
         </div>
       )}

@@ -15,7 +15,7 @@
   flex-direction: column;
 }
 
-/* === Sentinel para infinite scroll (invisible) === */
+/* === Sentinel for infinite scroll (invisible) === */
 .sentinel {
   height: 1px;
   width: 100%;
@@ -35,11 +35,11 @@
   pointer-events: none;
 }
 
-/* Entrada del contenido nuevo tras cambiar tab/radio: fade de duración
-   FIJA atado al cambio de contenido (visible aunque el fetch sea
-   instantáneo — en localhost el dim de arriba dura ~2 frames). Arranca
-   desde la opacidad del dim (0.5): se percibe como dim-old → fade-in-new.
-   Solo con motion permitido; con reduced-motion el swap es directo. */
+/* Entrance of the new content after changing tab/radius: FIXED-duration
+   fade tied to the content change (visible even if the fetch is
+   instant — on localhost the dim above lasts ~2 frames). Starts
+   from the dim's opacity (0.5): perceived as dim-old → fade-in-new.
+   Only with motion allowed; with reduced-motion the swap is direct. */
 @media (prefers-reduced-motion: no-preference) {
   .feedItemsEntering {
     animation: feedEnter 240ms ease-out;

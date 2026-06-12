@@ -1,10 +1,10 @@
 /**
- * Estado del permiso de geolocalización — util compartida (Close You y
- * el toggle de compartir zona del compose). Consultar el permiso es
- * metadata del navegador, NO ubicación: no toca la privacidad.
+ * Geolocation permission state — shared util (Close You and
+ * the compose's share-area toggle). Querying the permission is
+ * browser metadata, NOT location: it doesn't touch privacy.
  */
 
-/** "granted" | "prompt" | "denied" | null (sin Permissions API). */
+/** "granted" | "prompt" | "denied" | null (no Permissions API). */
 export async function queryGeolocationPermission() {
   try {
     if (
@@ -18,15 +18,15 @@ export async function queryGeolocationPermission() {
       return status.state;
     }
   } catch (err) {
-    /* sin Permissions API (Safari viejo) → null: el caller usa fallback */
+    /* no Permissions API (old Safari) → null: the caller uses a fallback */
   }
   return null;
 }
 
 /**
- * Suscripción a cambios EN VIVO del permiso (el usuario lo cambia en los
- * ajustes del navegador con la página abierta). Devuelve cleanup.
- * Sin Permissions API → no-op (el fallback de los callers cubre).
+ * Subscription to LIVE permission changes (the user changes it in the
+ * browser settings with the page open). Returns a cleanup.
+ * No Permissions API → no-op (the callers' fallback covers it).
  */
 export function subscribeGeolocationPermission(onChange) {
   let status = null;

@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import HomeTopBar from "../components/home/HomeTopBar";
+import { useTranslation } from "react-i18next";
 import HomeCompose from "../components/home/HomeCompose";
 import HomeFilterBar from "../components/home/HomeFilterBar";
 import CloseYouGate from "../components/home/CloseYouGate";
@@ -20,8 +20,9 @@ import styles from "../styles/screens/HomeNew.module.css";
 function HomeNew() {
   const composeRef = useRef(null);
   const navigate = useNavigate();
-  // Usuario actual REAL (de /me/): un solo request global, cacheado en el
-  // contexto — aquí solo se consume.
+  const { t } = useTranslation();
+  // REAL current user (from /me/): a single global request, cached in the
+  // context — here it is only consumed.
   const { currentUserMask } = useCurrentUser();
 
   const {
@@ -43,41 +44,44 @@ function HomeNew() {
     refetch,
   } = useFeedContext();
 
-  // Tabs del home: For You (default) y Close You. HomeFilterBar se reusa
-  // tal cual (mismo patrón que search) — labels visibles ↔ keys internas.
+  // Home tabs: For You (default) and Close You. HomeFilterBar is reused
+  // as-is (same pattern as search) — stable internal IDENTITY ("for
+  // you"/"close you") ↔ tab keys; the VISIBLE text is translated via
+  // getOptionLabel (the identity never changes language).
   const TAB_LABELS = { foryou: "for you", closeyou: "close you" };
   const LABEL_TO_TAB = { "for you": "foryou", "close you": "closeyou" };
+  const TAB_I18N = { "for you": "home.tabForYou", "close you": "home.tabCloseYou" };
 
-  // ── El query param ?tab= es la FUENTE DE VERDAD del tab activo ──────
-  // /home?tab=fy | /home?tab=cy — al recargar, el tab se reconstruye
-  // de la URL. TODOS los cambios de tab escriben la URL (clicks y el
-  // "not now" del gate); el feedTab del contexto es un espejo que se
-  // sincroniza URL → contexto en el effect de abajo (una sola dirección,
-  // sin dobles verdades ni loops).
+  // ── The ?tab= query param is the SOURCE OF TRUTH for the active tab ──
+  // /home?tab=fy | /home?tab=cy — on reload, the tab is rebuilt
+  // from the URL. ALL tab changes write the URL (clicks and the gate's
+  // "not now"); the context's feedTab is a mirror that is
+  // synced URL → context in the effect below (a single direction,
+  // no dual truths and no loops).
   const [searchParams, setSearchParams] = useSearchParams();
   const rawTabParam = searchParams.get("tab");
   const urlTab = rawTabParam === "cy" ? "closeyou" : "foryou";
 
-  // Patrón de transición suave de /search: la marca se pone SOLO en la
-  // acción del usuario (click de tab / cambio de radio) — nunca
-  // observando el state, así un POP que restaura ?tab= no dispara el
-  // scroll y la restauración de posición queda intacta.
+  // Smooth-transition pattern from /search: the flag is set ONLY on the
+  // user's action (tab click / radius change) — never by
+  // observing the state, so a POP that restores ?tab= doesn't trigger the
+  // scroll and the position restoration stays intact.
   const justSwitchedRef = useRef(false);
 
   const setTabParam = (tab) => {
     setSearchParams(
       (prev) => {
-        // Preservar los demás query params: solo se toca `tab`.
+        // Preserve the other query params: only `tab` is touched.
         const next = new URLSearchParams(prev);
         next.set("tab", tab === "closeyou" ? "cy" : "fy");
         return next;
       },
-      { replace: true } // cambiar de tab no llena el historial
+      { replace: true } // switching tab doesn't fill the history
     );
   };
 
-  // Param inválido (?tab=zzz) → limpiar: /home sin param (el default
-  // For You no necesita query). Los demás params se preservan.
+  // Invalid param (?tab=zzz) → clear it: /home without the param (the
+  // For You default needs no query). The other params are preserved.
   useEffect(() => {
     if (rawTabParam && rawTabParam !== "fy" && rawTabParam !== "cy") {
       setSearchParams(
@@ -92,9 +96,9 @@ function HomeNew() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rawTabParam]);
 
-  // URL → contexto: al recargar con ?tab=close (o al cambiar el param),
-  // selectFeedTab corre igual que un click — incluido el flujo de
-  // permiso de Close You (granted→feed, prompt→opt-in, denied→bloqueado).
+  // URL → context: on reload with ?tab=close (or when the param changes),
+  // selectFeedTab runs just like a click — including the Close You
+  // permission flow (granted→feed, prompt→opt-in, denied→blocked).
   useEffect(() => {
     if (urlTab !== feedTab) {
       selectFeedTab(urlTab);
@@ -102,20 +106,20 @@ function HomeNew() {
   }, [urlTab, feedTab, selectFeedTab]);
 
   // ── Anti "flash of wrong state" ──────────────────────────────────────
-  // Entre que la URL cambia a ?tab=cy y el effect sincroniza el contexto
-  // hay UN render donde closeYouStatus aún es el valor VIEJO (p. ej.
-  // "denied" de una visita anterior, aunque el permiso ya esté
-  // concedido). Ese frame pintaba el mensaje de bloqueado — el flash.
-  // Mientras el contexto no está sincronizado, el gate muestra SIEMPRE
-  // el estado neutral "checking" (el "finding your area…" sutil, con su
-  // icono pulsando) — nunca un mensaje que la comprobación async puede
-  // contradecir un instante después.
+  // Between the URL changing to ?tab=cy and the effect syncing the context
+  // there is ONE render where closeYouStatus is still the OLD value (e.g.
+  // "denied" from a previous visit, even though the permission is already
+  // granted). That frame used to paint the blocked message — the flash.
+  // While the context is not synced, the gate ALWAYS shows
+  // the neutral "checking" state (the subtle "finding your area…", with its
+  // icon pulsing) — never a message that the async check might
+  // contradict an instant later.
   const closeYouSyncing = urlTab === "closeyou" && feedTab !== "closeyou";
   const gateStatus = closeYouSyncing ? "locating" : closeYouStatus;
 
-  // El gate del Close You reemplaza el área del feed mientras no haya
-  // celdas (checking / prompt / denied...) — el feed nunca se monta sin
-  // el opt-in del lector.
+  // The Close You gate replaces the feed area while there are no
+  // cells (checking / prompt / denied...) — the feed never mounts without
+  // the reader's opt-in.
   const showCloseYouGate =
     urlTab === "closeyou" &&
     (closeYouSyncing ||
@@ -127,11 +131,11 @@ function HomeNew() {
     ensureLoaded();
   }, [ensureLoaded]);
 
-  // Entrada del contenido NUEVO tras un switch (tab/radio): animación de
-  // duración FIJA (~240ms, CSS) atada al CAMBIO DE CONTENIDO — no al
-  // estado loading. El dim atado a isLoading es invisible en localhost
-  // (fetch ~30ms = 1-2 frames); esta animación se reproduce COMPLETA
-  // aunque los datos lleguen instantáneos, sin ralentizar ningún fetch.
+  // Entrance of the NEW content after a switch (tab/radius): a FIXED-
+  // duration animation (~240ms, CSS) tied to the CONTENT CHANGE — not to
+  // the loading state. The dim tied to isLoading is invisible on localhost
+  // (fetch ~30ms = 1-2 frames); this animation plays in FULL
+  // even if the data arrives instantly, without slowing down any fetch.
   const [isEntering, setIsEntering] = useState(false);
   const enterTimerRef = useRef(null);
   useEffect(() => {
@@ -140,9 +144,9 @@ function HomeNew() {
     };
   }, []);
 
-  // Settle del switch (scroll suave + enter fade) — useLayoutEffect: la
-  // clase de entrada se aplica ANTES del paint del contenido nuevo (sin
-  // frame intermedio a opacidad plena = sin flash).
+  // Switch settle (smooth scroll + enter fade) — useLayoutEffect: the
+  // entrance class is applied BEFORE the paint of the new content (no
+  // intermediate frame at full opacity = no flash).
   useLayoutEffect(() => {
     if (!justSwitchedRef.current) return;
     if (!isLoading && posts.length > 0) {
@@ -155,8 +159,8 @@ function HomeNew() {
         behavior: reduceMotion ? "auto" : "smooth",
       });
       if (!reduceMotion) {
-        // Re-aplicable en cada switch: quitar la clase al terminar la
-        // animación permite que el próximo switch la reinicie.
+        // Re-applicable on each switch: removing the class when the
+        // animation ends lets the next switch restart it.
         setIsEntering(true);
         if (enterTimerRef.current) clearTimeout(enterTimerRef.current);
         enterTimerRef.current = setTimeout(() => {
@@ -178,8 +182,11 @@ function HomeNew() {
     navigate(`/post/${postId}`);
   };
 
+  // A hashtag click is a normal search for that hashtag (q=#tag) — lands on
+  // /search with the standard tabs, no special tag mode.
   const handleHashtagClick = (tag) => {
-    navigate(`/search?tag=${encodeURIComponent(tag)}`);
+    const clean = String(tag).replace(/^#/, "");
+    navigate(`/search?q=${encodeURIComponent(`#${clean}`)}`);
   };
 
   const handleComposeFocus = () => {
@@ -198,7 +205,6 @@ function HomeNew() {
 
   return (
     <div className={styles.page}>
-      <HomeTopBar currentUserMask={currentUserMask} />
       <main className={styles.main}>
         <div ref={composeRef}>
           <HomeCompose
@@ -214,6 +220,8 @@ function HomeNew() {
           }}
           isLoading={isLoading}
           options={["for you", "close you"]}
+          label={t("home.filterLabel")}
+          getOptionLabel={(option) => t(TAB_I18N[option])}
         />
         {urlTab === "closeyou" && !showCloseYouGate && (
           <CloseYouRadiusBar

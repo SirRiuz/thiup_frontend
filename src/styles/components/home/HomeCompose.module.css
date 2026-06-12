@@ -3,6 +3,8 @@
   background: #fdfcf8;
   border: 1px solid #e8e5dd;
   border-radius: 8px;
+  /* A bit more breathing room on top (adds to the page's padding-top). */
+  margin-top: 10px;
   margin-bottom: 24px;
 }
 
@@ -50,16 +52,16 @@
   white-space: nowrap;
 }
 
-/* === Textarea con overlay sincronizado === */
+/* === Textarea with synchronized overlay === */
 
 .textareaWrapper {
   position: relative;
   width: 100%;
 }
 
-/* CRÍTICO: el overlay debe matchear pixel-perfect el textarea.
- * Cualquier diferencia en font-family, font-size, line-height, padding,
- * white-space, word-wrap, box-sizing → desalinea las palabras. */
+/* CRITICAL: the overlay must match the textarea pixel-perfect.
+ * Any difference in font-family, font-size, line-height, padding,
+ * white-space, word-wrap, box-sizing → misaligns the words. */
 .highlightLayer {
   position: absolute;
   top: 0;
@@ -81,9 +83,9 @@
   min-height: 60px;
 }
 
-/* NO usar font-weight aquí — el peso 600 desalinea el caret del textarea
- * invisible (weight 400). Solo cambios que NO afectan glyph metrics:
- * background + border-radius + color. */
+/* Do NOT use font-weight here — weight 600 misaligns the caret of the
+ * invisible textarea (weight 400). Only changes that do NOT affect glyph
+ * metrics: background + border-radius + color. */
 .highlightHashtag {
   color: #1a1a1a;
   background: rgba(26, 26, 26, 0.06);
@@ -116,7 +118,7 @@
   color: #9b9591;
 }
 
-/* Selección visible aunque el color del texto sea transparente */
+/* Selection visible even though the text color is transparent */
 .input::selection {
   background: rgba(26, 26, 26, 0.15);
   color: transparent;
@@ -295,8 +297,8 @@
   }
 }
 
-/* Toggle de "compartir zona aproximada" (opt-in del autor, Close You).
-   Activo = el naranja cálido de la paleta; inactivo = gris discreto. */
+/* "Share approximate area" toggle (author opt-in, Close You).
+   Active = the palette's warm orange; inactive = subtle gray. */
 .locationButton {
   display: inline-flex;
   align-items: center;
@@ -323,15 +325,15 @@
   background: rgba(168, 84, 50, 0.1);
 }
 
-/* "La celda difuminada" — nota de privacidad del toggle de zona.
-   Micro-mapa de papel (retícula tenue + mancha cálida con blur real)
-   que MUESTRA el concepto: un área aproximada, nunca un punto. Borde
-   punteado estilo papel/recibo, compacto para no distraer del texto. */
+/* "The blurred cell" — privacy note for the area toggle.
+   Paper micro-map (faint grid + warm blob with real blur)
+   that SHOWS the concept: an approximate area, never a point. Dashed
+   paper/receipt-style border, compact so it doesn't distract from the text. */
 .privacyNote {
   display: flex;
   align-items: center;
   gap: 12px;
-  /* margen inferior: respiro frente a las tabs del feed (no pegada) */
+  /* bottom margin: breathing room from the feed tabs (not stuck to them) */
   margin: 8px 0 14px;
   padding: 8px 12px;
   background: rgba(184, 132, 95, 0.04);
@@ -359,7 +361,7 @@
   color: #666;
 }
 
-/* El dato clave como chip terracota (estética de la paleta cálida). */
+/* The key fact as a terracotta chip (warm palette aesthetic). */
 .privacyChip {
   display: inline-block;
   padding: 1px 7px;
@@ -371,7 +373,7 @@
   white-space: nowrap;
 }
 
-/* La garantía — el corazón del mensaje de confianza. */
+/* The guarantee — the heart of the trust message. */
 .privacyGuarantee {
   margin: 0;
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
@@ -381,9 +383,9 @@
   color: #1a1a1a;
 }
 
-/* Microinteracción: el bloque entra suave y la zona "se asienta" (un
-   pulso de opacidad, UNA vez) al activar el opt-in. Discreto, y
-   respetando prefers-reduced-motion. */
+/* Microinteraction: the block enters smoothly and the area "settles" (an
+   opacity pulse, ONCE) when the opt-in is enabled. Subtle, and
+   honoring prefers-reduced-motion. */
 @media (prefers-reduced-motion: no-preference) {
   .privacyNote {
     animation: privacyNoteIn 200ms ease-out;
@@ -421,8 +423,8 @@
   opacity: 0.65;
 }
 
-/* Variante WARNING de la nota: mismo layout/tipografía, tinte y borde
-   terracota — advierte sin alarmar (el hilo sí se publicó). */
+/* WARNING variant of the note: same layout/typography, terracotta tint
+   and border — warns without alarming (the thread was indeed published). */
 .noteWarning {
   background: rgba(168, 84, 50, 0.05);
   border-color: #dcc0ad;
@@ -432,8 +434,8 @@
   border-color: #e8d5c4;
 }
 
-/* Línea principal del aviso — paralela a .privacyGuarantee pero en el
-   color de aviso. */
+/* Main warning line — parallel to .privacyGuarantee but in the
+   warning color. */
 .warningPrimary {
   margin: 0 0 3px;
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
@@ -449,8 +451,8 @@
   }
 }
 
-/* Toggle de zona con el permiso BLOQUEADO: no promete lo que no puede
-   cumplir — atenuado y not-allowed (el hint warning persistente guía). */
+/* Area toggle with the permission BLOCKED: it doesn't promise what it
+   can't deliver — dimmed and not-allowed (the persistent warning hint guides). */
 .locationButtonBlocked,
 .locationButtonBlocked:hover {
   color: #a3a3a3;
@@ -459,8 +461,8 @@
   cursor: not-allowed;
 }
 
-/* 'x' de la nota de privacidad: discreta y proporcional, pero con área
-   táctil cómoda (28px). Cerrarla apaga el compartir zona. */
+/* 'x' of the privacy note: subtle and proportional, but with a comfortable
+   touch area (28px). Closing it turns off area sharing. */
 .privacyClose {
   display: inline-flex;
   align-items: center;

@@ -1,10 +1,10 @@
 /**
- * Healthcheck del backend — por apiFetch, con las MISMAS reglas estándar que
- * cualquier llamada de la app: cifrado E2E + client-assertion (single
- * request) + cache busting. Ya no es un fetch directo a un endpoint público.
+ * Backend healthcheck — through apiFetch, with the SAME standard rules as
+ * any call in the app: E2E encryption + client-assertion (single
+ * request) + cache busting. It is no longer a direct fetch to a public endpoint.
  *
- * Lo ÚNICO que importa es el status: si apiFetch RESUELVE, hubo un 200
- * (servidor + DB + auth + cifrado OK). Cualquier fallo (no-200, auth, red,
+ * The ONLY thing that matters is the status: if apiFetch RESOLVES, there was a 200
+ * (server + DB + auth + encryption OK). Any failure (non-200, auth, network,
  * timeout) => down.
  */
 
@@ -19,7 +19,7 @@ export async function checkServerHealth() {
     await apiFetch(`/health/?_t=${Date.now()}`, {
       signal: controller.signal,
     });
-    return true; // resolvió => status 200
+    return true; // resolved => status 200
   } catch (err) {
     return false;
   } finally {

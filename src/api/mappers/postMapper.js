@@ -1,7 +1,7 @@
 /**
- * Transforma un thread del shape del backend al shape que espera HomeFeedCard.
+ * Transforms a thread from the backend shape to the shape HomeFeedCard expects.
  *
- * Backend response shape (de apps/threads/serializers/thread_serializer.py):
+ * Backend response shape (from apps/threads/serializers/thread_serializer.py):
  *   {
  *     uid, text, content, create_at,
  *     mask: { id, hash, country_code, miniature },
@@ -10,16 +10,16 @@
  *     is_new, is_op, sub, parent
  *   }
  *
- * Nota: el backend ya no expone el UUID `id` ni `short_id` para los hilos.
- * El identificador público del hilo es ahora `uid` (12 chars), y el retrieve
- * (/post/:id, /threads/<uid>/) se resuelve por uid.
+ * Note: the backend no longer exposes the `id` UUID nor `short_id` for threads.
+ * The public identifier of the thread is now `uid` (12 chars), and the retrieve
+ * (/post/:id, /threads/<uid>/) is resolved by uid.
  */
 /**
- * Resuelve qué reacción tiene el current user en el post, desde `last_reaction`.
- * El backend lo expone como objeto de reacción (ver legacy ReactionBox, que usa
- * last_reaction.id). Devolvemos el emoji para que la UI (PostReactionPill.active,
- * picker highlight) lo compare contra cada reacción. Defensivo ante variaciones
- * de shape: emoji directo, string, o resolución por id contra el array.
+ * Resolves which reaction the current user has on the post, from `last_reaction`.
+ * The backend exposes it as a reaction object (see legacy ReactionBox, which uses
+ * last_reaction.id). We return the emoji so the UI (PostReactionPill.active,
+ * picker highlight) compares it against each reaction. Defensive against shape
+ * variations: direct emoji, string, or resolution by id against the array.
  */
 function resolveCurrentUserReaction(backendPost) {
   const lr = backendPost.last_reaction;
@@ -41,8 +41,8 @@ export function mapBackendPostToFrontend(backendPost) {
       emoji: r.emoji,
       name: r.name,
       count: r.reaction_count,
-      // userReacted marca la reacción activa del current user (modelo Facebook:
-      // a lo sumo una). Persiste el highlight de la pill tras un reload.
+      // userReacted marks the current user's active reaction (Facebook model:
+      // at most one). Persists the pill highlight after a reload.
       userReacted: currentUserReaction != null && r.emoji === currentUserReaction,
     }))
     .filter((r) => r.count > 0)
@@ -51,7 +51,7 @@ export function mapBackendPostToFrontend(backendPost) {
   return {
     currentUserReaction,
     uid: backendPost.uid,
-    // El backend ya no retorna el UUID `id`; el identificador público es `uid`.
+    // The backend no longer returns the `id` UUID; the public identifier is `uid`.
     id: backendPost.uid,
     shortId: backendPost.uid,
     mask: {
@@ -61,9 +61,9 @@ export function mapBackendPostToFrontend(backendPost) {
     },
     text: backendPost.text || "",
     time: backendPost.create_at || "",
-    // Momentum del motor For You. momentum_final = base × boost regional,
-    // calculado POR CONSULTA en el backend (solo viene en el feed For
-    // You); fallback al base persistido. Solo se muestra con DEBUG activo.
+    // Momentum from the For You engine. momentum_final = base × regional boost,
+    // computed PER QUERY in the backend (only comes in the For
+    // You feed); fallback to the persisted base. Only shown with DEBUG active.
     momentum: backendPost.momentum_final ?? backendPost.momentum_score ?? null,
     isTrending: false,
     repliesCount: backendPost.responses_count ?? 0,

@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import MaskAvatar from "../MaskAvatar";
 import { useFeedContext } from "../../contexts/FeedContext";
 import { geohashForPosition } from "../../utils/geohash";
@@ -16,9 +17,11 @@ const MAX_HEIGHT = 200;
 const MAX_CHARS = 1000;
 const ERROR_AUTO_DISMISS_MS = 8000;
 
-function getErrorMessage(err) {
+// The backend may return validation messages (400) that are shown as-is;
+// the rest of the error messages are from the UI and are translated.
+function getErrorMessage(err, t) {
   if (!err || !err.status) {
-    return "Couldn't reach the server — check your connection";
+    return t("errors.network");
   }
   if (err.status === 400) {
     const payload = err.payload;
@@ -28,23 +31,23 @@ function getErrorMessage(err) {
     if (payload?.detail) return payload.detail;
     if (Array.isArray(payload?.non_field_errors) && payload.non_field_errors[0])
       return payload.non_field_errors[0];
-    return "The post couldn't be created — check your text and try again";
+    return t("errors.badRequest");
   }
-  if (err.status === 401) return "Your session expired — refresh the page";
-  if (err.status === 403) return "You don't have permission to post";
-  if (err.status === 429) return "You're posting too fast — wait a moment";
-  if (err.status >= 500)
-    return "Something went wrong on our side — try again in a moment";
-  return "Something went wrong — try again";
+  if (err.status === 401) return t("errors.unauthorized");
+  if (err.status === 403) return t("errors.forbidden");
+  if (err.status === 429) return t("errors.rateLimit");
+  if (err.status >= 500) return t("errors.server");
+  return t("errors.generic");
 }
 
 function HomeCompose({ currentUserMask, isLoading = false }) {
+  const { t } = useTranslation();
   const [text, setText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
-  // Opt-in del AUTOR: compartir zona aproximada al publicar. Se persiste
-  // la PREFERENCIA (booleano) — la ubicación jamás: se pide al publicar,
-  // se fuzzea, se codifica a celda ~5km y se descarta.
+  // AUTHOR opt-in: share approximate area when publishing. The PREFERENCE
+  // (boolean) is persisted — the location never: it is requested when
+  // publishing, fuzzed, encoded to a ~5km cell and discarded.
   const [shareLocation, setShareLocation] = useState(() => {
     try {
       return window.localStorage.getItem("thiup:share-location") === "true";
@@ -52,19 +55,20 @@ function HomeCompose({ currentUserMask, isLoading = false }) {
       return false;
     }
   });
-  // Aviso no-bloqueante del flujo de ubicación (fallos transitorios).
-  // El post NUNCA se bloquea por esto — sale sin geohash.
+  // Non-blocking notice for the location flow (transient failures).
+  // The post is NEVER blocked by this — it goes out without geohash.
   const [locationNotice, setLocationNotice] = useState(null);
-  // Estado REAL del permiso de geolocalización — el toggle no puede
-  // prometer lo que el navegador no va a cumplir:
-  //   granted | prompt | denied | unsupported (sin geo/contexto inseguro)
-  //   | unknown (sin Permissions API → se resuelve al intentar)
+  // REAL state of the geolocation permission — the toggle can't promise what
+  // the browser isn't going to deliver:
+  //   granted | prompt | denied | unsupported (no geo/insecure context)
+  //   | unknown (no Permissions API → resolved when attempting)
   const [geoPermission, setGeoPermission] = useState("unknown");
-  // La nota de privacidad SOLO aparece con ubicación realmente
-  // disponible: permiso concedido + posición obtenida en esta sesión.
+  // The privacy note ONLY appears with location actually available:
+  // permission granted + position obtained in this session.
   const [locationReady, setLocationReady] = useState(false);
-  // Timer del aviso transitorio de "bloqueado" (aparece al clickear el
-  // toggle bloqueado y se va solo — no vive permanente en la caja).
+  // Timer for the transient "blocked" notice (appears when clicking the
+  // blocked toggle and goes away on its own — it doesn't live permanently
+  // in the box).
   const noticeTimerRef = useRef(null);
 
   useEffect(() => {
@@ -130,9 +134,10 @@ function HomeCompose({ currentUserMask, isLoading = false }) {
     setText(e.target.value.slice(0, MAX_CHARS));
   };
 
-  // Paste: normaliza el texto externo (CRLF→LF, nbsp, zero-width) antes de
-  // insertarlo en la posición del cursor. Reconstruye el value con React state
-  // y reposiciona el cursor tras el re-render (mismo patrón que PostCommentBox).
+  // Paste: normalizes the external text (CRLF→LF, nbsp, zero-width) before
+  // inserting it at the cursor position. Rebuilds the value with React state
+  // and repositions the cursor after the re-render (same pattern as
+  // PostCommentBox).
   const handlePaste = (e) => {
     if (isDisabled) return;
     e.preventDefault();
@@ -156,13 +161,13 @@ function HomeCompose({ currentUserMask, isLoading = false }) {
     try {
       window.localStorage.setItem("thiup:share-location", String(value));
     } catch (err) {
-      /* storage deshabilitado: la preferencia no persiste */
+      /* storage disabled: the preference does not persist */
     }
   };
 
-  // Obtiene la posición AHORA (dispara el diálogo si el permiso está
-  // 'prompt'). Éxito → toggle ON + nota de privacidad real. Denegado →
-  // toggle OFF + estado bloqueado. Otro fallo → aviso transitorio.
+  // Gets the position NOW (triggers the dialog if the permission is
+  // 'prompt'). Success → toggle ON + real privacy note. Denied →
+  // toggle OFF + blocked state. Other failure → transient notice.
   const requestPosition = ({ persistOnSuccess }) => {
     navigator.geolocation.getCurrentPosition(
       () => {
@@ -175,13 +180,13 @@ function HomeCompose({ currentUserMask, isLoading = false }) {
         setLocationReady(false);
         setShareLocation(false);
         if (geoError && geoError.code === 1) {
-          // Denegado en el diálogo (o ya bloqueado): el hint persistente
-          // de bloqueado lo muestra el computed de abajo.
+          // Denied in the dialog (or already blocked): the persistent
+          // blocked hint is shown by the computed below.
           setGeoPermission("denied");
         } else {
           setLocationNotice({
-            primary: "Can't share your area",
-            secondary: "We couldn't get your location — try again.",
+            primary: t("compose.cannotShareTitle"),
+            secondary: t("compose.cannotShareBody"),
           });
         }
       },
@@ -189,8 +194,8 @@ function HomeCompose({ currentUserMask, isLoading = false }) {
     );
   };
 
-  // Estado real del permiso al montar + cambios EN VIVO (el usuario lo
-  // habilita/bloquea en ajustes con la caja abierta).
+  // Real permission state on mount + LIVE changes (the user
+  // enables/blocks it in settings with the box open).
   useEffect(() => {
     let active = true;
     const blockedByEnvironment =
@@ -223,8 +228,8 @@ function HomeCompose({ currentUserMask, isLoading = false }) {
   const permissionBlocked =
     geoPermission === "denied" || geoPermission === "unsupported";
 
-  // Preferencia ON de una sesión anterior: verificar en silencio cuando
-  // el permiso sea conocido — la nota solo sale con posición real.
+  // ON preference from a previous session: verify silently when the
+  // permission is known — the note only appears with a real position.
   useEffect(() => {
     if (geoPermission === "granted" && shareLocation && !locationReady) {
       requestPosition({ persistOnSuccess: false });
@@ -238,9 +243,9 @@ function HomeCompose({ currentUserMask, isLoading = false }) {
 
   const toggleShareLocation = () => {
     setLocationNotice(null);
-    // Bloqueado: el toggle NO se puede activar — el click/tap muestra el
-    // aviso de bloqueado unos segundos y desaparece solo (no vive
-    // permanente en la caja; en móvil cubre la falta de hover).
+    // Blocked: the toggle CANNOT be activated — the click/tap shows the
+    // blocked notice for a few seconds and disappears on its own (it doesn't
+    // live permanently in the box; on mobile it covers the lack of hover).
     if (permissionBlocked) {
       showTransientNotice(BLOCKED_NOTICE);
       return;
@@ -252,15 +257,15 @@ function HomeCompose({ currentUserMask, isLoading = false }) {
       persistSharePref(false);
       return;
     }
-    // granted → posición directa; prompt/unknown → getCurrentPosition
-    // dispara el diálogo del navegador y el resultado decide.
+    // granted → direct position; prompt/unknown → getCurrentPosition
+    // triggers the browser dialog and the result decides.
     requestPosition({ persistOnSuccess: true });
   };
 
-  // Geohash del autor SOLO si activó compartir ubicación: coords →
-  // fuzzing → celda gruesa (precisión 5) → descartar coords. Si la
-  // ubicación falla/expira, el post sale SIN geohash (nunca bloquea) y
-  // se reporta el motivo para dar feedback honesto.
+  // Author's geohash ONLY if they enabled sharing location: coords →
+  // fuzzing → coarse cell (precision 5) → discard coords. If the location
+  // fails/expires, the post goes out WITHOUT geohash (never blocks) and the
+  // reason is reported to give honest feedback.
   const getAuthorGeohash = () =>
     new Promise((resolve) => {
       if (!shareLocation || permissionBlocked) {
@@ -288,36 +293,34 @@ function HomeCompose({ currentUserMask, isLoading = false }) {
       );
     });
 
-  // Avisos con la MISMA estructura de dos líneas que la nota de
-  // privacidad (su variante warning): el hilo SÍ se publicó — tono
-  // mesurado, solo faltó la zona.
-  // Copy del aviso de bloqueado — se muestra TRANSITORIO (unos segundos)
-  // solo cuando el usuario clickea el toggle bloqueado.
+  // Notices with the SAME two-line structure as the privacy note (its
+  // warning variant): the thread WAS published — measured tone, only the
+  // area was missing.
+  // Copy for the blocked notice — shown TRANSIENTLY (a few seconds) only
+  // when the user clicks the blocked toggle.
   const BLOCKED_NOTICE =
     geoPermission === "unsupported"
       ? {
-          primary: "Can't share your area",
-          secondary:
-            "Location needs a supported browser over https or localhost.",
+          primary: t("compose.cannotShareTitle"),
+          secondary: t("compose.unsupportedBody"),
         }
       : {
-          primary: "Location is blocked",
-          secondary:
-            "Enable it in your browser settings to attach your area.",
+          primary: t("compose.blockedTitle"),
+          secondary: t("compose.blockedBody"),
         };
 
   const LOCATION_FAILURE_NOTICES = {
     denied: {
-      primary: "Posted without your area",
-      secondary: "Location is blocked — enable it in your browser settings.",
+      primary: t("compose.postedWithoutAreaTitle"),
+      secondary: t("compose.postedWithoutAreaDenied"),
     },
     unavailable: {
-      primary: "Posted without your area",
-      secondary: "We couldn't get your location in time.",
+      primary: t("compose.postedWithoutAreaTitle"),
+      secondary: t("compose.postedWithoutAreaTimeout"),
     },
     unsupported: {
-      primary: "Posted without your area",
-      secondary: "Your browser doesn't support location.",
+      primary: t("compose.postedWithoutAreaTitle"),
+      secondary: t("compose.postedWithoutAreaUnsupported"),
     },
   };
 
@@ -330,8 +333,9 @@ function HomeCompose({ currentUserMask, isLoading = false }) {
 
     setLocationNotice(null);
     try {
-      // ESPERAR la geolocalización ANTES del POST (sin race): el payload
-      // sale con el geohash o, si falló, sin él — pero nunca a medias.
+      // WAIT for the geolocation BEFORE the POST (no race): the payload
+      // goes out with the geohash or, if it failed, without it — but never
+      // half-done.
       const { geohash, failure } = await getAuthorGeohash();
       await createPost(text, { geohash });
       if (shareLocation && !geohash && failure) {
@@ -342,7 +346,7 @@ function HomeCompose({ currentUserMask, isLoading = false }) {
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
       setSubmitError({
-        message: getErrorMessage(err),
+        message: getErrorMessage(err, t),
         timestamp: Date.now(),
       });
     } finally {
@@ -361,23 +365,23 @@ function HomeCompose({ currentUserMask, isLoading = false }) {
         className={`${styles.wrapper} ${isDisabled ? styles.disabled : ""}`}
       >
         <div className={styles.header}>
-          {/* Placeholder discreto mientras /me/ carga (un solo request
-              global, vía CurrentUserContext). */}
+          {/* Discreet placeholder while /me/ loads (a single global
+              request, via CurrentUserContext). */}
           {currentUserMask ? (
             <>
               <span className={styles.identiconWrap}>
                 <MaskAvatar seed={currentUserMask.id} size={20} />
               </span>
-              <span className={styles.label}>posting as</span>
+              <span className={styles.label}>{t("compose.postingAs")}</span>
               <span className={styles.maskId}>{currentUserMask.id}</span>
             </>
           ) : (
-            <span className={styles.label}>posting as …</span>
+            <span className={styles.label}>{t("compose.postingAsPlaceholder")}</span>
           )}
           <span className={styles.spacer} />
           {tagsDetected > 0 && (
             <span className={styles.tagsDetected}>
-              {tagsDetected} {tagsDetected === 1 ? "tag" : "tags"} detected
+              {t("common.tagsDetected", { count: tagsDetected })}
             </span>
           )}
         </div>
@@ -395,7 +399,7 @@ function HomeCompose({ currentUserMask, isLoading = false }) {
             id="compose-textarea"
             name="compose"
             className={styles.input}
-            placeholder="Start a thread..."
+            placeholder={t("compose.placeholder")}
             value={text}
             onChange={handleTextChange}
             onPaste={handlePaste}
@@ -405,8 +409,8 @@ function HomeCompose({ currentUserMask, isLoading = false }) {
           />
         </div>
         <div className={styles.toolbar}>
-          {/* Botón de subir imagen oculto temporalmente — la feature se
-              añadirá más adelante:
+          {/* Image upload button temporarily hidden — the feature will be
+              added later:
           <button
             type="button"
             className={styles.attachButton}
@@ -437,10 +441,10 @@ function HomeCompose({ currentUserMask, isLoading = false }) {
             aria-disabled={permissionBlocked}
             title={
               permissionBlocked
-                ? "location is blocked — enable it in your browser settings"
+                ? t("compose.locationBlocked")
                 : shareLocation
-                ? "sharing your approximate area (~5 km, blurred) — click to turn off"
-                : "share your approximate area when posting (for Close You) — never your exact location"
+                ? t("compose.locationActive")
+                : t("compose.locationDefault")
             }
           >
             <svg
@@ -462,7 +466,7 @@ function HomeCompose({ currentUserMask, isLoading = false }) {
               atLimit ? styles.charCountAtLimit : ""
             }`}
           >
-            {charCount} / {MAX_CHARS}
+            {t("common.charCount", { count: charCount, max: MAX_CHARS })}
           </span>
           <button
             type="button"
@@ -473,16 +477,16 @@ function HomeCompose({ currentUserMask, isLoading = false }) {
             {isSubmitting && (
               <span className={styles.spinner} aria-hidden="true" />
             )}
-            <span>{isSubmitting ? "posting" : "post"}</span>
+            <span>{isSubmitting ? t("compose.posting") : t("compose.post")}</span>
           </button>
         </div>
       </div>
       {shareLocation && locationReady && !locationNotice && (
         <aside className={styles.privacyNote}>
-          {/* "La celda difuminada": micro-mapa de papel donde la zona es
-              una mancha LITERALMENTE borrosa (feGaussianBlur) — muestra
-              el concepto (~5 km, difuminada, sin punto exacto) en vez de
-              solo describirlo. */}
+          {/* "The blurred cell": paper micro-map where the area is a
+              LITERALLY blurry blob (feGaussianBlur) — it shows the concept
+              (~5 km, blurred, no exact point) instead of just describing
+              it. */}
           <svg
             className={styles.privacyMap}
             width="44"
@@ -495,21 +499,21 @@ function HomeCompose({ currentUserMask, isLoading = false }) {
                 <feGaussianBlur stdDeviation="3" />
               </filter>
             </defs>
-            {/* retícula de mapa, tenue como papel */}
+            {/* map grid, faint like paper */}
             <g stroke="#e5e0d3" strokeWidth="1">
               <line x1="15" y1="2" x2="15" y2="42" />
               <line x1="29" y1="2" x2="29" y2="42" />
               <line x1="2" y1="15" x2="42" y2="15" />
               <line x1="2" y1="29" x2="42" y2="29" />
             </g>
-            {/* una calle diagonal, apenas insinuada */}
+            {/* a diagonal street, barely hinted */}
             <path
               d="M4 36 Q 18 28 24 18 T 40 6"
               fill="none"
               stroke="#ebe7dd"
               strokeWidth="1.4"
             />
-            {/* LA ZONA: mancha cálida difuminada — un área, nunca un pin */}
+            {/* THE AREA: warm blurred blob — an area, never a pin */}
             <rect
               className={styles.privacyZone}
               x="16"
@@ -522,26 +526,28 @@ function HomeCompose({ currentUserMask, isLoading = false }) {
             />
           </svg>
           <div className={styles.privacyText}>
-            {/* OJO wording: el ~5 km es el BORRÓN donde se guarda la
-                ubicación del autor (privacidad) — no confundir con el
-                radio de búsqueda del lector en Close You (15-100 km). */}
+            {/* CAREFUL with wording: the ~5 km is the BLUR where the
+                author's location is stored (privacy) — not to be confused
+                with the reader's search radius in Close You (15-100 km). */}
             <p className={styles.privacyLine}>
-              location blurred into a{" "}
-              <span className={styles.privacyChip}>~5 km area</span>
+              {t("compose.privacyNoteLead")}{" "}
+              <span className={styles.privacyChip}>
+                {t("compose.privacyNoteChip")}
+              </span>
             </p>
             <p className={styles.privacyGuarantee}>
-              your exact spot is never stored
+              {t("compose.privacyGuarantee")}
             </p>
           </div>
-          {/* Cerrar la nota = APAGAR el compartir zona (misma rama OFF
-              del toggle): nota y opt-in nunca se desincronizan — sin
-              estado huérfano de "compartiendo sin aviso". */}
+          {/* Closing the note = TURNING OFF area sharing (same OFF branch
+              of the toggle): note and opt-in never desync — no orphan state
+              of "sharing without notice". */}
           <button
             type="button"
             className={styles.privacyClose}
             onClick={toggleShareLocation}
-            aria-label="Stop sharing my area"
-            title="stop sharing my area"
+            aria-label={t("compose.stopSharing")}
+            title={t("compose.stopSharing")}
           >
             <svg
               width="12"
@@ -564,9 +570,9 @@ function HomeCompose({ currentUserMask, isLoading = false }) {
           className={`${styles.privacyNote} ${styles.noteWarning}`}
           role="status"
         >
-          {/* Variante WARNING de la nota de privacidad: mismo layout y
-              tipografía; cambia el icono (pin TACHADO = zona no
-              adjuntada) y el color de aviso (terracota, con tacto). */}
+          {/* WARNING variant of the privacy note: same layout and
+              typography; changes the icon (CROSSED-OUT pin = area not
+              attached) and the warning color (terracotta, tactful). */}
           <svg
             className={styles.privacyMap}
             width="44"
@@ -584,7 +590,7 @@ function HomeCompose({ currentUserMask, isLoading = false }) {
               {/* pin */}
               <path d="M30 19c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
               <circle cx="22" cy="19" r="3" />
-              {/* tachado */}
+              {/* crossed out */}
               <line x1="12" y1="33" x2="32" y2="9" />
             </g>
           </svg>
@@ -616,7 +622,7 @@ function HomeCompose({ currentUserMask, isLoading = false }) {
             type="button"
             className={styles.errorDismiss}
             onClick={handleDismissError}
-            aria-label="Dismiss error"
+            aria-label={t("common.dismissError")}
           >
             <svg
               width="12"

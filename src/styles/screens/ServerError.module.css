@@ -1,4 +1,4 @@
-/* ServerError — pantalla Oops de servidor caído (familia visual de la 404) */
+/* ServerError — server-down Oops screen (visual family of the 404) */
 
 .page {
   background: #f7f5f0;
@@ -39,7 +39,7 @@
   margin: 0;
 }
 
-/* Botón oscuro de alto contraste, con ícono reload blanco nítido. */
+/* High-contrast dark button, with a crisp white reload icon. */
 .button {
   margin-top: 8px;
   display: inline-flex;

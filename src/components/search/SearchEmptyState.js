@@ -1,6 +1,8 @@
+import { useTranslation } from "react-i18next";
 import styles from "../../styles/components/search/SearchEmptyState.module.css";
 
-function SearchEmptyState({ onBackToFeed }) {
+function SearchEmptyState() {
+  const { t } = useTranslation();
   return (
     <div className={styles.empty}>
       <div className={styles.iconWrap}>
@@ -16,13 +18,8 @@ function SearchEmptyState({ onBackToFeed }) {
           <line x1="21" y1="21" x2="16.65" y2="16.65" />
         </svg>
       </div>
-      <p className={styles.title}>No results found</p>
-      <p className={styles.subtitle}>
-        try different keywords or browse trending
-      </p>
-      <button type="button" className={styles.button} onClick={onBackToFeed}>
-        Back to home
-      </button>
+      <p className={styles.title}>{t("search.noResultsTitle")}</p>
+      <p className={styles.subtitle}>{t("search.noResultsSubtitle")}</p>
     </div>
   );
 }

@@ -90,8 +90,8 @@
   flex: none;
 }
 
-/* === Skeleton mientras cargan los datos reales (patrón warm del proyecto:
-   #ebe7dd + pulso de opacidad, como PostReplySkeleton) === */
+/* === Skeleton while the real data loads (project's warm pattern:
+   #ebe7dd + opacity pulse, like PostReplySkeleton) === */
 
 .skeletonBar {
   display: inline-block;

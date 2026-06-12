@@ -1,17 +1,17 @@
 /**
- * Matching de texto insensible a tildes y mayúsculas, para el RESALTADO del
- * término buscado. Espejo del backend (unaccent + icontains): lo que el
- * backend considera coincidencia, el frontend lo resalta.
+ * Accent- and case-insensitive text matching, for HIGHLIGHTING the
+ * searched term. Mirror of the backend (unaccent + icontains): whatever the
+ * backend considers a match, the frontend highlights.
  *
- * Clave del mapeo de índices: el texto se normaliza primero a NFC (tildes
- * precomputadas: 'Ú' = 1 char). removeAccents ('Ú'→'U') y toLowerCase
- * preservan la longitud 1:1 para este charset, así que los índices hallados
- * en el texto normalizado mapean DIRECTO al original — el resaltado muestra
- * el texto ORIGINAL (PERÚ, con su tilde y mayúsculas) en posiciones exactas.
+ * Key to the index mapping: the text is first normalized to NFC (precomputed
+ * accents: 'Ú' = 1 char). removeAccents ('Ú'→'U') and toLowerCase
+ * preserve the 1:1 length for this charset, so the indices found
+ * in the normalized text map DIRECTLY to the original — the highlight shows
+ * the ORIGINAL text (PERÚ, with its accent and uppercase) at exact positions.
  */
 
 export function removeAccents(str) {
-  // NFD descompone ('é' -> 'e' + U+0301) y se eliminan las combining marks.
+  // NFD decomposes ('é' -> 'e' + U+0301) and the combining marks are removed.
   return (str || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
@@ -20,9 +20,9 @@ export function normalizeForMatch(str) {
 }
 
 /**
- * Parte `text` en segmentos [{ text, match }] donde match=true son TODAS las
- * ocurrencias de `query`, comparando sin tildes ni case. Los segmentos
- * conservan el texto original. Query vacío => un solo segmento sin match.
+ * Splits `text` into segments [{ text, match }] where match=true are ALL the
+ * occurrences of `query`, comparing without accents or case. The segments
+ * keep the original text. Empty query => a single segment without a match.
  */
 export function splitByMatch(text, query) {
   const original = (text || "").normalize("NFC");
@@ -32,8 +32,8 @@ export function splitByMatch(text, query) {
   }
 
   const normText = normalizeForMatch(original);
-  // Safety: si algún carácter exótico rompió el mapeo 1:1, mejor no resaltar
-  // que resaltar desfasado.
+  // Safety: if some exotic character broke the 1:1 mapping, better not to
+  // highlight than to highlight off-position.
   if (normText.length !== original.length) {
     return [{ text: original, match: false }];
   }

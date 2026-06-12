@@ -2,12 +2,13 @@ import { useState, useEffect } from "react";
 import { fetchMaskProfile } from "../api/userApi";
 
 /**
- * Perfil de una máscara para el hover card, BAJO DEMANDA y con CACHÉ.
+ * Profile of a mask for the hover card, ON DEMAND and CACHED.
  *
- * - Bajo demanda: el hook vive dentro del hover card, que solo se monta al
- *   hacer hover (con su delay) — nunca se fetchea al renderizar las listas.
- * - Caché por hash (módulo, vive toda la sesión): la misma máscara repetida
- *   en el feed, o un segundo hover, NO repite el request ni el skeleton.
+ * - On demand: the hook lives inside the hover card, which only mounts on
+ *   hover (with its delay) — it's never fetched when rendering the lists.
+ * - Cache by hash (module-level, lives for the whole session): the same mask
+ *   repeated in the feed, or a second hover, does NOT repeat the request or
+ *   the skeleton.
  */
 const profileCache = new Map();
 

@@ -1,31 +1,37 @@
 /**
- * Wrapper de fetch que añade base URL, encryption handling y errores tipados.
+ * Fetch wrapper que añade base URL, transporte (gateway/directo), cifrado y
+ * errores tipados.
  *
- * El backend puede correr en dos modos según los flags ENCRYPTED_RESPONSE y
- * SINGLE_REQUEST_PROTECT:
+ * El backend corre en dos modos según ENCRYPTED_RESPONSE:
  *
- *  - Modo cifrado (ENCRYPTED_RESPONSE=True): responses vienen con
- *    Content-Type: application/raw, ciphertext en el body y la key+IV en el
- *    header X-Response-Payload. Reutilizamos el helper `decrypt` de
- *    src/services/cripto.js — el mismo que usa el código legacy.
+ *  - Modo cifrado: TODA petición (ticket y config incluidos) se enruta por
+ *    el GATEWAY de path rotativo /{hash}/ — el destino real (method, path,
+ *    query, body) viaja dentro del sobre cifrado y el backend despacha
+ *    internamente. La respuesta llega cifrada (X-Response-Payload) y se
+ *    descifra con el `decrypt` existente. Uniformidad: todo se ve igual.
  *
- *  - Modo plano (ENCRYPTED_RESPONSE=False): responses vienen como JSON normal.
- *    Soportamos ambos en runtime mirando el Content-Type, sin requerir
- *    cambios de config en el frontend.
+ *  - Modo plano: llamadas directas y legibles a los endpoints reales.
  *
- * Cuando SINGLE_REQUEST_PROTECT=True el backend exige el header
- * `client-assertion` (JWT firmado con REACT_APP_API_KEY). Lo enviamos siempre
- * — es inofensivo cuando el flag está apagado y necesario cuando está prendido.
+ * El modo se resuelve UNA vez al bootstrap (transport.js, fail-closed a
+ * gateway). apiFetch NO conoce la cripto: orquesta retry + errores y delega
+ * la salida en dispatchRequest (punto único). SINGLE_REQUEST_PROTECT: se
+ * envía siempre el `client-assertion` (inocuo si el flag está off).
  */
 
-import { decrypt, getClientSing } from "../services/cripto";
+import { parseResponseBody } from "./decode";
+import { dispatchRequest, DispatchEncryptError } from "./dispatch";
+import { getClientAssertion, refreshTicket } from "./ticket";
+import { ensureTransportMode } from "./transport";
+import { shouldUseGateway } from "./transportMode";
 import { SERVER_ERROR_EVENT } from "../contexts/ServerHealthContext";
 import { BASE_URL } from "../settings";
 
 const API_BASE_URL = BASE_URL;
 
-const CRYPTO_CONTENT_TYPE = "application/raw";
-const RESPONSE_PAYLOAD_HEADER = "x-response-payload";
+// Refresh-and-retry: máximo 3 INTENTOS por petición (original + 2 retries).
+// Solo el 403 (ticket expirado) dispara refresh+retry; otros errores se
+// propagan tal cual. Contador LOCAL por petición (nunca compartido).
+const MAX_ATTEMPTS = 3;
 
 export class APIError extends Error {
   constructor(message, status, payload) {
@@ -36,73 +42,95 @@ export class APIError extends Error {
   }
 }
 
-async function parseResponseBody(response) {
-  const contentType = response.headers.get("content-type") || "";
-
-  if (contentType.indexOf(CRYPTO_CONTENT_TYPE) !== -1) {
-    const payload = response.headers.get(RESPONSE_PAYLOAD_HEADER);
-    const rawBody = await response.text();
-    if (!payload || !rawBody) {
-      return null;
-    }
-    try {
-      return decrypt({ payload, data: rawBody });
-    } catch (err) {
-      console.error("Failed to decrypt response payload:", err);
-      return null;
-    }
-  }
-
-  // Fallback: JSON plano (cuando ENCRYPTED_RESPONSE=False)
-  try {
-    return await response.json();
-  } catch (err) {
-    return null;
-  }
-}
-
 /**
- * Realiza una request al backend.
+ * Performs a request to the backend.
  *
- * @param {string} url      Path relativo ('/threads/') o URL absoluta
+ * @param {string} url      Relative path ('/threads/') or absolute URL
  *                          (útil para usar `response.next` directo en paginación).
- * @param {object} options  Opciones de fetch, incluye `signal` para AbortController.
- * @returns {Promise<any>}  JSON descifrado.
- * @throws  {APIError}      Si response no es OK (con payload descifrado en .payload).
+ * @param {object} options  Fetch options, incluye `signal` para AbortController.
+ * @returns {Promise<any>}  Decrypted JSON.
+ * @throws  {APIError}      Si la respuesta no es OK (payload descifrado en .payload).
  */
 export async function apiFetch(url, options = {}) {
-  const fullUrl = url.startsWith("http") ? url : `${API_BASE_URL}${url}`;
+  // El modo (gateway vs directo) debe estar resuelto ANTES de enviar.
+  // ensureTransportMode obtiene ticket+config por su propio canal de bajo
+  // nivel (no por apiFetch) → sin recursión. Fail-closed: ante duda, gateway.
+  await ensureTransportMode();
 
-  const headers = {
-    Accept: "*/*",
-    "client-assertion": getClientSing(),
-    ...(options.headers || {}),
-  };
+  // Destino real: separamos path+query (sirve para paths relativos y para
+  // los `next` absolutos de paginación). El body se normaliza a string.
+  const dest = new URL(
+    url.startsWith("http") ? url : `${API_BASE_URL}${url}`,
+    API_BASE_URL
+  );
+  const path = dest.pathname;
+  const query = dest.search.startsWith("?") ? dest.search.slice(1) : dest.search;
+  const method = (options.method || "GET").toUpperCase();
+  const body =
+    options.body == null
+      ? null
+      : typeof options.body === "string"
+      ? options.body
+      : JSON.stringify(options.body);
 
-  if (options.body && !headers["Content-Type"]) {
-    headers["Content-Type"] = "application/json";
-  }
-
-  let response;
-  try {
-    response = await fetch(fullUrl, {
-      ...options,
-      headers,
-    });
-  } catch (err) {
-    // Red caída / servidor inalcanzable: notifica (el ServerHealthContext
-    // re-verifica el healthcheck). Los aborts del caller no cuentan.
-    if (!err || err.name !== "AbortError") {
-      window.dispatchEvent(new Event(SERVER_ERROR_EVENT));
+  for (let attempt = 1; ; attempt += 1) {
+    // Client-assertion EMITIDO POR EL SERVER (el FE no tiene secreto). En un
+    // reintento (attempt > 1) forzamos un ticket nuevo.
+    let assertion = "";
+    try {
+      assertion =
+        attempt === 1 ? await getClientAssertion() : await refreshTicket();
+    } catch (err) {
+      /* sin ticket: la petición sale sin assertion y el backend la rechaza */
     }
-    throw err;
-  }
 
-  const data = await parseResponseBody(response);
+    let response;
+    try {
+      // Punto ÚNICO de salida. Re-arma el sobre del gateway en CADA intento
+      // → sobre fresco en el retry (sin doble cifrado, sin stream consumido).
+      response = await dispatchRequest({
+        method,
+        path,
+        query,
+        body,
+        assertion,
+        gateway: shouldUseGateway(),
+        signal: options.signal,
+        extraHeaders: options.headers,
+      });
+    } catch (err) {
+      // Política "cifrado o nada": si no se pudo cifrar/derivar el sobre, la
+      // petición NO salió; fallamos local con el shape estándar (jamás plano).
+      if (err instanceof DispatchEncryptError) {
+        throw new APIError("Local request encryption failed.", 0, {
+          detail: "encryption_failed",
+        });
+      }
+      // Red caída / server inalcanzable: notificar (ServerHealthContext
+      // re-corre el healthcheck). Los aborts del consumidor no cuentan.
+      if (!err || err.name !== "AbortError") {
+        window.dispatchEvent(new Event(SERVER_ERROR_EVENT));
+      }
+      throw err;
+    }
 
-  if (!response.ok) {
-    // Solo errores DE SERVIDOR (5xx) disparan la verificación de health —
-    // 4xx (not found, bad request) no significan servidor caído.
+    if (response.ok) {
+      return parseResponseBody(response);
+    }
+
+    // 403 = ticket expirado: si quedan intentos, refrescar (single-flight) y
+    // reintentar. Otros errores (400/404/5xx) NO se reintentan.
+    if (response.status === 403 && attempt < MAX_ATTEMPTS) {
+      try {
+        await refreshTicket();
+        continue; // reintentar con el token fresco
+      } catch (err) {
+        /* el refresh falló: caemos a propagar el 403 original abajo */
+      }
+    }
+
+    // Sin reintento (o agotados): propagar con el MISMO shape de hoy.
+    const data = await parseResponseBody(response);
     if (response.status >= 500) {
       window.dispatchEvent(new Event(SERVER_ERROR_EVENT));
     }
@@ -112,6 +140,4 @@ export async function apiFetch(url, options = {}) {
       data
     );
   }
-
-  return data;
 }

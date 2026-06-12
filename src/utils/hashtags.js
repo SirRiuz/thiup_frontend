@@ -1,38 +1,38 @@
 /**
- * Regex compartido de hashtags — único punto de verdad del frontend.
+ * Shared hashtag regex — the frontend's single source of truth.
  *
- * Set de caracteres: letras Unicode (\p{L}: á,é,í,ó,ú,ñ,ü,...), números
- * (\p{N}), underscore y guion (#encrypted-messaging). El flag 'u' es
- * OBLIGATORIO para que \p{...} funcione.
+ * Character set: Unicode letters (\p{L}: any accented or non-ASCII letter), numbers
+ * (\p{N}), underscore and hyphen (#encrypted-messaging). The 'u' flag is
+ * MANDATORY for \p{...} to work.
  *
- * Por qué: el \w de JavaScript es ASCII-only, así que /#[\w-]+/ cortaba
- * #méxico en la 'é' (resaltaba solo '#m'). \p{L} cubre cualquier letra.
+ * Why: JavaScript's \w is ASCII-only, so /#[\w-]+/ would cut
+ * #méxico at the 'é' (highlighting only '#m'). \p{L} covers any letter.
  *
- * Debe coincidir con el regex del backend (apps/tags/methods/tags.py) para
- * que todo hashtag detectado aquí exista igual como Tag al guardar el post.
+ * Must match the backend regex (apps/tags/methods/tags.py) so that
+ * every hashtag detected here exists identically as a Tag when saving the post.
  */
 
 const HASHTAG_BODY = "[\\p{L}\\p{N}_-]+";
 
-// Para text.match(...) — extraer todos los hashtags de un texto.
+// For text.match(...) — extract all hashtags from a text.
 export const HASHTAG_RE = new RegExp(`#${HASHTAG_BODY}`, "gu");
 
-// Para text.split(...) — partir el texto conservando los hashtags (captura).
+// For text.split(...) — split the text keeping the hashtags (capture group).
 export const HASHTAG_SPLIT_RE = new RegExp(`(#${HASHTAG_BODY})`, "gu");
 
-// Para loops con .exec() (estado interno lastIndex): instancia fresca.
+// For loops with .exec() (internal lastIndex state): a fresh instance.
 export const makeHashtagRegex = () => new RegExp(`#(${HASHTAG_BODY})`, "gu");
 
 /**
- * Detección de intención de TAG en el texto de búsqueda: si EMPIEZA con '#'
- * (solo al inicio — '#' en medio sigue siendo query), devuelve el tag
- * normalizado (sin '#', primera palabra, lowercase — los tags son una sola
- * palabra); si no, null. '#' solo / vacío → null.
+ * Detection of TAG intent in the search text: if it STARTS with '#'
+ * (only at the start — '#' in the middle is still a query), returns the tag
+ * normalized (no '#', first word, lowercase — tags are a single
+ * word); otherwise, null. '#' alone / empty → null.
  *
  *   '#peru'           → 'peru'
  *   '#Peru noticias'  → 'peru'
  *   '#  peru'         → 'peru'
- *   'covid #vacuna'   → null (query normal)
+ *   'covid #vacuna'   → null (normal query)
  *   '#' / ''          → null
  */
 export function extractTagFromSearch(text) {

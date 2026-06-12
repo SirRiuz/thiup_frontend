@@ -13,7 +13,9 @@
   padding: 24px 20px;
 }
 
-/* Sticky app bar — frosted glass over the page bg (#f7f5f0) as it scrolls. */
+/* Sticky app bar — frosted glass over the page bg (#f7f5f0) as it scrolls.
+   The BORDER doesn't live here (the bar is full-width): it lives in the ::after
+   of the inner to span ONLY the central column, aligned with the content. */
 .appBar {
   position: sticky;
   top: 0;
@@ -21,7 +23,6 @@
   background: rgba(247, 245, 240, 0.72);
   -webkit-backdrop-filter: blur(12px) saturate(180%);
   backdrop-filter: blur(12px) saturate(180%);
-  border-bottom: 0.5px solid rgba(229, 224, 211, 0.6);
 }
 
 /* Fallback: solid bg where backdrop-filter is unsupported (keeps text legible). */
@@ -32,12 +33,29 @@
 }
 
 .appBarInner {
+  position: relative;
   max-width: 740px;
   margin: 0 auto;
   padding: 10px 20px;
   display: flex;
   align-items: center;
   gap: 16px;
+}
+
+/* Hairline aligned with the content COLUMN: same max-width/centering
+   as .main and with the side padding inset (20px) — starts and ends
+   exactly where the thread content does (and where the reply
+   separators do). On mobile the column takes the full width and the border spans
+   the available width naturally. Same color/thickness as before. */
+.appBarInner::after {
+  content: "";
+  position: absolute;
+  left: 20px;
+  right: 20px;
+  bottom: 0;
+  /* Middle ground: 1px #e5e0d3 at 75% — more visible than the original
+     (0.5px at 60%) but softer than the solid at 100%. */
+  border-bottom: 1px solid rgba(229, 224, 211, 0.75);
 }
 
 .backButton {
@@ -112,18 +130,18 @@
 .opBody {
   color: #1a1a1a;
   font-size: 17px;
-  /* Métrica de Twitter para el thread parent: 17/24px (ratio ~1.41 — un poco
-     más de aire que el texto de 15/20px, intencional). */
+  /* Twitter metric for the parent thread: 17/24px (ratio ~1.41 — a bit
+     more breathing room than the 15/20px text, intentional). */
   line-height: 24px;
   letter-spacing: -0.01em;
   font-weight: 400;
   margin: 0 0 24px;
-  /* Preserva saltos de línea del usuario + parte palabras/URLs largas. */
+  /* Preserves the user's line breaks + breaks long words/URLs. */
   white-space: pre-wrap;
   overflow-wrap: break-word;
 }
 
-/* Hashtag highlight — idéntico a /home-new (HomeFeedCard.hashtag). */
+/* Hashtag highlight — identical to /home-new (HomeFeedCard.hashtag). */
 .hashtag {
   font-weight: 400;
   color: #a85432;
@@ -217,9 +235,9 @@
   transition: opacity 200ms ease;
 }
 
-/* Reload por cambio de sort: atenúa los replies existentes (mismos valores que
- * /home-new .feedItemsReloading). NO skeletons — solo el post principal queda
- * intacto, los replies se atenúan mientras llega el nuevo orden. */
+/* Reload on sort change: dims the existing replies (same values as
+ * /home-new .feedItemsReloading). NO skeletons — only the main post stays
+ * intact, the replies dim while the new order arrives. */
 .repliesListReloading {
   opacity: 0.5;
   pointer-events: none;
@@ -266,8 +284,8 @@
   border-color: #ddd8c8;
 }
 
-/* === Estado sin replies: espaciado limpio entre el post y la caja === */
-/* El .opSection ya aporta 24px de margin-bottom; este gap lo lleva a ~32px. */
+/* === No-replies state: clean spacing between the post and the box === */
+/* .opSection already contributes 24px of margin-bottom; this gap brings it to ~32px. */
 
 .noRepliesGap {
   height: 8px;

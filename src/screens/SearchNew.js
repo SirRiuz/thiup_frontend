@@ -1,5 +1,6 @@
 import { useMemo, useEffect, useRef } from "react";
-import { useSearchParams, useNavigate, Navigate } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import HomeFilterBar from "../components/home/HomeFilterBar";
 import HomeFeedCard from "../components/home/HomeFeedCard";
 import HomeFeedCardSkeleton from "../components/home/HomeFeedCardSkeleton";
@@ -11,31 +12,45 @@ import SearchEmptyState from "../components/search/SearchEmptyState";
 import SearchTagCard from "../components/search/SearchTagCard";
 import SearchUserCard from "../components/search/SearchUserCard";
 import { useSearch } from "../hooks/useSearch";
-import { useTagPosts } from "../hooks/useTagPosts";
 import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
+import { formatCompactNumber } from "../utils/formatNumber";
 import styles from "../styles/screens/SearchNew.module.css";
+import { sanitizeQuery } from "../utils/searchQuery";
+
+// ONE fixed tab row (Twitter/X model), identical for any search — only the
+// results change, never the controls. 'top'/'latest' are the two post orders
+// (relevance vs chronological); 'people' = users; 'tags' = matching hashtags.
+const TABS = ["top", "latest", "people", "tags"];
+const TAB_I18N = {
+  top: "search.tabTop",
+  latest: "search.tabLatest",
+  people: "search.tabPeople",
+  tags: "search.tabTags",
+};
+// The two tabs whose results are posts (rendered with HomeFeedCard).
+const POST_TABS = new Set(["top", "latest"]);
 
 function SearchNew() {
-  const [searchParams] = useSearchParams();
+  const { t } = useTranslation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const query = searchParams.get("q") || "";
-  const tag = searchParams.get("tag") || "";
 
-  const mode = query ? "query" : tag ? "tag" : "none";
+  // ?q= puede venir manipulado (URL pegada a mano gigante) → sanear antes
+  // de usarlo en cualquier request. El backend igual valida (defensa real).
+  const query = sanitizeQuery(searchParams.get("q") || "");
+  const rawTab = searchParams.get("tab");
+  const activeTab = TABS.includes(rawTab) ? rawTab : "top";
+  const mode = query.trim() ? "query" : "none";
 
-  // Nota: la preservación/restauración de scroll la maneja el scroll manager
-  // global (ScrollToTop, por location.key) — aquí no hay lógica de scroll.
+  // The leading '#' is tag-intent syntax (extractTagFromSearch), NOT part of
+  // the searched term: typing or clicking '#tor' must highlight 'tor' inside
+  // '#historia' too. Mirror of the strip in SearchSuggestions/useSearch.
+  const highlightTerm = query.trim().replace(/^#/, "");
 
-  // -- Query mode (real, backend) --------------------------------------------
-  // El hook se llama siempre (regla de hooks); en modo tag recibe "" => no-op.
   const {
-    activeTab,
     loadedTab,
-    selectTab,
     results,
     counts,
-    countsReady,
-    totalCount,
     isLoading,
     isLoadingMore,
     error,
@@ -43,7 +58,19 @@ function SearchNew() {
     hasMore,
     loadMore,
     refetch,
-  } = useSearch(mode === "query" ? query : "");
+  } = useSearch(query, activeTab);
+
+  // Per-tab count badges (Twitter-style). top/latest share the matching-posts
+  // total (same set, different order); people = users; tags = hashtags. Null
+  // while a new query loads → badges hidden (no placeholder / no false 0).
+  const tabCounts = counts
+    ? {
+        top: counts.posts,
+        latest: counts.posts,
+        people: counts.users,
+        tags: counts.tags,
+      }
+    : undefined;
 
   const sentinelRef = useInfiniteScroll({
     onLoadMore: loadMore,
@@ -51,137 +78,126 @@ function SearchNew() {
     isLoading: isLoading || isLoadingMore || !!loadMoreError,
   });
 
-  // Máximo GLOBAL de actividad entre los tags visibles → escala compartida de
-  // los sparklines: un pico de 4 posts se ve 4× más alto que un pico de 1.
-  // El ", 1" evita división por cero cuando toda la actividad es 0. Para
-  // resultados sin activity (posts/users) el flatMap da [] y queda 1.
+  // Document title reflects the current search (Twitter-style: "dns - Search /
+  // Thiup"); with no query it's just "Search / Thiup". Restores the previous
+  // title when leaving /search. Re-runs on language change (i18n `t`).
+  useEffect(() => {
+    const previousTitle = document.title;
+    const trimmedQuery = query.trim();
+    document.title = trimmedQuery
+      ? t("search.documentTitle", { query: trimmedQuery })
+      : t("search.documentTitleEmpty");
+    return () => {
+      document.title = previousTitle;
+    };
+  }, [query, t]);
+
+  // Invalid ?tab=zzz → drop it (default 'top'); preserve ?q=.
+  useEffect(() => {
+    if (rawTab && !TABS.includes(rawTab)) {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.delete("tab");
+          return next;
+        },
+        { replace: true }
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rawTab]);
+
+  // Scroll-to-top after a tab switch settles (smooth), same as /home. The flag
+  // is set ONLY on the user's click — not by observing state — so a POP that
+  // restores a tab from cache never triggers the scroll.
+  const justSwitchedRef = useRef(false);
+  const setTabParam = (tab) => {
+    if (tab === activeTab) return;
+    justSwitchedRef.current = true;
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        // 'top' is the default — keep the URL clean (no ?tab=top).
+        if (tab === "top") next.delete("tab");
+        else next.set("tab", tab);
+        return next;
+      },
+      { replace: true } // switching tab doesn't fill the history
+    );
+  };
+
+  useEffect(() => {
+    if (!justSwitchedRef.current) return;
+    if (!isLoading && results.length > 0) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      justSwitchedRef.current = false;
+    }
+  }, [isLoading, results]);
+
+  // GLOBAL max activity across the visible tags → shared sparkline scale.
   const tagsActivityMax = useMemo(
     () =>
       Math.max(
-        ...results.flatMap((t) => (Array.isArray(t.activity) ? t.activity : [])),
+        ...results.flatMap((r) => (Array.isArray(r.activity) ? r.activity : [])),
         1
       ),
     [results]
   );
 
-  // -- Tag mode (real, backend): posts con el tag EXACTO -----------------------
-  // Mismo patrón que el query mode; en modo query recibe "" => no-op.
-  const {
-    sortBy,
-    selectSort,
-    posts: tagPosts,
-    totalCount: tagTotalCount,
-    countReady: tagCountReady,
-    isLoading: tagIsLoading,
-    isLoadingMore: tagIsLoadingMore,
-    error: tagError,
-    loadMoreError: tagLoadMoreError,
-    hasMore: tagHasMore,
-    loadMore: tagLoadMore,
-    refetch: tagRefetch,
-  } = useTagPosts(mode === "tag" ? tag : "");
-
-  const tagSentinelRef = useInfiniteScroll({
-    onLoadMore: tagLoadMore,
-    hasMore: tagHasMore,
-    isLoading: tagIsLoading || tagIsLoadingMore || !!tagLoadMoreError,
-  });
-
-  // Scroll-to-top al cambiar tab/sort, igual que /home: smooth y DESPUÉS de
-  // que los resultados nuevos carguen. La marca se pone SOLO en el click del
-  // usuario (no observando el state): así un POP que restaura tab/sort del
-  // cache nunca dispara el scroll — la restauración de posición queda intacta.
-  const justSwitchedRef = useRef(false);
-
-  const handleSelectTab = (tab) => {
-    justSwitchedRef.current = true;
-    selectTab(tab);
+  // A hashtag is just a normal search: navigate to /search?q=#tag (default tab)
+  // and land on THESE same tabs — no special tag mode.
+  const searchHashtag = (tagName) => {
+    const clean = String(tagName).replace(/^#/, "");
+    navigate(`/search?q=${encodeURIComponent(sanitizeQuery(`#${clean}`))}`);
   };
 
-  const handleSelectSort = (newSort) => {
-    justSwitchedRef.current = true;
-    selectSort(newSort);
-  };
-
-  useEffect(() => {
-    if (!justSwitchedRef.current) return;
-    const settled =
-      mode === "query"
-        ? !isLoading && results.length > 0
-        : mode === "tag"
-        ? !tagIsLoading && tagPosts.length > 0
-        : false;
-    if (settled) {
-      window.scrollTo({ top: 0, behavior: "smooth" }); // mismo smooth que /home
-      justSwitchedRef.current = false;
-    }
-  }, [mode, isLoading, results, tagIsLoading, tagPosts]);
-
-  const handleHashtagClick = (tagName) => {
-    navigate(`/search?tag=${encodeURIComponent(tagName)}`);
-  };
-
-  const handlePostClick = (postId) => {
-    navigate(`/post/${postId}`);
-  };
-
-  const handleTagCardClick = (tagName) => {
-    navigate(`/search?tag=${encodeURIComponent(tagName)}`);
-  };
-
+  const handlePostClick = (postId) => navigate(`/post/${postId}`);
   const handleUserCardClick = (maskId) => {
+    // Placeholder: user profile screen not built yet.
     console.log("view user profile:", maskId);
   };
 
-  // Loading diferenciado, igual que el feed: sin resultados => skeletons;
-  // con resultados (cambio de tab) => dim. loadedTab evita mezclar shapes.
+  // Differentiated loading (by loadedTab, so shapes never mix): no results =>
+  // skeletons; results present (tab change) => dim.
   const isInitialLoad = mode === "query" && isLoading && results.length === 0;
   const isReloading = mode === "query" && isLoading && results.length > 0;
   const showError = mode === "query" && !isLoading && !!error;
-  const showResults = mode === "query" && !isInitialLoad && !error && totalCount > 0;
   const showEmpty =
-    mode === "query" && !isLoading && !error && totalCount === 0;
-
-  // Tag mode: mismos estados derivados (skeletons initial / dim al cambiar sort).
-  const isTagInitialLoad = mode === "tag" && tagIsLoading && tagPosts.length === 0;
-  const isTagReloading = mode === "tag" && tagIsLoading && tagPosts.length > 0;
-  const showTagError = mode === "tag" && !tagIsLoading && !!tagError;
-  const showTagResults =
-    mode === "tag" && !isTagInitialLoad && !tagError && tagPosts.length > 0;
-  const showTagEmpty =
-    mode === "tag" && !tagIsLoading && !tagError && tagPosts.length === 0;
-
-  const totalResults = mode === "query" ? totalCount : tagTotalCount;
-  // El 'N results' del app bar: visible mientras los counts pertenezcan a la
-  // búsqueda actual (countsReady). Cambiar de tab o de sort NO lo oculta —
-  // los counts son globales de la query y se mantienen estables (sin
-  // parpadeo). Solo una query/tag NUEVO lo oculta hasta su primera respuesta.
-  const showCount =
-    mode === "query"
-      ? countsReady && !error
-      : mode === "tag"
-      ? tagCountReady && !tagError
-      : false;
-
-  // Guard: /search sin ?q= ni ?tag= (URL editada a mano — ningún flujo de la
-  // app llega aquí sin param) no es una pantalla — a /home de inmediato, en
-  // el RENDER (sin flash; los hooks con "" no fetchean) y con replace.
-  if (mode === "none") {
-    return <Navigate to="/home" replace />;
-  }
+    mode === "query" &&
+    !isLoading &&
+    !error &&
+    results.length === 0 &&
+    loadedTab === activeTab;
+  const showResults =
+    mode === "query" && !isInitialLoad && !error && results.length > 0;
 
   return (
     <div className={styles.page}>
-      <SearchAppBar
-        mode={mode}
-        query={query}
-        tag={tag}
-        totalResults={totalResults}
-        showCount={showCount}
-      />
+      <SearchAppBar mode={mode} query={query} />
       <main className={styles.main}>
         {mode === "query" && (
           <>
+            {/* The SAME tab row regardless of what is searched (word or
+                hashtag). Same component/tokens as For You / Close You; no
+                counts (Twitter-style). */}
+            <HomeFilterBar
+              label={null}
+              options={TABS}
+              value={activeTab}
+              onChange={setTabParam}
+              isLoading={isReloading}
+              counts={tabCounts}
+              getOptionLabel={(option) => t(TAB_I18N[option])}
+              getOptionAriaLabel={(option, count) =>
+                typeof count === "number" && count > 0
+                  ? t("search.tabWithCount", {
+                      label: t(TAB_I18N[option]),
+                      countLabel: formatCompactNumber(count),
+                    })
+                  : t(TAB_I18N[option])
+              }
+            />
+
             {isInitialLoad && (
               <section className={styles.results}>
                 <HomeFeedCardSkeleton variant="medium" />
@@ -190,60 +206,46 @@ function SearchNew() {
               </section>
             )}
 
-            {showError && (
-              <HomeFeedErrorState error={error} onRetry={refetch} />
-            )}
+            {showError && <HomeFeedErrorState error={error} onRetry={refetch} />}
 
             {showEmpty && (
-              <SearchEmptyState onBackToFeed={() => navigate("/home")} />
+              <SearchEmptyState />
             )}
 
             {showResults && (
               <>
-                {/* Mismo HomeFilterBar del feed: idéntico comportamiento
-                    (spinner en la tab activa, dim de inactivas, transiciones).
-                    counts => muestra 'posts 120 / tags 1 / users 0' y
-                    deshabilita tabs en 0. */}
-                <HomeFilterBar
-                  label={null}
-                  options={["posts", "tags", "users"]}
-                  value={activeTab}
-                  onChange={handleSelectTab}
-                  counts={counts}
-                  isLoading={isReloading}
-                />
                 <section
                   className={`${styles.results} ${
                     isReloading ? styles.resultsReloading : ""
                   }`}
                 >
-                  {loadedTab === "posts" &&
+                  {POST_TABS.has(loadedTab) &&
                     results.map((post, idx) => (
                       <HomeFeedCard
                         key={post.uid}
                         post={post}
                         isLast={idx === results.length - 1 && !hasMore}
                         onClick={() => handlePostClick(post.uid)}
-                        onHashtagClick={handleHashtagClick}
-                        highlightQuery={query}
+                        onHashtagClick={searchHashtag}
+                        highlightQuery={highlightTerm}
                       />
                     ))}
                   {loadedTab === "tags" &&
-                    results.map((t) => (
+                    results.map((tg) => (
                       <SearchTagCard
-                        key={t.name}
-                        tag={t}
+                        key={tg.name}
+                        tag={tg}
                         activityMax={tagsActivityMax}
-                        highlightQuery={query}
-                        onClick={() => handleTagCardClick(t.name)}
+                        highlightQuery={highlightTerm}
+                        onClick={() => searchHashtag(tg.name)}
                       />
                     ))}
-                  {loadedTab === "users" &&
+                  {loadedTab === "people" &&
                     results.map((u) => (
                       <SearchUserCard
                         key={u.maskId}
                         user={u}
-                        highlightQuery={query}
+                        highlightQuery={highlightTerm}
                         onClick={() => handleUserCardClick(u.maskId)}
                       />
                     ))}
@@ -262,75 +264,6 @@ function SearchNew() {
                     error={loadMoreError}
                     onRetry={loadMore}
                     isRetrying={isLoadingMore}
-                  />
-                )}
-              </>
-            )}
-          </>
-        )}
-
-        {mode === "tag" && (
-          <>
-            {isTagInitialLoad && (
-              <section className={styles.results}>
-                <HomeFeedCardSkeleton variant="medium" />
-                <HomeFeedCardSkeleton variant="short" />
-                <HomeFeedCardSkeleton variant="long" />
-              </section>
-            )}
-
-            {showTagError && (
-              <HomeFeedErrorState error={tagError} onRetry={tagRefetch} />
-            )}
-
-            {showTagEmpty && (
-              <SearchEmptyState onBackToFeed={() => navigate("/home")} />
-            )}
-
-            {showTagResults && (
-              <>
-                {/* Mismo HomeFilterBar de /home (mismo archivo): opciones
-                    trending/newest/oldest, spinner y animación idénticos.
-                    label=null: en modo tag no se muestra el "feed". */}
-                <HomeFilterBar
-                  value={sortBy}
-                  onChange={handleSelectSort}
-                  isLoading={tagIsLoading}
-                  label={null}
-                />
-                <section
-                  className={`${styles.results} ${
-                    isTagReloading ? styles.resultsReloading : ""
-                  }`}
-                >
-                  {tagPosts.map((post, idx) => (
-                    <HomeFeedCard
-                      key={post.uid}
-                      post={post}
-                      isLast={idx === tagPosts.length - 1 && !tagHasMore}
-                      onClick={() => handlePostClick(post.uid)}
-                      onHashtagClick={handleHashtagClick}
-                      activeTag={tag}
-                    />
-                  ))}
-                </section>
-
-                {tagHasMore &&
-                  !tagIsLoading &&
-                  !tagError &&
-                  !tagLoadMoreError && (
-                    <div
-                      ref={tagSentinelRef}
-                      className={styles.sentinel}
-                      aria-hidden="true"
-                    />
-                  )}
-                {tagIsLoadingMore && !tagLoadMoreError && <HomeFeedSpinner />}
-                {tagLoadMoreError && (
-                  <HomeFeedRetryBanner
-                    error={tagLoadMoreError}
-                    onRetry={tagLoadMore}
-                    isRetrying={tagIsLoadingMore}
                   />
                 )}
               </>

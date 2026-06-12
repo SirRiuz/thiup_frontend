@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import MaskAvatar from "../MaskAvatar";
 import styles from "../../styles/components/post/PostReplyContext.module.css";
 
@@ -15,12 +16,13 @@ import styles from "../../styles/components/post/PostReplyContext.module.css";
  *   - onCancel: handler invoked when the user dismisses the context
  */
 function PostReplyContext({ target, onCancel }) {
+  const { t } = useTranslation();
   if (!target) return null;
   if (target.type === "op") return null;
 
   return (
     <div className={styles.banner} role="status" aria-live="polite">
-      <span className={styles.label}>replying to</span>
+      <span className={styles.label}>{t("post.replyingTo")}</span>
       <span className={styles.identiconWrap}>
         <MaskAvatar seed={target.maskId} size={14} />
       </span>
@@ -30,7 +32,7 @@ function PostReplyContext({ target, onCancel }) {
         type="button"
         className={styles.cancelButton}
         onClick={onCancel}
-        aria-label="Cancel replying to"
+        aria-label={t("post.cancelReplyingTo")}
       >
         <svg
           width="12"

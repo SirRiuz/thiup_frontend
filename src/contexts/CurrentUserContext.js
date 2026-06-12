@@ -2,17 +2,17 @@ import { createContext, useContext, useState, useEffect } from "react";
 import { fetchCurrentMask } from "../api/userApi";
 
 /**
- * Usuario actual (su máscara) — UN SOLO request global por sesión.
+ * Current user (their mask) — A SINGLE global request per session.
  *
- * El dedupe vive en una PROMESA a nivel de módulo (no en el ciclo de vida
- * del componente): el doble montaje de StrictMode en dev re-suscribe a la
- * MISMA promesa en vez de abortar/repetir el request. (El patrón anterior
- * — ref de "ya pedido" + AbortController en el cleanup — hacía que
- * StrictMode CANCELARA el único request y nunca lo reintentara.)
+ * The dedupe lives in a module-level PROMISE (not in the component's
+ * lifecycle): StrictMode's double mount in dev re-subscribes to the SAME
+ * promise instead of aborting/repeating the request. (The previous pattern
+ * — an "already requested" ref + AbortController in the cleanup — made
+ * StrictMode CANCEL the single request and never retry it.)
  *
  * Shape: currentUserMask = { id (6 chars, display/avatar), fullHash,
- * countryCode (región GeoIP — boost regional del For You) }.
- * El avatar se genera en el cliente con MaskAvatar a partir del id.
+ * countryCode (GeoIP region — For You's regional boost) }.
+ * The avatar is generated on the client with MaskAvatar from the id.
  */
 const CurrentUserContext = createContext(null);
 
@@ -21,7 +21,7 @@ let mePromise = null;
 function loadCurrentMask() {
   if (!mePromise) {
     mePromise = fetchCurrentMask().catch((err) => {
-      // Falló: liberar el slot para que un próximo montaje pueda reintentar.
+      // Failed: free the slot so a future mount can retry.
       mePromise = null;
       throw err;
     });
@@ -41,10 +41,10 @@ export function CurrentUserProvider({ children }) {
         if (!active) return;
         const hash = data?.mask_id || "";
         setCurrentUserMask({
-          id: hash.slice(0, 6), // misma convención que el mapper de posts
+          id: hash.slice(0, 6), // same convention as the posts mapper
           fullHash: hash,
-          // Región del lector (GeoIP del backend) — el For You la usa
-          // para el boost regional (?region=).
+          // Reader's region (backend's GeoIP) — For You uses it
+          // for the regional boost (?region=).
           countryCode: data?.country_code || "",
         });
         setIsLoading(false);
@@ -55,7 +55,7 @@ export function CurrentUserProvider({ children }) {
         setIsLoading(false);
       });
     return () => {
-      active = false; // solo evita setState tras unmount — NO aborta el fetch
+      active = false; // only prevents setState after unmount — does NOT abort the fetch
     };
   }, []);
 

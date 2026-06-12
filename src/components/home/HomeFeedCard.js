@@ -1,7 +1,10 @@
+import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import MaskAvatar from "../MaskAvatar";
 import PostProfileTrigger from "../post/PostProfileTrigger";
 import { formatCount, renderTextWithHashtags } from "./homeHelpers";
 import { DEBUG } from "../../settings";
+import { ensureScrollSuppressor } from "../../utils/scrollSuppressor";
 import styles from "../../styles/components/home/HomeFeedCard.module.css";
 
 function HomeFeedCard({
@@ -12,6 +15,16 @@ function HomeFeedCard({
   highlightQuery,
   activeTag,
 }) {
+  const { t } = useTranslation();
+  // Hides the reaction tooltips during scroll (global listener, idempotent:
+  // it only registers once even with many cards).
+  useEffect(() => {
+    ensureScrollSuppressor();
+  }, []);
+  // Translatable reaction name (reactions.<name> in i18n). Falls back to the
+  // raw backend name if there's no key.
+  const reactionLabel = (name) =>
+    name ? t(`reactions.${name}`, { defaultValue: name }) : "";
   const {
     mask,
     text,
@@ -23,8 +36,8 @@ function HomeFeedCard({
     reactions = [],
   } = post;
 
-  // TODAS las reacciones, igual que el thread (antes: slice(0,3) truncaba
-  // el feed a top-3 y ocultaba el resto).
+  // ALL the reactions, same as the thread (previously: slice(0,3) truncated
+  // the feed to top-3 and hid the rest).
   const visibleReactions = reactions;
 
   const renderOptions = {
@@ -42,8 +55,8 @@ function HomeFeedCard({
       tabIndex={0}
     >
       <header className={styles.header}>
-        {/* Mismo hover card de máscara que el thread (componente reutilizado,
-            mismos delays/safe-zone). Su gap interno (10px) = el del header. */}
+        {/* Same mask hover card as the thread (reused component, same
+            delays/safe-zone). Its internal gap (10px) = the header's. */}
         <PostProfileTrigger mask={mask}>
           <span className={styles.identiconWrap}>
             <MaskAvatar seed={mask.id} size={22} />
@@ -52,9 +65,9 @@ function HomeFeedCard({
         </PostProfileTrigger>
         <span className={styles.divider}>·</span>
         <span className={styles.timestamp}>{time}</span>
-        {/* Herramienta de DEBUG (src/settings.js): momentum del motor For
-            You, visible solo con REACT_APP_DEBUG=true. En producción el
-            flag va apagado y este badge no se renderiza. */}
+        {/* DEBUG tool (src/settings.js): momentum from the For You engine,
+            visible only with REACT_APP_DEBUG=true. In production the flag is
+            off and this badge is not rendered. */}
         {DEBUG && momentum != null && (
           <span
             className={styles.momentumBadge}
@@ -120,12 +133,29 @@ function HomeFeedCard({
             {formatCount(viewsCount)}
           </span>
         )}
-        {visibleReactions.map((r, idx) => (
-          <span key={idx} className={styles.statReaction}>
-            <span className={styles.statReactionEmoji}>{r.emoji}</span>
-            {r.count}
-          </span>
-        ))}
+        {visibleReactions.map((r, idx) => {
+          const label = reactionLabel(r.name);
+          return (
+            <span
+              key={idx}
+              className={`${styles.statReaction} ${
+                r.userReacted ? styles.statReactionActive : ""
+              }`}
+              // Accessible name (SR + mobile long-press). The visual desktop
+              // tooltip is provided by .reactionTooltip (CSS hover).
+              aria-label={label}
+              title={label}
+            >
+              <span className={styles.statReactionEmoji}>{r.emoji}</span>
+              {r.count}
+              {label && (
+                <span className={styles.reactionTooltip} aria-hidden="true">
+                  {label}
+                </span>
+              )}
+            </span>
+          );
+        })}
       </footer>
     </article>
   );

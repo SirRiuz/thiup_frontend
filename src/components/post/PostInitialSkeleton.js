@@ -1,14 +1,16 @@
+import { useTranslation } from "react-i18next";
 import PostReplySkeleton from "./PostReplySkeleton";
 import styles from "../../styles/components/post/PostInitialSkeleton.module.css";
 
 /**
- * Skeleton del Post page durante el initial loading.
- * Estructura: OP card grande + sort tabs + 3 replies (reutiliza PostReplySkeleton).
- * NO incluye comment box — durante el loading el textarea desaparece.
+ * Skeleton for the Post page during the initial loading.
+ * Structure: large OP card + sort tabs + 3 replies (reuses PostReplySkeleton).
+ * Does NOT include the comment box — during loading the textarea disappears.
  */
 function PostInitialSkeleton() {
+  const { t } = useTranslation();
   return (
-    <div className={styles.wrapper} aria-busy="true" aria-label="Loading thread">
+    <div className={styles.wrapper} aria-busy="true" aria-label={t("common.loadingThread")}>
       <div className={styles.opCard}>
         <div className={styles.opHeader}>
           <div className={`${styles.bar} ${styles.opIdenticon}`}></div>

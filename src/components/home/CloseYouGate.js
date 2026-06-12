@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import styles from "../../styles/components/home/CloseYouGate.module.css";
 
 /**
@@ -36,17 +37,16 @@ function LocationIcon() {
 }
 
 function CloseYouGate({ status, onEnable, onRetry, onBack }) {
+  const { t } = useTranslation();
+
   if (status === "locating") {
     return (
       <div className={styles.gate}>
         <span className={`${styles.iconWrap} ${styles.iconPulse}`}>
           <LocationIcon />
         </span>
-        <p className={styles.title}>finding your area…</p>
-        <p className={styles.subtitle}>
-          computing your approximate cell (~5 km) — your coordinates never
-          leave this device
-        </p>
+        <p className={styles.title}>{t("closeYou.findingTitle")}</p>
+        <p className={styles.subtitle}>{t("closeYou.findingBody")}</p>
       </div>
     );
   }
@@ -57,17 +57,15 @@ function CloseYouGate({ status, onEnable, onRetry, onBack }) {
         <span className={styles.iconWrap}>
           <LocationIcon />
         </span>
-        <p className={styles.title}>we couldn't load your area</p>
-        <p className={styles.body}>
-          Something went wrong getting your location. You can try again.
-        </p>
+        <p className={styles.title}>{t("closeYou.errorTitle")}</p>
+        <p className={styles.body}>{t("closeYou.errorBody")}</p>
         <div className={styles.actions}>
           <button
             type="button"
             className={styles.primaryButton}
             onClick={onRetry}
           >
-            try again
+            {t("common.tryAgain")}
           </button>
         </div>
       </div>
@@ -80,18 +78,15 @@ function CloseYouGate({ status, onEnable, onRetry, onBack }) {
         <span className={styles.iconWrap}>
           <LocationIcon />
         </span>
-        <p className={styles.title}>location is blocked</p>
-        <p className={styles.body}>
-          Enable location for this site in your browser settings to use
-          Close You, then try again.
-        </p>
+        <p className={styles.title}>{t("closeYou.blockedTitle")}</p>
+        <p className={styles.body}>{t("closeYou.blockedBody")}</p>
         <div className={styles.actions}>
           <button
             type="button"
             className={styles.primaryButton}
             onClick={onRetry}
           >
-            try again
+            {t("common.tryAgain")}
           </button>
         </div>
       </div>
@@ -104,10 +99,8 @@ function CloseYouGate({ status, onEnable, onRetry, onBack }) {
         <span className={styles.iconWrap}>
           <LocationIcon />
         </span>
-        <p className={styles.title}>location isn't supported</p>
-        <p className={styles.body}>
-          Try a browser with geolocation support to use Close You.
-        </p>
+        <p className={styles.title}>{t("closeYou.unsupportedTitle")}</p>
+        <p className={styles.body}>{t("closeYou.unsupportedBody")}</p>
       </div>
     );
   }
@@ -118,27 +111,22 @@ function CloseYouGate({ status, onEnable, onRetry, onBack }) {
       <span className={styles.iconWrap}>
         <LocationIcon />
       </span>
-      <p className={styles.title}>see what's happening near you</p>
-      <p className={styles.body}>
-        Close You uses an <strong>approximate area</strong> — a ~5 km
-        cell, randomly blurred — never your exact location. Your area
-        isn't stored on any server: it's used for the query and then
-        discarded.
-      </p>
+      <p className={styles.title}>{t("closeYou.promptTitle")}</p>
+      <p className={styles.body}>{t("closeYou.promptBody")}</p>
       <div className={styles.actions}>
         <button
           type="button"
           className={styles.primaryButton}
           onClick={onEnable}
         >
-          enable location
+          {t("closeYou.enable")}
         </button>
         <button
           type="button"
           className={styles.secondaryButton}
           onClick={onBack}
         >
-          not now
+          {t("closeYou.notNow")}
         </button>
       </div>
     </div>

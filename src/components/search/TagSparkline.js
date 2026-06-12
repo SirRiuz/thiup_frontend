@@ -2,31 +2,31 @@ import { useMemo } from "react";
 import generateTagActivity from "../../utils/generateTagActivity";
 
 /**
- * Sparkline de línea con área para la actividad de un tag.
+ * Line sparkline with area for a tag's activity.
  *
- * Línea suave (Catmull-Rom → bezier cúbico), área con fill warm muy sutil y un
- * punto al final que ancla el último valor.
+ * Smooth line (Catmull-Rom → cubic bezier), area with a very subtle warm fill
+ * and a dot at the end that anchors the last value.
  *
  * Props:
- *   data:     serie REAL de actividad (posts por día, orden cronológico).
- *             Tiene prioridad; si no viene (o tiene <2 puntos) se cae al mock
- *             determinístico por seed para no romper la UI.
- *   maxValue: máximo GLOBAL entre todos los tags visibles. Con él la escala
- *             es compartida (piso 0, techo maxValue): un pico de 4 se ve 4×
- *             más alto que un pico de 1, y las gráficas son comparables entre
- *             tags. Sin él (fallback) se normaliza al max local, como antes.
- *   seed:     string usado como semilla del mock fallback (el tag.name)
- *   width:    ancho en px (default 130)
- *   height:   alto en px (default 34)
+ *   data:     REAL activity series (posts per day, chronological order).
+ *             Takes priority; if it doesn't arrive (or has <2 points) it falls
+ *             back to the deterministic mock by seed to not break the UI.
+ *   maxValue: GLOBAL maximum across all visible tags. With it the scale is
+ *             shared (floor 0, ceiling maxValue): a peak of 4 looks 4× higher
+ *             than a peak of 1, and the charts are comparable across tags.
+ *             Without it (fallback) it normalizes to the local max, as before.
+ *   seed:     string used as the seed of the mock fallback (the tag.name)
+ *   width:    width in px (default 130)
+ *   height:   height in px (default 34)
  */
 
 const STROKE = "#b8845f";
-const PAD = 3; // padding interno para que la línea no toque los bordes
+const PAD = 3; // internal padding so the line doesn't touch the edges
 
 /**
- * Convierte una lista de puntos en un path SVG suave usando Catmull-Rom
- * traducido a curvas bezier cúbicas. Esto evita los ángulos rectos de una
- * polyline y es lo que da el aspecto "lindo".
+ * Converts a list of points into a smooth SVG path using Catmull-Rom
+ * translated to cubic bezier curves. This avoids the right angles of a
+ * polyline and is what gives the "nice" look.
  */
 function smoothLine(pts) {
   if (pts.length < 2) return "";
@@ -47,25 +47,25 @@ function smoothLine(pts) {
 
 function TagSparkline({ data, maxValue, seed, width = 130, height = 34 }) {
   const { linePath, areaPath, end } = useMemo(() => {
-    // Serie real del backend si viene; mock determinístico como fallback.
+    // Real series from the backend if it arrives; deterministic mock as fallback.
     const isReal = Array.isArray(data) && data.length >= 2;
     const series = isReal ? data : generateTagActivity(seed);
 
-    // Escala GLOBAL compartida (solo con data real): piso 0 y techo maxValue,
-    // para que las alturas sean comparables entre tags. El mock fallback no es
-    // comparable con nada, así que conserva la normalización local.
+    // Shared GLOBAL scale (only with real data): floor 0 and ceiling
+    // maxValue, so the heights are comparable across tags. The mock fallback
+    // isn't comparable with anything, so it keeps the local normalization.
     const useGlobalScale =
       isReal && typeof maxValue === "number" && maxValue > 0;
     const min = useGlobalScale ? 0 : Math.min(...series);
     const max = useGlobalScale ? maxValue : Math.max(...series);
-    // Evita división por cero: serie plana (ej: toda en 0) => range 1, la
-    // línea queda plana abajo sin romperse.
+    // Avoids division by zero: flat series (e.g. all at 0) => range 1, the
+    // line stays flat at the bottom without breaking.
     const range = max - min || 1;
 
     const innerW = width - PAD * 2;
     const innerH = height - PAD * 2;
 
-    // x uniforme; y normalizada e invertida (SVG crece hacia abajo).
+    // x uniform; y normalized and inverted (SVG grows downward).
     const pts = series.map((v, i) => {
       const x =
         PAD + (series.length === 1 ? 0 : (i / (series.length - 1)) * innerW);
@@ -76,7 +76,7 @@ function TagSparkline({ data, maxValue, seed, width = 130, height = 34 }) {
     const line = smoothLine(pts);
     const first = pts[0];
     const last = pts[pts.length - 1];
-    // Área = misma curva cerrada hasta el borde inferior.
+    // Area = same curve closed down to the bottom edge.
     const area = `${line} L ${last[0]},${height} L ${first[0]},${height} Z`;
 
     return { linePath: line, areaPath: area, end: last };

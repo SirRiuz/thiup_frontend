@@ -1,17 +1,17 @@
 /**
- * Mappers de los resultados de búsqueda (tags y users) del backend al shape
- * que esperan SearchTagCard / SearchUserCard.
+ * Mappers of the search results (tags and users) from the backend to the shape
+ * that SearchTagCard / SearchUserCard expect.
  *
- * Los posts NO se mapean aquí: reusan mapBackendPostToFrontend (mismo shape
- * que el feed). Backend: apps/search/serializers/search_serializers.py.
+ * Posts are NOT mapped here: they reuse mapBackendPostToFrontend (same shape
+ * as the feed). Backend: apps/search/serializers/search_serializers.py.
  */
 
 /**
- * Tag agregado: { name, count, activity } → { name, postsCount, activity }.
- * `count` es el número real de posts del tag (annotate en el backend).
- * `activity` es la serie temporal REAL (posts por día, últimos N días, con
- * días sin posts en 0) que dibuja el sparkline; si no viene, null para que
- * TagSparkline caiga al mock determinístico por seed.
+ * Aggregated tag: { name, count, activity } → { name, postsCount, activity }.
+ * `count` is the real number of posts of the tag (annotate in the backend).
+ * `activity` is the REAL time series (posts per day, last N days, with
+ * days without posts at 0) that draws the sparkline; if it doesn't come, null so
+ * TagSparkline falls back to the deterministic seed-based mock.
  */
 export function mapBackendTagToFrontend(backendTag) {
   return {
@@ -22,9 +22,9 @@ export function mapBackendTagToFrontend(backendTag) {
 }
 
 /**
- * Mask/usuario: { hash, country_code, posts_count, joined_at, miniature }
+ * Mask/user: { hash, country_code, posts_count, joined_at, miniature }
  * → { maskId, fullHash, countryCode, postsCount, joinedAt }.
- * maskId = primeros 6 chars del hash (mismo criterio que el mapper de posts).
+ * maskId = first 6 chars of the hash (same criterion as the posts mapper).
  */
 export function mapBackendUserToFrontend(backendUser) {
   const hash = backendUser.hash || "";

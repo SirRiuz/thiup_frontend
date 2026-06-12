@@ -1,23 +1,23 @@
 /**
- * Geohash ligero (encode + vecinas) — sin librerías.
+ * Lightweight geohash (encode + neighbors) — no libraries.
  *
- * PRIVACIDAD (Close You): las coordenadas NUNCA salen del dispositivo.
- * Aquí se FUZZEAN (jitter aleatorio ±~1km) y se codifican a una celda
- * GRUESA (precisión 5 ≈ 4.9×4.9 km) — el backend solo recibe celdas.
- * La celda del lector + sus 8 vecinas cubren el radio de ~10-15 km.
+ * PRIVACY (Close You): the coordinates NEVER leave the device.
+ * Here they are FUZZED (random jitter ±~1km) and encoded to a COARSE
+ * cell (precision 5 ≈ 4.9×4.9 km) — the backend only receives cells.
+ * The reader's cell + its 8 neighbors cover the ~10-15 km radius.
  */
 
 const BASE32 = "0123456789bcdefghjkmnpqrstuvwxyz";
 
-// Precisión 5 = celdas de ~4.9 km. NO subir: más precisión = menos
-// privacidad (y el backend trunca a 5 de todas formas).
+// Precision 5 = cells of ~4.9 km. Do NOT raise: more precision = less
+// privacy (and the backend truncates to 5 anyway).
 export const GEOHASH_PRECISION = 5;
 
-// Fuzzing: jitter uniforme en grados (~±1.1 km) ANTES de codificar — ni
-// siquiera la celda es exactamente "donde estás".
+// Fuzzing: uniform jitter in degrees (~±1.1 km) BEFORE encoding — not
+// even the cell is exactly "where you are".
 export const FUZZ_DEGREES = 0.01;
 
-/** Encode estándar: interleave de bits lon/lat → base32. */
+/** Standard encode: interleave of lon/lat bits → base32. */
 export function encodeGeohash(lat, lon, precision = GEOHASH_PRECISION) {
   let latLo = -90.0;
   let latHi = 90.0;
@@ -26,7 +26,7 @@ export function encodeGeohash(lat, lon, precision = GEOHASH_PRECISION) {
   let result = "";
   let bit = 0;
   let ch = 0;
-  let even = true; // arranca con longitud
+  let even = true; // starts with longitude
 
   while (result.length < precision) {
     if (even) {
@@ -60,7 +60,7 @@ export function encodeGeohash(lat, lon, precision = GEOHASH_PRECISION) {
   return result;
 }
 
-/** Centro y tamaño de la celda de un geohash (para calcular vecinas). */
+/** Center and size of a geohash's cell (to compute neighbors). */
 function decodeCell(geohash) {
   let latLo = -90.0;
   let latHi = 90.0;
@@ -94,8 +94,8 @@ function decodeCell(geohash) {
 }
 
 /**
- * Las 8 celdas vecinas: se decodifica el centro y se re-codifica con
- * offsets de ±1 celda — simple de verificar y sin tablas de lookup.
+ * The 8 neighbor cells: the center is decoded and re-encoded with
+ * offsets of ±1 cell — simple to verify and without lookup tables.
  */
 export function neighborCells(geohash) {
   const { lat, lon, latSize, lonSize } = decodeCell(geohash);
@@ -105,7 +105,7 @@ export function neighborCells(geohash) {
       if (dLat === 0 && dLon === 0) continue;
       const nLat = lat + dLat * latSize;
       const nLon = lon + dLon * lonSize;
-      // Bordes del mundo: clamp de lat, wrap de lon.
+      // World edges: clamp lat, wrap lon.
       const clampedLat = Math.max(-90, Math.min(90, nLat));
       const wrappedLon = ((nLon + 540) % 360) - 180;
       neighbors.push(
@@ -117,10 +117,10 @@ export function neighborCells(geohash) {
 }
 
 /**
- * Celdas para consultar el Close You desde una posición: la celda del
- * lector (PRIMERA — el backend le da el boost de misma-celda) + sus 8
- * vecinas. Las coords se fuzzean ANTES de codificar y se descartan —
- * el resultado es EFÍMERO (no persistirlo).
+ * Cells to query the Close You from a position: the reader's cell
+ * (FIRST — the backend gives it the same-cell boost) + its 8
+ * neighbors. The coords are fuzzed BEFORE encoding and discarded —
+ * the result is EPHEMERAL (don't persist it).
  */
 export function cellsForPosition(lat, lon) {
   const fuzzedLat = lat + (Math.random() * 2 - 1) * FUZZ_DEGREES;
@@ -129,7 +129,7 @@ export function cellsForPosition(lat, lon) {
   return [center, ...neighborCells(center)];
 }
 
-/** Geohash (fuzzed, precisión 5) para etiquetar un hilo al crearlo. */
+/** Geohash (fuzzed, precision 5) to tag a thread on creation. */
 export function geohashForPosition(lat, lon) {
   return cellsForPosition(lat, lon)[0];
 }

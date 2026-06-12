@@ -34,10 +34,10 @@
 .popover {
   position: absolute;
   bottom: 36px;
-  /* left base: -8px — el componente lo ajusta inline (shift) para que el
-     popover SIEMPRE quede dentro del viewport (móvil con el '+' al borde). */
+  /* left base: -8px — the component adjusts it inline (shift) so the
+     popover ALWAYS stays within the viewport (mobile with the '+' at the edge). */
   left: -8px;
-  /* Salvaguarda en pantallas ultra-angostas: nunca exceder el viewport. */
+  /* Safeguard on ultra-narrow screens: never exceed the viewport. */
   max-width: calc(100vw - 16px);
   background: #fdfcf8;
   border: 1px solid #e8e5dd;
@@ -62,17 +62,17 @@
   }
 }
 
-/* === Colita estilo burbuja de chat (apunta hacia el '+', abajo) ===
-   Truco de dos triángulos superpuestos: ::before (color del borde) detrás y
-   ::after (color del fondo) delante, 1.5px más arriba — los lados visibles
-   del pico quedan con el borde #e8e5dd y el relleno se funde con el popover
-   tapando su border-bottom en ese tramo (burbuja "abierta"). El `left` lo
-   pone el componente inline para apuntar al centro del '+', incluso cuando
-   el popover está desplazado por el fix de viewport. */
+/* === Chat-bubble-style tail (points toward the '+', below) ===
+   Two overlapping triangles trick: ::before (border color) behind and
+   ::after (background color) in front, 1.5px higher — the visible sides
+   of the point keep the #e8e5dd border and the fill blends with the popover
+   covering its border-bottom on that stretch ("open" bubble). The `left` is
+   set by the component inline to point at the center of the '+', even when
+   the popover is shifted by the viewport fix. */
 
-/* El span tiene dimensiones REALES (18×9): su top coincide con el borde
-   inferior del popover, así la base del triángulo nace PEGADA al cuerpo
-   (antes width/height 0 + bottom -9px dejaban el pico flotando 9px abajo). */
+/* The span has REAL dimensions (18×9): its top coincides with the bottom
+   edge of the popover, so the base of the triangle is born ATTACHED to the body
+   (previously width/height 0 + bottom -9px left the point floating 9px below). */
 .tail {
   position: absolute;
   bottom: -9px;
@@ -97,16 +97,16 @@
   top: 0;
   left: 0;
   border-width: 9px 9px 0 9px;
-  border-top-color: #e8e5dd; /* el borde del popover */
+  border-top-color: #e8e5dd; /* the popover's border */
 }
 
 .tail::after {
-  /* 1.5px hacia ADENTRO del popover: el relleno tapa su border-bottom en
-     este tramo — conexión sin línea de separación (burbuja abierta). */
+  /* 1.5px INWARD into the popover: the fill covers its border-bottom on
+     this stretch — connection with no separating line (open bubble). */
   top: -1.5px;
   left: 1px;
   border-width: 8px 8px 0 8px;
-  border-top-color: #fdfcf8; /* el fondo del popover */
+  border-top-color: #fdfcf8; /* the popover's background */
 }
 
 .option {
@@ -133,7 +133,7 @@
   transform: scale(1.1);
 }
 
-/* Reacción actual del current user — resaltada dentro del picker. */
+/* The current user's current reaction — highlighted within the picker. */
 .optionActive {
   background: #ebe7dd;
 }

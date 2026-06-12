@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { Trans, useTranslation } from "react-i18next";
 import styles from "../../styles/components/post/PostThreadNotFound.module.css";
 
 /**
@@ -11,6 +12,7 @@ import styles from "../../styles/components/post/PostThreadNotFound.module.css";
  */
 function PostThreadNotFound({ threadId }) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   // maskIds across the project are short hex; long ids (UUIDs) get truncated
   // to the first 6 chars for visual coherence.
@@ -37,16 +39,17 @@ function PostThreadNotFound({ threadId }) {
         <line x1="55" y1="71" x2="76" y2="71" stroke="#e0dacb" strokeWidth="1.2" strokeDasharray="5 5" strokeLinecap="round" />
       </svg>
 
-      <p className={styles.title}>Thread not found</p>
+      <p className={styles.title}>{t("postNotFound.title")}</p>
 
       <p className={styles.subtitle}>
         {shortId ? (
-          <>
-            We couldn&apos;t find <span className={styles.chip}>{shortId}</span> —
-            it may have been removed.
-          </>
+          <Trans
+            i18nKey="postNotFound.subtitleWithId"
+            values={{ shortId }}
+            components={{ chip: <span className={styles.chip} /> }}
+          />
         ) : (
-          "This thread may have been removed."
+          t("postNotFound.subtitle")
         )}
       </p>
 
@@ -55,7 +58,7 @@ function PostThreadNotFound({ threadId }) {
         className={styles.button}
         onClick={() => navigate("/home")}
       >
-        Back to home
+        {t("common.backToHome")}
       </button>
     </div>
   );

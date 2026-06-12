@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import SearchSuggestions, {
   buildSuggestionItems,
 } from "./SearchSuggestions";
@@ -11,38 +12,39 @@ import {
   clearRecent,
 } from "../../utils/recentSearches";
 import { extractTagFromSearch } from "../../utils/hashtags";
-import { formatCompactNumber } from "../../utils/formatNumber";
+import { sanitizeQuery, MAX_QUERY_LENGTH } from "../../utils/searchQuery";
 import styles from "../../styles/components/search/SearchAppBar.module.css";
 
 /**
- * App bar de /search — autocomplete tipo Google (keywords, NO resultados):
+ * App bar for /search — Google-style autocomplete (keywords, NOT results):
  *
- *   - Escribir NO ejecuta la búsqueda completa (se quitó el auto-search por
- *     tecla). Solo muestra SUGERENCIAS: recientes (localStorage, filtrado
- *     instantáneo) + tags del backend (debounce + cancelación) + 'Search
- *     for X' al final.
- *   - Input vacío → recientes (reloj + x + Clear all).
- *   - La búsqueda completa solo corre al SELECCIONAR una sugerencia o Enter
- *     ('#peru' al inicio => modo tag; si no => query). Al ejecutar se guarda
- *     en recientes.
- *   - ← sale (navigate(-1) con fallback); × limpia el texto sin salir.
+ *   - Typing does NOT run the full search (the per-keystroke auto-search was
+ *     removed). It only shows SUGGESTIONS: recents (localStorage, instant
+ *     filtering) + backend tags (debounce + cancellation) + 'Search for X'
+ *     at the end.
+ *   - Empty input → recents (clock + x + Clear all).
+ *   - The full search only runs when SELECTING a suggestion or Enter. A '#peru'
+ *     at the start is just a normal search for '#peru' (a hashtag is a search
+ *     like any other — no special mode). On execution it is saved to recents.
+ *   - ← exits (navigate(-1) with fallback); × clears the text without exiting.
  */
-function SearchAppBar({ mode, query, tag, totalResults, showCount }) {
+function SearchAppBar({ mode, query }) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const [, setSearchParams] = useSearchParams();
   const inputRef = useRef(null);
 
-  // Lo que la URL dicta para el input (el modo tag se muestra como #tag).
-  const urlValue = mode === "tag" ? `#${tag}` : query;
+  // What the URL dictates for the input.
+  const urlValue = query;
 
   const [inputValue, setInputValue] = useState(urlValue);
   const [isOpen, setIsOpen] = useState(false);
   const [recents, setRecents] = useState(getRecent);
   const [highlightIndex, setHighlightIndex] = useState(-1);
 
-  // Última escritura propia a la URL: los cambios externos (back/forward,
-  // click en un tag de los resultados) SÍ sincronizan el input.
+  // Last own write to the URL: external changes (back/forward, click on a
+  // tag in the results) DO sync the input.
   const lastPushedRef = useRef(urlValue);
 
   useEffect(() => {
@@ -51,7 +53,18 @@ function SearchAppBar({ mode, query, tag, totalResults, showCount }) {
     setInputValue(urlValue);
   }, [urlValue]);
 
-  // Sugerencias de tags del backend (debounce 180ms + cancelación interna).
+  // Entry point (/search with no query/tag): focus the input on arrival so the
+  // user can type right away and the recents/suggestions open. Deep links with
+  // ?q=/?tag= are NOT auto-focused — their results stay scrollable.
+  useEffect(() => {
+    if (mode === "none" && inputRef.current) {
+      inputRef.current.focus();
+    }
+    // Only on mount (arrival); deps intentionally empty.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Backend tag suggestions (debounce 180ms + internal cancellation).
   const tagSuggestions = useTagSuggestions(isOpen ? inputValue : "");
 
   const items = useMemo(
@@ -59,34 +72,55 @@ function SearchAppBar({ mode, query, tag, totalResults, showCount }) {
       buildSuggestionItems({
         query: inputValue,
         recents,
-        tags: tagSuggestions,
+        suggestions: tagSuggestions,
       }),
     [inputValue, recents, tagSuggestions]
   );
 
-  // Ejecuta la búsqueda COMPLETA (única vía: selección o Enter) y la guarda
-  // en recientes. Reusa los flujos existentes: ?tag= (modo tag) / ?q=.
+  // Runs the FULL search (only way: selection or Enter) and saves it to
+  // recents. Everything routes to ?q= — a hashtag search is just q='#tag'.
+  // The active ?tab= is PRESERVED (functional update, not a full replace): a
+  // new search stays on the tab you were on (all four tabs are valid for any
+  // query). With no prior ?tab=, the screen defaults to 'top'.
   const executeSearch = ({ text, asTag }) => {
-    if (asTag) {
-      const cleanTag = text.replace(/^#/, "");
-      setRecents(addRecent({ text: cleanTag, type: "tag" }));
-      lastPushedRef.current = `#${cleanTag}`;
-      setInputValue(`#${cleanTag}`);
-      setSearchParams({ tag: cleanTag });
-    } else {
-      setRecents(addRecent({ text, type: "query" }));
-      lastPushedRef.current = text;
-      setInputValue(text);
-      setSearchParams({ q: text });
-    }
+    // Saneo (trim + truncado a MAX): el FE nunca manda un query inválido,
+    // venga del input, de un reciente de localStorage o de un hashtag.
+    text = sanitizeQuery(text);
+    if (!text || text === "#") return;
+    // 'asTag' only affects the recents badge + how it's re-run (with the '#').
+    const queryText = asTag ? `#${text.replace(/^#/, "")}` : text;
+    setRecents(
+      addRecent({
+        text: asTag ? text.replace(/^#/, "") : text,
+        type: asTag ? "tag" : "query",
+      })
+    );
+    lastPushedRef.current = queryText;
+    setInputValue(queryText);
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set("q", queryText);
+      return next; // keeps ?tab= (and any other param)
+    });
     setIsOpen(false);
     setHighlightIndex(-1);
     if (inputRef.current) inputRef.current.blur();
   };
 
   const handleSelectItem = (item) => {
+    // Sugerencia de HILO: navega directo a ese hilo (no es una búsqueda).
+    if (item.kind === "thread" && item.uid) {
+      setIsOpen(false);
+      setHighlightIndex(-1);
+      if (inputRef.current) inputRef.current.blur();
+      navigate(`/post/${item.uid}`);
+      return;
+    }
+    // tag/trending → búsqueda por tag; recent/new → búsqueda normal.
     const asTag =
-      item.kind === "tag" || (item.kind === "recent" && item.type === "tag");
+      item.kind === "tag" ||
+      item.kind === "trending" ||
+      (item.kind === "recent" && item.type === "tag");
     executeSearch({ text: item.text, asTag });
   };
 
@@ -129,8 +163,8 @@ function SearchAppBar({ mode, query, tag, totalResults, showCount }) {
   };
 
   const handleBack = () => {
-    // location.key === "default" => primera entrada del historial (deep
-    // link): no hay "atrás" real, caemos al home.
+    // location.key === "default" => first history entry (deep link): there's
+    // no real "back", we fall to the home.
     if (location.key !== "default") {
       navigate(-1);
     } else {
@@ -138,8 +172,8 @@ function SearchAppBar({ mode, query, tag, totalResults, showCount }) {
     }
   };
 
-  // × limpia el TEXTO (las recientes aparecen en el dropdown); NO sale ni
-  // toca la URL — la búsqueda mostrada solo cambia al ejecutar otra.
+  // × clears the TEXT (recents appear in the dropdown); does NOT exit or
+  // touch the URL — the shown search only changes when running another.
   const handleClearText = () => {
     setInputValue("");
     setHighlightIndex(-1);
@@ -158,7 +192,7 @@ function SearchAppBar({ mode, query, tag, totalResults, showCount }) {
             type="button"
             className={styles.backButton}
             onClick={handleBack}
-            aria-label="Back"
+            aria-label={t("common.back")}
           >
             <svg
               width="20"
@@ -196,6 +230,7 @@ function SearchAppBar({ mode, query, tag, totalResults, showCount }) {
                 name="search"
                 className={styles.input}
                 type="text"
+                maxLength={MAX_QUERY_LENGTH}
                 value={inputValue}
                 onChange={(e) => {
                   setInputValue(e.target.value);
@@ -207,14 +242,14 @@ function SearchAppBar({ mode, query, tag, totalResults, showCount }) {
                   setIsOpen(true);
                 }}
                 onBlur={() => {
-                  // El dropdown usa onMouseDown+preventDefault, así que un
-                  // click en una sugerencia NO dispara este blur.
+                  // The dropdown uses onMouseDown+preventDefault, so a click
+                  // on a suggestion does NOT trigger this blur.
                   setIsOpen(false);
                   setHighlightIndex(-1);
                 }}
                 onKeyDown={handleKeyDown}
-                placeholder="Search Thiup"
-                aria-label="Search"
+                placeholder={t("search.placeholder")}
+                aria-label={t("search.label")}
                 autoComplete="off"
                 spellCheck="false"
               />
@@ -226,7 +261,7 @@ function SearchAppBar({ mode, query, tag, totalResults, showCount }) {
                     e.preventDefault();
                     handleClearText();
                   }}
-                  aria-label="Clear search text"
+                  aria-label={t("search.clearText")}
                 >
                   <svg
                     width="8"
@@ -259,13 +294,6 @@ function SearchAppBar({ mode, query, tag, totalResults, showCount }) {
             )}
           </div>
         </div>
-
-        {showCount && (
-          <p className={styles.count}>
-            {formatCompactNumber(totalResults)}{" "}
-            {totalResults === 1 ? "result" : "results"}
-          </p>
-        )}
       </div>
     </header>
   );

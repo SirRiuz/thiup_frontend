@@ -1,29 +1,34 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useScrollLock } from "../utils/scrollLock";
+import BrandLogo from "./BrandLogo";
 import styles from "../styles/components/SplashScreen.module.css";
 
-// Rápido: la app es una SPA — está "lista" en cuanto React monta (cada
-// pantalla carga su data con skeletons). Solo se mantiene un mínimo CORTO
-// para que la animación se alcance a ver (antes: 1500ms fijos + corte seco).
-const MIN_DISPLAY_MS = 700;
+// Fast: the app is an SPA — it's "ready" as soon as React mounts (each
+// screen loads its data with skeletons). Only a SHORT minimum is kept so the
+// animation can be seen (previously: fixed 1500ms + abrupt cut).
+const MIN_DISPLAY_MS = 1400;
 const FADE_OUT_MS = 350;
 
 /**
- * Splash screen — telón animado estilo Threads.
+ * Splash screen — Threads-style animated curtain.
  *
- * - Telón: cubre todo (fixed, opaco, z-index alto), bloquea scroll y eventos.
- * - Animación A: fade + scale suave en loop (splashPulse) sobre el squircle.
- * - Sale rápido: mínimo corto + fade-out suave; no espera a completar el loop.
+ * - Curtain: covers everything (fixed, opaque, high z-index), blocks scroll
+ *   and events.
+ * - Animation A: smooth fade + scale in a loop (splashPulse) over the squircle.
+ * - Exits fast: short minimum + smooth fade-out; doesn't wait for the loop to
+ *   complete.
  */
 export default function SplashScreen({ onFinish }) {
+  const { t } = useTranslation();
   const [isLeaving, setIsLeaving] = useState(false);
 
-  // Telón: bloquea el scroll del body mientras el splash está visible, vía
-  // el scroll-lock centralizado (contador) — coexiste con otros lockers
-  // (ej: el loading de /post) sin pisarse, y el unlock está garantizado.
+  // Curtain: blocks the body scroll while the splash is visible, via the
+  // centralized scroll-lock (counter) — coexists with other lockers (e.g.
+  // the /post loading) without clobbering, and the unlock is guaranteed.
   useScrollLock(true);
 
-  // Mínimo corto de display → fade-out → onFinish (App desmonta el splash).
+  // Short display minimum → fade-out → onFinish (App unmounts the splash).
   useEffect(() => {
     const timer = setTimeout(() => setIsLeaving(true), MIN_DISPLAY_MS);
     return () => clearTimeout(timer);
@@ -41,17 +46,11 @@ export default function SplashScreen({ onFinish }) {
     <div
       className={`${styles.curtain} ${isLeaving ? styles.curtainLeaving : ""}`}
       role="status"
-      aria-label="Loading"
+      aria-label={t("splash.loading")}
     >
-      {/* ============================================================
-          PLACEHOLDER DEL LOGO — reemplazar este contenido por el logo
-          definitivo (<img src={...} /> o un SVG) DENTRO del squircle.
-          La animación (splashPulse) vive en el contenedor, así el logo
-          la hereda sin cambios.
-          ============================================================ */}
-      <div className={styles.logoPlaceholder}>
-        <span className={styles.logoHint}>logo</span>
-      </div>
+      {/* Brand icon (thread + dot) — the pulse animation lives on the logo
+          class, same rhythm as the old placeholder. */}
+      <BrandLogo size={72} className={styles.logo} />
     </div>
   );
 }

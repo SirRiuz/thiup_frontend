@@ -1,7 +1,7 @@
-/* Close You gate — mismos tokens que HomeFeedEmptyState (el sibling de
-   referencia del feed): superficie #fdfcf8, borde #e8e5dd, título Inter
-   500/16, subtítulo mono 11, icono en círculo. Acento cálido #b8845f.
-   Nunca #FFFFFF. */
+/* Close You gate — same tokens as HomeFeedEmptyState (the feed's reference
+   sibling): #fdfcf8 surface, #e8e5dd border, Inter 500/16 title,
+   mono 11 subtitle, icon in a circle. Warm accent #b8845f.
+   Never #FFFFFF. */
 
 .gate {
   padding: 56px 24px;
@@ -78,7 +78,7 @@
   gap: 10px;
 }
 
-/* Primario oscuro (buen contraste), estilo de botón del design system:
+/* Dark primary (good contrast), design system button style:
    mono 11, uppercase, letterspacing. */
 .primaryButton {
   background: #1a1a1a;
@@ -118,7 +118,7 @@
   color: #1a1a1a;
 }
 
-/* Móvil: botones cómodos de tocar, padding contenido. */
+/* Mobile: comfortable-to-tap buttons, contained padding. */
 @media (max-width: 480px) {
   .gate {
     padding: 44px 16px;

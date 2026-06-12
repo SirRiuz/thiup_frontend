@@ -1,0 +1,228 @@
+{
+  "common": {
+    "tryAgain": "try again",
+    "back": "Back",
+    "backToHome": "Back to home",
+    "loading": "loading",
+    "retrying": "Retrying...",
+    "dismissError": "Dismiss error",
+    "closeError": "Close error",
+    "loadingPost": "Loading post",
+    "loadingReply": "Loading reply",
+    "loadingThread": "Loading thread",
+    "tagsDetected_one": "{{count}} tag detected",
+    "tagsDetected_other": "{{count}} tags detected",
+    "charCount": "{{count}} / {{max}}"
+  },
+  "nav": {
+    "primary": "Primary",
+    "home": "Home",
+    "search": "Search",
+    "myThreads": "My threads",
+    "menu": "Menu",
+    "about": "About",
+    "languages": "Languages"
+  },
+  "language": {
+    "title": "Language",
+    "description": "Choose the language for the interface.",
+    "english": "English",
+    "spanish": "Español",
+    "close": "Close",
+    "current": "Current language"
+  },
+  "splash": {
+    "loading": "Loading"
+  },
+  "welcome": {
+    "title": "Welcome to Thiup",
+    "mission": "An anonymous space to speak freely about what matters — your privacy always comes first.",
+    "rulesHeader": "A few things to keep in mind",
+    "button": "I understand",
+    "rules": {
+      "anonymity": {
+        "lead": "Stay anonymous.",
+        "text": "Never share details that could identify you or others."
+      },
+      "respect": {
+        "lead": "Be respectful.",
+        "text": "This is a space for honest voices, not harassment."
+      },
+      "protect": {
+        "lead": "Protect each other.",
+        "text": "No doxxing, no exposing identities."
+      },
+      "minors": {
+        "lead": "Protect minors.",
+        "text": "Content that sexualizes or harms children is never allowed and will be removed."
+      }
+    }
+  },
+  "home": {
+    "tabForYou": "for you",
+    "tabCloseYou": "close you",
+    "filterLabel": "feed",
+    "sortTrending": "trending",
+    "sortNewest": "newest",
+    "sortOldest": "oldest",
+    "noPostsTitle": "No posts yet",
+    "noPostsSubtitle": "be the first to start a thread",
+    "newThread": "new thread",
+    "endOfFeed": "end of feed",
+    "loadingMore": "Loading more posts"
+  },
+  "compose": {
+    "postingAs": "posting as",
+    "postingAsPlaceholder": "posting as …",
+    "placeholder": "Start a thread...",
+    "post": "post",
+    "posting": "posting",
+    "locationDefault": "share your approximate area when posting (for Close You) — never your exact location",
+    "locationActive": "sharing your approximate area (~5 km, blurred) — click to turn off",
+    "locationBlocked": "location is blocked — enable it in your browser settings",
+    "cannotShareTitle": "Can't share your area",
+    "cannotShareBody": "We couldn't get your location — try again.",
+    "blockedTitle": "Location is blocked",
+    "blockedBody": "Enable it in your browser settings to attach your area.",
+    "unsupportedBody": "location needs a supported browser over https or localhost.",
+    "postedWithoutAreaTitle": "Posted without your area",
+    "postedWithoutAreaDenied": "Location is blocked — enable it in your browser settings.",
+    "postedWithoutAreaTimeout": "We couldn't get your location in time.",
+    "postedWithoutAreaUnsupported": "Your browser doesn't support location.",
+    "privacyNoteLead": "Location blurred into a",
+    "privacyNoteChip": "~5 km area",
+    "privacyGuarantee": "your exact spot is never stored",
+    "stopSharing": "Stop sharing my area"
+  },
+  "closeYou": {
+    "findingTitle": "finding your area…",
+    "findingBody": "computing your approximate cell (~5 km) — your coordinates never leave this device",
+    "errorTitle": "we couldn't load your area",
+    "errorBody": "Something went wrong getting your location. You can try again.",
+    "blockedTitle": "location is blocked",
+    "blockedBody": "Enable location for this site in your browser settings to use Close You, then try again.",
+    "unsupportedTitle": "location isn't supported",
+    "unsupportedBody": "Try a browser with geolocation support to use Close You.",
+    "promptTitle": "see what's happening near you",
+    "promptBody": "Close You uses an approximate area — a ~5 km cell, randomly blurred — never your exact location. Your area isn't stored on any server: it's used for the query and then discarded.",
+    "enable": "enable location",
+    "notNow": "not now",
+    "within": "within",
+    "radiusChip": "{{km}} km"
+  },
+  "search": {
+    "placeholder": "Search Thiup",
+    "label": "Search",
+    "clearText": "Clear search text",
+    "tabTop": "top",
+    "tabLatest": "latest",
+    "tabPeople": "people",
+    "tabTags": "tags",
+    "tabWithCount": "{{label}}, {{countLabel}} results",
+    "documentTitle": "{{query}} - Search / Thiup",
+    "documentTitleEmpty": "Search / Thiup",
+    "noResultsTitle": "No results found",
+    "noResultsSubtitle": "try different keywords or browse trending",
+    "searchForLead": "Search for",
+    "removeRecent": "Remove {{text}} from recent searches",
+    "clearAll": "Clear all",
+    "badgeRecent": "recent",
+    "badgeTag": "tag",
+    "badgeNew": "new",
+    "badgeTrending": "trending",
+    "badgePost": "post"
+  },
+  "post": {
+    "threadTitle": "Thread",
+    "postedAgo": "posted {{time}} ago",
+    "noReplies": "No replies yet",
+    "replyCount_one": "{{count}} reply",
+    "replyCount_other": "{{count}} replies",
+    "reply": "reply",
+    "replies": "replies",
+    "addReaction": "Add reaction",
+    "endOfThread": "end of thread",
+    "loadMoreReplies": "load more replies",
+    "sort": "sort",
+    "sortTrending": "trending",
+    "sortNewest": "newest",
+    "sortOldest": "oldest",
+    "replyingTo": "replying to",
+    "cancelReplyingTo": "Cancel replying to",
+    "couldNotLoad": "This thread could not be loaded.",
+    "commentPlaceholderUser": "Type your reply...",
+    "commentPlaceholderDefault": "Reply to this thread...",
+    "replying": "replying…",
+    "replyError": "Your reply couldn't be posted. Please try again.",
+    "fileTooLarge": "{{name}} is too large (max 10MB)",
+    "fileUnsupported": "{{name}} is not a supported file type",
+    "maxFiles": "Only {{max}} files allowed"
+  },
+  "postNotFound": {
+    "title": "Thread not found",
+    "subtitleWithId": "We couldn't find <chip>{{shortId}}</chip> — it may have been removed.",
+    "subtitle": "This thread may have been removed."
+  },
+  "moreMenu": {
+    "more": "More options",
+    "copyId": "copy id",
+    "share": "share",
+    "report": "report"
+  },
+  "attachment": {
+    "cancelUpload": "Cancel upload",
+    "remove": "Remove attachment"
+  },
+  "reactions": {
+    "fire": "fire",
+    "seen": "seen",
+    "solidarity": "solidarity",
+    "skeptical": "skeptical",
+    "heartbreak": "heartbreak"
+  },
+  "profile": {
+    "posts": "posts",
+    "replies": "replies",
+    "joined": "joined {{date}}",
+    "unknown": "unknown"
+  },
+  "myThreads": {
+    "title": "My threads",
+    "subtitle": "Threads you've started, newest first",
+    "emptyTitle": "You haven't created any threads yet",
+    "emptyBody": "Start a conversation from the home feed — your threads will show up here."
+  },
+  "notFound": {
+    "code": "404",
+    "title": "Nothing to see here",
+    "subtitle": "This page slipped into the void. Let's get you back."
+  },
+  "serverError": {
+    "title": "Something went wrong",
+    "body": "Our servers are having a moment. This is on us, not you — try again in a bit.",
+    "checking": "Checking...",
+    "tryAgain": "Try again",
+    "code": "error 503 · service unavailable"
+  },
+  "feedError": {
+    "title": "Couldn't reach the server",
+    "subtitle": "Check your connection and try again",
+    "cloudAria": "Cloud connection lost"
+  },
+  "retryBanner": {
+    "connectionAria": "Connection lost",
+    "generic": "Couldn't reach the server — check your connection",
+    "serverIssues": "Server is having issues",
+    "tooManyRequests": "Too many requests — wait a moment",
+    "couldNotLoadMore": "Couldn't load more posts"
+  },
+  "errors": {
+    "network": "Couldn't reach the server — check your connection",
+    "badRequest": "The post couldn't be created — check your text and try again",
+    "unauthorized": "Your session expired — refresh the page",
+    "forbidden": "You don't have permission to post",
+    "rateLimit": "You're posting too fast — wait a moment",
+    "server": "Something went wrong on our side — try again in a moment",
+    "generic": "Something went wrong — try again"
+  }
+}

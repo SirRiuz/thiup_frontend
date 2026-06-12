@@ -71,12 +71,12 @@
 .body {
   color: #1a1a1a;
   font-size: 15px;
-  /* Métricas tipo Twitter/Chirp: 15/20px (ratio ~1.33, antes 1.5≈23px) +
-     tracking sutil negativo para acercar Inter al look de Chirp. */
+  /* Twitter/Chirp-style metrics: 15/20px (ratio ~1.33, was 1.5≈23px) +
+     subtle negative tracking to bring Inter closer to the Chirp look. */
   line-height: 20px;
   letter-spacing: -0.01em;
   margin: 0 0 12px;
-  /* Preserva saltos de línea del usuario + parte palabras/URLs largas. */
+  /* Preserves the user's line breaks + breaks long words/URLs. */
   white-space: pre-wrap;
   overflow-wrap: break-word;
 }
@@ -95,7 +95,7 @@
 .stats {
   display: flex;
   align-items: center;
-  /* Con TODAS las reacciones visibles, envuelven en pantallas angostas. */
+  /* With ALL reactions visible, they wrap on narrow screens. */
   flex-wrap: wrap;
   gap: 8px 18px;
 }
@@ -125,19 +125,21 @@
   line-height: 1;
 }
 
-/* === Highlight de query matches con <mark> === */
+/* === Highlight of query matches with <mark> === */
 
+/* Search match — Twitter-style: emphasis from WEIGHT, not a background.
+   color: inherit keeps the surrounding color (plain text = #1a1a1a; a match
+   inside a hashtag keeps its warm accent #a85432) and only goes bold. */
 .highlight {
-  background: rgba(26, 26, 26, 0.1);
-  color: #1a1a1a;
-  padding: 0 2px;
-  border-radius: 2px;
+  background: none;
+  color: inherit;
+  font-weight: 700;
 }
 
-/* === Hashtag buscado (modo tag en SearchNew) — Opción C === */
-/* Solo el hashtag que coincide con el tag buscado lleva el chip; los demás
-   van en .hashtag normal. box-decoration-break: clone => si el chip se parte
-   entre líneas, el fondo y los bordes redondeados se ven bien en ambas. */
+/* === Searched hashtag (tag mode in SearchNew) — Option C === */
+/* Only the hashtag matching the searched tag gets the chip; the rest
+   use the normal .hashtag. box-decoration-break: clone => if the chip breaks
+   across lines, the background and rounded borders look good on both. */
 
 .hashtagActive {
   font-weight: 600;
@@ -155,9 +157,9 @@
   text-underline-offset: 2px;
 }
 
-/* Badge de DEBUG: momentum score del motor For You (solo con
-   REACT_APP_DEBUG=true — ver src/settings.js). Mismo lenguaje visual que
-   .trendingBadge, en el naranja cálido de la paleta (#a85432). */
+/* DEBUG badge: momentum score from the For You engine (only with
+   REACT_APP_DEBUG=true — see src/settings.js). Same visual language as
+   .trendingBadge, in the palette's warm orange (#a85432). */
 .momentumBadge {
   display: inline-flex;
   align-items: center;
@@ -173,4 +175,55 @@
 
 .momentumIcon {
   flex-shrink: 0;
+}
+
+/* The user's OWN reaction: warm active state, ALWAYS visible (does not
+   depend on hover) — same language as the app's active states
+   (#f3e3d3 / #a85432). */
+.statReaction {
+  position: relative;
+  padding: 1px 6px;
+  border-radius: 999px;
+}
+
+.statReactionActive {
+  background: #f3e3d3;
+  color: #a85432;
+}
+
+/* Tooltip with the reaction's NAME (desktop, hover). Hidden by
+   default; appears over the chip. On mobile there is no hover → the
+   accessible name is provided by aria-label/title. */
+.reactionTooltip {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: #1a1a1a;
+  color: #f7f5f0;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+  letter-spacing: 0;
+  text-transform: none;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+  z-index: 5;
+}
+
+@media (hover: hover) {
+  .statReaction:hover .reactionTooltip {
+    opacity: 1;
+  }
+}
+
+/* During scroll, hide the tooltip even if the pointer is still "over"
+   the chip (otherwise it stays stuck while scrolling). */
+:global(body.is-scrolling) .reactionTooltip {
+  opacity: 0 !important;
 }

@@ -1,6 +1,6 @@
 /**
- * Datos de perfil de una máscara (hover card). Reusa apiFetch (cifrado E2E +
- * client-assertion) y cache busting &_t como el resto de llamadas.
+ * Profile data of a mask (hover card). Reuses apiFetch (E2E encryption +
+ * client-assertion) and cache busting &_t like the rest of the calls.
  *
  * Backend: GET /users/<hash>/ →
  *   { mask_id, joined (ISO), posts_count, replies_count }
@@ -18,9 +18,9 @@ export function fetchMaskProfile(fullHash, { signal } = {}) {
 }
 
 /**
- * La máscara del usuario ACTUAL (GET /me/, privado + E2E). Se llama UNA sola
- * vez por sesión desde CurrentUserContext — el resultado queda cacheado
- * globalmente y se reutiliza en toda la app.
+ * The CURRENT user's mask (GET /me/, private + E2E). Called only ONCE
+ * per session from CurrentUserContext — the result is cached
+ * globally and reused throughout the app.
  */
 export function fetchCurrentMask({ signal } = {}) {
   return apiFetch(`/me/?_t=${Date.now()}`, { signal });

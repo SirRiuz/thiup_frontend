@@ -1,20 +1,20 @@
 import { createContext, useContext, useRef, useCallback } from "react";
 
 /**
- * Cache global de threads por threadId, para preservar estado y scroll al
- * volver (back/POP) a un /post/:id ya visitado — el mismo objetivo que
- * FeedContext cumple para /home-new, pero indexado por thread.
+ * Global cache of threads by threadId, to preserve state and scroll on
+ * returning (back/POP) to an already-visited /post/:id — the same goal that
+ * FeedContext fulfills for /home-new, but indexed by thread.
  *
- * El cache vive en un useRef<Map> (NO useState): mutarlo no debe causar
- * re-renders. Quien consume el cache (useThread) decide cuándo leer/escribir.
+ * The cache lives in a useRef<Map> (NOT useState): mutating it must not cause
+ * re-renders. The cache's consumer (useThread) decides when to read/write.
  *
- * Forma de cada entrada:
+ * Shape of each entry:
  *   { thread, replies, hasMore, nextUrl, scrollY }
  */
 const ThreadCacheContext = createContext(null);
 
-// Tope simple del cache (eviction FIFO del más antiguo). Preserva los threads
-// recientes sin crecer sin límite; 12 cubre de sobra el patrón ir-y-volver.
+// Simple cache cap (FIFO eviction of the oldest). Preserves recent threads
+// without growing unbounded; 12 amply covers the go-and-return pattern.
 const MAX_CACHED = 12;
 
 export function ThreadCacheProvider({ children }) {
@@ -25,8 +25,8 @@ export function ThreadCacheProvider({ children }) {
     return cacheRef.current.get(id) || null;
   }, []);
 
-  // Merge parcial: conserva los campos previos (ej. scrollY) al actualizar
-  // solo thread/replies. Evict del más antiguo al exceder el tope.
+  // Partial merge: keeps the previous fields (e.g. scrollY) when updating
+  // only thread/replies. Evicts the oldest when exceeding the cap.
   const setCachedThread = useCallback((id, data) => {
     if (!id) return;
     const cache = cacheRef.current;

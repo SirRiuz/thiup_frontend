@@ -3,10 +3,10 @@
   position: relative;
 }
 
-/* Separador full-width: el border vive en un ::after absoluto que se extiende
- * -8px a cada lado para cancelar el padding horizontal del parent (.repliesList,
- * padding: 0 8px) y llegar al borde de la columna. Mismo color/grosor/posición
- * que el border-bottom original; no toca el box ni el contenido del reply. */
+/* Full-width separator: the border lives in an absolute ::after that extends
+ * -8px on each side to cancel the parent's horizontal padding (.repliesList,
+ * padding: 0 8px) and reach the column's edge. Same color/thickness/position
+ * as the original border-bottom; doesn't touch the reply's box or content. */
 .reply::after {
   content: "";
   position: absolute;
@@ -17,8 +17,8 @@
   background: #ebe7dd;
 }
 
-/* Último reply cuando el thread ya cargó completo (!hasMore): sin separador para
- * no duplicar la línea con el divider '--end of thread--' que viene debajo. */
+/* Last reply when the thread has fully loaded (!hasMore): no separator so it
+ * doesn't duplicate the line with the '--end of thread--' divider below. */
 .lastReply::after {
   display: none;
 }
@@ -27,17 +27,17 @@
   padding: 16px 0 16px 28px;
 }
 
-/* Los sub-replies anidados NO llevan separador horizontal: se conectan solo con
- * la línea vertical de threading. El ::after full-width de .reply cruzaría esa
- * línea, así que lo anulamos aquí (los replies de nivel raíz sí lo conservan). */
+/* Nested sub-replies do NOT carry a horizontal separator: they connect only
+ * with the vertical threading line. The full-width ::after of .reply would cross
+ * that line, so we cancel it here (root-level replies do keep it). */
 .subReply::after {
   display: none;
 }
 
-/* Highlight temporal del reply recién creado: anillo + fondo warm que se
- * desvanecen solos (~2.5s visibles + ~0.5s de fade). El scroll-to lleva al
- * usuario aquí y el highlight le confirma "esto es lo que acabas de escribir".
- * box-shadow inset (no border) para no desplazar el layout ni el threading. */
+/* Temporary highlight of the newly created reply: ring + warm background that
+ * fade out on their own (~2.5s visible + ~0.5s fade). The scroll-to brings the
+ * user here and the highlight confirms "this is what you just wrote".
+ * inset box-shadow (not border) so it doesn't shift the layout or threading. */
 .highlighted {
   border-radius: 8px;
   animation: replyHighlightFade 3s ease forwards;
@@ -59,15 +59,15 @@
   position: absolute;
   left: 8px;
   top: 0;
-  /* Llega al borde inferior del box para empalmar con la línea del siguiente
-   * sub-reply (boxes adyacentes, sin margin) → threading line continuo. */
+  /* Reaches the bottom edge of the box to join the line of the next
+   * sub-reply (adjacent boxes, no margin) → continuous threading line. */
   bottom: 0;
   width: 1px;
   background: #ddd8c8;
 }
 
-/* Último sub-reply de la cadena: no hay siguiente al cual conectar, así que la
- * línea termina 12px antes del fondo (valor original) y no queda colgando. */
+/* Last sub-reply of the chain: there is no next one to connect to, so the
+ * line ends 12px before the bottom (original value) and doesn't hang. */
 .subVerticalLineLast {
   bottom: 12px;
 }
@@ -141,20 +141,20 @@
 .body {
   color: #1a1a1a;
   font-size: 15px;
-  /* Métricas tipo Twitter/Chirp: 15/20px + tracking sutil (antes 1.6=24px). */
+  /* Twitter/Chirp-style metrics: 15/20px + subtle tracking (was 1.6=24px). */
   line-height: 20px;
   letter-spacing: -0.01em;
   margin: 0 0 12px;
-  /* Preserva los saltos de línea del usuario (el texto trae \n del backend) y
-   * parte palabras largas/URLs pegadas para que no desborden la columna. */
+  /* Preserves the user's line breaks (the text carries \n from the backend) and
+   * breaks long words/joined URLs so they don't overflow the column. */
   white-space: pre-wrap;
   overflow-wrap: break-word;
 }
 
-/* (El override .bodySubReply de 14px se eliminó: TODAS las respuestas, a
-   cualquier profundidad, usan el mismo .body 15/20px.) */
+/* (The 14px .bodySubReply override was removed: ALL replies, at
+   any depth, use the same .body 15/20px.) */
 
-/* Hashtag highlight — idéntico a /home-new (HomeFeedCard.hashtag). */
+/* Hashtag highlight — identical to /home-new (HomeFeedCard.hashtag). */
 .hashtag {
   font-weight: 400;
   color: #a85432;

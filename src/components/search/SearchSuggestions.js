@@ -1,16 +1,17 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { splitByMatch } from "../../utils/matchText";
 import styles from "../../styles/components/search/SearchSuggestions.module.css";
 
 /**
- * Dropdown de autocomplete (tipo Google, keywords — no resultados completos).
+ * Autocomplete dropdown (Google-style, keywords — not full results).
  *
- * Items (los arma el padre con buildSuggestionItems):
- *   { kind: 'recent', text, type: 'query'|'tag' }  reloj + badge 'recent' + x
- *   { kind: 'tag',    text, count }                #    + badge 'tag'
- *   { kind: 'new',    text }                       lupa + badge 'new' (último)
+ * Items (assembled by the parent with buildSuggestionItems):
+ *   { kind: 'recent', text, type: 'query'|'tag' }  clock + 'recent' badge + x
+ *   { kind: 'tag',    text, count }                #     + 'tag' badge
+ *   { kind: 'new',    text }                       magnifier + 'new' badge (last)
  *
- * La parte ESCRITA va en negrita (splitByMatch: accent/case-insensitive).
+ * The TYPED part is bold (splitByMatch: accent/case-insensitive).
  */
 
 const ICONS = {
@@ -26,17 +27,27 @@ const ICONS = {
       <line x1="21" y1="21" x2="16.65" y2="16.65" />
     </svg>
   ),
+  thread: (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+    </svg>
+  ),
 };
 
-// Etiquetas por tipo. Un type futuro del backend (ej: 'user') cae al
-// fallback (su propio nombre como badge + ícono de lupa) hasta tener
-// indicativo propio — el render nunca se rompe por un tipo nuevo.
-const BADGE_LABEL = { recent: "recent", tag: "tag", new: "new" };
-const badgeLabel = (kind) => BADGE_LABEL[kind] || kind;
+// Label keys by type. A future backend type (e.g. 'user') falls to the
+// fallback (its own name as badge + magnifier icon) until it has its own
+// indicator — the render never breaks because of a new type.
+const BADGE_LABEL_KEYS = {
+  recent: "search.badgeRecent",
+  tag: "search.badgeTag",
+  trending: "search.badgeTrending",
+  thread: "search.badgePost",
+  new: "search.badgeNew",
+};
 
 function renderBoldMatch(text, query) {
-  // El texto de los items va sin '#'; si el usuario tipeó '#aler', el match
-  // en negrita debe compararse sin ese prefijo.
+  // The items' text comes without '#'; if the user typed '#aler', the bold
+  // match must be compared without that prefix.
   const cleanQuery = (query || "").trim().replace(/^#/, "");
   if (!cleanQuery) return text;
   return splitByMatch(text, cleanQuery).map((seg, idx) =>
@@ -59,15 +70,20 @@ function SearchSuggestions({
   onClearRecents,
   showClearAll,
 }) {
+  const { t } = useTranslation();
+  // Badge label: translated key if the type is known; otherwise the kind
+  // itself as fallback (a new backend type never breaks).
+  const badgeLabel = (kind) =>
+    BADGE_LABEL_KEYS[kind] ? t(BADGE_LABEL_KEYS[kind]) : kind;
   if (!items.length) return null;
 
   return (
     <div className={styles.dropdown} role="listbox">
       {items.map((item, index) => {
-        const isTag = item.kind === "tag";
-        // El '#' del tag lo pone SOLO el ícono de la izquierda (un único
-        // lugar de presentación) — el texto va limpio. Antes el texto
-        // también lo anteponía => '##nombre'.
+        const isTag = item.kind === "tag" || item.kind === "trending";
+        // The tag's '#' is added ONLY by the left icon (a single
+        // presentation place) — the text comes clean. Previously the text
+        // also prepended it => '##name'.
         const display = item.text;
         const recentTag = item.kind === "recent" && item.type === "tag";
         return (
@@ -78,8 +94,8 @@ function SearchSuggestions({
             className={`${styles.item} ${
               index === highlightIndex ? styles.itemHighlighted : ""
             }`}
-            // onMouseDown (no onClick): se ejecuta ANTES del blur del input,
-            // que cerraría el dropdown antes de poder seleccionar.
+            // onMouseDown (not onClick): runs BEFORE the input's blur, which
+            // would close the dropdown before being able to select.
             onMouseDown={(e) => {
               e.preventDefault();
               onSelect(item);
@@ -98,7 +114,7 @@ function SearchSuggestions({
             >
               {item.kind === "new" ? (
                 <>
-                  Search for &ldquo;
+                  {t("search.searchForLead")} &ldquo;
                   <strong className={styles.match}>{item.text}</strong>&rdquo;
                 </>
               ) : (
@@ -109,7 +125,7 @@ function SearchSuggestions({
               <button
                 type="button"
                 className={styles.removeButton}
-                aria-label={`Remove ${item.text} from recent searches`}
+                aria-label={t("search.removeRecent", { text: item.text })}
                 onMouseDown={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
@@ -142,7 +158,7 @@ function SearchSuggestions({
             onClearRecents();
           }}
         >
-          Clear all
+          {t("search.clearAll")}
         </button>
       )}
     </div>
@@ -150,16 +166,24 @@ function SearchSuggestions({
 }
 
 /**
- * Arma la lista de sugerencias: recientes que coinciden + tags del backend
- * (sin duplicar una reciente tipo tag) + 'Search for X' SIEMPRE al final.
- * Con input vacío: solo las recientes.
+ * Assembles the suggestion list: matching recents + backend tags (without
+ * duplicating a recent of type tag) + 'Search for X' ALWAYS at the end.
+ * With empty input: only the recents.
  */
-export function buildSuggestionItems({ query, recents, tags }) {
+export function buildSuggestionItems({ query, recents, suggestions }) {
   const trimmed = (query || "").trim();
+  const { trending = [], tags = [], threads = [] } = suggestions || {};
   const items = [];
 
+  // Input vacío → RECIENTES (local) + TENDENCIAS (tags con más momentum).
   if (!trimmed) {
     recents.forEach((r) => items.push({ kind: "recent", ...r }));
+    const recentTexts = new Set(recents.map((r) => r.text.toLowerCase()));
+    trending
+      .filter((t) => !recentTexts.has(t.name.toLowerCase()))
+      .forEach((t) =>
+        items.push({ kind: "trending", text: t.name, count: t.count })
+      );
     return items;
   }
 
@@ -169,17 +193,20 @@ export function buildSuggestionItems({ query, recents, tags }) {
   );
   matchingRecents.forEach((r) => items.push({ kind: "recent", ...r }));
 
+  // TAGS por prefijo (ordenados por tendencia), sin duplicar recientes.
   const recentTagTexts = new Set(
     matchingRecents.filter((r) => r.type === "tag").map((r) => r.text)
   );
   tags
     .filter((t) => !recentTagTexts.has(t.name))
-    // kind = el 'type' EXPLÍCITO que manda el backend (hoy siempre 'tag');
-    // ya no se asume por origen. Si el backend añade tipos ('query',
-    // 'user'...), fluyen hasta el render sin cambios estructurales.
     .forEach((t) =>
-      items.push({ kind: t.type || "tag", text: t.name, count: t.count })
+      items.push({ kind: "tag", text: t.name, count: t.count })
     );
+
+  // HILOS que coinciden en su CONTENIDO (snippet → navega al hilo).
+  threads.forEach((th) =>
+    items.push({ kind: "thread", text: th.snippet, uid: th.uid })
+  );
 
   if (trimmed !== "#") {
     items.push({ kind: "new", text: trimmed });

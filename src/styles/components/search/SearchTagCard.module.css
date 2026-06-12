@@ -36,7 +36,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Sparkline anclado a la derecha, ancho fijo para que no se deforme. */
+/* Sparkline anchored to the right, fixed width so it does not deform. */
 .spark {
   margin-left: auto;
   flex-shrink: 0;
@@ -44,9 +44,9 @@
   align-items: center;
 }
 
+/* Search match in a tag — bold in the warm accent, no background. */
 .highlight {
-  background: rgba(26, 26, 26, 0.1);
-  color: #1a1a1a;
-  padding: 0 2px;
-  border-radius: 2px;
+  background: none;
+  color: #a85432;
+  font-weight: 700;
 }

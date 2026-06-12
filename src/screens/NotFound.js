@@ -1,18 +1,20 @@
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import styles from "../styles/screens/NotFound.module.css";
 
 /**
- * 404 general (catch-all path='*'). Misma familia visual que
- * PostThreadNotFound: tarjetas fantasma dashed, paleta warm, botón a /home.
+ * General 404 (catch-all path='*'). Same visual family as
+ * PostThreadNotFound: dashed ghost cards, warm palette, button to /home.
  */
 export default function NotFound() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   return (
     <div className={styles.page}>
       <main className={styles.content} role="alert">
-        {/* Dos tarjetas fantasma (dashed) con un '?' warm — coherente con la
-            ilustración de thread-not-found. */}
+        {/* Two ghost cards (dashed) with a warm '?' — consistent with the
+            thread-not-found illustration. */}
         <svg
           width="120"
           height="100"
@@ -56,18 +58,16 @@ export default function NotFound() {
           </text>
         </svg>
 
-        <p className={styles.number}>404</p>
-        <h1 className={styles.title}>Nothing to see here</h1>
-        <p className={styles.subtitle}>
-          This page slipped into the void. Let&apos;s get you back.
-        </p>
+        <p className={styles.number}>{t("notFound.code")}</p>
+        <h1 className={styles.title}>{t("notFound.title")}</h1>
+        <p className={styles.subtitle}>{t("notFound.subtitle")}</p>
 
         <button
           type="button"
           className={styles.button}
           onClick={() => navigate("/home")}
         >
-          Back to home
+          {t("common.backToHome")}
         </button>
       </main>
     </div>

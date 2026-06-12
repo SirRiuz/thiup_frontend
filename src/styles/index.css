@@ -1,13 +1,13 @@
 /*
- * Global styles (antes en src/theme/GlobalStyle.js con @emotion — portados a
- * CSS plano para eliminar @emotion/@mui del bundle) + el @font-face de Inter
- * (self-hosted — sin requests a Google, coherente con el enfoque de
- * privacidad del proyecto).
+ * Global styles (previously in src/theme/GlobalStyle.js with @emotion — ported
+ * to plain CSS to drop @emotion/@mui from the bundle) + the Inter @font-face
+ * (self-hosted — no requests to Google, in line with the project's privacy
+ * approach).
  */
 
-/* Inter variable (rsms.me/inter): un solo woff2 cubre los pesos 100-900.
-   Vive en src/fonts para que webpack lo bundlee (CRA no resuelve URLs
-   absolutas en CSS). font-display: swap evita el FOIT. */
+/* Inter variable (rsms.me/inter): a single woff2 covers weights 100-900.
+   Lives in src/fonts so webpack bundles it (CRA does not resolve absolute
+   URLs in CSS). font-display: swap avoids the FOIT. */
 @font-face {
   font-family: "Inter";
   src: url("../fonts/InterVariable.woff2") format("woff2");
@@ -29,10 +29,13 @@
 html,
 body {
   height: 100%;
+  /* Warm app background — prevents a white flash before React mounts and white
+     overscroll/rubber-banding on mobile. */
+  background: #f7f5f0;
 }
 
 body {
-  background: #ffffff;
+  background: #f7f5f0;
   color: #0f0f0f;
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Helvetica, Arial, sans-serif;
   font-size: 14px;

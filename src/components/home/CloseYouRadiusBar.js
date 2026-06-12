@@ -1,7 +1,8 @@
+import { useTranslation } from "react-i18next";
 import styles from "../../styles/components/home/CloseYouRadiusBar.module.css";
 
-// Radio expandible del Close You — presets acotados (el backend adapta
-// la precisión geohash al radio; >25 km pasa a celdas gruesas).
+// Expandable radius for Close You — bounded presets (the backend adapts the
+// geohash precision to the radius; >25 km switches to coarse cells).
 const RADIUS_PRESETS = [15, 30, 50, 100];
 
 /**
@@ -10,9 +11,10 @@ const RADIUS_PRESETS = [15, 30, 50, 100];
  * the reader's location stays ephemeral).
  */
 function CloseYouRadiusBar({ radius, onChange, isLoading }) {
+  const { t } = useTranslation();
   return (
     <div className={styles.bar}>
-      <span className={styles.label}>within</span>
+      <span className={styles.label}>{t("closeYou.within")}</span>
       <div className={styles.options}>
         {RADIUS_PRESETS.map((km) => (
           <button
@@ -27,7 +29,7 @@ function CloseYouRadiusBar({ radius, onChange, isLoading }) {
             disabled={isLoading}
             aria-pressed={radius === km}
           >
-            {km} km
+            {t("closeYou.radiusChip", { km })}
           </button>
         ))}
       </div>

@@ -44,8 +44,8 @@
   pointer-events: none;
 }
 
-/* Mini spinner en la opción activa durante el reload (mismos valores que
- * HomeFilterBar.tabSpinner para consistencia visual con /home-new). */
+/* Mini spinner in the active option during reload (same values as
+ * HomeFilterBar.tabSpinner for visual consistency with /home-new). */
 .tabSpinner {
   width: 9px;
   height: 9px;

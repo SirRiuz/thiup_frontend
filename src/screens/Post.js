@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams, useLocation, Navigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import MaskAvatar from "../components/MaskAvatar";
 import PostCommentBox from "../components/post/PostCommentBox";
 import PostEndDivider from "../components/post/PostEndDivider";
 import PostLoadMoreButton from "../components/post/PostLoadMoreButton";
-// PostMoreMenu (los tres puntos) oculto temporalmente — se usará más adelante.
+// PostMoreMenu (the three dots) temporarily hidden — will be used later.
 // import PostMoreMenu from "../components/post/PostMoreMenu";
 import PostProfileTrigger from "../components/post/PostProfileTrigger";
 import PostReactionPicker from "../components/post/PostReactionPicker";
@@ -27,18 +28,19 @@ import { renderTextWithHashtags } from "../components/home/homeHelpers";
 import styles from "../styles/screens/Post.module.css";
 
 function Post() {
+  const { t } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  // Usuario actual REAL (de /me/): un solo request global, cacheado en el
-  // contexto — aquí solo se consume.
+  // REAL current user (from /me/): a single global request, cached in the
+  // context — here it is only consumed.
   const { currentUserMask } = useCurrentUser();
 
-  // 'Go back' robusto ante deep links: location.key === "default" es la señal
-  // idiomática de React Router v6 de PRIMERA entrada de la sesión (entrada
-  // directa, sin historial interno) — navigate(-1) no tendría destino, así
-  // que caemos a /home. Con historial: back normal (preserva el scroll del
-  // feed/search vía el scroll manager). Mismo patrón que el ← de /search.
+  // 'Go back' robust against deep links: location.key === "default" is React
+  // Router v6's idiomatic signal of the FIRST entry of the session (direct
+  // entry, no internal history) — navigate(-1) would have no destination, so
+  // we fall back to /home. With history: normal back (preserves the
+  // feed/search scroll via the scroll manager). Same pattern as /search's ←.
   const handleBack = () => {
     if (location.key !== "default") {
       navigate(-1);
@@ -66,14 +68,14 @@ function Post() {
   } = useThread(id);
 
   const [replyingTo, setReplyingTo] = useState(null);
-  // Reply recién creado: lo scrolleamos a la vista y lo resaltamos ~3s.
+  // Newly created reply: we scroll it into view and highlight it ~3s.
   const [highlightedReplyId, setHighlightedReplyId] = useState(null);
   const commentBoxRef = useRef(null);
   const repliesSectionRef = useRef(null);
 
-  // Auto-scroll a la sección de replies tras un cambio de sort exitoso (en el
-  // thread no tiene sentido ir al top del documento: scrolleamos a donde
-  // empiezan los replies). Replica el justSwitchedRef de HomeNew.
+  // Auto-scroll to the replies section after a successful sort change (in the
+  // thread it makes no sense to go to the top of the document: we scroll to
+  // where the replies start). Mirrors HomeNew's justSwitchedRef.
   const previousSortByRef = useRef(sortBy);
   const justSwitchedRef = useRef(false);
 
@@ -94,16 +96,16 @@ function Post() {
     }
   }, [isReloadingReplies]);
 
-  // ── Dwell time (perfil de afinidad client-side) ──────────────────────
-  // Si el usuario pasa > DWELL_THRESHOLD_MS con el thread VISIBLE, cuenta
-  // como "lo leyó" → señal débil de interés en sus tags. Page Visibility
-  // pausa el conteo con la pestaña en background (cambiar de pestaña y
-  // volver a la hora no es leer). Abrir-y-salir rápido no suma nada.
+  // ── Dwell time (client-side affinity profile) ────────────────────────
+  // If the user spends > DWELL_THRESHOLD_MS with the thread VISIBLE, it counts
+  // as "they read it" → weak signal of interest in its tags. Page Visibility
+  // pauses the counting with the tab in the background (switching tabs and
+  // coming back an hour later is not reading). Open-and-leave quickly adds nothing.
   //
-  // El thread carga async: los tags se leen de un ref que se actualiza al
-  // llegar. Keyed por `id` — navegar entre posts (mismo componente, param
-  // distinto) cierra el dwell del post anterior en el cleanup, sin timers
-  // ni listeners colgados.
+  // The thread loads async: the tags are read from a ref that updates when it
+  // arrives. Keyed by `id` — navigating between posts (same component, different
+  // param) closes the previous post's dwell in the cleanup, with no dangling
+  // timers or listeners.
   const dwellTagsRef = useRef([]);
   useEffect(() => {
     dwellTagsRef.current = thread ? extractTags(thread.text) : [];
@@ -115,13 +117,13 @@ function Post() {
 
     const onVisibility = () => {
       if (document.hidden) {
-        // A background: acumular el tramo visible y pausar.
+        // To background: accumulate the visible stretch and pause.
         if (visibleSince != null) {
           visibleMs += Date.now() - visibleSince;
           visibleSince = null;
         }
       } else if (visibleSince == null) {
-        // De vuelta al foreground: reanudar el conteo.
+        // Back to foreground: resume the counting.
         visibleSince = Date.now();
       }
     };
@@ -138,34 +140,34 @@ function Post() {
     };
   }, [id]);
 
-  // El hook es la única fuente de verdad. Las reacciones se actualizan
-  // optimísticamente DENTRO del hook (toggleReaction + rollback en error), así
-  // que aquí solo renderizamos su state. Aliases por legibilidad del JSX.
+  // The hook is the single source of truth. Reactions are updated
+  // optimistically INSIDE the hook (toggleReaction + rollback on error), so
+  // here we only render its state. Aliases for JSX readability.
   const post = thread;
   const displayReplies = replies;
 
-  // Total de replies del backend (DRF count, ya mapeado a thread.replyCount).
-  // Vacío mientras carga; plural-aware una vez resuelto el thread.
+  // Total replies from the backend (DRF count, already mapped to thread.replyCount).
+  // Empty while loading; plural-aware once the thread is resolved.
   const replyCount = post?.replyCount ?? 0;
-  // La lista local cubre el primer reply recién creado (count aún 0).
+  // The local list covers the first just-created reply (count still 0).
   const hasReplies = replyCount > 0 || replies.length > 0;
   const repliesLabel = !post
     ? ""
     : replyCount === 0
-    ? "No replies yet"
-    : replyCount === 1
-    ? "1 reply"
-    : `${replyCount} replies`;
+    ? t("post.noReplies")
+    : t("post.replyCount", { count: replyCount });
 
-  // Scroll lock durante el initial loading — el comment box no aparece,
-  // así que tampoco queremos que el usuario haga scroll a un layout vacío.
-  // Usa el scroll-lock centralizado (contador): coexiste con el splash sin
-  // pisarse (antes, restaurar aquí podía dejar el body en 'hidden' eterno).
+  // Scroll lock during the initial loading — the comment box doesn't appear,
+  // so we also don't want the user to scroll to an empty layout.
+  // Uses the centralized scroll-lock (counter): coexists with the splash
+  // without clobbering it (before, restoring here could leave the body in
+  // eternal 'hidden').
   useScrollLock(isLoading && !thread);
 
-  // Hashtag click → búsqueda por tag, idéntico a /home.
+  // Hashtag click → normal search for that hashtag (q=#tag), identical to /home.
   const handleHashtagClick = (tag) => {
-    navigate(`/search?tag=${encodeURIComponent(tag)}`);
+    const clean = String(tag).replace(/^#/, "");
+    navigate(`/search?q=${encodeURIComponent(`#${clean}`)}`);
   };
 
   const handleReplyClick = (target) => {
@@ -182,19 +184,19 @@ function Post() {
     setReplyingTo(null);
   };
 
-  // Crea comment/sub-comment. parentId = thread.id para comment directo, o el
-  // id del reply al que se responde (replyingTo.sourceId) para sub-comment.
-  // Resetea replyingTo solo si el POST tuvo éxito (createReply re-lanza en error).
+  // Creates a comment/sub-comment. parentId = thread.id for a direct comment, or
+  // the id of the reply being replied to (replyingTo.sourceId) for a sub-comment.
+  // Resets replyingTo only if the POST succeeded (createReply re-throws on error).
   const handleSubmitReply = async ({ parentId, text }) => {
     const newReply = await createReply({ parentId: parentId || thread?.id, text });
     setReplyingTo(null);
-    // El reply nuevo dispara scroll-to + highlight (ver effect abajo).
+    // The new reply triggers scroll-to + highlight (see effect below).
     if (newReply?.id) setHighlightedReplyId(newReply.id);
   };
 
-  // Tras crear un reply: scroll suave hacia él (ya en el DOM) y limpiar el
-  // highlight a los 3s (la animación CSS lo desvanece sola). rAF asegura que el
-  // nodo nuevo está commiteado antes del scroll; cleanup evita fugas/saltos.
+  // After creating a reply: smooth scroll to it (already in the DOM) and clear
+  // the highlight after 3s (the CSS animation fades it on its own). rAF ensures
+  // the new node is committed before the scroll; cleanup avoids leaks/jumps.
   useEffect(() => {
     if (!highlightedReplyId) return undefined;
     const raf = requestAnimationFrame(() => {
@@ -210,9 +212,10 @@ function Post() {
     };
   }, [highlightedReplyId]);
 
-  // Guard: sin id no hay hilo que mostrar — a /home de inmediato, en el
-  // RENDER (sin flash ni fetch: useThread sin id no fetchea) y con replace
-  // (la URL inválida no queda en el historial). Tras los hooks (regla).
+  // Guard: without an id there is no thread to show — go to /home immediately,
+  // during RENDER (no flash and no fetch: useThread without an id doesn't fetch)
+  // and with replace (the invalid URL doesn't stay in the history). After the
+  // hooks (rule).
   if (!id) {
     return <Navigate to="/home" replace />;
   }
@@ -225,7 +228,7 @@ function Post() {
             type="button"
             className={styles.backButton}
             onClick={handleBack}
-            aria-label="Back"
+            aria-label={t("common.back")}
           >
             <svg
               width="20"
@@ -242,7 +245,7 @@ function Post() {
             </svg>
           </button>
           <div className={styles.titleBlock}>
-            <span className={styles.title}>Thread</span>
+            <span className={styles.title}>{t("post.threadTitle")}</span>
             {repliesLabel && (
               <span className={styles.subtitle}>{repliesLabel}</span>
             )}
@@ -268,13 +271,13 @@ function Post() {
             <path d="M22 16.7a3 3 0 0 0-2.5-4.7 5.5 5.5 0 0 0-10.6-1.5" />
             <line x1="2" y1="2" x2="22" y2="22" />
           </svg>
-          <p className={styles.errorText}>This thread could not be loaded.</p>
+          <p className={styles.errorText}>{t("post.couldNotLoad")}</p>
           <button
             type="button"
             className={styles.retryButton}
             onClick={retry}
           >
-            retry
+            {t("common.tryAgain")}
           </button>
         </div>
       ) : !post ? (
@@ -288,7 +291,7 @@ function Post() {
             <div className={styles.opMetaCol}>
               <span className={styles.opMaskId}>{post.mask.id}</span>
               <span className={styles.opMetaLine}>
-                posted {post.time} ago
+                {t("post.postedAgo", { time: post.time })}
               </span>
             </div>
           </PostProfileTrigger>
@@ -304,6 +307,7 @@ function Post() {
               key={r.emoji}
               emoji={r.emoji}
               count={r.count}
+              name={r.name}
               active={r.userReacted}
               variant="op"
               onClick={() =>
@@ -345,16 +349,16 @@ function Post() {
               <polyline points="9 17 4 12 9 7" />
               <path d="M20 18v-2a4 4 0 0 0-4-4H4" />
             </svg>
-            reply
+            {t("post.reply")}
           </button>
           <span className={styles.spacer} />
-          {/* Oculto temporalmente — se usará más adelante:
+          {/* Temporarily hidden — will be used later:
           <PostMoreMenu maskId={post.mask.id} /> */}
         </div>
       </section>
 
-      {/* Sin replies: ni separador, ni sort, ni mensaje — solo un espaciado
-          limpio entre el post principal y la caja de comentarios. */}
+      {/* No replies: no separator, no sort, no message — just clean
+          spacing between the main post and the comment box. */}
       {hasReplies ? (
         <>
           <div
@@ -363,7 +367,7 @@ function Post() {
             role="separator"
           >
             <span className={styles.repliesSeparatorLine} />
-            <span className={styles.repliesSeparatorLabel}>replies</span>
+            <span className={styles.repliesSeparatorLabel}>{t("post.replies")}</span>
             <span className={styles.repliesSeparatorLine} />
           </div>
 
@@ -383,9 +387,9 @@ function Post() {
         }`}
       >
         {displayReplies.map((reply, index) => {
-          // isLastInChain: la línea vertical de threading se extiende para
-          // empalmar con el siguiente sub-reply, EXCEPTO en el último de la
-          // cadena (cuando el siguiente item ya no es un sub-reply, o no hay).
+          // isLastInChain: the vertical threading line extends to
+          // connect with the next sub-reply, EXCEPT on the last one in the
+          // chain (when the next item is no longer a sub-reply, or there is none).
           const next = displayReplies[index + 1];
           const isLastInChain =
             Boolean(reply.parentId) && !(next && next.parentId);
@@ -393,9 +397,9 @@ function Post() {
           <PostReply
             key={reply.id}
             {...reply}
-            // Sin border solo en el último reply cuando ya no hay más páginas:
-            // así conecta limpio con PostEndDivider. Con 'load more' visible
-            // (hasMore), el último visible conserva su border.
+            // No border only on the last reply when there are no more pages:
+            // so it connects cleanly with PostEndDivider. With 'load more' visible
+            // (hasMore), the last visible one keeps its border.
             isLast={index === displayReplies.length - 1 && !hasMore}
             isLastInChain={isLastInChain}
             isHighlighted={reply.id === highlightedReplyId}

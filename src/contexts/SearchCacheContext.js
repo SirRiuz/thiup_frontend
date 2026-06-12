@@ -1,21 +1,21 @@
 import { createContext, useContext, useRef, useCallback } from "react";
 
 /**
- * Cache global del estado de /search-new por clave de búsqueda ('q:<query>'
- * para el modo query, 't:<tag>' para el modo tag), para preservar resultados,
- * tab/sort activos y scroll al volver atrás (POP) — el mismo patrón que
- * ThreadCacheContext cumple para /post y FeedContext para /home-new.
+ * Global cache of the /search-new state by search key ('q:<query>' for query
+ * mode, 't:<tag>' for tag mode), to preserve results, active tab/sort and
+ * scroll on going back (POP) — the same pattern ThreadCacheContext fulfills
+ * for /post and FeedContext for /home-new.
  *
- * El cache vive en un useRef<Map> (NO useState): mutarlo no debe causar
- * re-renders. useSearch/useTagPosts hacen lazy-init desde aquí: el primer
- * render ya pinta los resultados cacheados → el documento recupera su altura
- * completa → el browser restaura el scroll de forma NATIVA en POP
- * (ScrollToTop no interfiere en POP).
+ * The cache lives in a useRef<Map> (NOT useState): mutating it must not cause
+ * re-renders. useSearch lazy-inits from here: the first render
+ * already paints the cached results → the document recovers its full height →
+ * the browser restores the scroll NATIVELY on POP (ScrollToTop doesn't
+ * interfere on POP).
  */
 const SearchCacheContext = createContext(null);
 
-// Tope simple (eviction FIFO del más antiguo): preserva las búsquedas
-// recientes sin crecer sin límite.
+// Simple cap (FIFO eviction of the oldest): preserves recent searches
+// without growing unbounded.
 const MAX_CACHED = 12;
 
 export function SearchCacheProvider({ children }) {
@@ -26,7 +26,7 @@ export function SearchCacheProvider({ children }) {
     return cacheRef.current.get(key) || null;
   }, []);
 
-  // Merge parcial: conserva campos previos al actualizar solo algunos.
+  // Partial merge: keeps previous fields when updating only some.
   const setCached = useCallback((key, data) => {
     if (!key) return;
     const cache = cacheRef.current;
@@ -38,8 +38,8 @@ export function SearchCacheProvider({ children }) {
     }
   }, []);
 
-  // (El scroll lo maneja el scroll manager global de ScrollToTop, por
-  // location.key — este cache solo preserva datos.)
+  // (Scroll is handled by ScrollToTop's global scroll manager, by
+  // location.key — this cache only preserves data.)
   return (
     <SearchCacheContext.Provider value={{ getCached, setCached }}>
       {children}

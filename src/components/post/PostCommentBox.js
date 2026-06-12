@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import MaskAvatar from "../MaskAvatar";
 import PostReplyContext from "./PostReplyContext";
 import PostAttachmentChip from "./PostAttachmentChip";
@@ -23,6 +24,7 @@ function PostCommentBox({
   isSubmitting = false,
   submitError = null,
 }) {
+  const { t } = useTranslation();
   const [text, setText] = useState("");
   const [attachments, setAttachments] = useState([]);
   const [errorMessage, setErrorMessage] = useState(null);
@@ -33,24 +35,25 @@ function PostCommentBox({
   const intervalsRef = useRef(new Map());
   const boxRef = useRef(null);
 
-  // Teclado virtual (móvil): con el textarea enfocado, el evento `resize` de
-  // window.visualViewport detecta la APARICIÓN del teclado (el viewport
-  // visible se reduce) — en el momento real, en cualquier dispositivo, sin
-  // delays ni alturas de teclado hardcodeadas. Si la caja quedó tapada por
-  // el teclado (su bottom cae fuera del área visible REAL: offsetTop +
-  // height del visualViewport), auto-scroll para dejarla visible encima.
-  // La caja es parte del flujo (no fixed), así que scrollIntoView basta y
-  // todo se revierte solo al cerrar el teclado. Desktop: el visualViewport
-  // no se reduce al enfocar → no-op.
+  // Virtual keyboard (mobile): with the textarea focused, the `resize` event
+  // of window.visualViewport detects the APPEARANCE of the keyboard (the
+  // visible viewport shrinks) — at the real moment, on any device, without
+  // delays or hardcoded keyboard heights. If the box ended up covered by the
+  // keyboard (its bottom falls outside the REAL visible area: offsetTop +
+  // height of the visualViewport), auto-scroll to leave it visible above.
+  // The box is part of the flow (not fixed), so scrollIntoView is enough and
+  // everything reverts on its own when the keyboard closes. Desktop: the
+  // visualViewport doesn't shrink on focus → no-op.
   useEffect(() => {
     if (!isInputFocused) return undefined;
 
-    // Aire entre el borde inferior de la caja y el teclado: el scroll se
-    // calcula con un delta exacto (no scrollIntoView, que la dejaba al ras).
+    // Breathing room between the bottom edge of the box and the keyboard:
+    // the scroll is computed with an exact delta (not scrollIntoView, which
+    // left it flush).
     const KEYBOARD_GAP = 24;
 
-    // Scrollea lo justo para que el bottom de la caja quede KEYBOARD_GAP px
-    // por encima del límite visible dado.
+    // Scrolls just enough so the bottom of the box ends up KEYBOARD_GAP px
+    // above the given visible limit.
     const liftAbove = (visibleBottom) => {
       const rect = boxRef.current?.getBoundingClientRect();
       if (!rect) return;
@@ -63,20 +66,20 @@ function PostCommentBox({
     const viewport = window.visualViewport;
 
     if (!viewport) {
-      // Fallback (navegadores sin visualViewport): mismo cálculo con
-      // window.innerHeight, con un pequeño delay tras el focus.
+      // Fallback (browsers without visualViewport): same calculation with
+      // window.innerHeight, with a small delay after the focus.
       const timer = setTimeout(() => liftAbove(window.innerHeight), 300);
       return () => clearTimeout(timer);
     }
 
     let lastHeight = viewport.height;
     const ensureVisible = () => {
-      // Solo cuando el viewport SE REDUCE (teclado abriéndose/creciendo);
-      // al cerrarse (crece) no forzamos nada.
+      // Only when the viewport SHRINKS (keyboard opening/growing);
+      // when it closes (grows) we don't force anything.
       const shrank = viewport.height < lastHeight - 1;
       lastHeight = viewport.height;
       if (!shrank) return;
-      // Borde inferior del área realmente visible (descontando el teclado).
+      // Bottom edge of the actually visible area (discounting the keyboard).
       liftAbove(viewport.offsetTop + viewport.height);
     };
 
@@ -87,18 +90,18 @@ function PostCommentBox({
   const charCount = text.length;
   const atLimit = charCount >= MAX_CHARS;
   const isAnyUploading = attachments.some((a) => a.uploading);
-  // Usado por el botón de attach (oculto temporalmente junto con él):
+  // Used by the attach button (temporarily hidden along with it):
   // const isAttachDisabled = attachments.length >= MAX_FILES;
   const isSubmittable =
     text.trim().length > 0 && !isAnyUploading && !isSubmitting;
 
-  // Contador de hashtags únicos detectados (case-insensitive)
+  // Counter of unique hashtags detected (case-insensitive)
   const tagsDetected = useMemo(() => {
     const matches = text.match(HASHTAG_RE) || [];
     return new Set(matches.map((m) => m.toLowerCase())).size;
   }, [text]);
 
-  // Focus automático al activar un nuevo replyingTo
+  // Automatic focus when activating a new replyingTo
   useEffect(() => {
     if (!replyingTo) return;
     const timer = setTimeout(() => {
@@ -107,7 +110,7 @@ function PostCommentBox({
     return () => clearTimeout(timer);
   }, [replyingTo]);
 
-  // Autoresize del textarea + sync del overlay height
+  // Autoresize of the textarea + sync of the overlay height
   useEffect(() => {
     const ta = textareaRef.current;
     if (!ta) return;
@@ -121,14 +124,14 @@ function PostCommentBox({
     }
   }, [text]);
 
-  // Auto-dismiss del error banner
+  // Auto-dismiss of the error banner
   useEffect(() => {
     if (!errorMessage) return;
     const timer = setTimeout(() => setErrorMessage(null), 4000);
     return () => clearTimeout(timer);
   }, [errorMessage]);
 
-  // Cleanup al desmontar
+  // Cleanup on unmount
   useEffect(() => {
     const intervals = intervalsRef.current;
     return () => {
@@ -137,21 +140,22 @@ function PostCommentBox({
     };
   }, []);
 
-  // Sync del scroll del overlay con el textarea
+  // Sync of the overlay scroll with the textarea
   const handleScroll = (e) => {
     if (overlayRef.current) {
       overlayRef.current.scrollTop = e.target.scrollTop;
     }
   };
 
-  // Hard limit: truncar al MAX_CHARS en cada cambio (cubre typing + paste)
+  // Hard limit: truncate to MAX_CHARS on every change (covers typing + paste)
   const handleTextChange = (e) => {
     setText(e.target.value.slice(0, MAX_CHARS));
   };
 
-  // Paste: normaliza el texto externo (CRLF→LF, nbsp, zero-width) antes de
-  // insertarlo en la posición del cursor. Reconstruye el value con React state
-  // (sin execCommand deprecado) y reposiciona el cursor tras el re-render.
+  // Paste: normalizes the external text (CRLF→LF, nbsp, zero-width) before
+  // inserting it at the cursor position. Rebuilds the value with React state
+  // (without deprecated execCommand) and repositions the cursor after the
+  // re-render.
   const handlePaste = (e) => {
     if (isSubmitting) return;
     e.preventDefault();
@@ -201,14 +205,15 @@ function PostCommentBox({
     let firstError = null;
     for (const file of files.slice(0, availableSlots)) {
       if (file.size > MAX_FILE_SIZE) {
-        if (!firstError) firstError = `${file.name} is too large (max 10MB)`;
+        if (!firstError)
+          firstError = t("post.fileTooLarge", { name: file.name });
         continue;
       }
       const isImage = file.type.startsWith("image/");
       const isVideo = file.type.startsWith("video/");
       if (!isImage && !isVideo) {
         if (!firstError)
-          firstError = `${file.name} is not a supported file type`;
+          firstError = t("post.fileUnsupported", { name: file.name });
         continue;
       }
       const id = `att-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
@@ -224,7 +229,7 @@ function PostCommentBox({
       });
     }
     if (files.length > availableSlots && !firstError) {
-      firstError = `Only ${MAX_FILES} files allowed`;
+      firstError = t("post.maxFiles", { max: MAX_FILES });
     }
     if (firstError) setErrorMessage(firstError);
     if (accepted.length > 0) {
@@ -247,7 +252,7 @@ function PostCommentBox({
     });
   };
 
-  // Abre el file picker — oculto temporalmente junto con el botón de attach:
+  // Opens the file picker — temporarily hidden along with the attach button:
   // const handleAttachClick = () => {
   //   if (isAttachDisabled) return;
   //   if (fileInputRef.current) fileInputRef.current.click();
@@ -255,12 +260,12 @@ function PostCommentBox({
 
   const handleSubmit = async () => {
     if (!isSubmittable) return;
-    // parentId: sub-comment a un reply (replyingTo.sourceId) o comment directo
-    // al thread (thread.id). El padre invoca createReply del useThread.
+    // parentId: sub-comment on a reply (replyingTo.sourceId) or direct comment
+    // on the thread (thread.id). The parent invokes createReply from useThread.
     const parentId = replyingTo?.sourceId || thread?.id;
     try {
       await onSubmit?.({ parentId, text });
-      // Solo limpiamos al éxito — el texto se preserva si el POST falla.
+      // We only clear on success — the text is preserved if the POST fails.
       attachments.forEach((a) => {
         if (a.thumbnail) URL.revokeObjectURL(a.thumbnail);
       });
@@ -269,8 +274,9 @@ function PostCommentBox({
       setErrorMessage(null);
       if (onCancelReply) onCancelReply();
     } catch (err) {
-      // El banner de error lo rendea submitError (lo controla el padre). No
-      // limpiamos el textarea: el usuario puede reintentar con el mismo texto.
+      // The error banner is rendered by submitError (controlled by the
+      // parent). We don't clear the textarea: the user can retry with the
+      // same text.
     }
   };
 
@@ -283,7 +289,7 @@ function PostCommentBox({
           <span className={styles.identiconWrap}>
             <MaskAvatar seed={currentUserMask.id} size={20} />
           </span>
-          <span className={styles.label}>posting as</span>
+          <span className={styles.label}>{t("compose.postingAs")}</span>
           <span className={styles.maskId}>{currentUserMask.id}</span>
         </div>
       )}
@@ -303,9 +309,7 @@ function PostCommentBox({
             <line x1="12" y1="8" x2="12" y2="12" />
             <line x1="12" y1="16" x2="12.01" y2="16" />
           </svg>
-          <span className={styles.errorText}>
-            Your reply couldn't be posted. Please try again.
-          </span>
+          <span className={styles.errorText}>{t("post.replyError")}</span>
         </div>
       )}
 
@@ -329,7 +333,7 @@ function PostCommentBox({
             type="button"
             className={styles.errorClose}
             onClick={() => setErrorMessage(null)}
-            aria-label="Close error"
+            aria-label={t("common.closeError")}
           >
             <svg
               width="12"
@@ -373,7 +377,9 @@ function PostCommentBox({
           name="comment"
           className={styles.input}
           placeholder={
-            replyingTo ? "Type your reply..." : "Reply to this thread..."
+            replyingTo
+              ? t("post.commentPlaceholderUser")
+              : t("post.commentPlaceholderDefault")
           }
           value={text}
           onChange={handleTextChange}
@@ -401,8 +407,8 @@ function PostCommentBox({
       />
 
       <div className={styles.toolbar}>
-        {/* Botón de subir imagen oculto temporalmente — la feature se añadirá
-            más adelante (la lógica de attachments sigue intacta):
+        {/* Image upload button temporarily hidden — the feature will be added
+            later (the attachments logic remains intact):
         <button
           type="button"
           className={styles.attachButton}
@@ -426,7 +432,7 @@ function PostCommentBox({
         <span className={styles.spacer} />
         {tagsDetected > 0 && (
           <span className={styles.tagsDetected}>
-            {tagsDetected} {tagsDetected === 1 ? "tag" : "tags"} detected
+            {t("common.tagsDetected", { count: tagsDetected })}
           </span>
         )}
         <span
@@ -434,7 +440,7 @@ function PostCommentBox({
             atLimit ? styles.charCountAtLimit : ""
           }`}
         >
-          {charCount} / {MAX_CHARS}
+          {t("common.charCount", { count: charCount, max: MAX_CHARS })}
         </span>
         <button
           type="button"
@@ -442,7 +448,7 @@ function PostCommentBox({
           onClick={handleSubmit}
           disabled={!isSubmittable}
         >
-          {isSubmitting ? "replying…" : "reply"}
+          {isSubmitting ? t("post.replying") : t("post.reply")}
         </button>
       </div>
     </div>

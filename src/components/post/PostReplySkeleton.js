@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import styles from "../../styles/components/post/PostReplySkeleton.module.css";
 
 /**
@@ -9,8 +10,9 @@ import styles from "../../styles/components/post/PostReplySkeleton.module.css";
  * Pulse animation lives in CSS (@keyframes skeletonPulse). No timers here.
  */
 function PostReplySkeleton({ variant = "medium" }) {
+  const { t } = useTranslation();
   return (
-    <div className={styles.skeleton} aria-busy="true" aria-label="Loading reply">
+    <div className={styles.skeleton} aria-busy="true" aria-label={t("common.loadingReply")}>
       <div className={styles.header}>
         <div className={`${styles.bar} ${styles.identicon}`} />
         <div className={`${styles.bar} ${styles.maskId}`} />

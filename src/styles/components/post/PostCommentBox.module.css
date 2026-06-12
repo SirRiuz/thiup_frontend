@@ -1,16 +1,16 @@
-/* PostCommentBox — caja de reply con overlay sincronizado para hashtags */
+/* PostCommentBox — reply box with synchronized overlay for hashtags */
 
 .wrapper {
   padding: 16px;
   background: #fdfcf8;
   border: 1px solid #e8e5dd;
   border-radius: 8px;
-  /* margin-bottom generoso para que la caja no quede pegada al fondo del
-   * scroll (el .main del screen aporta su propio padding; esto se suma). */
+  /* generous margin-bottom so the box doesn't stick to the bottom of the
+   * scroll (the screen's .main contributes its own padding; this adds to it). */
   margin: 0 8px 32px;
 }
 
-/* === Header "posting as @maskId" (alineado con HomeCompose) === */
+/* === Header "posting as @maskId" (aligned with HomeCompose) === */
 
 .header {
   display: flex;
@@ -44,16 +44,16 @@
   font-weight: 600;
 }
 
-/* === Textarea con overlay sincronizado === */
+/* === Textarea with synchronized overlay === */
 
 .textareaWrapper {
   position: relative;
   width: 100%;
 }
 
-/* CRÍTICO: el overlay debe matchear pixel-perfect el textarea.
- * font-size 14px aquí (no 15px como en HomeCompose) — el reply usa
- * texto más pequeño que el compose del home. */
+/* CRITICAL: the overlay must match the textarea pixel-perfect.
+ * font-size 14px here (not 15px like in HomeCompose) — the reply uses
+ * smaller text than the home compose. */
 .highlightLayer {
   position: absolute;
   top: 0;
@@ -75,8 +75,8 @@
   min-height: 24px;
 }
 
-/* NO usar font-weight aquí — desalinearia el caret del textarea invisible.
- * Solo cambios que NO afectan glyph metrics: background + border-radius + color. */
+/* Do NOT use font-weight here — it would misalign the caret of the invisible textarea.
+ * Only changes that do NOT affect glyph metrics: background + border-radius + color. */
 .highlightHashtag {
   color: #1a1a1a;
   background: rgba(26, 26, 26, 0.06);
@@ -200,7 +200,7 @@
   pointer-events: none;
 }
 
-/* === File input oculto === */
+/* === Hidden file input === */
 
 .hiddenFileInput {
   position: absolute;
@@ -214,7 +214,7 @@
   border: 0;
 }
 
-/* === Lista de attachments === */
+/* === Attachments list === */
 
 .attachmentsList {
   display: flex;

@@ -3,7 +3,7 @@ import { HASHTAG_SPLIT_RE } from "../../utils/hashtags";
 import { splitByMatch, normalizeForMatch } from "../../utils/matchText";
 
 /**
- * Formatea un número con suffix K/M.
+ * Formats a number with a K/M suffix.
  *   487 → '487'
  *   1200 → '1.2K'
  *   3400 → '3.4K'
@@ -21,9 +21,9 @@ export function formatCount(n) {
 }
 
 /**
- * Renderiza un segmento de texto plano, con highlighting opcional de query.
- * Insensible a tildes y mayúsculas (espejo del unaccent del backend): buscar
- * 'peru' resalta 'PERÚ'. El texto mostrado es siempre el ORIGINAL.
+ * Renders a plain text segment, with optional query highlighting.
+ * Accent- and case-insensitive (mirror of the backend's unaccent): searching
+ * 'peru' highlights 'PERÚ'. The displayed text is always the ORIGINAL.
  */
 function renderTextSegment(text, query, className, keyPrefix) {
   if (!query || !className || !text) {
@@ -48,18 +48,18 @@ function renderTextSegment(text, query, className, keyPrefix) {
 }
 
 /**
- * Renderiza texto con hashtags resaltados.
+ * Renders text with highlighted hashtags.
  *
  * @param {string} text
- * @param {string} hashtagClassName  Clase CSS para hashtags normales.
- * @param {function} onHashtagClick  Handler(tagName, event) opcional.
- * @param {object} options  Opcional:
- *   - highlightQuery: string para resaltar matches con <mark> dentro del texto normal
- *   - highlightClassName: clase CSS para los <mark>
- *   - activeTag: nombre del tag activo (sin #) — se renderiza con override
- *   - activeTagClassName: clase CSS de override cuando un hashtag matchea activeTag
+ * @param {string} hashtagClassName  CSS class for normal hashtags.
+ * @param {function} onHashtagClick  Optional Handler(tagName, event).
+ * @param {object} options  Optional:
+ *   - highlightQuery: string to highlight matches with <mark> inside the normal text
+ *   - highlightClassName: CSS class for the <mark>s
+ *   - activeTag: name of the active tag (without #) — rendered with override
+ *   - activeTagClassName: override CSS class when a hashtag matches activeTag
  *
- * Backward compatible: si no se pasa `options`, comportamiento idéntico al original.
+ * Backward compatible: if `options` is not passed, behavior identical to the original.
  */
 export function renderTextWithHashtags(
   text,
@@ -71,10 +71,10 @@ export function renderTextWithHashtags(
   const { highlightQuery, highlightClassName, activeTag, activeTagClassName } =
     options || {};
 
-  // Tag buscado normalizado (sin '#', trim, lowercase, SIN tildes — espejo
-  // del unaccent del backend) para comparar EXACTO: buscar 'peru' resalta
-  // '#perú' y viceversa. '#video' NO matchea '#videoviral' (igualdad
-  // estricta, no substring).
+  // Searched tag normalized (without '#', trim, lowercase, WITHOUT accents —
+  // mirror of the backend's unaccent) to compare EXACTLY: searching 'peru'
+  // highlights '#perú' and vice versa. '#video' does NOT match '#videoviral'
+  // (strict equality, not substring).
   const normalizedActiveTag = normalizeForMatch(
     (activeTag || "").trim().replace(/^#/, "")
   );
@@ -97,7 +97,18 @@ export function renderTextWithHashtags(
             if (onHashtagClick) onHashtagClick(tagName, e);
           }}
         >
-          {part}
+          {/* Highlight the searched term even when it falls inside a hashtag
+              (e.g. 'dns' inside '#dns'). splitByMatch runs over the full
+              '#dns', so the offset is correct; the <mark> nests inside the
+              hashtag span, preserving its color/link style. */}
+          {highlightQuery && highlightClassName
+            ? renderTextSegment(
+                part,
+                highlightQuery,
+                highlightClassName,
+                `tag-seg-${idx}`
+              )
+            : part}
         </span>
       );
     }

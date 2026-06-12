@@ -1,3 +1,11 @@
 # https://www.robotstxt.org/robotstxt.html
+#
+# Privacy: Thiup is an anonymous, high-risk app. Only the public landing shell
+# ("/") may be crawled. Every route that renders user content is blocked so no
+# anonymous or sensitive content (threads, search, profiles) is ever indexed.
 User-agent: *
-Disallow:
+Disallow: /home
+Disallow: /search
+Disallow: /me
+Disallow: /post
+Disallow: /my-threads

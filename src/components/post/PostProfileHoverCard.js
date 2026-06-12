@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import MaskAvatar from "../MaskAvatar";
 import { useMaskProfile } from "../../hooks/useMaskProfile";
 import styles from "../../styles/components/post/PostProfileHoverCard.module.css";
@@ -5,24 +6,25 @@ import styles from "../../styles/components/post/PostProfileHoverCard.module.css
 /**
  * Format an ISO date string as "mon yyyy" lowercase.
  *   "2025-03-14" → "mar 2025"
- *   invalid / missing → "unknown"
+ *   invalid / missing → unknownLabel (translated)
  */
-function formatJoinedDate(isoString) {
-  if (!isoString) return "unknown";
+function formatJoinedDate(isoString, unknownLabel) {
+  if (!isoString) return unknownLabel;
   const date = new Date(isoString);
-  if (Number.isNaN(date.getTime())) return "unknown";
+  if (Number.isNaN(date.getTime())) return unknownLabel;
   return date
-    .toLocaleString("en-US", { month: "short", year: "numeric" })
+    .toLocaleString(undefined, { month: "short", year: "numeric" })
     .toLowerCase();
 }
 
 /**
  * Profile hover card — minimal vertical layout (variant B).
  *
- * Los datos REALES (joined, posts, replies) se piden al backend al montar la
- * tarjeta (= al hover, con su delay) vía useMaskProfile (con caché por hash:
- * el segundo hover no repite request ni skeleton). Mientras carga: skeleton
- * warm. Si falla: fallback discreto a lo que trajera el mask (sin romper).
+ * The REAL data (joined, posts, replies) is requested from the backend when
+ * the card mounts (= on hover, with its delay) via useMaskProfile (with a
+ * cache by hash: the second hover doesn't repeat the request or skeleton).
+ * While loading: warm skeleton. If it fails: discreet fallback to whatever
+ * the mask carried (without breaking).
  *
  * Props:
  *   - mask: { id, fullHash, joinedAt?, postsCount?, repliesCount? }
@@ -30,17 +32,18 @@ function formatJoinedDate(isoString) {
  *     participates in the same hover "safe zone".
  */
 function PostProfileHoverCard({ mask, onMouseEnter, onMouseLeave }) {
+  const { t } = useTranslation();
   const { profile, isLoading } = useMaskProfile(mask?.fullHash);
 
   if (!mask) return null;
 
   const { id } = mask;
-  // Datos reales si llegaron; si no (error / sin fullHash), lo que trajera el
-  // mask del listado (los users de búsqueda ya traen joined/posts).
+  // Real data if it arrived; otherwise (error / no fullHash), whatever the
+  // mask from the listing carried (search users already bring joined/posts).
   const joinedAt = profile?.joinedAt ?? mask.joinedAt;
   const posts = profile?.postsCount ?? mask.postsCount ?? 0;
   const replies = profile?.repliesCount ?? mask.repliesCount ?? 0;
-  const formattedJoined = formatJoinedDate(joinedAt);
+  const formattedJoined = formatJoinedDate(joinedAt, t("profile.unknown"));
 
   return (
     <div
@@ -57,8 +60,8 @@ function PostProfileHoverCard({ mask, onMouseEnter, onMouseLeave }) {
       </p>
 
       {isLoading ? (
-        /* Skeleton warm mientras llegan los datos reales (el mask ID ya se
-           conoce del trigger, no necesita skeleton). */
+        /* Warm skeleton while the real data arrives (the mask ID is already
+           known from the trigger, doesn't need a skeleton). */
         <>
           <span className={`${styles.skeletonBar} ${styles.skeletonJoined}`} />
           <div className={styles.stats}>
@@ -66,29 +69,31 @@ function PostProfileHoverCard({ mask, onMouseEnter, onMouseLeave }) {
               <span
                 className={`${styles.skeletonBar} ${styles.skeletonStatValue}`}
               />
-              <span className={styles.statLabel}>posts</span>
+              <span className={styles.statLabel}>{t("profile.posts")}</span>
             </div>
             <div className={styles.statDivider} />
             <div className={styles.stat}>
               <span
                 className={`${styles.skeletonBar} ${styles.skeletonStatValue}`}
               />
-              <span className={styles.statLabel}>replies</span>
+              <span className={styles.statLabel}>{t("profile.replies")}</span>
             </div>
           </div>
         </>
       ) : (
         <>
-          <p className={styles.joined}>joined {formattedJoined}</p>
+          <p className={styles.joined}>
+            {t("profile.joined", { date: formattedJoined })}
+          </p>
           <div className={styles.stats}>
             <div className={styles.stat}>
               <span className={styles.statValue}>{posts}</span>
-              <span className={styles.statLabel}>posts</span>
+              <span className={styles.statLabel}>{t("profile.posts")}</span>
             </div>
             <div className={styles.statDivider} />
             <div className={styles.stat}>
               <span className={styles.statValue}>{replies}</span>
-              <span className={styles.statLabel}>replies</span>
+              <span className={styles.statLabel}>{t("profile.replies")}</span>
             </div>
           </div>
         </>

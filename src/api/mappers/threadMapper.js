@@ -1,22 +1,22 @@
 /**
- * Mapea la respuesta de GET /threads/<id>/responses/ al shape que consumen
- * Post.js y sus componentes (PostReply, PostReactionPill, PostReplyMedia).
+ * Maps the response of GET /threads/<id>/responses/ to the shape consumed by
+ * Post.js and its components (PostReply, PostReactionPill, PostReplyMedia).
  *
- * Reutiliza mapBackendPostToFrontend de postMapper.js para todos los campos
- * comunes de un post — NO duplica esa lógica. Solo añade lo propio de una
- * respuesta dentro de un thread: media + el contexto de parent (parentId /
- * parentMaskId) que la UI usa para indentar sub-replies y mostrar "re: <mask>".
+ * Reuses mapBackendPostToFrontend from postMapper.js for all the common
+ * fields of a post — does NOT duplicate that logic. It only adds what is specific to a
+ * response inside a thread: media + the parent context (parentId /
+ * parentMaskId) that the UI uses to indent sub-replies and show "re: <mask>".
  *
- * Backend shape de una respuesta (igual que un thread, + anidamiento):
+ * Backend shape of a response (same as a thread, + nesting):
  *   { uid, text, content, create_at, mask, reactions, responses_count,
  *     media, is_op, sub, parent, responses: [ ...sub-replies ] }
  */
 import { mapBackendPostToFrontend } from "./postMapper";
 
 /**
- * Reduce los media del backend al shape mínimo que usa PostReplyMedia
- * ({ id, type }). El componente solo lee length + type (rendea placeholders),
- * así que no necesitamos las URLs reales todavía.
+ * Reduces the backend media to the minimal shape used by PostReplyMedia
+ * ({ id, type }). The component only reads length + type (renders placeholders),
+ * so we don't need the real URLs yet.
  */
 function mapMedia(media) {
   if (!Array.isArray(media) || media.length === 0) return null;
@@ -27,12 +27,12 @@ function mapMedia(media) {
 }
 
 /**
- * Mapea una respuesta (reply o sub-reply) al shape de PostReply.
+ * Maps a response (reply or sub-reply) to the PostReply shape.
  *
  * @param {object} backendReply
  * @param {{ parentId?: string|null, parentMaskId?: string|null }} [ctx]
- *        Contexto de anidamiento. Vacío para un reply de primer nivel; con
- *        parentId/parentMaskId para un sub-reply (lo indenta y muestra "re:").
+ *        Nesting context. Empty for a top-level reply; with
+ *        parentId/parentMaskId for a sub-reply (indents it and shows "re:").
  */
 export function mapBackendReplyToFrontend(backendReply, ctx = {}) {
   return {
@@ -44,11 +44,11 @@ export function mapBackendReplyToFrontend(backendReply, ctx = {}) {
 }
 
 /**
- * Aplana un reply + sus `responses` anidados a una lista de 2 niveles, igual
- * que la versión legacy (flattenSubReplies en src/screens/Thread.js): el reply
- * de primer nivel seguido de todos sus descendientes, cada uno etiquetado con
- * el parent inmediato. No se rendea nivel 3+ visualmente (todos los hijos se
- * muestran como un único nivel de sub-reply indentado).
+ * Flattens a reply + its nested `responses` into a 2-level list, just like
+ * the legacy version (flattenSubReplies in src/screens/Thread.js): the
+ * top-level reply followed by all its descendants, each tagged with
+ * the immediate parent. Level 3+ is not rendered visually (all children are
+ * shown as a single indented sub-reply level).
  */
 function flattenReply(backendReply) {
   const top = mapBackendReplyToFrontend(backendReply);
@@ -69,15 +69,15 @@ function flattenReply(backendReply) {
 }
 
 /**
- * Convierte la página de `results` (cada item con responses anidados) en una
- * lista plana lista para replies.map(...) en Post.js.
+ * Converts the `results` page (each item with nested responses) into a
+ * flat list ready for replies.map(...) in Post.js.
  */
 export function mapBackendRepliesToFrontend(results) {
   return (results || []).flatMap(flattenReply);
 }
 
 /**
- * Mapea la respuesta completa de GET /threads/<id>/responses/.
+ * Maps the complete response of GET /threads/<id>/responses/.
  *
  * @param {{ head: object, results: object[], next: string|null, count: number }} data
  * @returns {{ thread: object|null, replies: object[], next: string|null, count: number }}

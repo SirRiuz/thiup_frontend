@@ -1,10 +1,10 @@
 /**
- * Construye el `content` DraftJS que el backend espera, a partir de texto plano.
+ * Builds the DraftJS `content` the backend expects, from plain text.
  *
- * DraftJS representa cada parrafo como un bloque SEPARADO, asi que dividimos el
- * texto por \n: un bloque por linea preserva los saltos del usuario. Compartido
- * por la creacion de hilos (FeedContext) y de comentarios (useThread) — antes
- * estaba duplicado en ambos.
+ * DraftJS represents each paragraph as a SEPARATE block, so we split the
+ * text by \n: one block per line preserves the user's line breaks. Shared
+ * by thread creation (FeedContext) and comment creation (useThread) — it was
+ * previously duplicated in both.
  */
 export function buildDraftJsContent(text) {
   const lines = (text || "").split("\n");

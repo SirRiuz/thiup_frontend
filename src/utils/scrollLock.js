@@ -1,17 +1,17 @@
 import { useEffect } from "react";
 
 /**
- * Scroll-lock del body CENTRALIZADO con contador de referencias.
+ * CENTRALIZED body scroll-lock with a reference counter.
  *
- * Por qué: con manipulaciones directas de document.body.style.overflow
- * dispersas, dos lockers se pisan. Caso real (carga directa de /post/:id):
- * el splash bloquea (guarda ""), el Post bloquea durante su loading y guarda
- * "hidden" (¡el valor del splash!); el splash restaura "", y al terminar de
- * cargar el Post "restaura"... "hidden" → body bloqueado para siempre.
+ * Why: with scattered direct manipulations of document.body.style.overflow,
+ * two lockers clobber each other. Real case (direct load of /post/:id):
+ * the splash locks (saves ""), the Post locks during its loading and saves
+ * "hidden" (the splash's value!); the splash restores "", and when the Post
+ * finishes loading it "restores"... "hidden" → body locked forever.
  *
- * Con el contador, el overflow original se guarda SOLO en la primera
- * adquisición y se restaura SOLO cuando se libera el último lock — múltiples
- * componentes pueden bloquear sin pisarse.
+ * With the counter, the original overflow is saved ONLY on the first
+ * acquisition and restored ONLY when the last lock is released — multiple
+ * components can lock without clobbering each other.
  */
 
 let lockCount = 0;
@@ -26,7 +26,7 @@ export function lockScroll() {
 }
 
 export function unlockScroll() {
-  if (lockCount === 0) return; // nunca por debajo de 0
+  if (lockCount === 0) return; // never below 0
   lockCount -= 1;
   if (lockCount === 0) {
     document.body.style.overflow = savedOverflow;
@@ -34,9 +34,9 @@ export function unlockScroll() {
 }
 
 /**
- * Hook: bloquea el scroll mientras `active` sea true. El unlock corre tanto
- * al pasar active a false (visibilidad) como en el unmount (cleanup) —
- * imposible dejar un lock huérfano.
+ * Hook: locks the scroll while `active` is true. The unlock runs both
+ * when active goes to false (visibility) and on unmount (cleanup) —
+ * impossible to leave an orphaned lock.
  */
 export function useScrollLock(active) {
   useEffect(() => {

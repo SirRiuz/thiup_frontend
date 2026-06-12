@@ -1,10 +1,10 @@
 import { render } from "@testing-library/react";
 import App from "./App";
 
-// Smoke test: la app monta sin crashear (router + providers + splash).
-// Reemplaza el boilerplate de CRA ("learn react"), que no aplica a esta app.
-// Los fetch de arranque (healthcheck, /me/) fallan en jsdom y los contexts
-// manejan ese error — el render no debe tumbarse.
+// Smoke test: the app mounts without crashing (router + providers + splash).
+// Replaces the CRA boilerplate ("learn react"), which does not apply to this app.
+// The startup fetches (healthcheck, /me/) fail under jsdom and the contexts
+// handle that error — the render must not fall over.
 test("renders the app shell without crashing", () => {
   render(<App />);
 });

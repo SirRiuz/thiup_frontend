@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import styles from "../../styles/components/post/PostAttachmentChip.module.css";
 
 /**
@@ -65,6 +66,7 @@ function CloseIcon() {
  *   - onRemove:   handler invoked when the user clicks the X
  */
 function PostAttachmentChip({ attachment, onRemove }) {
+  const { t } = useTranslation();
   const { name, size, type, progress, uploading, thumbnail } = attachment;
   const isImage = type === "image";
   const isVideo = type === "video";
@@ -90,7 +92,7 @@ function PostAttachmentChip({ attachment, onRemove }) {
         type="button"
         className={styles.removeButton}
         onClick={onRemove}
-        aria-label={uploading ? "Cancel upload" : "Remove attachment"}
+        aria-label={uploading ? t("attachment.cancelUpload") : t("attachment.remove")}
       >
         <CloseIcon />
       </button>

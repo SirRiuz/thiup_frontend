@@ -1,18 +1,25 @@
+import { useTranslation } from "react-i18next";
 import styles from "../../styles/components/post/PostSortMenu.module.css";
 
 const OPTIONS = ["trending", "newest", "oldest"];
+const OPTION_I18N = {
+  trending: "post.sortTrending",
+  newest: "post.sortNewest",
+  oldest: "post.sortOldest",
+};
 
 function PostSortMenu({ value, onChange, isLoading = false }) {
+  const { t } = useTranslation();
   const handleClick = (option) => {
     if (isLoading) return;
-    // Re-clickear la opción activa SÍ refetchea (selectSort siempre dispara),
-    // igual que HomeFilterBar/FeedContext — no es no-op.
+    // Re-clicking the active option DOES refetch (selectSort always fires),
+    // same as HomeFilterBar/FeedContext — it's not a no-op.
     onChange?.(option);
   };
 
   return (
     <div className={styles.menu} role="tablist">
-      <span className={styles.label}>sort</span>
+      <span className={styles.label}>{t("post.sort")}</span>
       {OPTIONS.map((option) => {
         const isActive = value === option;
         const isDisabled = isLoading && !isActive;
@@ -29,7 +36,7 @@ function PostSortMenu({ value, onChange, isLoading = false }) {
             className={tabClass}
             onClick={() => handleClick(option)}
           >
-            <span>{option}</span>
+            <span>{t(OPTION_I18N[option])}</span>
             {isLoading && isActive && (
               <span className={styles.tabSpinner} aria-hidden="true" />
             )}
