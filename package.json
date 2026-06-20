@@ -16,7 +16,7 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "build:secure": "GENERATE_SOURCEMAP=false react-scripts build && node scripts/obfuscate.js"
+    "build:secure": "REACT_APP_API_URL=https://api-em7qudoeqrvblg.thiup.com REACT_APP_DEBUG=false REACT_APP_GATEWAY_SEED=TdaZVzGD3xfX-HOXk8pqFYNxrPsA0MLsxKScIDra_40 GENERATE_SOURCEMAP=false react-scripts build && node scripts/obfuscate.js"
   },
   "eslintConfig": {
     "extends": [
@@ -42,6 +42,7 @@
     "@babel/preset-react": "^7.23.3",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
-    "@testing-library/user-event": "^13.5.0"
+    "@testing-library/user-event": "^13.5.0",
+    "javascript-obfuscator": "^5.4.3"
   }
 }

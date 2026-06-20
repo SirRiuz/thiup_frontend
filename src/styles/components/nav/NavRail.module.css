@@ -22,21 +22,21 @@
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Helvetica, Arial, sans-serif;
 }
 
-/* Brand logo — squircle tile, same as the splash/modal. */
-.logo {
-  margin-bottom: 6px;
+/* Rail divider — short and centered, shared by the logo zone and the ☰
+   zone so both always match. The 4px margins add to the rail's 10px gap:
+   14px of air on each side of the line. */
+.divider {
+  width: 28px;
+  height: 1px;
+  border-radius: 1px;
+  background: #e5e0d3;
+  margin: 4px 0;
 }
 
 .items {
   display: flex;
   flex-direction: column;
   gap: 6px;
-}
-
-.bottom {
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid #efece4;
 }
 
 /* ===== Item (shared capsule/bar) ===== */

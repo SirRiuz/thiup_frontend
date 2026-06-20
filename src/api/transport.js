@@ -56,7 +56,9 @@ async function probeMode() {
     }
   }
 
-  throw new Error("ambiguous probe result");
+  // E_TR1 = probe ambiguo (ni cifrado ni plano confirmados). Código opaco:
+  // no nombrar la arquitectura del transporte en el bundle de producción.
+  throw new Error("E_TR1");
 }
 
 async function resolveMode() {

@@ -102,7 +102,10 @@ export async function apiFetch(url, options = {}) {
       // Política "cifrado o nada": si no se pudo cifrar/derivar el sobre, la
       // petición NO salió; fallamos local con el shape estándar (jamás plano).
       if (err instanceof DispatchEncryptError) {
-        throw new APIError("Local request encryption failed.", 0, {
+        // E_ENC1 = no se pudo cifrar el sobre local (la petición no salió).
+        // Mensaje opaco; el shape (status 0 + detail) se conserva idéntico
+        // para el manejo de errores existente.
+        throw new APIError("E_ENC1", 0, {
           detail: "encryption_failed",
         });
       }

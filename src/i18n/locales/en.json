@@ -31,6 +31,13 @@
     "close": "Close",
     "current": "Current language"
   },
+  "pageTitle": {
+    "search": "Search",
+    "myThreads": "My threads",
+    "thread": "Thread",
+    "notFound": "Page not found",
+    "serverError": "Server error"
+  },
   "splash": {
     "loading": "Loading"
   },
@@ -119,8 +126,6 @@
     "tabPeople": "people",
     "tabTags": "tags",
     "tabWithCount": "{{label}}, {{countLabel}} results",
-    "documentTitle": "{{query}} - Search / Thiup",
-    "documentTitleEmpty": "Search / Thiup",
     "noResultsTitle": "No results found",
     "noResultsSubtitle": "try different keywords or browse trending",
     "searchForLead": "Search for",

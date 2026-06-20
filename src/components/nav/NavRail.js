@@ -282,12 +282,16 @@ function NavRail() {
     <>
       {/* Desktop: floating capsule on the left */}
       <nav className={styles.rail} aria-label={t("nav.primary")}>
-        {/* Brand icon (thread + dot) — same tile as the splash/modal. */}
-        <BrandLogo size={44} className={styles.logo} />
+        {/* Brand icon (thread + dot) — plain variant (no terracotta tile):
+            subtle, so it doesn't compete with the nav icons / active blob.
+            The short divider below gives it its own zone without boxing it
+            in; the SAME divider separates the ☰ at the bottom, so both
+            breathe identically (shared class = guaranteed consistency). */}
+        <BrandLogo size={44} variant="plain" />
+        <div className={styles.divider} aria-hidden="true" />
         <div className={styles.items}>{renderItems()}</div>
-        <div className={styles.bottom}>
-          <MenuButton menuUp={false} />
-        </div>
+        <div className={styles.divider} aria-hidden="true" />
+        <MenuButton menuUp={false} />
       </nav>
 
       {/* Mobile: fixed bottom bar */}

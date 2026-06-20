@@ -31,6 +31,13 @@
     "close": "Cerrar",
     "current": "Idioma actual"
   },
+  "pageTitle": {
+    "search": "Buscar",
+    "myThreads": "Mis hilos",
+    "thread": "Hilo",
+    "notFound": "Página no encontrada",
+    "serverError": "Error del servidor"
+  },
   "splash": {
     "loading": "Cargando"
   },
@@ -119,8 +126,6 @@
     "tabPeople": "personas",
     "tabTags": "etiquetas",
     "tabWithCount": "{{label}}, {{countLabel}} resultados",
-    "documentTitle": "{{query}} - Búsqueda / Thiup",
-    "documentTitleEmpty": "Búsqueda / Thiup",
     "noResultsTitle": "No se encontraron resultados",
     "noResultsSubtitle": "prueba con otras palabras o explora las tendencias",
     "searchForLead": "Buscar",

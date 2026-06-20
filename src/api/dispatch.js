@@ -9,6 +9,14 @@ import { BASE_URL } from "../settings";
  */
 export class DispatchEncryptError extends Error {}
 
+// ÚNICO punto de la app que toca la red (las dos salidas de abajo). El alias
+// vía window["fetch"] mete el literal al string-array del ofuscador para que
+// "fetch" no quede greppeable en el fuente del bundle. HONESTIDAD: esto es
+// opacidad del FUENTE únicamente — cada request (URL, método, headers) sigue
+// siendo perfectamente visible en el Network tab; el tráfico no se puede
+// ocultar desde el cliente (eso lo cubren HTTPS + el cifrado E2E del sobre).
+const browserFetch = (url, init) => window["fetch"](url, init);
+
 /**
  * PUNTO ÚNICO de salida HTTP. Envía una petición de DOS formas según el modo:
  *
@@ -54,11 +62,12 @@ export function dispatchRequest({
     try {
       envelope = encrypt(inner);
     } catch (err) {
-      throw new DispatchEncryptError("Local request encryption failed.");
+      // E_DSP1 = fallo de cifrado del sobre (apiFetch lo traduce a E_ENC1).
+      throw new DispatchEncryptError("E_DSP1");
     }
     headers["X-Request-Payload"] = envelope.payload;
     headers["Content-Type"] = "application/raw";
-    return fetch(`${BASE_URL}${gwPath}`, {
+    return browserFetch(`${BASE_URL}${gwPath}`, {
       method: "POST",
       headers,
       body: envelope.data,
@@ -70,7 +79,7 @@ export function dispatchRequest({
   if (body != null && !headers["Content-Type"]) {
     headers["Content-Type"] = "application/json";
   }
-  return fetch(`${BASE_URL}${path}${qs}`, {
+  return browserFetch(`${BASE_URL}${path}${qs}`, {
     method: verb,
     headers,
     body: body == null ? undefined : body,

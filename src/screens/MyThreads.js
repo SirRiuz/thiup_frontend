@@ -8,6 +8,7 @@ import HomeFeedErrorState from "../components/home/HomeFeedErrorState";
 import HomeFeedRetryBanner from "../components/home/HomeFeedRetryBanner";
 import { useMyThreads } from "../hooks/useMyThreads";
 import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
+import usePageTitle from "../hooks/usePageTitle";
 import styles from "../styles/screens/MyThreads.module.css";
 
 /**
@@ -21,6 +22,7 @@ import styles from "../styles/screens/MyThreads.module.css";
 function MyThreads() {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  usePageTitle("pageTitle.myThreads");
 
   const {
     posts,

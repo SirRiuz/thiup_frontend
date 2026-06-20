@@ -25,7 +25,9 @@ export async function parseResponseBody(response) {
     try {
       return decrypt({ payload, data: rawBody });
     } catch (err) {
-      console.error("Failed to decrypt response payload:", err);
+      // E_DEC1 = fallo al descifrar la respuesta. Código opaco (y además
+      // disableConsoleOutput elimina los console.* del bundle de prod).
+      console.error("E_DEC1", err);
       return null;
     }
   }

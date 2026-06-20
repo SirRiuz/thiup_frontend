@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import usePageTitle from "../hooks/usePageTitle";
 import styles from "../styles/screens/NotFound.module.css";
 
 /**
@@ -9,6 +10,7 @@ import styles from "../styles/screens/NotFound.module.css";
 export default function NotFound() {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  usePageTitle("pageTitle.notFound");
 
   return (
     <div className={styles.page}>

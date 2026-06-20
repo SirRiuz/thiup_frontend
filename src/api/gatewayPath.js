@@ -27,7 +27,10 @@ const NONCE_BYTES = 16; // 128 bits de aleatoriedad por request
 function _crypto() {
   const c = typeof window !== "undefined" && window.crypto;
   if (!c || !c.getRandomValues) {
-    throw new Error("CSPRNG no disponible");
+    // E_GW1 = CSPRNG del navegador no disponible. Código opaco a propósito:
+    // un texto descriptivo en el bundle regala arquitectura (el mapeo vive en
+    // este comentario, que Terser elimina del build).
+    throw new Error("E_GW1");
   }
   return c;
 }

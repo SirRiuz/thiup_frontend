@@ -16,6 +16,7 @@ import PostReplySkeleton from "../components/post/PostReplySkeleton";
 import PostThreadNotFound from "../components/post/PostThreadNotFound";
 import PostSortMenu from "../components/post/PostSortMenu";
 import { useThread } from "../hooks/useThread";
+import usePageTitle from "../hooks/usePageTitle";
 import {
   addInteraction,
   extractTags,
@@ -29,6 +30,10 @@ import styles from "../styles/screens/Post.module.css";
 
 function Post() {
   const { t } = useTranslation();
+  // Título GENÉRICO a propósito ("Hilo · Thiup"): el título de la pestaña
+  // queda en el historial/favoritos y se ve por encima del hombro — JAMÁS
+  // usar el contenido del hilo ni la máscara del autor aquí (app anónima).
+  usePageTitle("pageTitle.thread");
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();

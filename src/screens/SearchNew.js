@@ -13,6 +13,7 @@ import SearchTagCard from "../components/search/SearchTagCard";
 import SearchUserCard from "../components/search/SearchUserCard";
 import { useSearch } from "../hooks/useSearch";
 import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
+import usePageTitle from "../hooks/usePageTitle";
 import { formatCompactNumber } from "../utils/formatNumber";
 import styles from "../styles/screens/SearchNew.module.css";
 import { sanitizeQuery } from "../utils/searchQuery";
@@ -78,19 +79,11 @@ function SearchNew() {
     isLoading: isLoading || isLoadingMore || !!loadMoreError,
   });
 
-  // Document title reflects the current search (Twitter-style: "dns - Search /
-  // Thiup"); with no query it's just "Search / Thiup". Restores the previous
-  // title when leaving /search. Re-runs on language change (i18n `t`).
-  useEffect(() => {
-    const previousTitle = document.title;
-    const trimmedQuery = query.trim();
-    document.title = trimmedQuery
-      ? t("search.documentTitle", { query: trimmedQuery })
-      : t("search.documentTitleEmpty");
-    return () => {
-      document.title = previousTitle;
-    };
-  }, [query, t]);
+  // Título de pestaña GENÉRICO a propósito, SIN la query: el título queda en
+  // el historial/favoritos del navegador y esta app es anónima con temas
+  // sensibles — interpolarla la dejaría registrada. (Es posible añadirla,
+  // pero queda desaconsejado por esa razón.) Mecanismo central: usePageTitle.
+  usePageTitle("pageTitle.search");
 
   // Invalid ?tab=zzz → drop it (default 'top'); preserve ?q=.
   useEffect(() => {

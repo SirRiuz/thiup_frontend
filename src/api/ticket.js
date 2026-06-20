@@ -31,9 +31,12 @@ async function fetchTicket() {
     path: "/ticket/",
     gateway: shouldUseGateway(),
   });
-  if (!res.ok) throw new Error(`ticket endpoint ${res.status}`);
+  // E_TK1 = el endpoint del ticket respondió no-OK (status adjunto);
+  // E_TK2 = respuesta OK pero sin ticket en el cuerpo. Códigos opacos: los
+  // textos descriptivos mapeaban la arquitectura de assertions en el bundle.
+  if (!res.ok) throw new Error(`E_TK1:${res.status}`);
   const data = await parseResponseBody(res);
-  if (!data || !data.ticket) throw new Error("ticket missing in response");
+  if (!data || !data.ticket) throw new Error("E_TK2");
   cachedTicket = data.ticket;
   expiresAt = Date.now() + ASSUMED_TTL_MS;
   return cachedTicket;

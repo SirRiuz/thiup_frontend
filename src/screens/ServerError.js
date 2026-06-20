@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { useServerHealth } from "../contexts/ServerHealthContext";
+import usePageTitle from "../hooks/usePageTitle";
 import styles from "../styles/screens/ServerError.module.css";
 
 /**
@@ -11,6 +12,7 @@ import styles from "../styles/screens/ServerError.module.css";
 function ServerError() {
   const { t } = useTranslation();
   const { retry, isChecking } = useServerHealth();
+  usePageTitle("pageTitle.serverError");
 
   return (
     <div className={styles.page}>

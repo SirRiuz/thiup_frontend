@@ -15,12 +15,15 @@ import HomeFeedRetryBanner from "../components/home/HomeFeedRetryBanner";
 import { useFeedContext } from "../contexts/FeedContext";
 import { useCurrentUser } from "../contexts/CurrentUserContext";
 import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
+import usePageTitle from "../hooks/usePageTitle";
 import styles from "../styles/screens/HomeNew.module.css";
 
 function HomeNew() {
   const composeRef = useRef(null);
   const navigate = useNavigate();
   const { t } = useTranslation();
+  // Home = solo la marca ("Thiup"), sin sufijo de página.
+  usePageTitle();
   // REAL current user (from /me/): a single global request, cached in the
   // context — here it is only consumed.
   const { currentUserMask } = useCurrentUser();
