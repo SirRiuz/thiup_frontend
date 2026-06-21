@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f7f5f0" />
+
+    <!-- Title/description are localized at runtime by main.js; these are the
+         English defaults (and the no-JS fallback). -->
+    <title>Thiup — speak freely, stay anonymous</title>
+    <meta
+      name="description"
+      content="Thiup is an anonymous space to talk about what matters — no sign-ups, no profiles, no tracking."
+    />
+    <link rel="canonical" href="https://thiup.com/" />
+
+    <!-- Structured data (brand only, never user content): helps Google show a
+         rich, consistent brand result for the non-www canonical. -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://thiup.com/#org",
+            "name": "Thiup",
+            "url": "https://thiup.com/",
+            "logo": "https://thiup.com/assets/icon-512.png",
+            "description": "An anonymous, privacy-first space to talk about what matters."
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://thiup.com/#website",
+            "url": "https://thiup.com/",
+            "name": "Thiup",
+            "inLanguage": "en",
+            "publisher": { "@id": "https://thiup.com/#org" }
+          }
+        ]
+      }
+    </script>
+
+    <!-- Open Graph / Twitter: BRAND card only (never user content). Absolute
+         og:image so the preview renders when the link is shared. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Thiup" />
+    <meta property="og:url" content="https://thiup.com/" />
+    <meta property="og:title" content="Thiup — speak freely, stay anonymous" />
+    <meta
+      property="og:description"
+      content="An anonymous, privacy-first space to talk about what matters."
+    />
+    <meta property="og:image" content="https://thiup.com/assets/og-image.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Thiup — speak freely, stay anonymous" />
+    <meta
+      name="twitter:description"
+      content="An anonymous, privacy-first space to talk about what matters."
+    />
+    <meta name="twitter:image" content="https://thiup.com/assets/og-image.png" />
+
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+    <link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
+    <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
+
+    <!-- Inter: preload + self-hosted variable woff2 (one file covers 100–900). -->
+    <link
+      rel="preload"
+      href="assets/fonts/InterVariable.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main" data-i18n="skip">Skip to content</a>
+
+    <!-- ===== Header ===== -->
+    <header class="site-header">
+      <div class="container header-inner">
+        <a class="brand" href="/" aria-label="Thiup">
+          <svg
+            class="brand-mark"
+            width="30"
+            height="30"
+            viewBox="0 0 68 68"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <path
+              d="M24 17.5 Q46 25.75 24 34 Q46 42.25 24 50.5"
+              fill="none"
+              stroke="#a85432"
+              stroke-width="5.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <circle cx="44.5" cy="19" r="4.5" fill="#a85432" />
+          </svg>
+          <span class="brand-word">Thiup</span>
+        </a>
+
+        <div class="header-actions">
+          <div
+            class="lang-toggle"
+            role="group"
+            aria-label="Language"
+            id="lang-toggle"
+          >
+            <button type="button" class="lang-btn" data-lang="en" aria-pressed="true">
+              EN
+            </button>
+            <button type="button" class="lang-btn" data-lang="es" aria-pressed="false">
+              ES
+            </button>
+          </div>
+          <a class="btn btn-ghost" href="/app" data-i18n="openApp">
+            Open the app
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <main id="main">
+      <!-- ===== Hero ===== -->
+      <section class="hero">
+        <!-- Subtle "thread" motif: an enlarged serpentine line echoing the
+             brand glyph. Decorative, low-opacity, never loud. -->
+        <svg
+          class="hero-thread"
+          viewBox="0 0 1200 200"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          <path
+            class="thread-line thread-1"
+            pathLength="1"
+            d="M-20 100 Q150 20 300 100 Q450 180 600 100 Q750 20 900 100 Q1050 180 1220 100"
+            fill="none"
+            stroke="#a85432"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+          <path
+            class="thread-line thread-2"
+            pathLength="1"
+            d="M-20 124 Q150 54 300 124 Q450 194 600 124 Q750 54 900 124 Q1050 194 1220 124"
+            fill="none"
+            stroke="#a85432"
+            stroke-width="1.5"
+            stroke-linecap="round"
+          />
+        </svg>
+
+        <div class="container hero-inner">
+          <svg
+            class="hero-mark"
+            width="76"
+            height="76"
+            viewBox="0 0 68 68"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <rect width="68" height="68" rx="17" fill="#a85432" />
+            <path
+              d="M24 17.5 Q46 25.75 24 34 Q46 42.25 24 50.5"
+              fill="none"
+              stroke="#f7f5f0"
+              stroke-width="5.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <circle cx="44.5" cy="19" r="4.5" fill="#f7f5f0" />
+          </svg>
+
+          <span class="hero-eyebrow reveal" style="--rd: 60ms" data-i18n="eyebrow">
+            Anonymous · no sign-ups · no tracking
+          </span>
+          <h1 class="hero-title reveal" style="--rd: 120ms" data-i18n="heroTitle">
+            Speak freely. Stay anonymous.
+          </h1>
+          <p class="hero-subtitle reveal" style="--rd: 180ms" data-i18n="heroSubtitle">
+            Thiup is an anonymous space to talk about what matters — no sign-ups,
+            no profiles, no tracking.
+          </p>
+          <div class="hero-cta reveal" style="--rd: 240ms">
+            <a class="btn btn-primary" href="https://app.thiup.com/home" data-i18n="openApp">
+              Open the app
+            </a>
+            <a class="btn btn-quiet" href="#about" data-i18n="learnMore">
+              What is Thiup?
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== About / features ===== -->
+      <section class="about" id="about">
+        <div class="container">
+          <h2 class="section-title reveal" data-i18n="aboutTitle">What is Thiup?</h2>
+          <p class="section-lead reveal" style="--rd: 80ms" data-i18n="aboutLead">
+            A calm place to speak openly, built so you never have to reveal who
+            you are.
+          </p>
+
+          <ul class="features">
+            <li class="feature reveal">
+              <span class="feature-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="4" y="11" width="16" height="9" rx="2" />
+                  <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+                </svg>
+              </span>
+              <h3 class="feature-title" data-i18n="f1Title">Anonymous by default</h3>
+              <p class="feature-text" data-i18n="f1Text">
+                No accounts, no profiles. You are a pseudonymous mask, never a
+                real identity.
+              </p>
+            </li>
+
+            <li class="feature reveal">
+              <span class="feature-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="13 2 4 14 11 14 10 22 20 10 13 10 13 2" />
+                </svg>
+              </span>
+              <h3 class="feature-title" data-i18n="f2Title">Nothing to sign up for</h3>
+              <p class="feature-text" data-i18n="f2Text">
+                Open the app and start talking. No email, no password, no setup.
+              </p>
+            </li>
+
+            <li class="feature reveal">
+              <span class="feature-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 10c0 6-8 11-8 11s-8-5-8-11a8 8 0 0 1 8-8 8 8 0 0 1 8 8z" />
+                  <circle cx="12" cy="10" r="2.5" />
+                  <line x1="3" y1="3" x2="21" y2="21" />
+                </svg>
+              </span>
+              <h3 class="feature-title" data-i18n="f3Title">Your location stays yours</h3>
+              <p class="feature-text" data-i18n="f3Text">
+                Your precise location is never stored. Privacy is built in, not
+                bolted on.
+              </p>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- ===== Final CTA band ===== -->
+      <section class="cta-band">
+        <div class="container cta-inner">
+          <h2 class="cta-title reveal" data-i18n="ctaTitle">Speak nameless.</h2>
+          <p class="cta-text reveal" style="--rd: 80ms" data-i18n="ctaText">
+            Join the conversation without giving up your privacy.
+          </p>
+          <a class="btn btn-primary reveal" style="--rd: 160ms" href="https://app.thiup.com/home" data-i18n="openApp">
+            Open the app
+          </a>
+        </div>
+      </section>
+    </main>
+
+    <!-- ===== Footer ===== -->
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <a class="brand brand-sm" href="/" aria-label="Thiup">
+          <svg width="22" height="22" viewBox="0 0 68 68" aria-hidden="true" focusable="false">
+            <path
+              d="M24 17.5 Q46 25.75 24 34 Q46 42.25 24 50.5"
+              fill="none"
+              stroke="#a85432"
+              stroke-width="5.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <circle cx="44.5" cy="19" r="4.5" fill="#a85432" />
+          </svg>
+          <span class="brand-word">Thiup</span>
+        </a>
+        <p class="footer-tagline" data-i18n="tagline">Speak nameless.</p>
+        <nav class="footer-nav" aria-label="Footer">
+          <a href="/app" data-i18n="openApp">Open the app</a>
+        </nav>
+        <p class="footer-legal">
+          <span id="year">2026</span> · Thiup ·
+          <span data-i18n="footerNote">Anonymous, privacy first</span>
+        </p>
+      </div>
+    </footer>
+
+    <script src="main.js" defer></script>
+  </body>
+</html>

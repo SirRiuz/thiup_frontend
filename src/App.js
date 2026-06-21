@@ -17,6 +17,7 @@ import {
   ServerHealthProvider,
   ServerHealthGate,
 } from "./contexts/ServerHealthContext";
+import { ToastProvider } from "./contexts/ToastContext";
 import ServerError from "./screens/ServerError";
 import "./styles/index.css";
 
@@ -39,6 +40,8 @@ export default function App() {
           The check runs on load and on any 5xx. */}
       <ServerHealthProvider>
         <ServerHealthGate fallback={<ServerError />}>
+          {/* Toasts available to every screen; rendered in a portal above all. */}
+          <ToastProvider>
           <BrowserRouter
             future={{
               v7_startTransition: true,
@@ -85,6 +88,7 @@ export default function App() {
               </FeedProvider>
             </CurrentUserProvider>
           </BrowserRouter>
+          </ToastProvider>
         </ServerHealthGate>
       </ServerHealthProvider>
     </>

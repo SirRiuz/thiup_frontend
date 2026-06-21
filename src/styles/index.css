@@ -5,16 +5,11 @@
  * approach).
  */
 
-/* Inter variable (rsms.me/inter): a single woff2 covers weights 100-900.
-   Lives in src/fonts so webpack bundles it (CRA does not resolve absolute
-   URLs in CSS). font-display: swap avoids the FOIT. */
-@font-face {
-  font-family: "Inter";
-  src: url("../fonts/InterVariable.woff2") format("woff2");
-  font-weight: 100 900;
-  font-style: normal;
-  font-display: swap;
-}
+/* Inter variable @font-face lives in public/index.html (inline <style>), not
+   here: it references the font from public/fonts with a STABLE url so it can be
+   <link rel="preload">-ed and is available before first paint on EVERY platform
+   (webpack/css-loader can't reference a public asset by absolute url from a
+   CSS Module — it tries to resolve it as a module). Self-hosted (no Google). */
 
 /* === Reset === */
 
@@ -32,6 +27,9 @@ body {
   /* Warm app background — prevents a white flash before React mounts and white
      overscroll/rubber-banding on mobile. */
   background: #f7f5f0;
+  /* Disable rubber-band/overscroll + pull-to-refresh. Must sit on <html> (the
+     document scroller), not just <body>, or Safari ignores it. */
+  overscroll-behavior: none;
 }
 
 body {
@@ -43,7 +41,6 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  overscroll-behavior: none;
 }
 
 button {

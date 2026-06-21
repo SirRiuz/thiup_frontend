@@ -4,8 +4,11 @@
 # ("/") may be crawled. Every route that renders user content is blocked so no
 # anonymous or sensitive content (threads, search, profiles) is ever indexed.
 User-agent: *
+Allow: /$
 Disallow: /home
 Disallow: /search
 Disallow: /me
 Disallow: /post
 Disallow: /my-threads
+
+Sitemap: https://app.thiup.com/sitemap.xml

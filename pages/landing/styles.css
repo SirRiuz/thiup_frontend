@@ -1,0 +1,656 @@
+/* Thiup landing — vanilla CSS.
+   Tokens mirror the app design system (frontend CLAUDE.md): warm paper palette,
+   Inter, 8px radius, sober/warm tone. Pure #FFFFFF is forbidden. */
+
+@font-face {
+  font-family: "Inter";
+  src: url("assets/fonts/InterVariable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* Surfaces */
+  --bg: #f7f5f0;
+  --surface: #fdfcf8;
+  --hover: #f0ece3;
+  --tint: #f3e3d3;
+  /* Text */
+  --text: #1a1a1a;
+  --text-2: #6b6b6b;
+  --text-3: #a3a3a3;
+  /* Borders */
+  --border: #e5e0d3;
+  --border-soft: #ebe7dd;
+  /* Brand */
+  --accent: #a85432;
+  --accent-ink: #8b6f47;
+  /* Shape */
+  --radius: 8px;
+  --radius-btn: 12px;
+  --maxw: 1080px;
+  --shadow-card: 0 4px 20px rgba(26, 26, 26, 0.06);
+  --shadow-pop: 0 8px 24px rgba(26, 26, 26, 0.08);
+  --ring: inset 0 0 0 2px #c5a572;
+  --font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
+    Roboto, Helvetica, Arial, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  color: var(--text);
+  background: var(--bg);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.container {
+  width: 100%;
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* ===== Accessibility ===== */
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 14px;
+  font-size: 14px;
+}
+
+.skip-link:focus {
+  left: 16px;
+  top: 16px;
+}
+
+:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+  border-radius: var(--radius);
+}
+
+/* ===== Buttons ===== */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 11px 20px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-btn);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  transition: opacity 140ms ease, background 140ms ease, border-color 140ms ease,
+    transform 140ms ease, box-shadow 140ms ease;
+}
+
+/* Dark fill, cream text — the canonical Thiup primary button. */
+.btn-primary {
+  background: var(--text);
+  color: var(--surface);
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(26, 26, 26, 0.14);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-ghost {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--text);
+  font-size: 14px;
+  min-height: 40px;
+  padding: 9px 16px;
+}
+
+.btn-ghost:hover {
+  background: var(--hover);
+}
+
+.btn-quiet {
+  background: transparent;
+  color: var(--text-2);
+}
+
+.btn-quiet:hover {
+  color: var(--text);
+}
+
+/* ===== Header ===== */
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: rgba(247, 245, 240, 0.78);
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+  backdrop-filter: blur(12px) saturate(180%);
+  border-bottom: 1px solid var(--border-soft);
+  transition: box-shadow 200ms ease;
+}
+
+.site-header.scrolled {
+  box-shadow: 0 6px 20px rgba(26, 26, 26, 0.05);
+}
+
+.hero-eyebrow {
+  display: inline-block;
+  margin-bottom: 22px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--accent-ink);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .site-header {
+    background: var(--bg);
+  }
+}
+
+.header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.brand-word {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Language toggle (segmented) */
+.lang-toggle {
+  display: inline-flex;
+  padding: 3px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+
+.lang-btn {
+  border: 0;
+  background: transparent;
+  color: var(--text-2);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 5px 11px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 140ms ease, color 140ms ease;
+}
+
+.lang-btn:hover {
+  color: var(--text);
+}
+
+.lang-btn[aria-pressed="true"] {
+  background: var(--tint);
+  color: var(--accent);
+}
+
+/* ===== Hero ===== */
+
+.hero {
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+  padding: clamp(64px, 12vw, 132px) 0 clamp(56px, 9vw, 104px);
+}
+
+.hero-thread {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 38%;
+  width: 100%;
+  height: 200px;
+  opacity: 0.1;
+  pointer-events: none;
+}
+
+.hero-inner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.hero-mark {
+  margin-bottom: 28px;
+  box-shadow: var(--shadow-card);
+  border-radius: 17px;
+}
+
+.hero-title {
+  font-size: clamp(2.2rem, 5.2vw, 3.4rem);
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  max-width: 16ch;
+}
+
+.hero-subtitle {
+  margin-top: 18px;
+  max-width: 52ch;
+  font-size: clamp(1rem, 2vw, 1.18rem);
+  line-height: 1.5;
+  color: var(--text-2);
+}
+
+.hero-cta {
+  margin-top: 32px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+/* ===== About / features ===== */
+
+.about {
+  background: var(--surface);
+  border-top: 1px solid var(--border-soft);
+  border-bottom: 1px solid var(--border-soft);
+  padding: clamp(56px, 9vw, 100px) 0;
+  text-align: center;
+}
+
+.section-title {
+  font-size: clamp(1.6rem, 3.4vw, 2.1rem);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.section-lead {
+  margin: 14px auto 0;
+  max-width: 50ch;
+  color: var(--text-2);
+  font-size: 1.05rem;
+}
+
+.features {
+  list-style: none;
+  margin: clamp(36px, 6vw, 56px) 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  text-align: left;
+}
+
+.feature {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+}
+
+.feature-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius);
+  background: var(--tint);
+  color: var(--accent);
+  margin-bottom: 16px;
+}
+
+.feature-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.feature-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin-bottom: 7px;
+}
+
+.feature-text {
+  color: var(--text-2);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+/* ===== Final CTA band ===== */
+
+.cta-band {
+  background: var(--tint);
+  padding: clamp(56px, 9vw, 96px) 0;
+  text-align: center;
+}
+
+.cta-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.cta-title {
+  font-size: clamp(1.7rem, 4vw, 2.4rem);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+
+.cta-text {
+  margin: 12px 0 28px;
+  max-width: 44ch;
+  color: var(--accent-ink);
+  font-size: 1.05rem;
+}
+
+/* ===== Footer ===== */
+
+.site-footer {
+  background: var(--bg);
+  border-top: 1px solid var(--border-soft);
+  padding: 40px 0;
+}
+
+.footer-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+}
+
+.brand-sm .brand-word {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.footer-tagline {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.footer-nav a {
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.footer-nav a:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.footer-legal {
+  color: var(--text-3);
+  font-size: 13px;
+}
+
+/* ===== Redirect page (/app) ===== */
+
+.redirect-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.redirect-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 40px;
+  padding-bottom: 40px;
+}
+
+.redirect-title {
+  margin-top: 24px;
+  font-size: clamp(1.6rem, 4vw, 2.1rem);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.redirect-text {
+  margin: 12px 0 26px;
+  max-width: 40ch;
+  color: var(--text-2);
+}
+
+.redirect-back {
+  margin-top: 20px;
+  font-size: 14px;
+}
+
+.redirect-back a {
+  color: var(--text-2);
+}
+
+.redirect-back a:hover {
+  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* ===== Responsive ===== */
+
+@media (max-width: 760px) {
+  .features {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .hero-thread {
+    opacity: 0.08;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 0 18px;
+  }
+
+  .brand-word {
+    font-size: 16px;
+  }
+
+  .header-actions .btn-ghost {
+    display: none; /* keep the header light on phones; CTA lives in the hero */
+  }
+}
+
+/* ===== Motion & depth ===== */
+
+/* Scroll-reveal: elements rise + fade in when they enter the viewport. The
+   per-element delay (--rd) staggers a group. JS adds .in via IntersectionObserver. */
+.reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 600ms ease, transform 600ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: var(--rd, 0ms);
+}
+
+.reveal.in {
+  opacity: 1;
+  transform: none;
+}
+
+/* Feature cards stagger left-to-right. */
+.features .feature:nth-child(2) {
+  --rd: 90ms;
+}
+.features .feature:nth-child(3) {
+  --rd: 180ms;
+}
+
+/* Hero logo: fades up on load, then breathes gently. */
+.hero-mark {
+  animation: markIn 700ms cubic-bezier(0.16, 1, 0.3, 1) both,
+    floatY 6s ease-in-out 900ms infinite;
+}
+
+@keyframes markIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes floatY {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-7px);
+  }
+}
+
+/* Hero thread: draws itself in, then drifts slowly side to side (depth). */
+.hero-thread {
+  animation: threadDrift 20s ease-in-out infinite alternate;
+}
+
+.thread-line {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: threadDraw 2.4s ease 200ms forwards;
+}
+
+.thread-2 {
+  opacity: 0.55;
+  animation-delay: 500ms;
+}
+
+@keyframes threadDraw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes threadDrift {
+  from {
+    transform: translateX(-14px);
+  }
+  to {
+    transform: translateX(14px);
+  }
+}
+
+/* Hover lift (pointer devices only). */
+@media (hover: hover) {
+  .feature {
+    transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+  }
+
+  .feature:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-card);
+    border-color: rgba(168, 84, 50, 0.32);
+  }
+
+  .feature-icon {
+    transition: transform 180ms ease;
+  }
+
+  .feature:hover .feature-icon {
+    transform: scale(1.06);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .btn,
+  .lang-btn {
+    transition: none;
+  }
+
+  /* No entrance/idle motion: show everything in its final state. */
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .hero-mark,
+  .hero-thread,
+  .thread-line {
+    animation: none;
+  }
+
+  .thread-line {
+    stroke-dashoffset: 0;
+  }
+}

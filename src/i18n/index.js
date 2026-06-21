@@ -71,6 +71,17 @@ i18n.use(initReactI18next).init({
   },
 });
 
+// Keep <html lang> in sync with the active UI language (a11y + SEO/GEO: the
+// static index.html ships lang="en"; this corrects it to the real language
+// once i18n resolves, and on every live change from the ☰ Languages modal).
+function syncHtmlLang(lng) {
+  if (typeof document !== "undefined" && lng) {
+    document.documentElement.lang = lng;
+  }
+}
+syncHtmlLang(i18n.language);
+i18n.on("languageChanged", syncHtmlLang);
+
 /** Changes the language LIVE and persists the choice. */
 export function setLanguage(lang) {
   const normalized = normalizeLanguage(lang) || FALLBACK_LANGUAGE;

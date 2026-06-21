@@ -276,6 +276,9 @@ export function FeedProvider({ children }) {
     } catch (err) {
       /* no storage: doesn't persist, doesn't break */
     }
+    // Synchronous loading on radius change too: no false-isLoading window
+    // during the Close You reload (keeps the compose Post button disabled).
+    setIsLoading(true);
     setRefetchKey((k) => k + 1);
   }, []);
 
@@ -368,6 +371,12 @@ export function FeedProvider({ children }) {
       return;
     }
     setFeedTab(tab);
+    // Enter the loading state SYNCHRONOUSLY (same batched render as the tab
+    // change), so there is no intermediate render where isLoading is still
+    // false during the transition — that window let controls bound to
+    // isLoading (e.g. the compose Post button) flash enabled with the previous
+    // tab's data before the fetch effect set isLoading=true.
+    setIsLoading(true);
     setRefetchKey((k) => k + 1);
   }, [feedTab, resolveCloseYouEntry]);
 

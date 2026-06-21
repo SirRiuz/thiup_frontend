@@ -27,6 +27,25 @@ function PostProfileTrigger({ mask, children, className }) {
     };
   }, []);
 
+  // Hide the card (and cancel any pending show) as soon as the page scrolls —
+  // the card is anchored to the trigger and would otherwise drift. Same as the
+  // reaction picker. capture:true because scroll events don't bubble.
+  useEffect(() => {
+    const hideOnScroll = () => {
+      if (showTimerRef.current) {
+        clearTimeout(showTimerRef.current);
+        showTimerRef.current = null;
+      }
+      setIsVisible(false);
+    };
+    document.addEventListener("scroll", hideOnScroll, {
+      capture: true,
+      passive: true,
+    });
+    return () =>
+      document.removeEventListener("scroll", hideOnScroll, { capture: true });
+  }, []);
+
   const handleMouseEnter = () => {
     // Moving back onto the trigger (or onto the card) cancels any pending hide.
     if (hideTimerRef.current) {

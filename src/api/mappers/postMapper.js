@@ -61,6 +61,9 @@ export function mapBackendPostToFrontend(backendPost) {
     },
     text: backendPost.text || "",
     time: backendPost.create_at || "",
+    // Absolute publish timestamp (ISO) for the thread-details panel. `time`
+    // above is the compact relative string the card renders.
+    publishedAt: backendPost.created_at_iso || null,
     // Momentum from the For You engine. momentum_final = base × regional boost,
     // computed PER QUERY in the backend (only comes in the For
     // You feed); fallback to the persisted base. Only shown with DEBUG active.

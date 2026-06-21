@@ -83,7 +83,7 @@ function SearchNew() {
   // el historial/favoritos del navegador y esta app es anónima con temas
   // sensibles — interpolarla la dejaría registrada. (Es posible añadirla,
   // pero queda desaconsejado por esa razón.) Mecanismo central: usePageTitle.
-  usePageTitle("pageTitle.search");
+  usePageTitle("pageTitle.search", { noindex: true });
 
   // Invalid ?tab=zzz → drop it (default 'top'); preserve ?q=.
   useEffect(() => {

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f7f5f0" />
+
+    <title>Open the app · Thiup</title>
+    <meta
+      name="description"
+      content="Open Thiup — the anonymous, privacy-first app. No sign-ups, no profiles."
+    />
+    <link rel="canonical" href="https://thiup.com/app" />
+
+    <!-- Convenience redirect for humans (the app lives on app.thiup.com). The
+         page still serves real content, so it stays indexable as a sitelink
+         candidate; the redirect fires shortly after for visitors. -->
+    <meta http-equiv="refresh" content="2; url=https://app.thiup.com/home" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Thiup" />
+    <meta property="og:url" content="https://thiup.com/app" />
+    <meta property="og:title" content="Open the app · Thiup" />
+    <meta
+      property="og:description"
+      content="Open Thiup — the anonymous, privacy-first app."
+    />
+    <meta property="og:image" content="https://thiup.com/assets/og-image.png" />
+
+    <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg" />
+    <link rel="icon" type="image/x-icon" href="../assets/favicon.ico" />
+    <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png" />
+
+    <link
+      rel="preload"
+      href="../assets/fonts/InterVariable.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link rel="stylesheet" href="../styles.css" />
+  </head>
+  <body>
+    <main id="main" class="redirect-page">
+      <div class="container redirect-inner">
+        <svg
+          class="hero-mark"
+          width="72"
+          height="72"
+          viewBox="0 0 68 68"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <rect width="68" height="68" rx="17" fill="#a85432" />
+          <path
+            d="M24 17.5 Q46 25.75 24 34 Q46 42.25 24 50.5"
+            fill="none"
+            stroke="#f7f5f0"
+            stroke-width="5.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <circle cx="44.5" cy="19" r="4.5" fill="#f7f5f0" />
+        </svg>
+
+        <h1 class="redirect-title">Opening Thiup…</h1>
+        <p class="redirect-text">
+          Taking you to the app. If nothing happens, use the button below.
+        </p>
+        <a class="btn btn-primary" href="https://app.thiup.com/home">
+          Open the app
+        </a>
+        <p class="redirect-back">
+          <a href="/">Back to thiup.com</a>
+        </p>
+      </div>
+    </main>
+
+    <!-- Immediate redirect for JS-enabled visitors (faster than the 2s meta
+         refresh). Uses replace() so this hop doesn't pollute browser history. -->
+    <script>
+      window.location.replace("https://app.thiup.com/home");
+    </script>
+  </body>
+</html>

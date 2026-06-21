@@ -5,6 +5,32 @@
          altering the UI. Kept intentionally. -->
     <meta name="google" content="notranslate" />
     <meta charset="utf-8" />
+    <!-- Preload the self-hosted Inter font so it is available before first
+         paint on EVERY platform (notably Android, where the wider Roboto
+         fallback otherwise rendered during the swap window and made some texts
+         wrap differently than on iOS/desktop). crossorigin is required to match
+         the font's CORS fetch even same-origin. -->
+    <link
+      rel="preload"
+      href="%PUBLIC_URL%/fonts/InterVariable.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin="anonymous"
+    />
+    <!-- Inter @font-face declared here (not in a CSS Module) so it can point at
+         the preloaded public/fonts asset by a stable URL. A single variable
+         woff2 covers weights 100-900. font-display: swap + the preload above =
+         Inter is ready before first paint, so no platform falls back to a wider
+         font (the Android line-wrap bug). -->
+    <style>
+      @font-face {
+        font-family: "Inter";
+        src: url("%PUBLIC_URL%/fonts/InterVariable.woff2") format("woff2");
+        font-weight: 100 900;
+        font-style: normal;
+        font-display: swap;
+      }
+    </style>
     <!-- Brand icon ("thread + dot"): favicon.svg is the primary (scales with
          the display); the .ico (16/32/48) is the fallback for legacy browsers.
          The 16/32 PNGs use a slightly thicker stroke so the thread stays
@@ -54,7 +80,7 @@
       name="description"
       content="Thiup is an anonymous space to speak freely about what matters. Privacy first by design — no sign-ups, no profiles, your exact location is never stored."
     />
-    <link rel="canonical" href="https://thiup.io/" />
+    <link rel="canonical" href="https://app.thiup.com/" />
 
     <!-- Open Graph (link previews) -->
     <meta property="og:type" content="website" />
@@ -64,12 +90,12 @@
       property="og:description"
       content="An anonymous space to speak freely about what matters. Privacy first by design — no sign-ups, no profiles."
     />
-    <meta property="og:url" content="https://thiup.io/" />
+    <meta property="og:url" content="https://app.thiup.com/" />
     <!-- PRIVACY: the OG/Twitter image is ALWAYS this single static brand card
          (logo + wordmark + tagline) for the whole app. Never generate per-thread
          previews or include user content — crawlers cache these images outside
          our control. Absolute URL required (crawlers don't resolve relative). -->
-    <meta property="og:image" content="https://thiup.io/og-image.png" />
+    <meta property="og:image" content="https://app.thiup.com/og-image.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:type" content="image/png" />
@@ -85,7 +111,37 @@
       name="twitter:description"
       content="An anonymous space to speak freely about what matters. Privacy first by design — no sign-ups, no profiles."
     />
-    <meta name="twitter:image" content="https://thiup.io/og-image.png" />
+    <meta name="twitter:image" content="https://app.thiup.com/og-image.png" />
+
+    <!-- Structured data (schema.org / JSON-LD) — BRAND ONLY. Describes what
+         Thiup IS for search engines and LLMs; contains zero user content,
+         masks or queries. No SearchAction on purpose: it would advertise the
+         (private, noindex) /search URL to crawlers. Helps generative engines
+         (GEO) describe Thiup correctly. -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://app.thiup.com/#organization",
+            "name": "Thiup",
+            "url": "https://app.thiup.com/",
+            "logo": "https://app.thiup.com/icon-512.png",
+            "description": "Thiup is an anonymous social space to speak freely about what matters. Privacy first by design — no sign-ups, no profiles, your exact location is never stored."
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://app.thiup.com/#website",
+            "name": "Thiup",
+            "url": "https://app.thiup.com/",
+            "description": "An anonymous space to speak freely about what matters. Privacy first by design — no sign-ups, no profiles.",
+            "inLanguage": ["en", "es"],
+            "publisher": { "@id": "https://app.thiup.com/#organization" }
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>

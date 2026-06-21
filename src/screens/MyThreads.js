@@ -22,7 +22,7 @@ import styles from "../styles/screens/MyThreads.module.css";
 function MyThreads() {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  usePageTitle("pageTitle.myThreads");
+  usePageTitle("pageTitle.myThreads", { noindex: true });
 
   const {
     posts,

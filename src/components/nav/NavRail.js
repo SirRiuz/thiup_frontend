@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import LanguageModal from "./LanguageModal";
 import WelcomeModal from "../WelcomeModal";
 import BrandLogo from "../BrandLogo";
+import { useKeyboardOpen } from "../../hooks/useKeyboardOpen";
 import styles from "../../styles/components/nav/NavRail.module.css";
 
 /**
@@ -209,6 +210,9 @@ function NavRail() {
   const { t } = useTranslation();
   const { pathname, search } = useLocation();
   const navigate = useNavigate();
+  // On iOS the keyboard pushes a fixed bottom bar up on top of itself; hide it
+  // while typing (it isn't usable then) and bring it back when the keyboard closes.
+  const keyboardOpen = useKeyboardOpen();
   // Item whose tooltip is SUPPRESSED after a click (the pointer is still
   // over it → :hover would leave it stuck). It clears on the next mouseenter
   // — normal hover is not affected.
@@ -295,7 +299,12 @@ function NavRail() {
       </nav>
 
       {/* Mobile: fixed bottom bar */}
-      <nav className={styles.bottomBar} aria-label={t("nav.primary")}>
+      <nav
+        className={`${styles.bottomBar} ${
+          keyboardOpen ? styles.bottomBarHidden : ""
+        }`}
+        aria-label={t("nav.primary")}
+      >
         {renderItems()}
         <MenuButton menuUp />
       </nav>

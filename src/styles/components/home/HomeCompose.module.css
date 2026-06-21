@@ -230,9 +230,14 @@
   to { transform: rotate(360deg); }
 }
 
-/* Keep the submit button visually active while submitting even though the
- * wrapper is .disabled — the disabled attr handles real interactivity. */
-.wrapper.disabled .submitButton {
+/* While SUBMITTING, keep the submit button visually active (it shows the
+ * spinner) even though the wrapper is .disabled — the disabled attr handles
+ * real interactivity. Scoped to .submitting (NOT .disabled): during a feed
+ * load/tab switch the wrapper is also .disabled, and this rule used to
+ * override `.submitButton:disabled { opacity: 0.4 }` (higher specificity),
+ * brightening the genuinely-disabled (e.g. empty) button to 0.8 — it looked
+ * "active" for the couple seconds of loading. Now a loading button stays 0.4. */
+.wrapper.submitting .submitButton {
   opacity: 0.8;
 }
 

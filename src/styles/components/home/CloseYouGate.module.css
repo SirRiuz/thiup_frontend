@@ -1,27 +1,39 @@
-/* Close You gate — same tokens as HomeFeedEmptyState (the feed's reference
-   sibling): #fdfcf8 surface, #e8e5dd border, Inter 500/16 title,
-   mono 11 subtitle, icon in a circle. Warm accent #b8845f.
-   Never #FFFFFF. */
+/* Close You gate — sober card (empty-state family) that fills the feed column
+   (margin 8px inset), #fdfcf8 surface, #e5e0d3 border, 8px radius, muted square
+   icon. Never #FFFFFF. The classes are shared by every gate state
+   (locating / error / denied / unsupported / prompt). */
 
 .gate {
-  padding: 56px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 30px 22px;
   text-align: center;
   background: #fdfcf8;
-  border: 1px solid #e8e5dd;
+  border: 1px solid #e5e0d3;
   border-radius: 8px;
   margin: 8px;
 }
 
+/* Top icon — sober muted square (empty-state family), NOT a terracotta tint.
+   The SVG uses stroke="currentColor", so `color` tints it gray; CSS width
+   overrides the inline 20px attribute. */
 .iconWrap {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
-  border: 1.5px solid #c4bfb1;
-  border-radius: 50%;
-  margin-bottom: 16px;
-  color: #b8845f;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  background: #f7f5f0;
+  border: 1px solid #ebe7dd;
+  color: #9b9591;
+  margin: 0 0 14px;
+}
+
+.iconWrap svg {
+  width: 21px;
+  height: 21px;
 }
 
 @keyframes gatePulse {
@@ -41,12 +53,41 @@
 .title {
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
     system-ui, sans-serif;
-  font-size: 16px;
-  font-weight: 500;
+  font-size: 15px;
+  font-weight: 600;
   color: #1a1a1a;
-  margin: 0 0 6px;
+  line-height: 1.3;
+  margin: 0 0 7px;
 }
 
+.body {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    system-ui, sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #666;
+  margin: 0 0 9px;
+  max-width: 320px;
+}
+
+.body strong {
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+/* Privacy reassurance under the opt-in body — quieter, smaller tier so the
+   text reads as a clear hierarchy (what it does → privacy note). */
+.privacyNote {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    system-ui, sans-serif;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: #a3a3a3;
+  margin: 0 0 18px;
+  max-width: 320px;
+}
+
+/* Subtitle — only the "finding your area…" state (mono, muted). */
 .subtitle {
   font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   font-size: 11px;
@@ -56,61 +97,82 @@
   line-height: 1.6;
 }
 
-.body {
+/* Reload hint — quiet line that replaces the old buttons in the denied state.
+   The emphasis ("reload"/"recarga") is a warm brown via <strong>. */
+.hint {
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
     system-ui, sans-serif;
-  font-size: 13px;
-  line-height: 1.6;
-  color: #666;
-  margin: 0 auto 24px;
-  max-width: 400px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #a3a3a3;
+  margin: 13px auto 0;
+  max-width: 300px;
 }
 
-.body strong {
-  color: #1a1a1a;
+.hint strong {
+  color: #8b6f47;
   font-weight: 600;
 }
 
+/* Actions — stacked column, width-capped so the button is sized (NOT feed-wide);
+   centered by the gate's align-items. Shared by the prompt (enable / not now)
+   and error (try again) states. In prompt the 18px gap above comes from
+   .privacyNote's margin-bottom; the sibling rule below restores that gap for
+   states where actions follows the body directly (error). */
 .actions {
   display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 10px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 9px;
+  width: 100%;
+  max-width: 240px;
+  margin: 0;
 }
 
-/* Dark primary (good contrast), design system button style:
-   mono 11, uppercase, letterspacing. */
+.body + .actions {
+  margin-top: 9px;
+}
+
+/* Primary — dark, cream text (canonical Thiup button), fills the capped column. */
 .primaryButton {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   background: #1a1a1a;
-  border: 1px solid #1a1a1a;
-  border-radius: 6px;
-  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  padding: 11px 14px;
   cursor: pointer;
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  font-size: 11px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    system-ui, sans-serif;
+  font-size: 13.5px;
+  font-weight: 600;
   color: #f7f5f0;
-  font-weight: 500;
-  transition: background 120ms ease;
+  transition: opacity 130ms ease;
 }
 
 .primaryButton:hover {
-  background: #333;
+  opacity: 0.9;
 }
 
+.primaryButton:active {
+  opacity: 0.8;
+}
+
+/* Secondary — subtle, text-only, sits under the primary. */
 .secondaryButton {
+  width: 100%;
   background: transparent;
   border: none;
-  border-radius: 6px;
-  padding: 10px 14px;
+  padding: 7px;
   cursor: pointer;
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  font-size: 11px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: #666;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    system-ui, sans-serif;
+  font-size: 12.5px;
   font-weight: 500;
+  color: #666;
   transition: color 120ms ease;
 }
 
@@ -118,20 +180,9 @@
   color: #1a1a1a;
 }
 
-/* Mobile: comfortable-to-tap buttons, contained padding. */
+/* Mobile: a touch less padding on the card. */
 @media (max-width: 480px) {
   .gate {
-    padding: 44px 16px;
-  }
-
-  .actions {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .primaryButton,
-  .secondaryButton {
-    width: 100%;
-    padding: 12px 16px;
+    padding: 32px 16px;
   }
 }

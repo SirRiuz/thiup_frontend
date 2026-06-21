@@ -1,0 +1,181 @@
+/* PostOptionsMenu — three-dots menu on a post card.
+   Warm palette, Inter, 8px radius. Sits absolutely in the card's top-right. */
+
+.wrapper {
+  display: inline-flex;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
+    Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* Card placement: absolute top-right over the post card (feed/search). */
+.wrapperCard {
+  position: absolute;
+  top: 6px;
+  right: 2px;
+  z-index: 3;
+}
+
+/* Inline placement: sits in the flow (thread app bar, reply header). */
+.wrapperInline {
+  position: relative;
+}
+
+/* Trigger: ~44px touch target around an 18px glyph. */
+.trigger {
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  color: #a3a3a3;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.trigger:hover,
+.triggerOpen {
+  background: #f0ece3;
+  color: #1a1a1a;
+}
+
+/* Menu popover — portaled to <body> and positioned (fixed) by JS from the
+   trigger rect, so it sits above every card and never bleeds under the next
+   thread. Right-aligned to the trigger; closes on scroll. */
+.menu {
+  position: fixed;
+  min-width: 196px;
+  max-width: min(240px, calc(100vw - 24px));
+  padding: 6px;
+  background: #fdfcf8;
+  border: 1px solid #e5e0d3;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(26, 26, 26, 0.08);
+  z-index: 1000;
+  transform-origin: top right;
+  animation: menuIn 140ms ease-out;
+  /* Portaled to body — declare the family so it doesn't depend on context. */
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
+    Roboto, Helvetica, Arial, sans-serif;
+}
+
+@keyframes menuIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #1a1a1a;
+  cursor: pointer;
+  text-align: left;
+  transition: background 120ms ease;
+}
+
+.item:hover {
+  background: #f7f5f0;
+}
+
+.itemIcon {
+  display: inline-flex;
+  flex: none;
+  color: #a3a3a3;
+}
+
+/* Destructive action (Report). */
+.itemDanger {
+  color: #c53030;
+}
+
+.itemDanger .itemIcon {
+  color: #c53030;
+}
+
+.divider {
+  height: 1px;
+  background: #ebe7dd;
+  margin: 6px 4px;
+}
+
+/* ===== Mobile bottom-sheet rows (same items, larger/touch-friendly) ===== */
+
+.sheetMenu {
+  display: flex;
+  flex-direction: column;
+}
+
+.sheetItem {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 15px 4px;
+  border: 0;
+  border-top: 1px solid #f0ece2;
+  background: transparent;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  color: #1a1a1a;
+  cursor: pointer;
+  text-align: left;
+  transition: background 120ms ease;
+}
+
+.sheetItem:first-child {
+  border-top: 0;
+}
+
+.sheetItem:hover,
+.sheetItem:active {
+  background: #f7f5f0;
+}
+
+.sheetItemIcon {
+  display: inline-flex;
+  flex: none;
+  color: #a3a3a3;
+}
+
+.sheetItemIcon svg {
+  width: 19px;
+  height: 19px;
+}
+
+.sheetItemDanger {
+  color: #c53030;
+}
+
+.sheetItemDanger .sheetItemIcon {
+  color: #c53030;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .trigger,
+  .item,
+  .sheetItem {
+    transition: none;
+  }
+
+  .menu {
+    animation: none;
+  }
+}

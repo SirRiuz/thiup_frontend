@@ -2,14 +2,17 @@ import { useEffect, useLayoutEffect, useRef, useState, useCallback } from "react
 import { useTranslation } from "react-i18next";
 import styles from "../../styles/components/post/PostReactionPicker.module.css";
 
-// `label` (in English) is the STABLE value that travels in the reaction's
-// payload; `labelKey` is only the VISIBLE text (tooltip/aria), translated.
+// Single source of truth for the reaction set (order = display order in the bar).
+// `id`/`label` are the STABLE internal ids — they match the backend catalog
+// `name`, which is how the reaction is resolved/posted. `emoji` is presentation
+// (changing one here never touches the DB); `labelKey` is the translated tooltip.
 const REACTIONS = [
-  { id: "fire", emoji: "🔥", label: "fire", labelKey: "reactions.fire" },
-  { id: "seen", emoji: "👁", label: "seen", labelKey: "reactions.seen" },
-  { id: "solidarity", emoji: "✊", label: "solidarity", labelKey: "reactions.solidarity" },
-  { id: "skeptical", emoji: "🤔", label: "skeptical", labelKey: "reactions.skeptical" },
-  { id: "heartbreak", emoji: "💔", label: "heartbreak", labelKey: "reactions.heartbreak" },
+  { id: "love", emoji: "❤️", label: "love", labelKey: "reactions.love" },
+  { id: "laugh", emoji: "😂", label: "laugh", labelKey: "reactions.laugh" },
+  { id: "wow", emoji: "😮", label: "wow", labelKey: "reactions.wow" },
+  { id: "sad", emoji: "😢", label: "sad", labelKey: "reactions.sad" },
+  { id: "angry", emoji: "😡", label: "angry", labelKey: "reactions.angry" },
+  { id: "applause", emoji: "👏", label: "applause", labelKey: "reactions.applause" },
 ];
 
 // Minimum margin from the popover to the viewport edges.

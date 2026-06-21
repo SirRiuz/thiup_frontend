@@ -1,7 +1,6 @@
 import { useTranslation } from "react-i18next";
 import MaskAvatar from "../MaskAvatar";
-// PostMoreMenu (the three dots) temporarily hidden — will be used later.
-// import PostMoreMenu from "./PostMoreMenu";
+import PostOptionsMenu from "./PostOptionsMenu";
 import PostProfileTrigger from "./PostProfileTrigger";
 import PostReactionPicker from "./PostReactionPicker";
 import PostReactionPill from "./PostReactionPill";
@@ -15,6 +14,8 @@ function PostReply({
   text,
   time,
   reactions = [],
+  repliesCount,
+  publishedAt,
   media,
   parentId,
   parentMaskId,
@@ -67,8 +68,10 @@ function PostReply({
           </>
         )}
         <span className={styles.spacer} />
-        {/* Temporarily hidden — will be used later:
-        <PostMoreMenu maskId={mask?.id} /> */}
+        <PostOptionsMenu
+          post={{ id, uid: id, repliesCount, reactions, publishedAt }}
+          variant="inline"
+        />
       </div>
 
       <p className={bodyClassName}>

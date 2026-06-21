@@ -5,8 +5,7 @@ import MaskAvatar from "../components/MaskAvatar";
 import PostCommentBox from "../components/post/PostCommentBox";
 import PostEndDivider from "../components/post/PostEndDivider";
 import PostLoadMoreButton from "../components/post/PostLoadMoreButton";
-// PostMoreMenu (the three dots) temporarily hidden — will be used later.
-// import PostMoreMenu from "../components/post/PostMoreMenu";
+import PostOptionsMenu from "../components/post/PostOptionsMenu";
 import PostProfileTrigger from "../components/post/PostProfileTrigger";
 import PostReactionPicker from "../components/post/PostReactionPicker";
 import PostReactionPill from "../components/post/PostReactionPill";
@@ -33,7 +32,7 @@ function Post() {
   // Título GENÉRICO a propósito ("Hilo · Thiup"): el título de la pestaña
   // queda en el historial/favoritos y se ve por encima del hombro — JAMÁS
   // usar el contenido del hilo ni la máscara del autor aquí (app anónima).
-  usePageTitle("pageTitle.thread");
+  usePageTitle("pageTitle.thread", { noindex: true });
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -78,9 +77,9 @@ function Post() {
   const commentBoxRef = useRef(null);
   const repliesSectionRef = useRef(null);
 
-  // Auto-scroll to the replies section after a successful sort change (in the
-  // thread it makes no sense to go to the top of the document: we scroll to
-  // where the replies start). Mirrors HomeNew's justSwitchedRef.
+  // Auto-scroll to the very top of the document after a successful sort change
+  // (smooth, so the re-sorted thread is seen from the start). Mirrors HomeNew's
+  // justSwitchedRef.
   const previousSortByRef = useRef(sortBy);
   const justSwitchedRef = useRef(false);
 
@@ -93,10 +92,7 @@ function Post() {
 
   useEffect(() => {
     if (justSwitchedRef.current && !isReloadingReplies) {
-      repliesSectionRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
+      window.scrollTo({ top: 0, behavior: "smooth" });
       justSwitchedRef.current = false;
     }
   }, [isReloadingReplies]);
@@ -255,6 +251,14 @@ function Post() {
               <span className={styles.subtitle}>{repliesLabel}</span>
             )}
           </div>
+          {/* Thread-level options (View details / Copy link / Report). */}
+          {post && (
+            <PostOptionsMenu
+              post={post}
+              variant="inline"
+              className={styles.appBarMenu}
+            />
+          )}
         </div>
       </header>
 
@@ -357,8 +361,6 @@ function Post() {
             {t("post.reply")}
           </button>
           <span className={styles.spacer} />
-          {/* Temporarily hidden — will be used later:
-          <PostMoreMenu maskId={post.mask.id} /> */}
         </div>
       </section>
 

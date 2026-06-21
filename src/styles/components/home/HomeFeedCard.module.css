@@ -1,4 +1,5 @@
 .card {
+  position: relative;
   padding: 18px 8px;
   border-bottom: 1px solid #ebe7dd;
   cursor: pointer;
@@ -18,6 +19,9 @@
   align-items: center;
   gap: 10px;
   margin-bottom: 10px;
+  /* Room for the absolutely-positioned options button (top-right) so long mask
+     ids / timestamps never slide underneath it. */
+  padding-right: 38px;
 }
 
 .identiconWrap {

@@ -362,7 +362,9 @@ function HomeCompose({ currentUserMask, isLoading = false }) {
   return (
     <>
       <div
-        className={`${styles.wrapper} ${isDisabled ? styles.disabled : ""}`}
+        className={`${styles.wrapper} ${isDisabled ? styles.disabled : ""} ${
+          isSubmitting ? styles.submitting : ""
+        }`}
       >
         <div className={styles.header}>
           {/* Discreet placeholder while /me/ loads (a single global

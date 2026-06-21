@@ -1,0 +1,7 @@
+# robots.txt for the public marketing site (https://thiup.com/).
+# This is the brand landing — fully crawlable. The anonymous app and all of its
+# user content live on app.thiup.com, which has its own (restrictive) robots.
+User-agent: *
+Allow: /
+
+Sitemap: https://thiup.com/sitemap.xml

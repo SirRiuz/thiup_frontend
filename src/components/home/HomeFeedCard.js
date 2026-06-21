@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import MaskAvatar from "../MaskAvatar";
 import PostProfileTrigger from "../post/PostProfileTrigger";
+import PostOptionsMenu from "../post/PostOptionsMenu";
 import { formatCount, renderTextWithHashtags } from "./homeHelpers";
 import { DEBUG } from "../../settings";
 import { ensureScrollSuppressor } from "../../utils/scrollSuppressor";
@@ -54,6 +55,10 @@ function HomeFeedCard({
       role="button"
       tabIndex={0}
     >
+      {/* Three-dots options (View details / Copy link / Report). Self-contained;
+          stops propagation so it never triggers the card's navigation. */}
+      <PostOptionsMenu post={post} />
+
       <header className={styles.header}>
         {/* Same mask hover card as the thread (reused component, same
             delays/safe-zone). Its internal gap (10px) = the header's. */}
