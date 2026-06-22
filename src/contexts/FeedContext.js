@@ -29,8 +29,19 @@ const POSTS_ENDPOINT = "/threads/";
 const FORYOU_ENDPOINT = "/threads/foryou/";
 const CLOSEYOU_ENDPOINT = "/threads/closeyou/";
 
+// How long the just-created thread stays marked as "new" (drives the temporary
+// highlight on its feed card). Slightly longer than the card's fade animation
+// (~3.6s) so the class is removed only AFTER it has visually settled to normal
+// — which also restores the card's hover background.
+const NEW_POST_HIGHLIGHT_MS = 3800;
+
 export function FeedProvider({ children }) {
   const [posts, setPosts] = useState([]);
+  // uid of the thread the user just created — its feed card is briefly
+  // highlighted so they can spot it at the top. Auto-cleared (below); applies
+  // to that one thread, once.
+  const [newPostId, setNewPostId] = useState(null);
+  const newPostTimerRef = useRef(null);
   // Active home tab: For You (default) | Close You.
   const [feedTab, setFeedTab] = useState("foryou");
   // State of the Close You location opt-in:
@@ -445,14 +456,31 @@ export function FeedProvider({ children }) {
     setPosts((prev) =>
       prev.some((p) => p.id === mapped.id) ? prev : [mapped, ...prev]
     );
+    // Mark it as the just-created thread → its feed card highlights briefly.
+    // The auto-clear effect below removes the mark after the fade settles.
+    setNewPostId(mapped.uid);
     // Same prepend to the My threads cache: the new thread shows up in the
     // user's list when they visit it — freshness without extra requests.
     prependToMyThreadsCache(mapped);
     return mapped;
   }, []);
 
+  // Auto-clear the "new" mark once the highlight has faded, so it never
+  // re-triggers on re-render/scroll and the card returns to a plain cell. The
+  // cleanup clears the timer on unmount or when a newer thread takes over (no
+  // setState on an unmounted provider).
+  useEffect(() => {
+    if (!newPostId) return undefined;
+    newPostTimerRef.current = window.setTimeout(
+      () => setNewPostId(null),
+      NEW_POST_HIGHLIGHT_MS
+    );
+    return () => window.clearTimeout(newPostTimerRef.current);
+  }, [newPostId]);
+
   const value = {
     posts,
+    newPostId,
     feedTab,
     selectFeedTab,
     closeYouStatus,

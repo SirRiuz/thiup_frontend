@@ -30,6 +30,7 @@ function HomeNew() {
 
   const {
     posts,
+    newPostId,
     feedTab,
     selectFeedTab,
     closeYouStatus,
@@ -287,6 +288,7 @@ function HomeNew() {
                 <HomeFeedCard
                   key={post.uid}
                   post={post}
+                  isNew={post.uid === newPostId}
                   isLast={idx === posts.length - 1 && !hasMore}
                   onClick={() => handlePostClick(post.uid)}
                   onHashtagClick={handleHashtagClick}

@@ -123,7 +123,8 @@ function PostOptionsMenu({ post, variant = "card", className = "" }) {
       const url = `${window.location.origin}/post/${post?.id || post?.uid || ""}/`;
       try {
         await navigator.clipboard.writeText(url);
-        showToast({ type: "success", message: t("toast.linkCopied") });
+        // Copy confirmation: text only, no icon (cleaner, Threads-like).
+        showToast({ type: "success", message: t("toast.linkCopied"), icon: "none" });
       } catch (e) {
         showToast({ type: "error", message: t("toast.linkCopyFailed") });
       }
@@ -164,7 +165,9 @@ function PostOptionsMenu({ post, variant = "card", className = "" }) {
       <button
         ref={triggerRef}
         type="button"
-        className={`${styles.trigger} ${open ? styles.triggerOpen : ""}`}
+        className={`${styles.trigger} springPressIcon ${
+          open ? styles.triggerOpen : ""
+        }`}
         onClick={toggle}
         aria-label={t("threadOptions.more")}
         aria-haspopup="menu"

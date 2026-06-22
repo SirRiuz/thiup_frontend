@@ -17,6 +17,13 @@ this file.
 - react-router v6; i18n via i18next/react-i18next (`en`/`es`).
 - Icons: **inline SVG** (see Iconography — there is **no icon library**).
 - No CSS-in-JS, no UI kit (Emotion/MUI were removed to slim the bundle).
+- **PWA / system chrome:** installable (`public/manifest.json`, `display: standalone`). The system
+  status bar / browser chrome takes the warm app color via `<meta name="theme-color" content="#f7f5f0">`
+  + `mobile-web-app-capable` / `apple-mobile-web-app-capable` + `apple-mobile-web-app-status-bar-style:
+  default` (legible dark icons on the light bar); manifest `theme_color`/`background_color` match
+  (`#f7f5f0`). Honest caveat: reliable on Android Chrome / installed PWA; iOS **Safari while browsing**
+  has limited support (full effect when installed). `#f7f5f0` is near-white, so the tint is subtle by
+  design (it fuses with the header).
 
 ## Design philosophy
 
@@ -122,10 +129,22 @@ Pure `#FFFFFF` is **FORBIDDEN** — use `#fdfcf8` for elevated/white-feeling sur
 - **AppShell** (`AppShell.module.css`): page bg `#f7f5f0`. Desktop (`>700px`) reserves the rail lane
   with symmetric `96px` side padding (keeps the column centered). Mobile (`≤700px`) adds
   `padding-bottom: 64px` so the fixed bottom bar never covers content.
-- **NavRail** (`NavRail.module.css`): desktop = floating capsule, `width: 68px`, `border-radius: 22px`,
-  surface `#fdfcf8`, border `#e5e0d3`, fixed `left: 14px; top: 50%`. Items `46px`, radius `14px`,
-  idle color `#666`, **active** = warm blob (`#f3e3d3` bg + `#a85432` icon). Mobile = fixed bottom bar
-  (no logo). See Brand for the rail logo + divider.
+- **NavRail** (`NavRail.module.css`) is the whole nav system (desktop + mobile), all in one component:
+  - **Desktop (`>700px`)** = floating capsule, `width: 68px`, `border-radius: 22px`, surface `#fdfcf8`,
+    border `#e5e0d3`, fixed `left: 14px; top: 50%`. Items `46px`, radius `14px`, idle `#666`,
+    **active** = warm blob (`#f3e3d3` bg + `#a85432` icon). Three items: Home / Search / My threads.
+    See Brand for the rail logo + divider.
+  - **Mobile (`≤700px`) top app bar** — `height: 60px`, **sticky**, frosted glass (see Interaction
+    patterns), grid `[☰] · [logo centered] · [search]`. The **☰ reuses the SAME NavRail menu**
+    (Languages / About — the `MenuButton` with `variant="header"`); the logo is `BrandLogo
+    variant="plain"` (`size 36`); the magnifier links to `/search`. The header renders **only on
+    `/home` and `/me`** (Search and the thread view keep their own top bars → no double headers).
+    The asymmetric ☰ glyph: two rounded lines, the bottom one shorter (see Iconography).
+  - **Mobile bottom bar** — fixed, frosted glass, **two icon-only items: Home + My threads** (Search
+    moved to the app-bar magnifier; the ☰ moved to the app bar). Idle/active states per Interaction
+    patterns. Hidden while the keyboard is open (`useKeyboardOpen`); honors `safe-area-inset-bottom`.
+- **AppShell** mobile `padding-bottom: 64px` keeps the bottom bar clear; the sticky app bar offsets
+  the top in normal flow (no manual top padding).
 
 ## Components (catalog)
 
@@ -141,7 +160,11 @@ Reference component: **`HomeFeedCard`** — the thread cell that defines the fee
 | Dropdown / select menu | `post/PostSortMenu` | Trigger (44px touch target) + floating menu of options (name + description + check). The canonical anchored-dropdown pattern — reuse it. See Dropdown menu. |
 | Modals | `WelcomeModal`, `nav/LanguageModal` | Portal to body, surface `#fdfcf8`, border `#e5e0d3`, radius `18px`, backdrop `rgba(31,26,20,0.42)` + blur, shadow `0 18px 50px rgba(26,26,26,0.18)`. Focus trap + Escape + `aria-modal`. |
 | Reaction picker / pill | `post/PostReactionPicker`, `post/PostReactionPill` | Popover radius `28px`; see Reactions. |
-| Mask avatar | `MaskAvatar` | Identicon for the pseudonymous mask; small radius `3px`, never a real photo. |
+| Mask avatar | `MaskAvatar` | Identicon for the pseudonymous mask; procedural SVG from a seed (the mask hash) — same seed → same avatar, no network, no uploads. Small radius `3px`, never a real photo. |
+| Toasts | `contexts/ToastContext` + `ToastViewport` | Dark pill `#1a1a1a` / text `#f7f5f0`, **min-height `53px`**, **dynamic width** (`max-width: min(360px, calc(100vw-32px))`, wraps past it), radius `12px`, bottom-floating portal. `showToast({type,message,duration,action,icon})→id`; `type:"loading"` = persistent spinner; `icon:"none"` (copy confirms) / `icon:"check"` not needed (success check is **white `#f7f5f0`**, never green). `showToast.update(id,…)` morphs a toast in place (same node → no jump) for **"Publishing… → Thread posted"** sequences; `.dismiss(id)`. `action` renders a trailing link (e.g. "View"). aria-live polite / assertive(error) / busy(loading). |
+| Identity tags | `home/HomeFeedCard` (`is_mine`), `post/PostReply` (`is_op`), `me/MeProfileHeader` (You) | Derived from backend **booleans** `is_mine`/`is_op` (anonymity — no author id leaves the server; `is_op` is local to the thread). "Your thread" (feed/search) + "OP" (replies) use mono `9px`, radius `3px` (matching the momentum debug tag): warm `#f3e3d3`/`#a85432`/border `#d8b89a` for mine, solid black `#1a1a1a`/`#f7f5f0` for OP. The `/me` "You" badge is the warmer pill (`10px/700`, radius `20px`). |
+| /me profile header | `me/MeProfileHeader` | **/me only.** Card (`#fdfcf8`/`#e5e0d3`/radius `12`): identicon (58px, ring `#d8b89a`) + "Anonymous" + "You" badge + short hash pill (`#f7f5f0`/`#ebe7dd`/text `#8b6f47`/mono/radius `6`) with copy→toast + 3 **private** stats (Threads/Reactions/Replies, from `/me`, owner-only) with `#f0ece2` dividers + a short lock privacy note. A light divider (lines icon + real count + `#f0ece2` rule) separates it from the list — no explanatory heading. |
+| Error screens | `screens/ServerError`, `screens/NetworkError` | Classified centrally (`ServerHealthContext`): a 5xx (HTTP response) → **server-down** screen; a request that failed **without a response** / `navigator.onLine===false` → **no-connection** screen (wifi-off icon, no HTTP code). Auto-recovers on the browser `online` event; manual retry re-checks `/health/`. Same warm layout for both. |
 | States | `*EmptyState`, `*ErrorState`, `*Skeleton`, `*Spinner`, `*RetryBanner` | Every feed/screen ships loading (skeleton), empty, and error/retry variants — reuse them, don't reinvent. |
 
 ### Reactions (real set)
@@ -191,6 +214,72 @@ select-style menu instead of inventing a new one.
 - **A11y** — trigger `aria-haspopup="menu"` + `aria-expanded`; menu `role="menu"`; options
   `role="menuitemradio"` + `aria-checked`; decorative SVGs `aria-hidden`.
 
+## Interaction patterns
+
+### Press feedback — spring / bounce
+
+A subtle "spring" (Threads-style): on press the control shrinks and bounces back on
+release (overshoot). **Centralized** as two global utility classes in `src/styles/index.css`
+(global, not a CSS Module) — never re-implement it per component:
+
+```css
+.springPress,            /* text buttons */
+.springPressIcon {       /* icon-only controls (a touch stronger) */
+  transition: transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1),
+    background 0.14s ease, color 0.14s ease, opacity 0.14s ease;
+}
+.springPress:not(:disabled):active     { transform: scale(0.93); }
+.springPressIcon:not(:disabled):active { transform: scale(0.88); }
+@media (prefers-reduced-motion: reduce) {
+  .springPress, .springPressIcon { transition: background .14s ease, color .14s ease, opacity .14s ease; }
+  .springPress:active, .springPressIcon:active { transform: none; }
+}
+```
+
+- The bounce comes from the **overshoot cubic-bezier** (the `1.56` > 1). Intensity is
+  **subtle–medium**: `scale(0.93)` buttons, `scale(0.88)` icons; `120ms`.
+- **Rules:** (1) `:not(:disabled)` → a **disabled** control NEVER springs (no misleading press
+  feedback — e.g. the inactive "Post" button). (2) Honors `prefers-reduced-motion` (no transform).
+  (3) The transition also carries `background/color/opacity` so it **coexists** with hover washes
+  (e.g. the nav `#f0ece3`) from one declaration — affected components drop their own `transition`
+  so the global class is the single source (no cascade clash). (4) Visual-only — never affects
+  focus (`:focus-visible` intact) or `aria`.
+- **Applied to** (only these, for now — do not spread app-wide): nav controls (desktop NavRail
+  items + mobile bottom-bar items + app-bar ☰/search), the three-dots options trigger, and the
+  primary submit buttons ("Post" in `HomeCompose`, "Reply" in `PostCommentBox`) — the latter
+  spring only when enabled.
+
+### Nav icon states (mobile)
+
+Shared, centralized in `NavRail.module.css`: idle **`#a3a3a3`**; hover (`@media (hover:hover)`)
+and tap (`:active`) → **`#1a1a1a` icon + `#f0ece3` pill**; the bottom-bar **active route** keeps
+its own warm blob **`#f3e3d3` fill + `#a85432` icon** (declared last so it wins over hover). Icon
+stroke is bumped to **`2.3px`** on mobile (Threads-like weight) via a CSS override scoped to
+`.appBarButton svg` / `.bottomBar .item svg` — the shared `NAV_ITEMS` glyphs stay `1.8` on desktop.
+
+### Frosted glass bars
+
+The mobile app bar + bottom bar and the view-thread app bar share one recipe (consistency):
+`background: rgba(247, 245, 240, 0.72)` + `-webkit-backdrop-filter`/`backdrop-filter:
+blur(12px) saturate(180%)`, hairline border `#ebe7dd`. **Fallback:** `@supports not
+((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)))` → solid `#f7f5f0`
+(never illegible). Content blurs through as it scrolls under the fixed/sticky bar.
+
+### New-thread highlight
+
+The just-created thread's feed card briefly highlights then fades to normal so the user spots
+it at the top: `@keyframes` 0–65% warm `#f3e3d3` + inset ring `#d8b89a`, 100% transparent, `3600ms
+ease-out forwards`. Animates **only background-color + box-shadow** (the "border" is an inset
+shadow) → no layout shift. `FeedContext` clears the `newPostId` mark after the fade (so it never
+re-triggers on scroll/re-render); reduced-motion shows a static highlight that simply clears.
+
+### Loading buttons (no resize)
+
+A submitting button keeps its exact size: the label always renders the resting text (e.g. "Post")
+with `visibility: hidden` while submitting (box kept), and a spinner is centered over it with
+`position:absolute; inset:0; margin:auto` (centered **without** `transform`, so the rotate
+animation doesn't fight the centering). `aria-busy` + an `aria-label` announce the busy state.
+
 ## Iconography
 
 - **Inline SVG only** — there is **no icon library** (no Tabler/Feather package; the establishement
@@ -200,6 +289,11 @@ select-style menu instead of inventing a new one.
 - **Stroke width:** `1.5` default (most common); `1.8`/`2` for small/dense icons. Keep one weight per
   context; don't mix.
 - **Sizing:** render at `20–22px` in nav/menus. Color via `currentColor` (inherits text color).
+- **Mobile nav weight:** nav glyphs are bumped to `2.3px` on mobile via a CSS override (see
+  Interaction patterns → Nav icon states) for a heavier, Threads-like presence; desktop stays `1.8`.
+- **Mobile hamburger (☰):** an **asymmetric** mark — two rounded lines, the bottom one shorter
+  (`M4 8 h16` / `M4 16 h10`-ish in the `0 0 24 24` viewBox) — lighter than the desktop rail's
+  3-bar glyph. The desktop ☰ keeps the 3 equal bars.
 - Use icons with an accessible label (`aria-label` on the control, or adjacent text); decorative
   icons get `aria-hidden="true"`.
 
@@ -262,8 +356,14 @@ rejected smooth-S/loop variant.
 
 ## Privacy in the UI (hard rules)
 
-- Never put thread content, author masks, or search queries in: document titles, OG/Twitter
-  previews, JSON-LD, sitemap, or any crawlable surface.
+- Never put thread content, author masks, or search queries in: OG/Twitter previews, JSON-LD,
+  sitemap, or any **crawlable / shareable** surface.
+- **Document titles are an exception (product decision):** `/post/:id` shows the thread text
+  (Threads-style) and `/search` shows the query (X-style `<query> - Search / Thiup`, via
+  `prefixSeparator: "-"` + `separator: "/"`), through `usePageTitle`'s `prefix` arg
+  (whitespace-collapsed + truncated to 70 chars). This affects only
+  the browser tab/history — these routes stay `noindex` and their share image stays the static
+  brand card, so nothing leaks to crawlers or link previews.
 - The OG/share image is the **static brand card** for the whole app — never per-thread.
 - `/post/:id`, `/search`, `/me` are `noindex` (via `usePageTitle(key, { noindex: true })`) and
   blocked in `robots.txt`. Only `/` is indexable.

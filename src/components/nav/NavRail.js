@@ -57,6 +57,13 @@ const NAV_ITEMS = [
   },
 ];
 
+// Mobile bottom bar shows only Home + My threads (icon-only, no labels). Search
+// lives in the mobile header (magnifier) and the ☰ menu also lives there — so
+// the bottom bar stays to two primary destinations, Threads-style.
+const BOTTOM_NAV_ITEMS = NAV_ITEMS.filter((item) => item.to !== "/search");
+// Reused magnifier glyph for the mobile header search button.
+const SEARCH_ICON = NAV_ITEMS.find((item) => item.to === "/search").icon;
+
 // Last FULL URL visited for each rail screen (at module level: survives
 // unmount). The item navigates to it instead of to the bare route → it
 // returns to the SAME view (?q=/?tag= in Search, ?tab= in Home) and the
@@ -75,8 +82,13 @@ const prefersReducedMotion = () =>
 // up the resulting scroll event, so its saved positions stay correct.
 const scrollPageToTop = () => window.scrollTo(0, 0);
 
-function MenuButton({ menuUp }) {
+// ☰ options menu (Languages / About). The SAME menu is used by the desktop
+// rail and the mobile header — `variant` only changes the TRIGGER (rail item +
+// tooltip vs. header icon button) and the menu's anchor direction. The dropdown
+// markup, options and modals are identical (no duplication).
+function MenuButton({ menuUp = false, variant = "rail" }) {
   const { t } = useTranslation();
+  const isHeader = variant === "header";
   const [open, setOpen] = useState(false);
   // Language modal (opens from the "Languages" item of the menu).
   const [languageOpen, setLanguageOpen] = useState(false);
@@ -138,26 +150,41 @@ function MenuButton({ menuUp }) {
     <div className={styles.menuWrapper} ref={wrapperRef}>
       <button
         type="button"
-        className={`${styles.item} ${tipOff ? styles.tipOff : ""}`}
+        className={
+          isHeader
+            ? `${styles.appBarButton} springPressIcon`
+            : `${styles.item} springPressIcon ${tipOff ? styles.tipOff : ""}`
+        }
         aria-label={t("nav.menu")}
         aria-haspopup="menu"
         aria-expanded={isExpanded}
         onClick={toggleMenu}
         onMouseEnter={() => setTipOff(false)}
       >
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-          <line x1="4" y1="6" x2="20" y2="6" />
-          <line x1="4" y1="12" x2="20" y2="12" />
-          <line x1="4" y1="18" x2="20" y2="18" />
-        </svg>
-        <span className={styles.tooltip}>{t("nav.menu")}</span>
+        {isHeader ? (
+          // Mobile header: refined ASYMMETRIC mark (Threads-style) — two thin
+          // rounded bars, the bottom one shorter. Lighter than the rail's
+          // 3-bar glyph; matches the search icon's 1.8 stroke + round caps.
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+            <line x1="4" y1="8" x2="20" y2="8" />
+            <line x1="4" y1="16" x2="14" y2="16" />
+          </svg>
+        ) : (
+          // Desktop rail: unchanged 3-bar glyph.
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+            <line x1="4" y1="6" x2="20" y2="6" />
+            <line x1="4" y1="12" x2="20" y2="12" />
+            <line x1="4" y1="18" x2="20" y2="18" />
+          </svg>
+        )}
+        {!isHeader && <span className={styles.tooltip}>{t("nav.menu")}</span>}
       </button>
 
       {open && (
         <div
-          className={`${styles.menu} ${menuUp ? styles.menuUp : ""} ${
-            closing ? styles.menuClosing : ""
-          }`}
+          className={`${styles.menu} ${
+            isHeader ? styles.menuDown : menuUp ? styles.menuUp : ""
+          } ${closing ? styles.menuClosing : ""}`}
           role="menu"
           onAnimationEnd={() => {
             // Only the end of the EXIT animation unmounts (the entry one
@@ -240,8 +267,15 @@ function NavRail() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [navigate]);
 
-  const renderItems = () =>
-    NAV_ITEMS.map((item) => {
+  // The mobile header (☰ + logo + search) only appears on the feed-like screens
+  // that have NO top bar of their own. Search and the thread view keep their own
+  // contextual bars (SearchAppBar / back bar), so we don't stack a second one.
+  const showMobileHeader =
+    pathname.startsWith("/home") || pathname.startsWith("/me");
+  const searchTarget = lastUrlByItem.get("/search") || "/search";
+
+  const renderItems = (items) =>
+    items.map((item) => {
       const isActive = pathname.startsWith(item.to);
       // Inactive → return to the last view of that screen (or the base
       // route if never visited). Active → the current URL as href (valid for
@@ -255,9 +289,9 @@ function NavRail() {
         <Link
           key={item.to}
           to={target}
-          className={`${styles.item} ${isActive ? styles.itemActive : ""} ${
-            tipOffItem === item.to ? styles.tipOff : ""
-          }`}
+          className={`${styles.item} springPressIcon ${
+            isActive ? styles.itemActive : ""
+          } ${tipOffItem === item.to ? styles.tipOff : ""}`}
           aria-label={label}
           aria-current={isActive ? "page" : undefined}
           onClick={(e) => {
@@ -293,20 +327,43 @@ function NavRail() {
             breathe identically (shared class = guaranteed consistency). */}
         <BrandLogo size={44} variant="plain" />
         <div className={styles.divider} aria-hidden="true" />
-        <div className={styles.items}>{renderItems()}</div>
+        <div className={styles.items}>{renderItems(NAV_ITEMS)}</div>
         <div className={styles.divider} aria-hidden="true" />
         <MenuButton menuUp={false} />
       </nav>
 
-      {/* Mobile: fixed bottom bar */}
+      {/* Mobile: top app bar — [☰] · [logo] · [search]. Sticky, so it offsets
+          the content naturally (no manual padding). Only on the feed screens
+          (see showMobileHeader); CSS also hides it on desktop. */}
+      {showMobileHeader && (
+        <header className={styles.appBar}>
+          {/* ☰ reuses the SAME menu (Languages / About) as the rail. */}
+          <MenuButton variant="header" />
+          {/* Brand mark, centered (plain thread + dot, no background). A touch
+              larger than the side icons so it reads as the header's focal
+              point (Threads-style), with ~8px of air in the 52px bar. */}
+          <span className={styles.appBarBrand} aria-hidden="true">
+            <BrandLogo size={36} variant="plain" />
+          </span>
+          {/* Magnifier → /search (returns to the last search view if any). */}
+          <Link
+            to={searchTarget}
+            className={`${styles.appBarButton} springPressIcon`}
+            aria-label={t("nav.search")}
+          >
+            {SEARCH_ICON}
+          </Link>
+        </header>
+      )}
+
+      {/* Mobile: fixed bottom bar — Home + My threads only (icon-only). */}
       <nav
         className={`${styles.bottomBar} ${
           keyboardOpen ? styles.bottomBarHidden : ""
         }`}
         aria-label={t("nav.primary")}
       >
-        {renderItems()}
-        <MenuButton menuUp />
+        {renderItems(BOTTOM_NAV_ITEMS)}
       </nav>
     </>
   );

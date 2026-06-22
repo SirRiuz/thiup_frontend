@@ -156,7 +156,8 @@ function ThreadDetailsModal({ post, onClose }) {
       setCopied(true);
       if (copyTimerRef.current) window.clearTimeout(copyTimerRef.current);
       copyTimerRef.current = window.setTimeout(() => setCopied(false), 1500);
-      showToast({ type: "success", message: t("toast.idCopied") });
+      // Copy confirmation: text only, no icon (consistent with link-copied).
+      showToast({ type: "success", message: t("toast.idCopied"), icon: "none" });
     } else {
       showToast({ type: "error", message: t("toast.copyFailed") });
     }

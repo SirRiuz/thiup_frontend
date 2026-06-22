@@ -31,6 +31,9 @@ function loadCurrentMask() {
 
 export function CurrentUserProvider({ children }) {
   const [currentUserMask, setCurrentUserMask] = useState(null);
+  // PRIVATE stats from /me ({ threads, reactions, replies }) — the owner's own,
+  // shown only on /me. Comes free with the single /me request.
+  const [stats, setStats] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -47,6 +50,7 @@ export function CurrentUserProvider({ children }) {
           // for the regional boost (?region=).
           countryCode: data?.country_code || "",
         });
+        setStats(data?.stats || null);
         setIsLoading(false);
       })
       .catch((err) => {
@@ -59,7 +63,7 @@ export function CurrentUserProvider({ children }) {
     };
   }, []);
 
-  const value = { currentUserMask, isLoading, error };
+  const value = { currentUserMask, stats, isLoading, error };
 
   return (
     <CurrentUserContext.Provider value={value}>

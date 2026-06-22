@@ -36,7 +36,8 @@
     "myThreads": "My threads",
     "thread": "Thread",
     "notFound": "Page not found",
-    "serverError": "Server error"
+    "serverError": "Server error",
+    "networkError": "No connection"
   },
   "splash": {
     "loading": "Loading"
@@ -75,6 +76,8 @@
     "noPostsTitle": "No posts yet",
     "noPostsSubtitle": "Be the first to start a thread",
     "newThread": "New thread",
+    "newThreadBadge": "Your new thread",
+    "yourThread": "Your thread",
     "endOfFeed": "End of feed",
     "loadingMore": "Loading more posts"
   },
@@ -149,6 +152,7 @@
     "replyCount_other": "{{count}} replies",
     "reply": "Reply",
     "replies": "Replies",
+    "opAuthor": "Thread author",
     "addReaction": "Add reaction",
     "endOfThread": "End of thread",
     "loadMoreReplies": "Load more replies",
@@ -201,7 +205,12 @@
     "linkCopied": "Link copied",
     "linkCopyFailed": "Couldn't copy link",
     "idCopied": "ID copied",
-    "copyFailed": "Couldn't copy"
+    "copied": "Copied",
+    "copyFailed": "Couldn't copy",
+    "publishing": "Publishing…",
+    "posted": "Thread posted",
+    "replyPosted": "Reply posted",
+    "viewPost": "View"
   },
   "report": {
     "title": "Report thread",
@@ -246,7 +255,16 @@
     "title": "My threads",
     "subtitle": "Threads you've started, newest first",
     "emptyTitle": "You haven't created any threads yet",
-    "emptyBody": "Start a conversation from the home feed — your threads will show up here."
+    "emptyBody": "Start a conversation from the home feed — your threads will show up here.",
+    "maskName": "Anonymous",
+    "youBadge": "You",
+    "copyHash": "Copy your mask id",
+    "statThreads": "Threads",
+    "statReactions": "Reactions",
+    "statReplies": "Replies",
+    "privacyNote": "Only you can see this",
+    "threadCount_one": "{{count}} thread",
+    "threadCount_other": "{{count}} threads"
   },
   "notFound": {
     "code": "404",
@@ -259,6 +277,13 @@
     "checking": "Checking...",
     "tryAgain": "Try again",
     "code": "Error 503 · service unavailable"
+  },
+  "networkError": {
+    "title": "No connection",
+    "body": "Looks like you're offline. Check your wifi or mobile data and try again.",
+    "checking": "Checking...",
+    "tryAgain": "Try again",
+    "code": "No network connection"
   },
   "feedError": {
     "title": "Couldn't reach the server",

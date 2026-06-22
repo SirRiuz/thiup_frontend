@@ -14,22 +14,33 @@
 
 /* === Screen header === */
 
-.header {
-  padding: 8px 4px 18px;
+/* Light divider between the identity header and the thread list: lines icon +
+   real count + a thin rule filling the rest. Informative, not a heading. */
+.listDivider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 4px;
+  margin-bottom: 16px;
 }
 
-.title {
-  margin: 0;
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: #1a1a1a;
+.listDividerIcon {
+  flex: none;
+  color: #9b9591;
 }
 
-.subtitle {
-  margin: 4px 0 0;
-  font-size: 13px;
-  color: #8a8578;
+.listDividerCount {
+  flex: none;
+  font-size: 12px;
+  font-weight: 500;
+  color: #666666;
+  white-space: nowrap;
+}
+
+.listDividerLine {
+  flex: 1;
+  height: 1px;
+  background: #f0ece2;
 }
 
 /* === Feed (mismos patrones que HomeNew) === */

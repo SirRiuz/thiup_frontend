@@ -14,6 +14,86 @@
   border-bottom: 0;
 }
 
+/* Just-created thread: a brief warm highlight (paper tint #f3e3d3 + a terracotta
+   inset ring #d8b89a) that fades to the normal card so the user can spot it at
+   the top of the feed. Animates ONLY background-color + box-shadow (the ring is
+   an inset shadow, not a real border) → no layout shift, no nudging of other
+   cards. The .cardNew class is removed by FeedContext after the fade, which also
+   restores the hover background. */
+.cardNew {
+  animation: cardHighlight 3600ms ease-out forwards;
+}
+
+@keyframes cardHighlight {
+  0%,
+  65% {
+    background-color: #f3e3d3;
+    box-shadow: inset 0 0 0 1px #d8b89a;
+  }
+  100% {
+    background-color: transparent;
+    box-shadow: inset 0 0 0 1px transparent;
+  }
+}
+
+/* Optional badge (prepared, off by default — see SHOW_NEW_BADGE): warm chip
+   explaining the highlight; fades out on the same timeline. */
+.newBadge {
+  position: absolute;
+  top: 14px;
+  left: 8px;
+  z-index: 1;
+  padding: 2px 8px;
+  border: 1px solid #d8b89a;
+  border-radius: 999px;
+  background: #fdfcf8;
+  color: #a85432;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+  animation: badgeFade 3600ms ease-out forwards;
+}
+
+@keyframes badgeFade {
+  0%,
+  65% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* No fade: a simple static highlight that disappears (with the card's own
+     120ms background transition) when the mark clears — no harsh flicker. */
+  .cardNew {
+    animation: none;
+    background-color: #f3e3d3;
+    box-shadow: inset 0 0 0 1px #d8b89a;
+  }
+  .newBadge {
+    animation: none;
+  }
+}
+
+/* "Your thread" tag — warm pill next to the metadata. Private (only the author
+   sees it on their own threads). Same palette family as the active blob. */
+.mineBadge {
+  flex: none;
+  padding: 1px 6px;
+  border: 1px solid #d8b89a;
+  background: #f3e3d3;
+  color: #a85432;
+  /* Same font style as the momentum debug tag: monospace, 9px, not bold —
+     subtle rounded corners (not a pill). */
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  border-radius: 3px;
+  font-size: 9px;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
 .header {
   display: flex;
   align-items: center;

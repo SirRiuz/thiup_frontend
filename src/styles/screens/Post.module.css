@@ -103,6 +103,47 @@
   color: #a3a3a3;
 }
 
+/* Loading skeletons for the app-bar title block — same warm pulse as the other
+   skeletons. Sized to the title ("Thread") and subtitle ("N replies") lines so
+   they reserve the exact space and the real text doesn't shift the layout. */
+.skeletonBar {
+  display: block;
+  background: #ebe7dd;
+  border-radius: 3px;
+  animation: skeletonPulse 1.4s ease-in-out infinite;
+}
+
+.titleSkeleton {
+  width: 56px;
+  height: 12px;
+  margin: 3px 0;
+}
+
+.subtitleSkeleton {
+  width: 64px;
+  height: 9px;
+  margin: 3px 0;
+}
+
+/* Placeholder for the 3-dots options button while the thread loads. */
+.menuSkeleton {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+}
+
+@keyframes skeletonPulse {
+  0% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.6;
+  }
+}
+
 .opSection {
   margin-bottom: 24px;
   padding: 0 8px;

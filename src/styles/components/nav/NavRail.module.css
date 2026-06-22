@@ -54,7 +54,8 @@
   color: #666666;
   cursor: pointer;
   text-decoration: none;
-  transition: background 140ms ease, color 140ms ease;
+  /* Transition (background/color + the spring transform) comes from the global
+     .springPressIcon class applied to every nav item — single source. */
 }
 
 .item:hover {
@@ -181,6 +182,48 @@
   background: #f0ece3;
 }
 
+/* Header variant: the popover opens DOWNWARD, anchored to the left edge of the
+   ☰ button (which sits at the top-left of the mobile app bar). */
+.menuDown {
+  left: 0;
+  right: auto;
+  top: calc(100% + 8px);
+  bottom: auto;
+  transform-origin: top left;
+}
+
+/* ===== Mobile: top app bar ([☰] · logo · [search]) ===== */
+
+/* Hidden by default (desktop uses the rail); shown only at the mobile
+   breakpoint below. */
+.appBar {
+  display: none;
+}
+
+/* Header icon button (☰ and search): comfortable 44px touch target, no
+   tooltip. Idle grey glyph (shared nav idle); the hover/active treatment is
+   centralized in the mobile block below. */
+.appBarButton {
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: #a3a3a3;
+  cursor: pointer;
+  text-decoration: none;
+  /* Transition comes from the global .springPressIcon class (single source). */
+}
+
+.appBarBrand {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* ===== Mobile: bottom bar ===== */
 
 .bottomBar {
@@ -190,6 +233,40 @@
 @media (max-width: 700px) {
   .rail {
     display: none;
+  }
+
+  /* Top app bar: [☰] · [logo centered] · [search]. Grid 1fr·auto·1fr keeps the
+     logo perfectly centered regardless of the side buttons' widths. Sticky so
+     it pins to the top and offsets the content in normal flow (no manual
+     padding). Warm bar, subtle bottom hairline (never #FFFFFF). */
+  .appBar {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 41;
+    /* 60px tall like Threads. Sticky + in normal flow → it offsets the content
+       on its own (the feed starts below; no manual padding needed). The 36px
+       logo keeps ~12px of air top/bottom. */
+    height: 60px;
+    padding: 0 8px;
+    /* Frosted glass — same warm translucent recipe as the view-thread app bar
+       (rgba of #f7f5f0 @ 0.72 + blur 12px saturate 180%) so the whole app reads
+       consistently. Content blurs through it as you scroll. */
+    background: rgba(247, 245, 240, 0.72);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    backdrop-filter: blur(12px) saturate(180%);
+    border-bottom: 1px solid #ebe7dd;
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  .appBar > :first-child {
+    justify-self: start;
+  }
+
+  .appBar > :last-child {
+    justify-self: end;
   }
 
   .bottomBar {
@@ -202,10 +279,70 @@
     justify-content: space-around;
     align-items: center;
     padding: 6px 12px calc(6px + env(safe-area-inset-bottom));
-    background: #fdfcf8;
-    border-top: 1px solid #e5e0d3;
+    /* Same frosted glass as the header / view-thread app bar. The padding keeps
+       the blur extending into the safe-area inset (no odd opaque strip). */
+    background: rgba(247, 245, 240, 0.72);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    backdrop-filter: blur(12px) saturate(180%);
+    border-top: 1px solid #ebe7dd;
     font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Helvetica, Arial, sans-serif;
     transition: transform 0.2s ease;
+  }
+
+  /* Fallback: solid warm bg where backdrop-filter is unsupported (old Android),
+     so the bars never sit translucent-without-blur over content (illegible). */
+  @supports not (
+    (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))
+  ) {
+    .appBar,
+    .bottomBar {
+      background: #f7f5f0;
+    }
+  }
+
+  /* Bottom bar items idle = grey (shared nav idle with the app bar buttons). */
+  .bottomBar .item {
+    color: #a3a3a3;
+  }
+
+  /* Shared interaction for ALL mobile nav icons (☰, search, Home, My threads):
+     hover (desktop) AND active/tap (mobile) → black icon + a subtle #f0ece3
+     pill. Centralized here so every nav icon speaks one language. The 44–46px
+     item with its radius makes the fill read as a centered rounded pill, with
+     the touch target untouched. */
+  .appBarButton:active,
+  .bottomBar .item:active {
+    background: #f0ece3;
+    color: #1a1a1a;
+  }
+
+  @media (hover: hover) {
+    .appBarButton:hover,
+    .bottomBar .item:hover {
+      background: #f0ece3;
+      color: #1a1a1a;
+    }
+  }
+
+  /* The active route keeps its OWN terracotta blob (#f3e3d3 + #a85432) —
+     distinct from the hover pill and NOT overridden by it (declared last, equal
+     specificity → wins for the current route even on hover/tap). */
+  .bottomBar .itemActive,
+  .bottomBar .itemActive:hover,
+  .bottomBar .itemActive:active {
+    background: #f3e3d3;
+    color: #a85432;
+  }
+
+  /* Heavier, Threads-like stroke for the mobile nav icons (☰, search, Home, My
+     threads). Set via CSS — it overrides each SVG's stroke-width="1.8" attribute
+     — so the shared NAV_ITEMS glyphs stay 1.8 on the DESKTOP rail (untouched) and
+     only thicken on mobile. Centralized here = one knob. Excludes the brand logo
+     (it lives in .appBarBrand, not .appBarButton). Round caps/joins are kept (SVG
+     attributes), so the thicker stroke stays smooth, not blocky. */
+  .appBarButton svg,
+  .bottomBar .item svg {
+    stroke-width: 2.3px;
   }
 
   /* Keyboard open (iOS): slide the bar off-screen so it doesn't ride up on top
@@ -226,6 +363,7 @@
    that case: no frozen frame on close). */
 @media (prefers-reduced-motion: reduce) {
   .item,
+  .appBarButton,
   .tooltip,
   .menuItem {
     transition: none;

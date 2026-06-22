@@ -19,7 +19,7 @@ function PostReply({
   media,
   parentId,
   parentMaskId,
-  isOP,
+  isOp,
   currentUserReaction,
   isLast = false,
   isLastInChain = false,
@@ -56,8 +56,16 @@ function PostReply({
           <MaskAvatar seed={mask.id} size={identiconSize} />
           <span className={styles.maskId}>{mask.id}</span>
         </PostProfileTrigger>
-        {isOP && <span className={styles.opBadge}>OP</span>}
-        <span className={styles.divider}>·</span>
+        {/* OP: this reply's author is the thread's Original Poster (is_op, a
+            backend boolean local to this thread). Visible to everyone in the
+            thread. "OP" is a literal convention; aria-label spells it out. */}
+        {isOp && (
+          <span className={styles.opBadge} aria-label={t("post.opAuthor")}>
+            OP
+          </span>
+        )}
+        {/* No "·" between id and date — spaced only by the header's small flex
+            gap ("6be4a5 2w"). The "·" before "re:" below is kept. */}
         <span className={styles.timestamp}>{time}</span>
         {parentMaskId && (
           <>

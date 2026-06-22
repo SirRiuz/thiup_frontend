@@ -79,11 +79,16 @@ function SearchNew() {
     isLoading: isLoading || isLoadingMore || !!loadMoreError,
   });
 
-  // Título de pestaña GENÉRICO a propósito, SIN la query: el título queda en
-  // el historial/favoritos del navegador y esta app es anónima con temas
-  // sensibles — interpolarla la dejaría registrada. (Es posible añadirla,
-  // pero queda desaconsejado por esa razón.) Mecanismo central: usePageTitle.
-  usePageTitle("pageTitle.search", { noindex: true });
+  // Título de pestaña estilo X: "<query> - Search / Thiup" ("-" antes de la
+  // página, "/" antes de la marca). Sin query (pantalla de búsqueda vacía) cae
+  // a "Search / Thiup". La ruta sigue noindex — esto solo afecta la pestaña/
+  // historial del navegador, no el SEO ni el share.
+  usePageTitle("pageTitle.search", {
+    noindex: true,
+    prefix: query,
+    prefixSeparator: "-",
+    separator: "/",
+  });
 
   // Invalid ?tab=zzz → drop it (default 'top'); preserve ?q=.
   useEffect(() => {

@@ -72,6 +72,11 @@ export function mapBackendPostToFrontend(backendPost) {
     repliesCount: backendPost.responses_count ?? 0,
     viewsCount: 0,
     reactions,
-    isOp: backendPost.is_op ?? true,
+    // is_mine: this thread belongs to the current (anonymous) viewer — drives
+    // the private "Your thread" tag in feed/search. is_op: this reply's author
+    // is the thread's OP — drives the "OP" tag in the thread view. Both arrive
+    // as plain booleans (no author identity); default false (never assume).
+    isMine: backendPost.is_mine ?? false,
+    isOp: backendPost.is_op ?? false,
   };
 }

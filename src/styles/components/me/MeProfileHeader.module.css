@@ -1,0 +1,186 @@
+/* /me profile header — warm identity card (anonymous mask + private stats).
+   Palette from CLAUDE.md; never #FFFFFF. */
+
+.card {
+  background: #fdfcf8;
+  border: 1px solid #e5e0d3;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+/* ── Identity: identicon + name + hash ── */
+.identity {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.avatarRing {
+  flex: none;
+  display: inline-flex;
+  border-radius: 50%;
+  border: 2px solid #d8b89a;
+  /* The avatar is 58px; the ring sits just outside it. */
+  padding: 0;
+  line-height: 0;
+}
+
+.identityText {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.nameRow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.maskName {
+  font-size: 17px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+/* "You" badge next to the mask name — warm tag (same family as the "Your
+   thread" tag): #f3e3d3 fill, #a85432 text, #d8b89a border. */
+.youBadge {
+  flex: none;
+  padding: 1px 8px;
+  border: 1px solid #d8b89a;
+  border-radius: 20px;
+  background: #f3e3d3;
+  color: #a85432;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+
+.hashRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hashPill {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 12px;
+  color: #8b6f47;
+  background: #f7f5f0;
+  border: 1px solid #ebe7dd;
+  border-radius: 6px;
+  padding: 3px 8px;
+  letter-spacing: 0.02em;
+}
+
+.copyBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #8b6f47;
+  cursor: pointer;
+  transition: background 140ms ease, color 140ms ease;
+}
+
+@media (hover: hover) {
+  .copyBtn:hover {
+    background: #f0ece3;
+    color: #1a1a1a;
+  }
+}
+
+.copyBtn:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px #c5a572;
+}
+
+.copyBtn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* ── Stats row (3 columns, subtle dividers) ── */
+.stats {
+  display: flex;
+  margin-top: 18px;
+}
+
+.stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 4px 8px;
+}
+
+.stat:not(:first-child) {
+  border-left: 1px solid #f0ece2;
+}
+
+.statValue {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1a1a1a;
+  font-variant-numeric: tabular-nums;
+}
+
+.statLabel {
+  font-size: 11px;
+  color: #666666;
+}
+
+/* Skeleton bar standing in for a stat number while /me loads. */
+.statSkeleton {
+  display: block;
+  width: 28px;
+  height: 18px;
+  border-radius: 4px;
+  background: #ebe7dd;
+  animation: meStatPulse 1.4s ease-in-out infinite;
+}
+
+@keyframes meStatPulse {
+  0% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.6;
+  }
+}
+
+/* ── Privacy note ── */
+.privacy {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 16px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid #f0ece2;
+  font-size: 12px;
+  color: #9b9591;
+  line-height: 1.4;
+}
+
+.privacy svg {
+  flex: none;
+  color: #b8845f;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .statSkeleton {
+    animation: none;
+  }
+}

@@ -172,6 +172,14 @@ export function useThread(threadId) {
     threadTagsRef.current = thread ? extractTags(thread.text) : [];
   }, [thread]);
 
+  // Whether the ROOT thread is the current user's (head.is_mine). A ref so
+  // createReply reads it without a stale closure: a reply the user posts is OP
+  // iff they authored the thread.
+  const threadIsMineRef = useRef(false);
+  useEffect(() => {
+    threadIsMineRef.current = Boolean(thread?.isMine);
+  }, [thread]);
+
   // Reactions catalog: a single load per hook mount. No aggressive cache
   // busting (it changes very rarely); silent failure (the reactions already
   // present on the post carry their backend id anyway).
@@ -345,6 +353,11 @@ export function useThread(threadId) {
           parentId: isSubReply ? targetParentId : null,
           parentMaskId: parent?.mask?.id || null,
         });
+        // The create response carries no op_mask, so is_op would be false until
+        // a reload. This reply is authored by the current user → it's OP iff
+        // they authored the thread (head.is_mine). Set it locally so the "OP"
+        // tag shows instantly, matching what the server returns on reload.
+        mapped.isOp = Boolean(threadIsMineRef.current);
         // POSITIONAL insertion: groups the sub-reply under its parent (not at
         // the end of the thread). insertReply respects the flat list's DFS order.
         setReplies((prev) =>

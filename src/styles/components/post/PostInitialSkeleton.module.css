@@ -6,7 +6,10 @@
 }
 
 .opCard {
-  padding: 24px 8px 20px;
+  /* No top padding: the skeleton renders inside .main (24px top) just like the
+     real .opSection (padding: 0 8px), so its first row aligns with the real
+     content — no downward shift when the thread loads. */
+  padding: 0 8px 20px;
 }
 
 .opHeader {

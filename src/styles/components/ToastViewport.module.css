@@ -1,5 +1,6 @@
-/* Toasts — dark pill (#1a1a1a / #f7f5f0), bottom-floating. Variants differ only
-   by icon color. Portaled above everything. */
+/* Toasts — dark pill (#1a1a1a / #f7f5f0), bottom-floating. DYNAMIC width (fits
+   its content, wraps past the max), FIXED height (~53px). Portaled above
+   everything. */
 
 .viewport {
   position: fixed;
@@ -23,19 +24,31 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  /* Chunky pill (Threads-style): sized to its content, never wider than the
-     viewport. */
-  max-width: min(340px, calc(100vw - 32px));
-  padding: 14px 18px;
+  /* DYNAMIC width: inline-flex sizes to content; centered by the viewport's
+     align-items. Never wider than the max (Threads-like ~360px) — past it the
+     message WRAPS instead of growing. */
+  width: auto;
+  max-width: min(360px, calc(100vw - 32px));
+  /* FIXED height (~53px) so every toast is the same size and the
+     loading → posted morph never jumps. min-height (not height) so very long
+     wrapped text can still grow gracefully instead of clipping. */
+  min-height: 53px;
+  box-sizing: border-box;
+  padding: 12px 18px;
   background: #1a1a1a;
   color: #f7f5f0;
-  border-radius: 14px;
+  border-radius: 12px;
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.2);
   font-size: 14px;
   font-weight: 500;
   line-height: 1.35;
   cursor: pointer;
   animation: toastIn 200ms ease-out;
+}
+
+/* Loading is persistent / in-progress: not click-to-dismiss. */
+.loading {
+  cursor: default;
 }
 
 .icon {
@@ -50,17 +63,68 @@
 
 .message {
   min-width: 0;
+  /* WRAP past the max-width (no infinite growth, no clipping). */
+  overflow-wrap: anywhere;
 }
 
-/* Variants — icon color only (background stays dark). */
+/* Variants — icon color only (background stays dark). The success CHECK is
+   WHITE (#f7f5f0, never green) — single source of truth for every toast that
+   shows a check. error/info keep their own colors. */
 .success .icon {
-  color: #9ec79a;
+  color: #f7f5f0;
 }
 .error .icon {
   color: #f0a3a3;
 }
 .info .icon {
   color: #d8b89a;
+}
+
+/* Loading spinner — cream ring on the dark pill. Rotation is kept even under
+   reduced-motion (it conveys progress); only the entry/exit slide is dropped. */
+.spinner {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid rgba(247, 245, 240, 0.3);
+  border-top-color: #f7f5f0;
+  animation: toastSpin 0.7s linear infinite;
+}
+
+@keyframes toastSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Trailing action (Threads-style "View"): a WHITE text link separated from the
+   message by a subtle hairline divider. Keyboard-focusable. */
+.action {
+  flex: none;
+  margin-left: 4px;
+  padding: 2px 0 2px 12px;
+  border: none;
+  border-left: 1px solid rgba(247, 245, 240, 0.22);
+  background: transparent;
+  color: #f7f5f0;
+  font: inherit;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .action:hover {
+    text-decoration: underline;
+  }
+}
+
+.action:focus-visible {
+  outline: 2px solid #c5a572;
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
 .leaving {

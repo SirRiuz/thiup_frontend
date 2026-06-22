@@ -24,6 +24,25 @@ const InfoIcon = () => (
 
 const ICONS = { success: CheckIcon, error: AlertIcon, info: InfoIcon };
 
+// Resolve the leading glyph. Explicit `toast.icon` wins; otherwise the type's
+// default. "none" → nothing (copy confirmations), "spinner" / type "loading" →
+// spinning ring. The success glyph is the check, coloured WHITE via CSS
+// (.success .icon) — no per-toast colour here.
+function renderIcon(toast) {
+  const override = toast.icon;
+  if (override === "none") return null;
+  if (override === "spinner" || toast.type === "loading") {
+    return <span className={styles.spinner} aria-hidden="true" />;
+  }
+  const Icon = ICONS[toast.type];
+  if (!Icon) return null;
+  return (
+    <span className={styles.icon}>
+      <Icon />
+    </span>
+  );
+}
+
 function Toast({ toast, onDismiss }) {
   const [leaving, setLeaving] = useState(false);
   const exitTimerRef = useRef(null);
@@ -35,32 +54,61 @@ function Toast({ toast, onDismiss }) {
     exitTimerRef.current = window.setTimeout(() => onDismiss(toast.id), 200);
   }, [onDismiss, toast.id]);
 
+  // Auto-dismiss — ONLY when a duration is set. `0`/falsey = persistent (the
+  // loading toast stays until updated/dismissed). When a later updateToast sets
+  // a real duration (loading → posted), this effect re-runs and arms the timer.
   useEffect(() => {
-    autoTimerRef.current = window.setTimeout(close, toast.duration ?? 2000);
-    return () => {
-      window.clearTimeout(autoTimerRef.current);
-      window.clearTimeout(exitTimerRef.current);
-    };
+    if (!toast.duration) return undefined;
+    autoTimerRef.current = window.setTimeout(close, toast.duration);
+    return () => window.clearTimeout(autoTimerRef.current);
   }, [close, toast.duration]);
 
+  // Exit-animation timer cleared on unmount (independent of duration).
+  useEffect(() => () => window.clearTimeout(exitTimerRef.current), []);
+
   const isError = toast.type === "error";
-  const Icon = ICONS[toast.type] || ICONS.info;
+  const isLoading = toast.type === "loading";
+  const { action } = toast;
+
+  // The action runs its handler then dismisses. stopPropagation so the pill's
+  // own click-to-dismiss doesn't also fire. For a real link, let the browser
+  // handle modified clicks (new tab); otherwise prevent the full load and let
+  // onClick do the SPA navigation.
+  const handleAction = (e) => {
+    e.stopPropagation();
+    if (action?.href) {
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return;
+      e.preventDefault();
+    }
+    action?.onClick?.();
+    close();
+  };
 
   return (
     <div
       className={`${styles.toast} ${styles[toast.type] || styles.info} ${
         leaving ? styles.leaving : ""
       }`}
-      // SR announcement: assertive for errors, polite otherwise. Does not steal
-      // focus or block interaction.
+      // SR announcement: assertive for errors, polite otherwise. aria-busy while
+      // loading. Never steals focus or blocks interaction.
       role={isError ? "alert" : "status"}
       aria-live={isError ? "assertive" : "polite"}
-      onClick={close}
+      aria-busy={isLoading || undefined}
+      // A persistent loading toast is not click-to-dismiss (work in progress).
+      onClick={isLoading ? undefined : close}
     >
-      <span className={styles.icon}>
-        <Icon />
-      </span>
+      {renderIcon(toast)}
       <span className={styles.message}>{toast.message}</span>
+      {action &&
+        (action.href ? (
+          <a href={action.href} className={styles.action} onClick={handleAction}>
+            {action.label}
+          </a>
+        ) : (
+          <button type="button" className={styles.action} onClick={handleAction}>
+            {action.label}
+          </button>
+        ))}
     </div>
   );
 }

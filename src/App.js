@@ -19,6 +19,7 @@ import {
 } from "./contexts/ServerHealthContext";
 import { ToastProvider } from "./contexts/ToastContext";
 import ServerError from "./screens/ServerError";
+import NetworkError from "./screens/NetworkError";
 import "./styles/index.css";
 
 export default function App() {
@@ -39,7 +40,10 @@ export default function App() {
       {/* Server down (healthcheck) => Oops screen instead of the app.
           The check runs on load and on any 5xx. */}
       <ServerHealthProvider>
-        <ServerHealthGate fallback={<ServerError />}>
+        <ServerHealthGate
+          fallback={<ServerError />}
+          offlineFallback={<NetworkError />}
+        >
           {/* Toasts available to every screen; rendered in a portal above all. */}
           <ToastProvider>
           <BrowserRouter

@@ -8,11 +8,18 @@ import { DEBUG } from "../../settings";
 import { ensureScrollSuppressor } from "../../utils/scrollSuppressor";
 import styles from "../../styles/components/home/HomeFeedCard.module.css";
 
+// Optional explanatory badge on the just-created card ("Your new thread").
+// Prepared but OFF by default — flip to true to make the reason for the
+// highlight explicit. Copy lives in i18n (home.newThreadBadge).
+const SHOW_NEW_BADGE = false;
+
 function HomeFeedCard({
   post,
   onClick,
   onHashtagClick,
   isLast,
+  isNew,
+  hideMineTag,
   highlightQuery,
   activeTag,
 }) {
@@ -31,6 +38,7 @@ function HomeFeedCard({
     text,
     time,
     isTrending,
+    isMine,
     momentum,
     repliesCount,
     viewsCount,
@@ -50,7 +58,9 @@ function HomeFeedCard({
 
   return (
     <article
-      className={`${styles.card} ${isLast ? styles.cardLast : ""}`}
+      className={`${styles.card} ${isLast ? styles.cardLast : ""} ${
+        isNew ? styles.cardNew : ""
+      }`}
       onClick={onClick}
       role="button"
       tabIndex={0}
@@ -58,6 +68,12 @@ function HomeFeedCard({
       {/* Three-dots options (View details / Copy link / Report). Self-contained;
           stops propagation so it never triggers the card's navigation. */}
       <PostOptionsMenu post={post} />
+
+      {/* Optional "why is this highlighted" badge — fades with the card. Off by
+          default (SHOW_NEW_BADGE); shown only on the just-created thread. */}
+      {isNew && SHOW_NEW_BADGE && (
+        <span className={styles.newBadge}>{t("home.newThreadBadge")}</span>
+      )}
 
       <header className={styles.header}>
         {/* Same mask hover card as the thread (reused component, same
@@ -68,8 +84,15 @@ function HomeFeedCard({
           </span>
           <span className={styles.maskId}>{mask.id}</span>
         </PostProfileTrigger>
-        <span className={styles.divider}>·</span>
+        {/* No "·" separator — id and date sit close, spaced only by the
+            header's small flex gap (e.g. "6be4a5 2w"). */}
         <span className={styles.timestamp}>{time}</span>
+        {/* "Your thread" — PRIVATE tag, shown only to the author on their own
+            threads (is_mine, a backend boolean). Feed/search only; suppressed on
+            the /me screen via hideMineTag (redundant there). */}
+        {isMine && !hideMineTag && (
+          <span className={styles.mineBadge}>{t("home.yourThread")}</span>
+        )}
         {/* DEBUG tool (src/settings.js): momentum from the For You engine,
             visible only with REACT_APP_DEBUG=true. In production the flag is
             off and this badge is not rendered. */}

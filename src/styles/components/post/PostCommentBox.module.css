@@ -177,6 +177,7 @@
 }
 
 .submitButton {
+  position: relative;
   background: #1a1a1a;
   color: #fdfcf8;
   border: 0;
@@ -187,7 +188,36 @@
   font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   letter-spacing: 0.04em;
   cursor: pointer;
-  transition: opacity 120ms ease;
+  /* Transition (opacity + the spring transform) comes from the global
+     .springPress class. */
+}
+
+/* While replying: hide the label (box kept → no resize) and center a spinner. */
+.submitLabelHidden {
+  visibility: hidden;
+}
+
+.spinner {
+  position: absolute;
+  /* Centered via inset + auto margins (NOT transform) so the rotate animation
+     doesn't fight the centering. */
+  inset: 0;
+  margin: auto;
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid rgba(253, 252, 248, 0.35);
+  border-top-color: #fdfcf8;
+  border-radius: 50%;
+  animation: commentSpinnerSpin 700ms linear infinite;
+}
+
+@keyframes commentSpinnerSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .submitButton:hover {

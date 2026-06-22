@@ -36,7 +36,8 @@
     "myThreads": "Mis hilos",
     "thread": "Hilo",
     "notFound": "Página no encontrada",
-    "serverError": "Error del servidor"
+    "serverError": "Error del servidor",
+    "networkError": "Sin conexión"
   },
   "splash": {
     "loading": "Cargando"
@@ -75,6 +76,8 @@
     "noPostsTitle": "Aún no hay publicaciones",
     "noPostsSubtitle": "Sé el primero en iniciar un hilo",
     "newThread": "Nuevo hilo",
+    "newThreadBadge": "Tu nuevo hilo",
+    "yourThread": "Mi hilo",
     "endOfFeed": "Fin del feed",
     "loadingMore": "Cargando más publicaciones"
   },
@@ -149,6 +152,7 @@
     "replyCount_other": "{{count}} respuestas",
     "reply": "Responder",
     "replies": "Respuestas",
+    "opAuthor": "Autor del hilo",
     "addReaction": "Añadir reacción",
     "endOfThread": "Fin del hilo",
     "loadMoreReplies": "Cargar más respuestas",
@@ -201,7 +205,12 @@
     "linkCopied": "Enlace copiado",
     "linkCopyFailed": "No se pudo copiar el enlace",
     "idCopied": "ID copiado",
-    "copyFailed": "No se pudo copiar"
+    "copied": "Copiado",
+    "copyFailed": "No se pudo copiar",
+    "publishing": "Publicando…",
+    "posted": "Hilo publicado",
+    "replyPosted": "Respuesta publicada",
+    "viewPost": "Ver"
   },
   "report": {
     "title": "Reportar hilo",
@@ -246,7 +255,16 @@
     "title": "Mis hilos",
     "subtitle": "Hilos que has iniciado, los más recientes primero",
     "emptyTitle": "Aún no has creado ningún hilo",
-    "emptyBody": "Inicia una conversación desde el feed de inicio — tus hilos aparecerán aquí."
+    "emptyBody": "Inicia una conversación desde el feed de inicio — tus hilos aparecerán aquí.",
+    "maskName": "Anónimo",
+    "youBadge": "Tú",
+    "copyHash": "Copiar el id de tu máscara",
+    "statThreads": "Hilos",
+    "statReactions": "Reacciones",
+    "statReplies": "Respuestas",
+    "privacyNote": "Solo tú ves esto",
+    "threadCount_one": "{{count}} hilo",
+    "threadCount_other": "{{count}} hilos"
   },
   "notFound": {
     "code": "404",
@@ -259,6 +277,13 @@
     "checking": "Comprobando...",
     "tryAgain": "Intentar de nuevo",
     "code": "Error 503 · servicio no disponible"
+  },
+  "networkError": {
+    "title": "Sin conexión",
+    "body": "Parece que te quedaste sin internet. Revisa tu conexión wifi o de datos e inténtalo de nuevo.",
+    "checking": "Comprobando...",
+    "tryAgain": "Reintentar",
+    "code": "Sin conexión de red"
   },
   "feedError": {
     "title": "No se pudo conectar con el servidor",

@@ -23,12 +23,20 @@ import { checkServerHealth } from "../api/healthApi";
  */
 const ServerHealthContext = createContext(null);
 
-// Minimal event that apiFetch fires on a 5xx / network down (one line over
-// there, zero coupling with the encryption logic).
+// apiFetch fires SERVER_ERROR_EVENT when the server RESPONDS with a 5xx (there
+// WAS an HTTP response) and NETWORK_ERROR_EVENT when the request failed WITHOUT
+// a response (offline / unreachable). Splitting them lets us show the right
+// screen: server-down vs no-connection.
 export const SERVER_ERROR_EVENT = "thiup:server-error";
+export const NETWORK_ERROR_EVENT = "thiup:network-error";
+
+const isBrowserOffline = () =>
+  typeof navigator !== "undefined" && navigator.onLine === false;
 
 export function ServerHealthProvider({ children }) {
   const [isServerDown, setIsServerDown] = useState(false);
+  // Client has no internet (or a request failed without any HTTP response).
+  const [isOffline, setIsOffline] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
   // Avoids concurrent checks (several 5xx in a row, double-click on retry).
   const inFlightRef = useRef(false);
@@ -38,7 +46,19 @@ export function ServerHealthProvider({ children }) {
     inFlightRef.current = true;
     setIsChecking(true);
     const healthy = await checkServerHealth();
-    setIsServerDown(!healthy);
+    if (healthy) {
+      // Recovered: clear both screens without reloading the page.
+      setIsServerDown(false);
+      setIsOffline(false);
+    } else if (isBrowserOffline()) {
+      // The browser reports no connection → NETWORK problem, not the server.
+      setIsOffline(true);
+      setIsServerDown(false);
+    } else {
+      // A failure while the browser is online → the SERVER is down.
+      setIsServerDown(true);
+      setIsOffline(false);
+    }
     setIsChecking(false);
     inFlightRef.current = false;
   }, []);
@@ -48,18 +68,48 @@ export function ServerHealthProvider({ children }) {
     verify();
   }, [verify]);
 
-  // (b) Any 5xx/network down reported by apiFetch => re-check.
+  // (b) A 5xx reported by apiFetch (the server DID respond) => re-check the
+  // healthcheck (a one-off 500 doesn't mean the server is down).
   useEffect(() => {
     const onServerError = () => verify();
     window.addEventListener(SERVER_ERROR_EVENT, onServerError);
     return () => window.removeEventListener(SERVER_ERROR_EVENT, onServerError);
   }, [verify]);
 
+  // (c) A request that failed WITHOUT a response (apiFetch network error). If
+  // the browser is offline it's unambiguously a NETWORK problem → show it
+  // immediately (the healthcheck would fail too). If "online" but the request
+  // still failed, let the healthcheck classify (server down vs flaky network).
+  useEffect(() => {
+    const onNetworkError = () => {
+      if (isBrowserOffline()) setIsOffline(true);
+      else verify();
+    };
+    window.addEventListener(NETWORK_ERROR_EVENT, onNetworkError);
+    return () =>
+      window.removeEventListener(NETWORK_ERROR_EVENT, onNetworkError);
+  }, [verify]);
+
+  // (d) Auto-recovery via the browser's connectivity events: 'online' →
+  // re-check and clear the screen if healthy; 'offline' → show it at once.
+  // Listeners cleaned up on unmount (no leaks / phantom calls).
+  useEffect(() => {
+    const onOnline = () => verify();
+    const onOffline = () => setIsOffline(true);
+    window.addEventListener("online", onOnline);
+    window.addEventListener("offline", onOffline);
+    return () => {
+      window.removeEventListener("online", onOnline);
+      window.removeEventListener("offline", onOffline);
+    };
+  }, [verify]);
+
   const value = {
     isServerDown,
+    isOffline,
     isChecking,
-    // 'Try again': re-checks the healthcheck; if it returns 200, isServerDown
-    // turns to false and the app is shown WITHOUT reloading the page.
+    // 'Try again' (both screens): re-checks the healthcheck and reclassifies;
+    // if it returns 200 the app is shown again WITHOUT reloading the page.
     retry: verify,
   };
 
@@ -80,8 +130,14 @@ export function useServerHealth() {
   return ctx;
 }
 
-/** Renders `fallback` (the Oops screen) when the server is down. */
-export function ServerHealthGate({ fallback, children }) {
-  const { isServerDown } = useServerHealth();
-  return isServerDown ? fallback : children;
+/**
+ * Renders the right screen: `offlineFallback` (no connection) takes precedence
+ * — if the client has no internet, that's the actionable problem — then
+ * `fallback` (server down), otherwise the app.
+ */
+export function ServerHealthGate({ fallback, offlineFallback, children }) {
+  const { isServerDown, isOffline } = useServerHealth();
+  if (isOffline) return offlineFallback ?? fallback ?? children;
+  if (isServerDown) return fallback ?? children;
+  return children;
 }

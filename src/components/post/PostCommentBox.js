@@ -444,11 +444,21 @@ function PostCommentBox({
         </span>
         <button
           type="button"
-          className={styles.submitButton}
+          className={`${styles.submitButton} springPress`}
           onClick={handleSubmit}
           disabled={!isSubmittable}
+          aria-busy={isSubmitting || undefined}
+          aria-label={isSubmitting ? t("post.replying") : undefined}
         >
-          {isSubmitting ? t("post.replying") : t("post.reply")}
+          {/* Label always renders "Reply" to keep the button's exact width;
+              while submitting it's hidden (box kept) and a spinner is centered
+              over it — no resize. */}
+          <span className={isSubmitting ? styles.submitLabelHidden : undefined}>
+            {t("post.reply")}
+          </span>
+          {isSubmitting && (
+            <span className={styles.spinner} aria-hidden="true" />
+          )}
         </button>
       </div>
     </div>

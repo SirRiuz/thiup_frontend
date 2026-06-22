@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import MaskAvatar from "../MaskAvatar";
 import { useFeedContext } from "../../contexts/FeedContext";
+import { useToast } from "../../contexts/ToastContext";
 import { geohashForPosition } from "../../utils/geohash";
 import {
   queryGeolocationPermission,
@@ -89,6 +91,8 @@ function HomeCompose({ currentUserMask, isLoading = false }) {
   const overlayRef = useRef(null);
   const errorTimerRef = useRef(null);
   const { createPost } = useFeedContext();
+  const showToast = useToast();
+  const navigate = useNavigate();
 
   const charCount = text.length;
   const atLimit = charCount >= MAX_CHARS;
@@ -332,19 +336,49 @@ function HomeCompose({ currentUserMask, isLoading = false }) {
     setSubmitError(null);
 
     setLocationNotice(null);
+    // Persistent "Publishing…" toast (spinner). Kept by id so the SAME toast is
+    // morphed into the success state on completion — one recipient, same size,
+    // no jump (Threads-style). Shown before awaiting geolocation so it covers
+    // the whole publish wait.
+    const toastId = showToast({
+      type: "loading",
+      message: t("toast.publishing"),
+      duration: 0,
+    });
     try {
       // WAIT for the geolocation BEFORE the POST (no race): the payload
       // goes out with the geohash or, if it failed, without it — but never
       // half-done.
       const { geohash, failure } = await getAuthorGeohash();
-      await createPost(text, { geohash });
+      const created = await createPost(text, { geohash });
       if (shareLocation && !geohash && failure) {
         setLocationNotice(LOCATION_FAILURE_NOTICES[failure]);
       }
       setText("");
       textareaRef.current?.blur();
       window.scrollTo({ top: 0, behavior: "smooth" });
+      // Morph the SAME loading toast into the confirmation: white check
+      // (success default) + "Thread posted" + a "View" link to the new thread
+      // (public id only, no author data). Now auto-dismisses (~3s).
+      if (created?.id) {
+        const href = `/post/${created.id}`;
+        showToast.update(toastId, {
+          type: "success",
+          message: t("toast.posted"),
+          duration: 3000,
+          action: {
+            label: t("toast.viewPost"),
+            href,
+            onClick: () => navigate(href),
+          },
+        });
+      } else {
+        showToast.dismiss(toastId);
+      }
     } catch (err) {
+      // Never leave the spinner hanging: drop the loading toast; the inline
+      // error banner carries the detail.
+      showToast.dismiss(toastId);
       setSubmitError({
         message: getErrorMessage(err, t),
         timestamp: Date.now(),
@@ -472,14 +506,21 @@ function HomeCompose({ currentUserMask, isLoading = false }) {
           </span>
           <button
             type="button"
-            className={styles.submitButton}
+            className={`${styles.submitButton} springPress`}
             onClick={handleSubmit}
             disabled={!isSubmittable}
+            aria-busy={isSubmitting || undefined}
+            aria-label={isSubmitting ? t("compose.posting") : undefined}
           >
+            {/* The label always renders "Post" so the button keeps its exact
+                width; while submitting it's hidden (visibility, box kept) and a
+                spinner is centered over it — no resize, no X-axis jump. */}
+            <span className={isSubmitting ? styles.submitLabelHidden : undefined}>
+              {t("compose.post")}
+            </span>
             {isSubmitting && (
               <span className={styles.spinner} aria-hidden="true" />
             )}
-            <span>{isSubmitting ? t("compose.posting") : t("compose.post")}</span>
           </button>
         </div>
       </div>

@@ -23,16 +23,14 @@ import {
   DWELL_THRESHOLD_MS,
 } from "../utils/affinity";
 import { useCurrentUser } from "../contexts/CurrentUserContext";
+import { useToast } from "../contexts/ToastContext";
 import { useScrollLock } from "../utils/scrollLock";
 import { renderTextWithHashtags } from "../components/home/homeHelpers";
 import styles from "../styles/screens/Post.module.css";
 
 function Post() {
   const { t } = useTranslation();
-  // Título GENÉRICO a propósito ("Hilo · Thiup"): el título de la pestaña
-  // queda en el historial/favoritos y se ve por encima del hombro — JAMÁS
-  // usar el contenido del hilo ni la máscara del autor aquí (app anónima).
-  usePageTitle("pageTitle.thread", { noindex: true });
+  const showToast = useToast();
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -70,6 +68,14 @@ function Post() {
     retry,
     toggleReaction,
   } = useThread(id);
+
+  // Título de pestaña estilo Threads: muestra el texto del hilo una vez
+  // cargado; mientras carga (o si falla) cae al genérico "Thread · Thiup".
+  // La ruta sigue noindex — esto solo afecta la pestaña/historial, no SEO.
+  usePageTitle(thread ? null : "pageTitle.thread", {
+    noindex: true,
+    prefix: thread?.text || "",
+  });
 
   const [replyingTo, setReplyingTo] = useState(null);
   // Newly created reply: we scroll it into view and highlight it ~3s.
@@ -189,10 +195,31 @@ function Post() {
   // the id of the reply being replied to (replyingTo.sourceId) for a sub-comment.
   // Resets replyingTo only if the POST succeeded (createReply re-throws on error).
   const handleSubmitReply = async ({ parentId, text }) => {
-    const newReply = await createReply({ parentId: parentId || thread?.id, text });
-    setReplyingTo(null);
-    // The new reply triggers scroll-to + highlight (see effect below).
-    if (newReply?.id) setHighlightedReplyId(newReply.id);
+    // Reuse the shared loading→success toast (same as publishing a thread), but
+    // WITHOUT a "View" action — the user is already in the thread.
+    const toastId = showToast({
+      type: "loading",
+      message: t("toast.publishing"),
+      duration: 0,
+    });
+    try {
+      const newReply = await createReply({ parentId: parentId || thread?.id, text });
+      setReplyingTo(null);
+      // The new reply triggers scroll-to + highlight (see effect below).
+      if (newReply?.id) setHighlightedReplyId(newReply.id);
+      // Morph the SAME toast into the confirmation: white check + "Reply posted",
+      // no link. Auto-dismisses (~3s).
+      showToast.update(toastId, {
+        type: "success",
+        message: t("toast.replyPosted"),
+        duration: 3000,
+      });
+    } catch (err) {
+      // Never leave the spinner hanging; re-throw so PostCommentBox keeps the
+      // text and its inline error banner (createReplyError) shows.
+      showToast.dismiss(toastId);
+      throw err;
+    }
   };
 
   // After creating a reply: smooth scroll to it (already in the DOM) and clear
@@ -246,19 +273,47 @@ function Post() {
             </svg>
           </button>
           <div className={styles.titleBlock}>
-            <span className={styles.title}>{t("post.threadTitle")}</span>
-            {repliesLabel && (
-              <span className={styles.subtitle}>{repliesLabel}</span>
+            {post ? (
+              <>
+                <span className={styles.title}>{t("post.threadTitle")}</span>
+                {repliesLabel && (
+                  <span className={styles.subtitle}>{repliesLabel}</span>
+                )}
+              </>
+            ) : isLoading ? (
+              // While loading, BOTH lines are skeletons — reserving the
+              // subtitle row so the real "N replies" doesn't pop in and shift
+              // the title block (no jump).
+              <>
+                <span
+                  className={`${styles.titleSkeleton} ${styles.skeletonBar}`}
+                  aria-hidden="true"
+                />
+                <span
+                  className={`${styles.subtitleSkeleton} ${styles.skeletonBar}`}
+                  aria-hidden="true"
+                />
+              </>
+            ) : (
+              // Error / not-found: static title, no skeleton (it would never
+              // resolve), no subtitle.
+              <span className={styles.title}>{t("post.threadTitle")}</span>
             )}
           </div>
-          {/* Thread-level options (View details / Copy link / Report). */}
-          {post && (
+          {/* Thread-level options (View details / Copy link / Report).
+              While loading, a skeleton keeps its slot so it doesn't pop in. */}
+          {post ? (
             <PostOptionsMenu
               post={post}
               variant="inline"
               className={styles.appBarMenu}
             />
-          )}
+          ) : isLoading ? (
+            <span
+              className={`${styles.appBarMenu} ${styles.menuSkeleton} ${styles.skeletonBar}`}
+              aria-hidden="true"
+            />
+          ) : null}
         </div>
       </header>
 

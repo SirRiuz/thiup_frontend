@@ -23,7 +23,10 @@ import { dispatchRequest, DispatchEncryptError } from "./dispatch";
 import { getClientAssertion, refreshTicket } from "./ticket";
 import { ensureTransportMode } from "./transport";
 import { shouldUseGateway } from "./transportMode";
-import { SERVER_ERROR_EVENT } from "../contexts/ServerHealthContext";
+import {
+  SERVER_ERROR_EVENT,
+  NETWORK_ERROR_EVENT,
+} from "../contexts/ServerHealthContext";
 import { BASE_URL } from "../settings";
 
 const API_BASE_URL = BASE_URL;
@@ -109,10 +112,11 @@ export async function apiFetch(url, options = {}) {
           detail: "encryption_failed",
         });
       }
-      // Red caída / server inalcanzable: notificar (ServerHealthContext
-      // re-corre el healthcheck). Los aborts del consumidor no cuentan.
+      // La petición FALLÓ SIN respuesta HTTP (red caída / server inalcanzable):
+      // es un error de RED, no de servidor → evento distinto para que se muestre
+      // la pantalla de "sin conexión". Los aborts del consumidor no cuentan.
       if (!err || err.name !== "AbortError") {
-        window.dispatchEvent(new Event(SERVER_ERROR_EVENT));
+        window.dispatchEvent(new Event(NETWORK_ERROR_EVENT));
       }
       throw err;
     }

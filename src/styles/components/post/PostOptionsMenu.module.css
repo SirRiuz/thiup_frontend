@@ -32,7 +32,8 @@
   color: #a3a3a3;
   border-radius: 50%;
   cursor: pointer;
-  transition: background 120ms ease, color 120ms ease;
+  /* Transition (background/color + spring transform) comes from the global
+     .springPressIcon class applied to the trigger — single source. */
 }
 
 .trigger:hover,

@@ -6,6 +6,7 @@ import HomeFeedSpinner from "../components/home/HomeFeedSpinner";
 import HomeFeedEndDivider from "../components/home/HomeFeedEndDivider";
 import HomeFeedErrorState from "../components/home/HomeFeedErrorState";
 import HomeFeedRetryBanner from "../components/home/HomeFeedRetryBanner";
+import MeProfileHeader from "../components/me/MeProfileHeader";
 import { useMyThreads } from "../hooks/useMyThreads";
 import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
 import usePageTitle from "../hooks/usePageTitle";
@@ -26,6 +27,7 @@ function MyThreads() {
 
   const {
     posts,
+    totalCount,
     isLoading,
     isLoadingMore,
     error,
@@ -59,10 +61,40 @@ function MyThreads() {
   return (
     <div className={styles.page}>
       <main className={styles.main}>
-        <header className={styles.header}>
-          <h1 className={styles.title}>{t("myThreads.title")}</h1>
-          <p className={styles.subtitle}>{t("myThreads.subtitle")}</p>
-        </header>
+        {/* Anonymous identity + private stats — /me only. The header already
+            says "this is your space", so the old explanatory title is dropped
+            in favour of a light divider with the real thread count below. */}
+        <MeProfileHeader />
+
+        {/* Light divider between the header and the list: lines icon + count +
+            a thin rule. Informative, not an explanatory heading. */}
+        {!isInitialLoad && !error && posts.length > 0 && (
+          <div className={styles.listDivider}>
+            <svg
+              className={styles.listDividerIcon}
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <line x1="8" y1="6" x2="20" y2="6" />
+              <line x1="8" y1="12" x2="20" y2="12" />
+              <line x1="8" y1="18" x2="20" y2="18" />
+              <line x1="4" y1="6" x2="4" y2="6" />
+              <line x1="4" y1="12" x2="4" y2="12" />
+              <line x1="4" y1="18" x2="4" y2="18" />
+            </svg>
+            <span className={styles.listDividerCount}>
+              {t("myThreads.threadCount", { count: totalCount || posts.length })}
+            </span>
+            <span className={styles.listDividerLine} aria-hidden="true" />
+          </div>
+        )}
 
         <section className={styles.feed}>
           {isInitialLoad && (
@@ -102,6 +134,9 @@ function MyThreads() {
                   isLast={idx === posts.length - 1 && !hasMore}
                   onClick={() => handlePostClick(post.uid)}
                   onHashtagClick={handleHashtagClick}
+                  // Every thread here is the user's own — the "Your thread" tag
+                  // would be redundant on this screen.
+                  hideMineTag
                 />
               ))}
             </div>
