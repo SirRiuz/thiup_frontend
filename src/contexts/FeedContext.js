@@ -17,7 +17,10 @@ import {
   subscribeGeolocationPermission,
 } from "../utils/geoPermission";
 import { getCoarsePosition } from "../utils/robustGeolocation";
-import { prependToMyThreadsCache } from "../hooks/useMyThreads";
+import {
+  prependToMyThreadsCache,
+  patchMyThreadsCacheMedia,
+} from "../hooks/useMyThreads";
 
 const FeedContext = createContext(null);
 
@@ -465,6 +468,19 @@ export function FeedProvider({ children }) {
     return mapped;
   }, []);
 
+  // Optimistic media injection: media is uploaded+confirmed AFTER the thread is
+  // created (the create response has no media yet), so once the composer
+  // confirms it, patch the just-created post with its media — it renders
+  // immediately, no reload. Same media shape as a fetched thread, so
+  // ThreadMedia needs no special case.
+  const attachMediaToPost = useCallback((uid, media) => {
+    if (!uid || !media || media.length === 0) return;
+    setPosts((prev) =>
+      prev.map((p) => (p.uid === uid || p.id === uid ? { ...p, media } : p))
+    );
+    patchMyThreadsCacheMedia(uid, media);
+  }, []);
+
   // Auto-clear the "new" mark once the highlight has faded, so it never
   // re-triggers on re-render/scroll and the card returns to a plain cell. The
   // cleanup clears the timer on unmount or when a newer thread takes over (no
@@ -497,6 +513,7 @@ export function FeedProvider({ children }) {
     loadMore,
     refetch,
     createPost,
+    attachMediaToPost,
   };
 
   return <FeedContext.Provider value={value}>{children}</FeedContext.Provider>;

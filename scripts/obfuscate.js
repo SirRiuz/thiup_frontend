@@ -59,6 +59,7 @@ const JS_DIR = path.join(__dirname, "..", "build", "static", "js");
 const SENSITIVE_WORDS = [
   "encrypt",
   "decrypt",
+  "debug",
   "cipher",
   "crypto",
   "sign",
@@ -72,6 +73,67 @@ const SENSITIVE_WORDS = [
   "envelope",
   "token",
 ];
+
+// ---------------------------------------------------------------------------
+// RAÍCES A OCULTAR COMO TEXTO LEGIBLE (post-ofuscación).
+//
+// El string-array oculta los string-LITERALS (valores), y los ACCESOS a
+// propiedades quedan como índices codificados del array. Pero las CLAVES de
+// definición de objetos quedan como texto plano: el bundle muestra
+// 'encrypt':function, 'decrypt':function, 'encryptBlock':…, 'createEncryptor':…,
+// 'debug':…, 'useDebugValue':… (API interna de crypto-js / i18next / React).
+//
+// `renameProperties` NO se puede usar para esto (renombraría .ticket/.payload de
+// los sobres de red, props de React y rompería crypto-js — ver OPTIONS). En su
+// lugar, este pase reescribe esas comillas-string identificador-like que
+// CONTENGAN una raíz a escapes \xHH:
+//
+//   'encrypt'  ->  '\x65\x6e\x63\x72\x79\x70\x74'
+//
+// El valor en runtime es EXACTAMENTE el mismo string, así que no cambia ninguna
+// semántica (la propiedad se sigue llamando "encrypt", el acceso codificado la
+// sigue encontrando, i18next/React siguen leyendo "debug"/"useDebugValue"). Por
+// ser value-preserving, incluso un match casual (p.ej. dentro del string-array)
+// es inofensivo: solo cambia la REPRESENTACIÓN, no el valor.
+//
+// Amplía esta lista si aparece otra raíz que deba ocultarse.
+// ---------------------------------------------------------------------------
+const HIDE_WORD_ROOTS = ["encrypt", "decrypt", "debug"];
+const HIDE_ROOT_RE = new RegExp(HIDE_WORD_ROOTS.join("|"), "i");
+
+// "encrypt" -> "\x65\x6e\x63\x72\x79\x70\x74" (mismo valor, texto ilegible).
+function hexEscape(str) {
+  let out = "";
+  for (let i = 0; i < str.length; i += 1) {
+    const code = str.charCodeAt(i);
+    out +=
+      code <= 0xff
+        ? `\\x${code.toString(16).padStart(2, "0")}`
+        : `\\u${code.toString(16).padStart(4, "0")}`;
+  }
+  return out;
+}
+
+// Reescribe los string-literals identificador-like ('foo' / "foo") cuyo
+// contenido contenga una raíz sensible. Solo toca strings cuyo contenido es un
+// identificador completo (sin espacios/comillas/backslash), que es justo la
+// forma de las claves que quedan legibles; las entradas base64 del string-array
+// llevan +/=, así que no matchean. Devuelve el código y cuántas reescribió.
+function hideReadableWords(code) {
+  let count = 0;
+  const rewrite = (src, quote) =>
+    src.replace(
+      new RegExp(`${quote}([A-Za-z0-9_$]+)${quote}`, "g"),
+      (match, token) => {
+        if (!HIDE_ROOT_RE.test(token)) return match;
+        count += 1;
+        return `${quote}${hexEscape(token)}${quote}`;
+      }
+    );
+  let out = rewrite(code, "'");
+  out = rewrite(out, '"');
+  return { code: out, count };
+}
 
 // Nombres que JAMÁS deben renombrarse (APIs del navegador / librerías que la
 // app referencia por nombre). renameGlobals va en false (el ofuscador solo
@@ -147,12 +209,16 @@ const OPTIONS = {
 function obfuscateFile(file) {
   const code = fs.readFileSync(file, "utf8");
   const before = Buffer.byteLength(code);
-  const result = JavaScriptObfuscator.obfuscate(code, OPTIONS).getObfuscatedCode();
+  const obfuscated = JavaScriptObfuscator.obfuscate(code, OPTIONS).getObfuscatedCode();
+  // Post-pass: hide any still-readable debug/encrypt/decrypt property keys as
+  // \xHH escapes (value-preserving — see HIDE_WORD_ROOTS).
+  const { code: result, count } = hideReadableWords(obfuscated);
   fs.writeFileSync(file, result, "utf8");
   const after = Buffer.byteLength(result);
   console.log(
     `[obfuscate] ${path.basename(file)}: ` +
-      `${(before / 1024).toFixed(0)}KB → ${(after / 1024).toFixed(0)}KB`
+      `${(before / 1024).toFixed(0)}KB → ${(after / 1024).toFixed(0)}KB ` +
+      `(${count} sensitive tokens hidden)`
   );
 }
 

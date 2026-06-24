@@ -30,6 +30,26 @@ function resolveCurrentUserReaction(backendPost) {
   return match?.emoji || null;
 }
 
+/**
+ * Maps the backend media to the shape ThreadMedia consumes:
+ *   { id, type, url, isNsfw }
+ * The backend sends { id, uid, is_video, is_nsfw, file (public URL) } — it does
+ * NOT send dimensions (width/height live in the internal metadata), so the
+ * aspect-ratio is derived on load. RECOMMENDATION: expose width/height in the
+ * public media serializer to fully avoid layout shift on single images.
+ */
+export function mapMedia(media) {
+  if (!Array.isArray(media) || media.length === 0) return null;
+  return media.map((m, i) => ({
+    id: m.uid || m.id || `media-${i}`,
+    type: m.is_video || m.type === "video" ? "video" : "image",
+    url: m.file || m.url || null,
+    isNsfw: m.is_nsfw ?? false,
+    // Dominant color for the fullscreen viewer background (null → warm fallback).
+    dominantColor: m.target_color || m.dominantColor || null,
+  }));
+}
+
 export function mapBackendPostToFrontend(backendPost) {
   const maskDisplayId = (backendPost.mask?.hash || "").slice(0, 6);
 
@@ -78,5 +98,7 @@ export function mapBackendPostToFrontend(backendPost) {
     // as plain booleans (no author identity); default false (never assume).
     isMine: backendPost.is_mine ?? false,
     isOp: backendPost.is_op ?? false,
+    // Thread media (feed + head + replies) — real URLs + sensitive flag.
+    media: mapMedia(backendPost.media),
   };
 }

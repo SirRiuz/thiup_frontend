@@ -5,10 +5,13 @@ import MaskAvatar from "../MaskAvatar";
 import { useFeedContext } from "../../contexts/FeedContext";
 import { useToast } from "../../contexts/ToastContext";
 import { geohashForPosition } from "../../utils/geohash";
+import { ACCEPT_ATTR } from "../../services/media/allowedFormats";
 import {
   queryGeolocationPermission,
   subscribeGeolocationPermission,
 } from "../../utils/geoPermission";
+import MediaScanList from "../media/MediaScanList";
+import useMediaComposer from "../../hooks/useMediaComposer";
 import { renderTextWithHashtags } from "./homeHelpers";
 import { normalizePastedText } from "../../utils/normalizeText";
 import { HASHTAG_RE } from "../../utils/hashtags";
@@ -90,14 +93,20 @@ function HomeCompose({ currentUserMask, isLoading = false }) {
   const textareaRef = useRef(null);
   const overlayRef = useRef(null);
   const errorTimerRef = useRef(null);
-  const { createPost } = useFeedContext();
+  const fileInputRef = useRef(null);
+  const { createPost, attachMediaToPost } = useFeedContext();
   const showToast = useToast();
   const navigate = useNavigate();
+  // Shared media flow (images + videos): scan + compress + auto-upload, then
+  // confirm against the thread once it's created. Same hook as the reply box.
+  const media = useMediaComposer();
 
   const charCount = text.length;
   const atLimit = charCount >= MAX_CHARS;
   const isDisabled = isLoading || isSubmitting;
-  const isSubmittable = text.trim().length > 0 && !isDisabled;
+  // Block submit while media is still processing/uploading (media.pending), so
+  // the thread is never posted referencing an incomplete upload.
+  const isSubmittable = text.trim().length > 0 && !isDisabled && !media.pending;
 
   const tagsDetected = useMemo(() => {
     const matches = text.match(HASHTAG_RE) || [];
@@ -328,6 +337,20 @@ function HomeCompose({ currentUserMask, isLoading = false }) {
     },
   };
 
+  // Validate + start processing the picked files; show the first error inline.
+  const handleFileChange = (e) => {
+    const { error } = media.addFiles(e.target.files);
+    e.target.value = "";
+    if (error) {
+      setSubmitError({ message: t(error.key, error.params), timestamp: Date.now() });
+    }
+  };
+
+  const handleAttachClick = () => {
+    if (isDisabled || media.attachDisabled) return;
+    if (fileInputRef.current) fileInputRef.current.click();
+  };
+
   const handleSubmit = async () => {
     if (!isSubmittable) return;
     if (isSubmitting) return;
@@ -351,10 +374,19 @@ function HomeCompose({ currentUserMask, isLoading = false }) {
       // half-done.
       const { geohash, failure } = await getAuthorGeohash();
       const created = await createPost(text, { geohash });
+      // Attach the already-uploaded media to the new thread (confirm). The files
+      // were uploaded as they finished processing; best-effort, the thread is
+      // already posted. Inject the confirmed media into the just-inserted feed
+      // post so it renders immediately (no reload).
+      if (created?.uid) {
+        const mediaItems = await media.confirmTo(created.uid);
+        attachMediaToPost(created.uid, mediaItems);
+      }
       if (shareLocation && !geohash && failure) {
         setLocationNotice(LOCATION_FAILURE_NOTICES[failure]);
       }
       setText("");
+      media.clear();
       textareaRef.current?.blur();
       window.scrollTo({ top: 0, behavior: "smooth" });
       // Morph the SAME loading toast into the confirmation: white check
@@ -444,14 +476,30 @@ function HomeCompose({ currentUserMask, isLoading = false }) {
             rows={3}
           />
         </div>
+
+        <MediaScanList media={media} />
+
+        <input
+          ref={fileInputRef}
+          id="compose-file-input"
+          name="compose-files"
+          type="file"
+          accept={ACCEPT_ATTR}
+          multiple
+          onChange={handleFileChange}
+          className={styles.hiddenFileInput}
+          aria-hidden="true"
+          tabIndex={-1}
+        />
+
         <div className={styles.toolbar}>
-          {/* Image upload button temporarily hidden — the feature will be
-              added later:
           <button
             type="button"
             className={styles.attachButton}
-            aria-label="Attach image or video"
-            disabled={isDisabled}
+            onClick={handleAttachClick}
+            disabled={isDisabled || media.attachDisabled}
+            aria-label={t("post.attachMedia")}
+            title={t("post.attachMedia")}
           >
             <svg
               width="14"
@@ -465,7 +513,7 @@ function HomeCompose({ currentUserMask, isLoading = false }) {
               <circle cx="9" cy="9" r="2" />
               <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
             </svg>
-          </button> */}
+          </button>
           <button
             type="button"
             className={`${styles.locationButton} ${

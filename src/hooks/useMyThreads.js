@@ -43,6 +43,21 @@ export function prependToMyThreadsCache(post) {
   };
 }
 
+/**
+ * Patches the media of a cached thread once its upload is confirmed, so the
+ * just-created thread shows its media in My threads without a reload (same
+ * optimistic fix as the home feed).
+ */
+export function patchMyThreadsCacheMedia(uid, media) {
+  if (!myThreadsCache || !uid || !media || media.length === 0) return;
+  myThreadsCache = {
+    ...myThreadsCache,
+    posts: myThreadsCache.posts.map((p) =>
+      p.uid === uid || p.id === uid ? { ...p, media } : p
+    ),
+  };
+}
+
 export function useMyThreads() {
   const [posts, setPosts] = useState(() => myThreadsCache?.posts || []);
   const [totalCount, setTotalCount] = useState(

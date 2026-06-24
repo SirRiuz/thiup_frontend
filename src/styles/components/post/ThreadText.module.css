@@ -1,0 +1,44 @@
+/* ThreadText — line-clamp truncation + subtle "show more / show less" toggle. */
+
+.clamp {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: var(--clamp-lines, 7);
+  line-clamp: var(--clamp-lines, 7);
+  overflow: hidden;
+}
+
+/* Link-like action in the brand accent so it reads as tappable and doesn't get
+ * lost against the warm background. */
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 2px;
+  /* Padding (not just text) gives a real hit area; negative inline margin keeps
+   * the label visually flush with the text's left edge. */
+  padding: 6px 4px;
+  margin-inline: -4px;
+  background: transparent;
+  border: 0;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: #a85432;
+  cursor: pointer;
+  transition: opacity 120ms ease;
+}
+
+.toggle:hover {
+  opacity: 0.7;
+}
+
+/* Mobile/touch: comfortable ~44px tap target. The negative block margin absorbs
+ * the extra height so it doesn't loosen the vertical rhythm. */
+@media (max-width: 700px) {
+  .toggle {
+    min-height: 44px;
+    padding: 10px 8px;
+    margin-block: -8px;
+    margin-inline: -8px;
+  }
+}

@@ -2,7 +2,9 @@ import { useState, useRef, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import MaskAvatar from "../MaskAvatar";
 import PostReplyContext from "./PostReplyContext";
-import PostAttachmentChip from "./PostAttachmentChip";
+import MediaScanList from "../media/MediaScanList";
+import useMediaComposer from "../../hooks/useMediaComposer";
+import { ACCEPT_ATTR } from "../../services/media/allowedFormats";
 import { renderTextWithHashtags } from "../home/homeHelpers";
 import { normalizePastedText } from "../../utils/normalizeText";
 import { HASHTAG_RE } from "../../utils/hashtags";
@@ -10,9 +12,6 @@ import styles from "../../styles/components/post/PostCommentBox.module.css";
 
 const MIN_HEIGHT = 24;
 const MAX_HEIGHT = 140;
-const MAX_FILES = 4;
-const MAX_FILE_SIZE = 10 * 1024 * 1024;
-const UPLOAD_TICK_MS = 100;
 const MAX_CHARS = 500;
 
 function PostCommentBox({
@@ -26,14 +25,21 @@ function PostCommentBox({
 }) {
   const { t } = useTranslation();
   const [text, setText] = useState("");
-  const [attachments, setAttachments] = useState([]);
   const [errorMessage, setErrorMessage] = useState(null);
   const [isInputFocused, setIsInputFocused] = useState(false);
+  // True for the WHOLE submit (create + media confirmation), so the loading
+  // state doesn't end before the confirmation finishes (matches the main thread).
+  const [isFinalizing, setIsFinalizing] = useState(false);
   const textareaRef = useRef(null);
   const overlayRef = useRef(null);
   const fileInputRef = useRef(null);
-  const intervalsRef = useRef(new Map());
   const boxRef = useRef(null);
+  // Re-entrancy guard for the whole submit (create reply + media upload), so a
+  // second click during the upload window can't post a duplicate reply.
+  const busyRef = useRef(false);
+  // Shared media flow (scan + compress + auto-upload + confirm). The reply box
+  // and the thread composer use the same hook.
+  const media = useMediaComposer();
 
   // Virtual keyboard (mobile): with the textarea focused, the `resize` event
   // of window.visualViewport detects the APPEARANCE of the keyboard (the
@@ -89,11 +95,16 @@ function PostCommentBox({
 
   const charCount = text.length;
   const atLimit = charCount >= MAX_CHARS;
-  const isAnyUploading = attachments.some((a) => a.uploading);
-  // Used by the attach button (temporarily hidden along with it):
-  // const isAttachDisabled = attachments.length >= MAX_FILES;
+
+  // `submitting` spans the WHOLE submit (create + media confirmation), not just
+  // the create request, so the spinner/disabled state stays until everything is
+  // done — same as the main thread (the button doesn't re-enable mid-confirm).
+  const submitting = isSubmitting || isFinalizing;
+
+  // Submit is gated while media is still being analyzed / compressed / uploaded
+  // (media.pending) so we never post a reply that references an incomplete upload.
   const isSubmittable =
-    text.trim().length > 0 && !isAnyUploading && !isSubmitting;
+    text.trim().length > 0 && !media.pending && !submitting;
 
   // Counter of unique hashtags detected (case-insensitive)
   const tagsDetected = useMemo(() => {
@@ -131,15 +142,6 @@ function PostCommentBox({
     return () => clearTimeout(timer);
   }, [errorMessage]);
 
-  // Cleanup on unmount
-  useEffect(() => {
-    const intervals = intervalsRef.current;
-    return () => {
-      intervals.forEach(clearInterval);
-      intervals.clear();
-    };
-  }, []);
-
   // Sync of the overlay scroll with the textarea
   const handleScroll = (e) => {
     if (overlayRef.current) {
@@ -157,7 +159,7 @@ function PostCommentBox({
   // (without deprecated execCommand) and repositions the cursor after the
   // re-render.
   const handlePaste = (e) => {
-    if (isSubmitting) return;
+    if (submitting) return;
     e.preventDefault();
     const pasted = (e.clipboardData || window.clipboardData).getData("text");
     const clean = normalizePastedText(pasted);
@@ -175,108 +177,49 @@ function PostCommentBox({
     });
   };
 
-  const startUpload = (id) => {
-    const interval = setInterval(() => {
-      setAttachments((prev) =>
-        prev.map((a) => {
-          if (a.id !== id) return a;
-          const increment = Math.random() * 8 + 4;
-          const newProgress = a.progress + increment;
-          if (newProgress >= 100) {
-            const intv = intervalsRef.current.get(id);
-            if (intv) {
-              clearInterval(intv);
-              intervalsRef.current.delete(id);
-            }
-            return { ...a, progress: 100, uploading: false };
-          }
-          return { ...a, progress: newProgress };
-        })
-      );
-    }, UPLOAD_TICK_MS);
-    intervalsRef.current.set(id, interval);
-  };
-
+  // Validate + start processing the picked files; show the first error (if any).
   const handleFileChange = (e) => {
-    const files = Array.from(e.target.files || []);
-    if (files.length === 0) return;
-    const availableSlots = MAX_FILES - attachments.length;
-    const accepted = [];
-    let firstError = null;
-    for (const file of files.slice(0, availableSlots)) {
-      if (file.size > MAX_FILE_SIZE) {
-        if (!firstError)
-          firstError = t("post.fileTooLarge", { name: file.name });
-        continue;
-      }
-      const isImage = file.type.startsWith("image/");
-      const isVideo = file.type.startsWith("video/");
-      if (!isImage && !isVideo) {
-        if (!firstError)
-          firstError = t("post.fileUnsupported", { name: file.name });
-        continue;
-      }
-      const id = `att-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-      accepted.push({
-        id,
-        file,
-        name: file.name,
-        size: file.size,
-        type: isImage ? "image" : "video",
-        progress: 0,
-        uploading: true,
-        thumbnail: isImage ? URL.createObjectURL(file) : null,
-      });
-    }
-    if (files.length > availableSlots && !firstError) {
-      firstError = t("post.maxFiles", { max: MAX_FILES });
-    }
-    if (firstError) setErrorMessage(firstError);
-    if (accepted.length > 0) {
-      setAttachments((prev) => [...prev, ...accepted]);
-      accepted.forEach((a) => startUpload(a.id));
-    }
+    const { error } = media.addFiles(e.target.files);
     e.target.value = "";
+    if (error) setErrorMessage(t(error.key, error.params));
   };
 
-  const handleRemoveAttachment = (id) => {
-    const intv = intervalsRef.current.get(id);
-    if (intv) {
-      clearInterval(intv);
-      intervalsRef.current.delete(id);
-    }
-    setAttachments((prev) => {
-      const removed = prev.find((a) => a.id === id);
-      if (removed && removed.thumbnail) URL.revokeObjectURL(removed.thumbnail);
-      return prev.filter((a) => a.id !== id);
-    });
+  const handleAttachClick = () => {
+    if (media.attachDisabled) return;
+    if (fileInputRef.current) fileInputRef.current.click();
   };
-
-  // Opens the file picker — temporarily hidden along with the attach button:
-  // const handleAttachClick = () => {
-  //   if (isAttachDisabled) return;
-  //   if (fileInputRef.current) fileInputRef.current.click();
-  // };
 
   const handleSubmit = async () => {
+    if (busyRef.current) return;
     if (!isSubmittable) return;
+    busyRef.current = true;
+    setIsFinalizing(true);
     // parentId: sub-comment on a reply (replyingTo.sourceId) or direct comment
     // on the thread (thread.id). The parent invokes createReply from useThread.
     const parentId = replyingTo?.sourceId || thread?.id;
     try {
-      await onSubmit?.({ parentId, text });
-      // We only clear on success — the text is preserved if the POST fails.
-      attachments.forEach((a) => {
-        if (a.thumbnail) URL.revokeObjectURL(a.thumbnail);
+      // The parent (handleSubmitReply) creates the reply AND awaits the media
+      // confirmation before completing — same single sequence as the main
+      // thread. We hand it the confirm function (the media hook lives here); it
+      // attaches the confirmed media before flipping to "posted". If confirm
+      // fails, no media is attached (never a broken reply).
+      await onSubmit?.({
+        parentId,
+        text,
+        confirmMedia: (uid) => media.confirmTo(uid),
       });
+      // We only clear on success — the text is preserved if the POST fails.
       setText("");
-      setAttachments([]);
+      media.clear();
       setErrorMessage(null);
       if (onCancelReply) onCancelReply();
     } catch (err) {
       // The error banner is rendered by submitError (controlled by the
       // parent). We don't clear the textarea: the user can retry with the
       // same text.
+    } finally {
+      setIsFinalizing(false);
+      busyRef.current = false;
     }
   };
 
@@ -350,17 +293,7 @@ function PostCommentBox({
         </div>
       )}
 
-      {attachments.length > 0 && (
-        <div className={styles.attachmentsList}>
-          {attachments.map((a) => (
-            <PostAttachmentChip
-              key={a.id}
-              attachment={a}
-              onRemove={() => handleRemoveAttachment(a.id)}
-            />
-          ))}
-        </div>
-      )}
+      <MediaScanList media={media} />
 
       <div className={styles.textareaWrapper}>
         <div
@@ -387,8 +320,8 @@ function PostCommentBox({
           onScroll={handleScroll}
           onFocus={() => setIsInputFocused(true)}
           onBlur={() => setIsInputFocused(false)}
-          disabled={isSubmitting}
-          style={isSubmitting ? { opacity: 0.6 } : undefined}
+          disabled={submitting}
+          style={submitting ? { opacity: 0.6 } : undefined}
           rows={1}
         />
       </div>
@@ -398,7 +331,7 @@ function PostCommentBox({
         id="comment-file-input"
         name="comment-files"
         type="file"
-        accept="image/*,video/*"
+        accept={ACCEPT_ATTR}
         multiple
         onChange={handleFileChange}
         className={styles.hiddenFileInput}
@@ -407,14 +340,13 @@ function PostCommentBox({
       />
 
       <div className={styles.toolbar}>
-        {/* Image upload button temporarily hidden — the feature will be added
-            later (the attachments logic remains intact):
         <button
           type="button"
           className={styles.attachButton}
           onClick={handleAttachClick}
-          disabled={isAttachDisabled}
-          aria-label="Attach image or video"
+          disabled={media.attachDisabled}
+          aria-label={t("post.attachMedia")}
+          title={t("post.attachMedia")}
         >
           <svg
             width="14"
@@ -428,7 +360,7 @@ function PostCommentBox({
             <circle cx="9" cy="9" r="2" />
             <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
           </svg>
-        </button> */}
+        </button>
         <span className={styles.spacer} />
         {tagsDetected > 0 && (
           <span className={styles.tagsDetected}>
@@ -447,16 +379,16 @@ function PostCommentBox({
           className={`${styles.submitButton} springPress`}
           onClick={handleSubmit}
           disabled={!isSubmittable}
-          aria-busy={isSubmitting || undefined}
-          aria-label={isSubmitting ? t("post.replying") : undefined}
+          aria-busy={submitting || undefined}
+          aria-label={submitting ? t("post.replying") : undefined}
         >
           {/* Label always renders "Reply" to keep the button's exact width;
               while submitting it's hidden (box kept) and a spinner is centered
               over it — no resize. */}
-          <span className={isSubmitting ? styles.submitLabelHidden : undefined}>
+          <span className={submitting ? styles.submitLabelHidden : undefined}>
             {t("post.reply")}
           </span>
-          {isSubmitting && (
+          {submitting && (
             <span className={styles.spinner} aria-hidden="true" />
           )}
         </button>

@@ -157,6 +157,16 @@ a,
   outline: none;
 }
 
+/* Silent focus restore: when a component returns focus to its opener after a
+ * keyboard close (e.g. the media viewer on Escape), keyboard modality would make
+ * the opener match :focus-visible and show a ring. The opener carries this
+ * attribute only during that restore (removed on its next blur), so focus is
+ * preserved for a11y without a visible ring. */
+[data-focus-silent]:focus,
+[data-focus-silent]:focus-visible {
+  outline: none !important;
+}
+
 /*
  * Spring/bounce press feedback (Threads-style) — CENTRAL, reusable.
  *   .springPress      → text buttons (scale 0.93)

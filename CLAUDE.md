@@ -260,8 +260,10 @@ stroke is bumped to **`2.3px`** on mobile (Threads-like weight) via a CSS overri
 ### Frosted glass bars
 
 The mobile app bar + bottom bar and the view-thread app bar share one recipe (consistency):
-`background: rgba(247, 245, 240, 0.72)` + `-webkit-backdrop-filter`/`backdrop-filter:
-blur(12px) saturate(180%)`, hairline border `#ebe7dd`. **Fallback:** `@supports not
+`background: rgba(247, 245, 240, 0.88)` + `-webkit-backdrop-filter`/`backdrop-filter:
+blur(28px) saturate(180%)` (Threads-strength; same alpha + blur in all three bars — the higher
+`0.88` alpha keeps the background barely perceptible, frosted not transparent), hairline border
+`#ebe7dd`. **Fallback:** `@supports not
 ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)))` → solid `#f7f5f0`
 (never illegible). Content blurs through as it scrolls under the fixed/sticky bar.
 

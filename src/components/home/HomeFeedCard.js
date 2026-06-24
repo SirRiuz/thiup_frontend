@@ -3,6 +3,8 @@ import { useTranslation } from "react-i18next";
 import MaskAvatar from "../MaskAvatar";
 import PostProfileTrigger from "../post/PostProfileTrigger";
 import PostOptionsMenu from "../post/PostOptionsMenu";
+import ThreadMedia from "../media/ThreadMedia";
+import ThreadText from "../post/ThreadText";
 import { formatCount, renderTextWithHashtags } from "./homeHelpers";
 import { DEBUG } from "../../settings";
 import { ensureScrollSuppressor } from "../../utils/scrollSuppressor";
@@ -43,6 +45,7 @@ function HomeFeedCard({
     repliesCount,
     viewsCount,
     reactions = [],
+    media,
   } = post;
 
   // ALL the reactions, same as the thread (previously: slice(0,3) truncated
@@ -122,14 +125,16 @@ function HomeFeedCard({
         )}
       </header>
 
-      <p className={styles.body}>
+      <ThreadText text={text} className={styles.body}>
         {renderTextWithHashtags(
           text,
           styles.hashtag,
           onHashtagClick,
           renderOptions
         )}
-      </p>
+      </ThreadText>
+
+      {media && media.length > 0 && <ThreadMedia items={media} />}
 
       <footer className={styles.stats}>
         <span className={styles.statWithIcon}>

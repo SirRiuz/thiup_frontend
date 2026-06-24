@@ -12,6 +12,7 @@ import PostReactionPill from "../components/post/PostReactionPill";
 import PostInitialSkeleton from "../components/post/PostInitialSkeleton";
 import PostReply from "../components/post/PostReply";
 import PostReplySkeleton from "../components/post/PostReplySkeleton";
+import ThreadMedia from "../components/media/ThreadMedia";
 import PostThreadNotFound from "../components/post/PostThreadNotFound";
 import PostSortMenu from "../components/post/PostSortMenu";
 import { useThread } from "../hooks/useThread";
@@ -64,6 +65,7 @@ function Post() {
     sortBy,
     selectSort,
     createReply,
+    attachMediaToReply,
     loadMore,
     retry,
     toggleReaction,
@@ -194,7 +196,7 @@ function Post() {
   // Creates a comment/sub-comment. parentId = thread.id for a direct comment, or
   // the id of the reply being replied to (replyingTo.sourceId) for a sub-comment.
   // Resets replyingTo only if the POST succeeded (createReply re-throws on error).
-  const handleSubmitReply = async ({ parentId, text }) => {
+  const handleSubmitReply = async ({ parentId, text, confirmMedia }) => {
     // Reuse the shared loading→success toast (same as publishing a thread), but
     // WITHOUT a "View" action — the user is already in the thread.
     const toastId = showToast({
@@ -204,16 +206,25 @@ function Post() {
     });
     try {
       const newReply = await createReply({ parentId: parentId || thread?.id, text });
+      // WAIT for the media confirmation BEFORE completing — same single
+      // sequence as the main thread. The files were already uploaded; confirm
+      // creates the relation and returns the media, which we attach to the
+      // just-inserted reply so its images are ready when we flip to "posted".
+      if (newReply?.uid && confirmMedia) {
+        const mediaItems = await confirmMedia(newReply.uid);
+        attachMediaToReply(newReply.uid, mediaItems);
+      }
       setReplyingTo(null);
       // The new reply triggers scroll-to + highlight (see effect below).
       if (newReply?.id) setHighlightedReplyId(newReply.id);
       // Morph the SAME toast into the confirmation: white check + "Reply posted",
-      // no link. Auto-dismisses (~3s).
+      // no link. Auto-dismisses (~3s). Now AFTER the media confirmation.
       showToast.update(toastId, {
         type: "success",
         message: t("toast.replyPosted"),
         duration: 3000,
       });
+      return newReply;
     } catch (err) {
       // Never leave the spinner hanging; re-throw so PostCommentBox keeps the
       // text and its inline error banner (createReplyError) shows.
@@ -361,9 +372,15 @@ function Post() {
           </PostProfileTrigger>
         </div>
 
+        {/* The opened thread's head shows its FULL text — no "show more"
+            clamp: you came here to read the whole thread. */}
         <p className={styles.opBody}>
           {renderTextWithHashtags(post.text, styles.hashtag, handleHashtagClick)}
         </p>
+
+        {post.media && post.media.length > 0 && (
+          <ThreadMedia items={post.media} />
+        )}
 
         <div className={styles.opReactions}>
           {post.reactions.map((r) => (

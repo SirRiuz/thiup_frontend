@@ -11,6 +11,10 @@
 # production
 /build
 
+# self-hosted vendor assets (reproducible from pinned devDependencies via
+# scripts/copy-nsfw-assets.js — regenerated on postinstall/prebuild)
+/public/vendor/nsfwjs
+
 # misc
 .DS_Store
 .env.local

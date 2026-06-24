@@ -155,6 +155,25 @@
   color: #1a1a1a;
 }
 
+.attachButton:disabled {
+  opacity: 0.4;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* Visually-hidden file input (triggered by the attach button). */
+.hiddenFileInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .charCount {
   font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   font-size: 11px;
@@ -315,23 +334,23 @@
 
 /* "Share approximate area" toggle (author opt-in, Close You).
    Active = the palette's warm orange; inactive = subtle gray. */
+/* Icon-only but with the SAME bordered affordance as the attach button, so the
+   location option reads as a clear, discoverable control (not a faint icon). */
 .locationButton {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  border: none;
+  padding: 6px;
+  border: 1px solid #e8e5dd;
   border-radius: 6px;
   background: transparent;
-  color: #c4bfb1;
+  color: #6b6b6b;
   cursor: pointer;
-  transition: color 120ms ease, background 120ms ease;
+  transition: color 120ms ease, background 120ms ease, border-color 120ms ease;
 }
 
 .locationButton:hover {
-  color: #6b6b6b;
+  color: #1a1a1a;
   background: rgba(26, 26, 26, 0.05);
 }
 
@@ -339,6 +358,7 @@
 .locationButtonActive:hover {
   color: #a85432;
   background: rgba(168, 84, 50, 0.1);
+  border-color: rgba(168, 84, 50, 0.25);
 }
 
 /* "The blurred cell" — privacy note for the area toggle.

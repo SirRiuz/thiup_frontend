@@ -391,6 +391,17 @@ export function useThread(threadId) {
     [threadId]
   );
 
+  // Optimistic media injection: a reply's media is uploaded+confirmed AFTER the
+  // reply is created (the create response has no media), so once the composer
+  // confirms it, patch the just-inserted reply with its media — it renders
+  // immediately, no reload. Same media shape as a fetched reply.
+  const attachMediaToReply = useCallback((uid, media) => {
+    if (!uid || !media || media.length === 0) return;
+    setReplies((prev) =>
+      prev.map((r) => (r.id === uid || r.uid === uid ? { ...r, media } : r))
+    );
+  }, []);
+
   /**
    * Toggles the current user's reaction on a post (thread or reply).
    * Immediate optimistic update + POST /reactions/ + rollback on error.
@@ -488,6 +499,7 @@ export function useThread(threadId) {
     sortBy,
     selectSort,
     createReply,
+    attachMediaToReply,
     loadMore,
     retry,
     toggleReaction,

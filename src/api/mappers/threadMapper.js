@@ -1,6 +1,6 @@
 /**
  * Maps the response of GET /threads/<id>/responses/ to the shape consumed by
- * Post.js and its components (PostReply, PostReactionPill, PostReplyMedia).
+ * Post.js and its components (PostReply, PostReactionPill, ThreadMedia).
  *
  * Reuses mapBackendPostToFrontend from postMapper.js for all the common
  * fields of a post — does NOT duplicate that logic. It only adds what is specific to a
@@ -14,20 +14,8 @@
 import { mapBackendPostToFrontend } from "./postMapper";
 
 /**
- * Reduces the backend media to the minimal shape used by PostReplyMedia
- * ({ id, type }). The component only reads length + type (renders placeholders),
- * so we don't need the real URLs yet.
- */
-function mapMedia(media) {
-  if (!Array.isArray(media) || media.length === 0) return null;
-  return media.map((m, i) => ({
-    id: m.uid || m.id || `media-${i}`,
-    type: m.type === "video" || m.is_video ? "video" : "image",
-  }));
-}
-
-/**
- * Maps a response (reply or sub-reply) to the PostReply shape.
+ * Maps a response (reply or sub-reply) to the PostReply shape. Media (real URLs
+ * + sensitive flag) is already mapped by mapBackendPostToFrontend.
  *
  * @param {object} backendReply
  * @param {{ parentId?: string|null, parentMaskId?: string|null }} [ctx]
@@ -37,7 +25,6 @@ function mapMedia(media) {
 export function mapBackendReplyToFrontend(backendReply, ctx = {}) {
   return {
     ...mapBackendPostToFrontend(backendReply),
-    media: mapMedia(backendReply.media),
     parentId: ctx.parentId ?? null,
     parentMaskId: ctx.parentMaskId ?? null,
   };

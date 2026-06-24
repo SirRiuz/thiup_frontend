@@ -4,7 +4,8 @@ import PostOptionsMenu from "./PostOptionsMenu";
 import PostProfileTrigger from "./PostProfileTrigger";
 import PostReactionPicker from "./PostReactionPicker";
 import PostReactionPill from "./PostReactionPill";
-import PostReplyMedia from "./PostReplyMedia";
+import ThreadMedia from "../media/ThreadMedia";
+import ThreadText from "./ThreadText";
 import { renderTextWithHashtags } from "../home/homeHelpers";
 import styles from "../../styles/components/post/PostReply.module.css";
 
@@ -82,11 +83,11 @@ function PostReply({
         />
       </div>
 
-      <p className={bodyClassName}>
+      <ThreadText text={text} className={bodyClassName}>
         {renderTextWithHashtags(text, styles.hashtag, onHashtagClick)}
-      </p>
+      </ThreadText>
 
-      {media && media.length > 0 && <PostReplyMedia items={media} />}
+      {media && media.length > 0 && <ThreadMedia items={media} />}
 
       <div className={styles.reactions}>
         {reactions.map((r) => (
