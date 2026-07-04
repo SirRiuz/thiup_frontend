@@ -4,7 +4,10 @@
   position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  /* Threads' avatar↔name gap (their 48px lane = 36px avatar + 12px gap). Only
+     the OP header puts avatar + mask in ONE trigger, so this is what aligns the
+     OP mask with the replies' content column (36 gutter + 12 grid gap). */
+  gap: 12px;
   cursor: pointer;
 }
 

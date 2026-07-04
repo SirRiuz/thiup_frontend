@@ -1,22 +1,26 @@
 // Shared media-attach orchestration for BOTH composers (new thread + reply):
-// validate → NSFW scan + compress (images) → auto-upload as each file finishes
-// → confirm against the thread at submit. Keeps the two composers DRY; each only
+// validate → compress (images only) → auto-upload as each file is ready →
+// confirm against the thread at submit. Keeps the two composers DRY; each only
 // renders its own button/input and the <MediaScanList>.
 //
-// - Images: scanned + compressed to WebP (metadata stripped), the COMPRESSED
+// - Images: compressed to WebP (downscaled + metadata stripped), the COMPRESSED
 //   file is uploaded.
-// - Videos: scanned, the ORIGINAL file is uploaded (no compression).
+// - Videos: the ORIGINAL file is uploaded as-is (no client compression).
+//
+// NO client-side NSFW classification: the model crashed iOS on heavy media and
+// is moving to a SERVER-SIDE service that will run between the R2 upload and the
+// confirm step (see useMediaUploads), stamping is_nsfw into the file metadata.
+// The frontend stays agnostic to that service.
 
-import { useCallback, useEffect, useMemo, useRef } from "react";
-import useNsfwScan from "./useNsfwScan";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import useMediaItems from "./useMediaItems";
 import useImageCompression from "./useImageCompression";
 import useMediaUploads from "./useMediaUploads";
 import {
   logProcessed,
   buildProcessedMetadata,
 } from "../services/imageCompression/imageCompressor";
-import { isVideoFile } from "../services/nsfw/nsfwAnalyzer";
-import { isAllowedFile } from "../services/media/allowedFormats";
+import { isAllowedFile, isVideoFile } from "../services/media/allowedFormats";
 
 export const MAX_FILES = 10;
 
@@ -45,26 +49,58 @@ function videoContentType(file) {
   return /\.mov$/i.test(file.name || "") ? "video/quicktime" : "video/mp4";
 }
 
-const pct = (v) => `${Math.round((v || 0) * 100)}%`;
-
-// Minimal config metadata for a video (no compression report). Uses the same
-// whitelisted keys as images so the backend stores it consistently.
+// Minimal config metadata for a video (no compression report, no client
+// verdict). Same whitelisted keys as images so the backend stores it
+// consistently; the server-side classifier fills is_nsfw later.
 function videoMetadata(item) {
-  const v = item.result;
-  if (!v) return { archivo: item.name };
-  const labels = { safe: "Seguro", review: "Revisar", block: "Bloquear" };
-  return {
-    archivo: item.name,
-    prediccion: labels[v.verdict] || v.verdict,
-    esNsfw: v.verdict === "safe" ? "no" : "sí",
-    nsfwPorcentaje: pct(v.score),
-    explicito: pct(v.explicit),
-    sugerente: pct(v.sexy),
-  };
+  return { archivo: item.name };
+}
+
+// Measures a video file's intrinsic dimensions from its metadata (a detached
+// <video preload="metadata"> — only the header is read, never the full file).
+// The backend stores width/height per file so the UI can reserve the EXACT
+// aspect-ratio before the video loads (no placeholder → real-size layout jump).
+// Resolves {0,0} on error/timeout — dimensions must never block an upload.
+function measureVideoDimensions(file) {
+  return new Promise((resolve) => {
+    let url;
+    try {
+      url = URL.createObjectURL(file);
+    } catch (err) {
+      resolve({ width: 0, height: 0 });
+      return;
+    }
+    const v = document.createElement("video");
+    let settled = false;
+    const done = (width, height) => {
+      if (settled) return;
+      settled = true;
+      URL.revokeObjectURL(url);
+      v.removeAttribute("src");
+      try {
+        v.load();
+      } catch (err) {
+        /* releasing the element is best-effort */
+      }
+      resolve({ width, height });
+    };
+    const timer = setTimeout(() => done(0, 0), 5000);
+    v.preload = "metadata";
+    v.muted = true;
+    v.onloadedmetadata = () => {
+      clearTimeout(timer);
+      done(v.videoWidth || 0, v.videoHeight || 0);
+    };
+    v.onerror = () => {
+      clearTimeout(timer);
+      done(0, 0);
+    };
+    v.src = url;
+  });
 }
 
 export default function useMediaComposer() {
-  const scan = useNsfwScan();
+  const media = useMediaItems();
   const compression = useImageCompression();
   const {
     uploads: uploadItems,
@@ -90,46 +126,68 @@ export default function useMediaComposer() {
     return map;
   }, [uploadItems]);
 
-  // When a file finishes processing, log it once and auto-start its upload:
-  // images upload the compressed WebP (after compression); videos upload the
-  // original. startUpload is idempotent per id.
+  // Video dimensions, measured async from the file's metadata BEFORE its upload
+  // starts (id → {width,height} | "pending"). The tick re-runs the effect below
+  // when a measurement lands.
+  const videoDimsRef = useRef(new Map());
+  const [dimsTick, setDimsTick] = useState(0);
+
+  // Auto-start each file's upload as soon as it's ready. Images wait for their
+  // compression (downscaled WebP, metadata stripped); videos wait for their
+  // (fast, metadata-only) dimension probe, then upload the original. No NSFW
+  // gate — nothing waits on a client classification. startUpload is idempotent
+  // per id.
   const loggedRef = useRef(new Set());
   useEffect(() => {
-    scan.items.forEach((item) => {
-      if (item.status !== "done" || !item.result) return;
-
+    media.items.forEach((item) => {
       if (item.kind === "image") {
         const comp = compressionByFile.get(item.file);
         if (!comp || comp.status !== "done" || !comp.report || !comp.file) return;
         if (!loggedRef.current.has(item.id)) {
           loggedRef.current.add(item.id);
-          logProcessed(comp.report, item.result);
+          logProcessed(comp.report);
         }
         startUpload(item.id, comp.report.name, {
           file: comp.file,
           contentType: comp.file.type || "image/webp",
           isVideo: false,
           report: comp.report,
-          verdict: item.result,
-          metadata: buildProcessedMetadata(comp.report, item.result),
+          metadata: buildProcessedMetadata(comp.report),
           filenameOriginal: comp.report.name,
         });
       } else if (item.kind === "video") {
+        // Measure the intrinsic dimensions FIRST (metadata-only, ~instant; a
+        // 5s timeout resolves {0,0} so a weird container never blocks the
+        // upload). They travel in the confirm as width/height so the UI can
+        // reserve the real aspect-ratio before the video loads (no layout jump).
+        const dims = videoDimsRef.current.get(item.id);
+        if (!dims) {
+          videoDimsRef.current.set(item.id, "pending");
+          measureVideoDimensions(item.file).then((measured) => {
+            videoDimsRef.current.set(item.id, measured);
+            setDimsTick((n) => n + 1); // re-run this effect with dims ready
+          });
+          return;
+        }
+        if (dims === "pending") return;
+        // Upload the ORIGINAL video as-is (no client compression/scan). The
+        // server-side classifier (future) flags is_nsfw before confirm. The
+        // measured dims ride in `report` — confirmAll reads report.width/height.
         startUpload(item.id, item.name, {
           file: item.file,
           contentType: videoContentType(item.file),
           isVideo: true,
-          report: null,
-          verdict: item.result,
+          report: { width: dims.width, height: dims.height },
           metadata: videoMetadata(item),
           filenameOriginal: item.name,
         });
       }
     });
-    if (scan.items.length === 0 && compression.results.length === 0) {
+    if (media.items.length === 0 && compression.results.length === 0) {
       loggedRef.current.clear();
+      videoDimsRef.current.clear();
     }
-  }, [scan.items, compression.results, compressionByFile, startUpload]);
+  }, [media.items, compression.results, compressionByFile, startUpload, dimsTick]);
 
   // Validate the selection (size / type / count) and start processing accepted
   // files. Returns { error: { key, params } | null } so the caller translates it.
@@ -137,7 +195,7 @@ export default function useMediaComposer() {
     (fileList) => {
       const files = Array.from(fileList || []);
       if (files.length === 0) return { error: null };
-      const availableSlots = MAX_FILES - scan.items.length;
+      const availableSlots = MAX_FILES - media.items.length;
       if (availableSlots <= 0) {
         return { error: { key: "post.maxFiles", params: { max: MAX_FILES } } };
       }
@@ -171,21 +229,21 @@ export default function useMediaComposer() {
         error = { key: "post.maxFiles", params: { max: MAX_FILES } };
       }
       if (accepted.length > 0) {
-        scan.addFiles(accepted);
+        media.addFiles(accepted);
         // compression.compress filters to images internally; videos are skipped.
         compression.compress(accepted);
       }
       return { error };
     },
-    [scan, compression]
+    [media, compression]
   );
 
   const removeItem = useCallback(
     (id) => {
-      scan.removeItem(id);
+      media.removeItem(id);
       removeUpload(id);
     },
-    [scan, removeUpload]
+    [media, removeUpload]
   );
 
   // Attach every uploaded object to the thread (called at submit, once the
@@ -196,27 +254,25 @@ export default function useMediaComposer() {
   );
 
   const clear = useCallback(() => {
-    scan.clear();
+    media.clear();
     compression.clear();
     clearUploads();
     loggedRef.current.clear();
-  }, [scan, compression, clearUploads]);
+  }, [media, compression, clearUploads]);
 
   const isCompressing = compression.results.some(
     (r) => r.status === "queued" || r.status === "compressing"
   );
 
   return {
-    items: scan.items,
+    items: media.items,
     compressionByFile,
     uploadsById,
-    // Counter of files still being analyzed (NSFW), for the list header.
-    analyzingCount: scan.pending,
-    // Busy = still analyzing, compressing or uploading → block submit so we
-    // never post a thread that references an incomplete upload.
-    pending: scan.pending > 0 || isCompressing || uploadsPending,
-    count: scan.items.length,
-    attachDisabled: scan.items.length >= MAX_FILES,
+    // Busy = still compressing or uploading → block submit so we never post a
+    // thread that references an incomplete upload.
+    pending: isCompressing || uploadsPending,
+    count: media.items.length,
+    attachDisabled: media.items.length >= MAX_FILES,
     addFiles,
     removeItem,
     retryUpload,

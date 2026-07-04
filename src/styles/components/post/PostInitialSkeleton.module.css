@@ -6,10 +6,10 @@
 }
 
 .opCard {
-  /* No top padding: the skeleton renders inside .main (24px top) just like the
-     real .opSection (padding: 0 8px), so its first row aligns with the real
-     content — no downward shift when the thread loads. */
-  padding: 0 8px 20px;
+  /* No own padding: the skeleton now lives inside .surface (Post), which already
+     provides the exact 16px horizontal inset + the mobile full-bleed, so its rows
+     align 1:1 with the real .opSection — no shift when the thread loads. */
+  padding: 0 0 20px;
 }
 
 .opHeader {
@@ -35,14 +35,16 @@
 .opDivider {
   height: 1px;
   background: #ebe7dd;
-  margin: 0 8px;
+  /* Bleed to the card edge like the real OP divider (opSectionDivided::after,
+     left/right: -16px → cancels the surface's 16px padding). */
+  margin: 0 -16px;
 }
 
 .sortRow {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 18px 8px 14px;
+  padding: 18px 0 14px;
 }
 
 .repliesList {
@@ -57,9 +59,10 @@
 }
 
 .opIdenticon {
-  width: 40px;
-  height: 40px;
-  border-radius: 4px;
+  /* Mirrors the real OP avatar: 36px circle (Threads' single avatar size). */
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
   flex: none;
 }
 

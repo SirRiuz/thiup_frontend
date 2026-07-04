@@ -82,7 +82,9 @@ function PostProfileTrigger({ mask, children, className }) {
     >
       {children}
       {isVisible && (
-        <div className={styles.cardContainer}>
+        // data-hover-card: lets clickable ancestors (the feed card's whole-row
+        // navigation) ignore clicks landing on the floating profile card.
+        <div className={styles.cardContainer} data-hover-card="">
           <PostProfileHoverCard
             mask={mask}
             onMouseEnter={handleMouseEnter}

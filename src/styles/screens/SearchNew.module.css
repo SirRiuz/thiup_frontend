@@ -5,9 +5,16 @@
 }
 
 .main {
-  max-width: 740px;
+  /* Threads-like column: 640px wide, 24px side padding (Threads' feed
+     --barcelona-columns-item-horizontal-padding) — the feed cards carry NO
+     horizontal padding of their own, so this is the single content inset
+     (see CLAUDE.md → Layout). */
+  max-width: 640px;
   margin: 0 auto;
-  padding: 24px 20px 60px;
+  padding: 24px 24px 60px;
+  /* Column side padding for nested media-carousel edge-to-edge bleed — MUST
+     equal the side padding above. */
+  --layout-pad-x: 24px;
 }
 
 /* Sort dropdown row (tag feed): its own line, right-aligned — the sort control

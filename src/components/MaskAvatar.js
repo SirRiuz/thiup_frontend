@@ -1,5 +1,16 @@
 import { useMemo } from "react";
 
+// Threads' exact activity green — their `--barcelona-green-dot` token
+// (rgb(94, 231, 71), same value in light and dark theme).
+const ONLINE_GREEN = "rgb(94, 231, 71)";
+// Ring around the dot (Threads uses `--background-primary`, i.e. the surface
+// the avatar sits on). Default = our card surface; screens whose avatars sit
+// directly on the page bg override it via `ringColor`.
+const ONLINE_RING = "#fdfcf8";
+// Threads' reference geometry: a 10px dot with a 2px ring on a 36px avatar.
+const DOT_REF_AVATAR = 36;
+const DOT_REF_SIZE = 10;
+
 const BG_COLORS = [
   "#f0e3d2", "#e8d5b7", "#dac4a8", "#d4cfbf", "#e0d4c1",
   "#c9b18a", "#c5a572", "#b8845f", "#a37e6e", "#9b8c7b",
@@ -105,13 +116,55 @@ function buildShape(shapeIdx, cx, cy, r, rotation, fg) {
 }
 
 /**
+ * Green "active now" dot overlaid on the avatar's bottom-right corner
+ * (Threads-style). Rendered only when `online` is true, so avatars without
+ * presence keep the exact legacy markup.
+ */
+function OnlineDot({ size, ringColor }) {
+  // Threads-exact geometry: the GREEN CONTENT is 10px (at 36px avatars) and the
+  // 2px ring grows OUTWARD (content-box), total 14px. Their wrapper anchors at
+  // bottom: 1px / right: 0 and lets the ring overflow 2px on every side — with
+  // a single border-box-positioned span that is bottom: -1px / right: -2px.
+  const dot = Math.max(8, Math.round((size * DOT_REF_SIZE) / DOT_REF_AVATAR));
+  return (
+    <span
+      aria-label="online"
+      style={{
+        position: "absolute",
+        bottom: -1,
+        right: -2,
+        width: dot,
+        height: dot,
+        background: ONLINE_GREEN,
+        borderRadius: "50%",
+        border: `2px solid ${ringColor || ONLINE_RING}`,
+        boxSizing: "content-box",
+        pointerEvents: "none",
+      }}
+    />
+  );
+}
+
+/**
  * MaskAvatar — Procedural SVG avatar generated from a seed (UUID).
  *
  * Same seed always produces the same avatar. Pure component, no network,
  * no storage. Accepts both `seed` and `id` for drop-in compatibility with
  * the legacy Identicon API.
+ *
+ * `online`: when true, wraps the avatar and overlays the Threads-style green
+ * activity dot (bottom-right). Falsy/omitted -> identical legacy render.
+ * `ringColor`: the dot's cut-out ring — must match the surface BEHIND the
+ * avatar (defaults to the card surface #fdfcf8).
  */
-function MaskAvatar({ seed, id, size = 32, className }) {
+function MaskAvatar({
+  seed,
+  id,
+  size = 32,
+  className,
+  online = false,
+  ringColor,
+}) {
   const params = useMemo(() => {
     const raw = (seed || id || "").toString().replace(/-/g, "").toLowerCase();
     if (!raw) return null;
@@ -152,7 +205,7 @@ function MaskAvatar({ seed, id, size = 32, className }) {
 
   const { bg, fg, shapeIdx, rotation, cx, cy, r } = params;
 
-  return (
+  const avatar = (
     <svg
       width={size}
       height={size}
@@ -165,6 +218,25 @@ function MaskAvatar({ seed, id, size = 32, className }) {
       <rect width={size} height={size} fill={bg} />
       {buildShape(shapeIdx, cx, cy, r, rotation, fg)}
     </svg>
+  );
+
+  if (!online) return avatar;
+
+  // Relative wrapper sized exactly like the svg, so surrounding flex/grid
+  // layouts see the same box they saw before the indicator existed.
+  return (
+    <span
+      style={{
+        position: "relative",
+        display: "block",
+        flex: "none",
+        width: size,
+        height: size,
+      }}
+    >
+      {avatar}
+      <OnlineDot size={size} ringColor={ringColor} />
+    </span>
   );
 }
 

@@ -19,10 +19,12 @@ export const COMPRESSION_CONFIG = {
   // heavier; lower = lighter with more loss. This is the FIRST knob to adjust.
   quality: 0.5,
 
-  // Optional downscale cap (null = no limit, the default). If set to a number,
-  // the largest side is capped to this many px (aspect ratio preserved) before
-  // encoding, to save even more. The hook is wired but inactive by default.
-  maxDimension: null,
+  // Downscale cap: the largest side is capped to this many px (aspect ratio
+  // preserved) BEFORE encoding. Active by default (2048) — it both saves bytes
+  // and, critically, stops iOS from drawing a 12MP iPhone photo to a full-res
+  // canvas (the memory crash). Decoding itself is also done at this size (see
+  // decodeScaledCanvas), so the full-res bitmap never lives in memory.
+  maxDimension: 2048,
 };
 
 // NOTE FOR THE FUTURE (video is OUT OF SCOPE in this iteration): when video

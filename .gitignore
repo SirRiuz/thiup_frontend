@@ -27,3 +27,6 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Respaldos temporales del build seguro (scripts/build-secure.js)
+*.secure-build-bak

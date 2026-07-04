@@ -6,6 +6,12 @@
 
 import { COMPRESSION_CONFIG } from "./compressionConfig";
 import { readImageMetadata } from "./metadataReader";
+import { stripWebpMetadata } from "./webpMetadata";
+import { decodeScaledCanvas } from "../media/decodeImage";
+
+// Safe upper bound on the longest side when the config doesn't set one — keeps
+// iPhone 12MP photos from being drawn to a full-res canvas (the iOS crash).
+const DEFAULT_MAX_DIMENSION = 2048;
 
 function readAsArrayBuffer(file) {
   return new Promise((resolve, reject) => {
@@ -13,28 +19,6 @@ function readAsArrayBuffer(file) {
     fr.onload = () => resolve(fr.result);
     fr.onerror = () => reject(new Error("read-failed"));
     fr.readAsArrayBuffer(file);
-  });
-}
-
-// data URL (not blob:) — more compatible than blob: inside webviews.
-function readAsDataURL(blob) {
-  return new Promise((resolve, reject) => {
-    const fr = new FileReader();
-    fr.onload = () => resolve(fr.result);
-    fr.onerror = () => reject(new Error("read-failed"));
-    fr.readAsDataURL(blob);
-  });
-}
-
-function loadImage(url) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    // Attach handlers BEFORE src: local images can decode before the listener
-    // is attached, which would otherwise hang the promise.
-    img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error("decode-failed"));
-    img.src = url;
-    if (img.complete && img.naturalWidth > 0) resolve(img);
   });
 }
 
@@ -141,9 +125,85 @@ async function encodeCanvas(canvas, type, quality) {
   }
 }
 
+// True for an already-compressed WebP (by MIME or extension).
+function isWebp(file) {
+  return (
+    (file.type && file.type === "image/webp") || /\.webp$/i.test(file.name || "")
+  );
+}
+
+// WebP passthrough: the file is ALREADY compressed, so we don't re-encode it
+// (that would only re-compress and lose quality). We just strip its EXIF/XMP
+// metadata from the container — same privacy guarantee as the canvas re-encode,
+// without touching the pixels. Dimensions + dominant color are read best-effort
+// (a decode failure must never block the upload of the cleaned file).
+async function passthroughWebp(file) {
+  const buf = await readAsArrayBuffer(file);
+  const meta = readImageMetadata(buf, file.type);
+  const { blob, removed } = stripWebpMetadata(buf);
+
+  let width = 0;
+  let height = 0;
+  let dominantColorHex = "#e5e0d3";
+  let dominantFg = "#1a1a1a";
+  try {
+    // Decode (downscaled, memory-safe) ONLY to sample the dominant color + read
+    // dimensions — the output is still the untouched, metadata-stripped blob.
+    const { canvas, width: w, height: h, release } = await decodeScaledCanvas(
+      file,
+      DEFAULT_MAX_DIMENSION
+    );
+    try {
+      width = w;
+      height = h;
+      const dom = dominantColor(canvas);
+      dominantColorHex = rgbToHex(dom);
+      dominantFg = luminance(dom) > 0.55 ? "#1a1a1a" : "#fdfcf8";
+    } finally {
+      release();
+    }
+  } catch (err) {
+    /* keep the neutral fallbacks; the cleaned file still uploads */
+  }
+
+  const baseName = (file.name || "image").replace(/\.[^.]+$/, "");
+  const outputFile = new File([blob], `${baseName}.webp`, { type: "image/webp" });
+
+  let metadataAfter = [];
+  try {
+    const outBuf = await readAsArrayBuffer(blob);
+    metadataAfter = readImageMetadata(outBuf, "image/webp").items;
+  } catch (err) {
+    /* leave empty if the output can't be re-read */
+  }
+
+  const report = {
+    name: file.name,
+    formatBefore: meta.format || "WEBP",
+    formatAfter: "WEBP",
+    width,
+    height,
+    sizeBefore: file.size,
+    sizeAfter: blob.size,
+    savingsPct: file.size > 0 ? Math.round((1 - blob.size / file.size) * 100) : 0,
+    metadataBefore: meta.items,
+    metadataAfter,
+    dominantColor: dominantColorHex,
+    dominantFg,
+    // For the DevTools log: note we skipped compression and what we removed.
+    passthrough: true,
+    removedMetadata: removed,
+  };
+
+  return { outputFile, blob, type: "image/webp", report };
+}
+
 // Compresses one image File. Returns { outputFile, blob, type, report }.
 // `report` feeds the DevTools logger (logCompression).
 export async function compressImage(file, config = COMPRESSION_CONFIG) {
+  // Already-compressed WebP → skip the re-encode, just strip metadata.
+  if (isWebp(file)) return passthroughWebp(file);
+
   const { outputFormat, quality, maxDimension } = config;
 
   // "Before": read original bytes only to report metadata (the output won't
@@ -151,31 +211,30 @@ export async function compressImage(file, config = COMPRESSION_CONFIG) {
   const buf = await readAsArrayBuffer(file);
   const meta = readImageMetadata(buf, file.type);
 
-  // Decode.
-  const dataUrl = await readAsDataURL(file);
-  const img = await loadImage(dataUrl);
+  // Decode REDUCED (longest side ≤ maxDimension) — never the full-res photo —
+  // so iOS doesn't run out of memory drawing a 12MP image to a full-res canvas.
+  // Re-encoding through this canvas still strips ALL metadata (EXIF/GPS/…).
+  const cap = maxDimension || DEFAULT_MAX_DIMENSION;
+  const { canvas, width: w, height: h, release } = await decodeScaledCanvas(
+    file,
+    cap
+  );
 
-  // Draw to canvas at natural size, or downscaled if maxDimension is set
-  // (inactive by default — the hook is prepared but null).
-  let w = img.naturalWidth;
-  let h = img.naturalHeight;
-  if (maxDimension && Math.max(w, h) > maxDimension) {
-    const scale = maxDimension / Math.max(w, h);
-    w = Math.max(1, Math.round(w * scale));
-    h = Math.max(1, Math.round(h * scale));
+  let blob;
+  let type;
+  let dominantColorHex;
+  let dominantFg;
+  try {
+    // Representative color of the photo (for the UI chip).
+    const dom = dominantColor(canvas);
+    dominantColorHex = rgbToHex(dom);
+    dominantFg = luminance(dom) > 0.55 ? "#1a1a1a" : "#fdfcf8";
+
+    // Encode (strips all metadata as a side effect).
+    ({ blob, type } = await encodeCanvas(canvas, outputFormat, quality));
+  } finally {
+    release(); // free the canvas backing store before the next file
   }
-  const canvas = document.createElement("canvas");
-  canvas.width = w;
-  canvas.height = h;
-  canvas.getContext("2d").drawImage(img, 0, 0, w, h);
-
-  // Representative color of the photo (for the UI chip).
-  const dom = dominantColor(canvas);
-  const dominantColorHex = rgbToHex(dom);
-  const dominantFg = luminance(dom) > 0.55 ? "#1a1a1a" : "#fdfcf8";
-
-  // Encode (strips all metadata as a side effect).
-  const { blob, type } = await encodeCanvas(canvas, outputFormat, quality);
   const ext = type.split("/")[1].replace("jpeg", "jpg");
   const baseName = file.name.replace(/\.[^.]+$/, "");
   const outputFile = new File([blob], `${baseName}.${ext}`, { type });

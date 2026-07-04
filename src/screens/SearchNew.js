@@ -149,7 +149,7 @@ function SearchNew() {
     navigate(`/search?q=${encodeURIComponent(sanitizeQuery(`#${clean}`))}`);
   };
 
-  const handlePostClick = (postId) => navigate(`/post/${postId}`);
+  const handlePostClick = (postId) => navigate(`/p/${postId}`);
   const handleUserCardClick = (maskId) => {
     // Placeholder: user profile screen not built yet.
     console.log("view user profile:", maskId);

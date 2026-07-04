@@ -8,8 +8,6 @@ function formatBytes(bytes) {
   return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
 }
 
-const pct = (value) => Math.round((value || 0) * 100);
-
 function PhotoIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9b9591" strokeWidth="1.5">
@@ -35,32 +33,6 @@ function InfoIcon() {
       <circle cx="12" cy="12" r="9" />
       <path d="M12 11v5" />
       <path d="M12 7.5h.01" />
-    </svg>
-  );
-}
-
-// Tiny verdict glyphs (Feather-style outline) used inside the details panel.
-function VerdictIcon({ verdict }) {
-  if (verdict === "block") {
-    return (
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-        <circle cx="12" cy="12" r="9" />
-        <line x1="5.6" y1="5.6" x2="18.4" y2="18.4" />
-      </svg>
-    );
-  }
-  if (verdict === "review") {
-    return (
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <path d="M12 9v4" />
-        <path d="M12 17h.01" />
-        <path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" />
-      </svg>
-    );
-  }
-  return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M20 6 9 17l-5-5" />
     </svg>
   );
 }
@@ -150,82 +122,64 @@ function CompressionView({ compression, t }) {
 }
 
 /**
- * One row in the analysis list: thumbnail + name + status, plus (when done) an
- * info button (ⓘ) that toggles a details panel with the colored verdict label,
- * the explicit/suggestive breakdown, and — for images — the before/after
- * compression comparison (format, dimensions, size) plus savings and dominant
- * color chips. Full metadata before/after is logged to the DevTools console.
+ * One row in the attached-media list: thumbnail + name + status, plus (for
+ * images, once compressed) an info button (ⓘ) that toggles the before/after
+ * compression comparison. There is NO client-side NSFW classification — the
+ * state line tracks only compression (images) → upload.
  *
  * Props:
- *   - item:        a useNsfwScan item ({ id, name, size, kind, status, frame, result, error, thumbnail })
+ *   - item:        a useMediaItems item ({ id, name, size, kind, thumbnail })
  *   - compression: the matching useImageCompression result (or undefined) for this file
- *   - onRemove:    handler invoked when the user clicks the X
+ *   - upload:      the matching useMediaUploads item (or undefined)
  */
 function PostScanResult({ item, compression, upload, onRetry, onRemove }) {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
-  const { id, name, size, kind, status, frame, result, error, thumbnail } = item;
+  const { id, name, size, kind, thumbnail } = item;
 
-  const isAnalyzing = status === "analyzing";
-  const isQueued = status === "queued";
-  const isDone = status === "done";
-  const isError = status === "error";
   const isImage = kind === "image";
-  const verdict = result && result.verdict;
   const detailsId = `scan-details-${id}`;
 
   const compStatus = compression && compression.status;
   const upStatus = upload && upload.status;
 
-  // Combined per-file state machine across the three phases (analyze →
-  // compress → upload): one status line + a flag set driving spinner / progress
-  // bar / retry.
+  // Per-file state line across compression (images only) → upload.
   let secondary;
   let showSpinner = false;
   let showRetry = false;
   let lineError = false;
   let uploadPercent = null; // 0..100 while uploading, else null
 
-  if (isQueued) {
+  if (
+    isImage &&
+    (!compression || compStatus === "queued" || compStatus === "compressing")
+  ) {
+    secondary = t("scan.compressing");
+    showSpinner = true;
+  } else if (isImage && compStatus === "error") {
+    secondary = t("scan.compressError");
+    lineError = true;
+  } else if (!upload || upStatus === "queued") {
+    // Waiting its turn in the sequential upload queue.
     secondary = t("scan.queued");
     showSpinner = true;
-  } else if (isAnalyzing) {
-    secondary =
-      kind === "video" && frame
-        ? t("scan.analyzingFrame", { current: frame.current, total: frame.total })
-        : t("scan.analyzing");
-    showSpinner = true;
-  } else if (isError) {
-    const code = error && error.code;
-    if (code === "hevc") secondary = t("scan.errorHevc");
-    else if (code === "decode") secondary = t("scan.errorDecode");
-    else if (code === "model") secondary = t("scan.errorModel");
-    else secondary = t("scan.errorAnalyze");
+  } else if (upStatus === "uploading") {
+    uploadPercent = upload.progress;
+    secondary = t("scan.uploading", { percent: uploadPercent });
+  } else if (upStatus === "uploaded") {
+    secondary = t("scan.uploaded");
+  } else if (upStatus === "error") {
+    secondary = t("scan.uploadError");
     lineError = true;
-  } else if (isDone && isImage) {
-    // Image: NSFW done → compression → upload.
-    if (!compression || compStatus === "queued" || compStatus === "compressing") {
-      secondary = t("scan.compressing");
-      showSpinner = true;
-    } else if (compStatus === "error") {
-      secondary = t("scan.compressError");
-      lineError = true;
-    } else if (!upload || upStatus === "uploading") {
-      uploadPercent = upload ? upload.progress : 0;
-      secondary = t("scan.uploading", { percent: uploadPercent });
-    } else if (upStatus === "uploaded") {
-      secondary = t("scan.uploaded");
-    } else if (upStatus === "error") {
-      secondary = t("scan.uploadError");
-      lineError = true;
-      showRetry = true;
-    }
-  } else if (isDone) {
-    // Video (no compression/upload this iteration): show size.
+    showRetry = true;
+  } else {
+    // Settled non-image state (e.g. just-finished video) → show its size.
     secondary = formatBytes(size);
   }
 
-  const rowHasError = isError || compStatus === "error" || upStatus === "error";
+  // Details (compression comparison) available once an image is compressed.
+  const canShowDetails = isImage && compStatus === "done" && !!compression.report;
+  const rowHasError = compStatus === "error" || upStatus === "error";
 
   return (
     <div className={`${styles.row} ${rowHasError ? styles.rowError : ""}`}>
@@ -264,10 +218,10 @@ function PostScanResult({ item, compression, upload, onRetry, onRemove }) {
           </button>
         )}
 
-        {isDone && result && (
+        {canShowDetails && (
           <button
             type="button"
-            className={`${styles.infoButton} ${styles[`info_${verdict}`]} ${
+            className={`${styles.infoButton} ${
               expanded ? styles.infoButtonActive : ""
             }`}
             onClick={() => setExpanded((v) => !v)}
@@ -290,36 +244,10 @@ function PostScanResult({ item, compression, upload, onRetry, onRemove }) {
         </button>
       </div>
 
-      {isDone && result && expanded && (
+      {canShowDetails && expanded && (
         <div id={detailsId} className={styles.details}>
-          <div className={styles.verdictRow}>
-            <span className={`${styles.badge} ${styles[`badge_${verdict}`]}`}>
-              <VerdictIcon verdict={verdict} />
-              <span className={styles.badgeLabel}>{t(`scan.verdict_${verdict}`)}</span>
-              <span className={styles.badgeScore}>
-                {t("scan.scorePercent", { percent: pct(result.score) })}
-              </span>
-            </span>
-            <span className={styles.detail}>
-              {t("scan.detail", {
-                explicit: pct(result.explicit),
-                suggestive: pct(result.sexy),
-              })}
-            </span>
-          </div>
-          {kind === "image" && <CompressionView compression={compression} t={t} />}
+          <CompressionView compression={compression} t={t} />
         </div>
-      )}
-
-      {isAnalyzing && kind === "video" && frame && (
-        <div
-          className={styles.progressBar}
-          style={{ width: `${(frame.current / frame.total) * 100}%` }}
-          role="progressbar"
-          aria-valuenow={frame.current}
-          aria-valuemin={0}
-          aria-valuemax={frame.total}
-        />
       )}
 
       {uploadPercent != null && (

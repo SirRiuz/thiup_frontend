@@ -15,11 +15,15 @@ import styles from "../../styles/components/post/PostOptionsMenu.module.css";
  * "Copy link" / "Report" are visible placeholders (no logic yet).
  */
 
+// Threads' exact "More" glyph (20×20, r=2 dots at cx 4/12/20 — bigger and wider
+// spread than the old r=1.7 at cx 5/12/19).
 const MoreIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-    <circle cx="5" cy="12" r="1.7" />
-    <circle cx="12" cy="12" r="1.7" />
-    <circle cx="19" cy="12" r="1.7" />
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path
+      clipRule="evenodd"
+      fillRule="evenodd"
+      d="M4 14C5.10457 14 6 13.1046 6 12C6 10.8954 5.10457 10 4 10C2.89543 10 2 10.8954 2 12C2 13.1046 2.89543 14 4 14ZM14 12C14 13.1046 13.1046 14 12 14C10.8954 14 10 13.1046 10 12C10 10.8954 10.8954 10 12 10C13.1046 10 14 10.8954 14 12ZM22 12C22 13.1046 21.1046 14 20 14C18.8954 14 18 13.1046 18 12C18 10.8954 18.8954 10 20 10C21.1046 10 22 10.8954 22 12Z"
+    />
   </svg>
 );
 const InfoIcon = () => (
@@ -42,19 +46,57 @@ const FlagIcon = () => (
   </svg>
 );
 
+const SortIcon = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M7 4v16M7 4 4 7M7 4l3 3" />
+    <path d="M17 20V4M17 20l3-3M17 20l-3-3" />
+  </svg>
+);
+const BackIcon = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M15 18l-6-6 6-6" />
+  </svg>
+);
+const ChevronRight = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="m9 6 6 6-6 6" />
+  </svg>
+);
+const CheckIcon = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="m5 12 4.5 4.5L19 7" />
+  </svg>
+);
+
 const ITEMS = [
   { key: "viewDetails", icon: <InfoIcon />, labelKey: "threadOptions.viewDetails" },
   { key: "copyLink", icon: <LinkIcon />, labelKey: "threadOptions.copyLink" },
   { key: "report", icon: <FlagIcon />, labelKey: "threadOptions.report", danger: true },
 ];
 
-function PostOptionsMenu({ post, variant = "card", className = "" }) {
+// Sort sub-menu options — same backend keys as the old PostSortMenu so the
+// ordering logic (useThread.buildReplyOrdering) stays untouched.
+const SORT_OPTIONS = [
+  { value: "trending", labelKey: "post.sortTop" },
+  { value: "newest", labelKey: "post.sortRecent" },
+];
+
+function PostOptionsMenu({
+  post,
+  variant = "card",
+  className = "",
+  sortValue,
+  onSortChange,
+}) {
   const { t } = useTranslation();
   const isMobile = useIsMobile();
   const showToast = useToast();
   const [open, setOpen] = useState(false);
+  // Which sub-panel is showing inside the menu (Threads-style): null = root.
+  const [submenu, setSubmenu] = useState(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
+  const canSort = typeof onSortChange === "function";
   // Fixed coords for the (desktop) portaled popover, right-aligned to trigger.
   const [pos, setPos] = useState(null);
   const wrapperRef = useRef(null);
@@ -112,6 +154,11 @@ function PostOptionsMenu({ post, variant = "card", className = "" }) {
     }
   }, [open, isMobile]);
 
+  // Always return to the root panel when the menu closes.
+  useEffect(() => {
+    if (!open) setSubmenu(null);
+  }, [open]);
+
   const handle = async (key) => {
     setOpen(false);
     if (key === "viewDetails") {
@@ -119,8 +166,9 @@ function PostOptionsMenu({ post, variant = "card", className = "" }) {
       return;
     }
     if (key === "copyLink") {
-      // Public thread URL. The toast shows only a confirmation — never the URL.
-      const url = `${window.location.origin}/post/${post?.id || post?.uid || ""}/`;
+      // Public thread URL — the canonical SHORT form (/p/:id; the legacy
+      // /post/:id still redirects). The toast shows only a confirmation.
+      const url = `${window.location.origin}/p/${post?.id || post?.uid || ""}`;
       try {
         await navigator.clipboard.writeText(url);
         // Copy confirmation: text only, no icon (cleaner, Threads-like).
@@ -136,8 +184,57 @@ function PostOptionsMenu({ post, variant = "card", className = "" }) {
   };
 
   // Single source of the menu content; rendered in both presentations.
-  const renderItems = (itemClass, iconClass, dangerClass, dividerClass) =>
-    ITEMS.map((it) => (
+  // Shows the root items, or the Sort sub-panel when submenu === "sort"
+  // (Threads-style: a ">" item opens it, a back row returns).
+  const renderItems = (itemClass, iconClass, dangerClass, dividerClass) => {
+    if (submenu === "sort") {
+      return (
+        <>
+          <button
+            type="button"
+            role="menuitem"
+            className={itemClass}
+            onClick={() => setSubmenu(null)}
+          >
+            <span className={iconClass}>
+              <BackIcon />
+            </span>
+            {t("post.sort")}
+          </button>
+          {dividerClass && (
+            <div className={dividerClass} role="separator" aria-hidden="true" />
+          )}
+          {SORT_OPTIONS.map((o) => {
+            const active = o.value === sortValue;
+            return (
+              <button
+                key={o.value}
+                type="button"
+                role="menuitemradio"
+                aria-checked={active}
+                className={itemClass}
+                onClick={() => {
+                  onSortChange?.(o.value);
+                  close();
+                }}
+              >
+                <span className={iconClass}>{active ? <CheckIcon /> : null}</span>
+                {t(o.labelKey)}
+              </button>
+            );
+          })}
+        </>
+      );
+    }
+
+    // Root: optional "Sort" entry (only when sorting is wired) + the base items.
+    const items = canSort
+      ? [
+          { key: "sort", icon: <SortIcon />, labelKey: "post.sort", submenu: true },
+          ...ITEMS,
+        ]
+      : ITEMS;
+    return items.map((it) => (
       <Fragment key={it.key}>
         {dividerClass && it.key === "report" && (
           <div className={dividerClass} role="separator" aria-hidden="true" />
@@ -145,14 +242,21 @@ function PostOptionsMenu({ post, variant = "card", className = "" }) {
         <button
           type="button"
           role="menuitem"
+          aria-haspopup={it.submenu ? "menu" : undefined}
           className={`${itemClass} ${it.danger ? dangerClass : ""}`}
-          onClick={() => handle(it.key)}
+          onClick={() => (it.submenu ? setSubmenu("sort") : handle(it.key))}
         >
           <span className={iconClass}>{it.icon}</span>
           {t(it.labelKey)}
+          {it.submenu && (
+            <span style={{ marginLeft: "auto", display: "inline-flex", color: "#9b9591" }}>
+              <ChevronRight />
+            </span>
+          )}
         </button>
       </Fragment>
     ));
+  };
 
   return (
     <div

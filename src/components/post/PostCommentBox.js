@@ -11,7 +11,6 @@ import { HASHTAG_RE } from "../../utils/hashtags";
 import styles from "../../styles/components/post/PostCommentBox.module.css";
 
 const MIN_HEIGHT = 24;
-const MAX_HEIGHT = 140;
 const MAX_CHARS = 500;
 
 function PostCommentBox({
@@ -52,6 +51,16 @@ function PostCommentBox({
   // visualViewport doesn't shrink on focus → no-op.
   useEffect(() => {
     if (!isInputFocused) return undefined;
+
+    // On mobile the composer is a FIXED bottom bar that already rides above the
+    // keyboard via CSS (bottom: var(--kb-inset-bottom), set by useKeyboardOpen),
+    // so this in-flow scroll would only fight it with a spurious jump — skip it.
+    if (
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(max-width: 700px)").matches
+    ) {
+      return undefined;
+    }
 
     // Breathing room between the bottom edge of the box and the keyboard:
     // the scroll is computed with an exact delta (not scrollIntoView, which
@@ -94,17 +103,23 @@ function PostCommentBox({
   }, [isInputFocused]);
 
   const charCount = text.length;
-  const atLimit = charCount >= MAX_CHARS;
+  // Threads-style: typing past the limit is ALLOWED; a countdown then shows the
+  // negative remaining (e.g. "-394") and submit is blocked until back under.
+  const remaining = MAX_CHARS - charCount;
+  const overLimit = remaining < 0;
 
   // `submitting` spans the WHOLE submit (create + media confirmation), not just
   // the create request, so the spinner/disabled state stays until everything is
   // done — same as the main thread (the button doesn't re-enable mid-confirm).
   const submitting = isSubmitting || isFinalizing;
 
+  // Anything to post (text or attached media). Drives the attach↔Reply swap.
+  const hasContent = text.trim().length > 0 || media.count > 0;
+
   // Submit is gated while media is still being analyzed / compressed / uploaded
-  // (media.pending) so we never post a reply that references an incomplete upload.
+  // (media.pending) and while over the char limit.
   const isSubmittable =
-    text.trim().length > 0 && !media.pending && !submitting;
+    hasContent && !overLimit && !media.pending && !submitting;
 
   // Counter of unique hashtags detected (case-insensitive)
   const tagsDetected = useMemo(() => {
@@ -127,9 +142,10 @@ function PostCommentBox({
     if (!ta) return;
     ta.style.height = "auto";
     const scrollH = ta.scrollHeight;
-    const newHeight = Math.min(Math.max(scrollH, MIN_HEIGHT), MAX_HEIGHT);
+    // Threads-style: the field just GROWS with the content — never a scrollbar.
+    const newHeight = Math.max(scrollH, MIN_HEIGHT);
     ta.style.height = `${newHeight}px`;
-    ta.style.overflowY = scrollH > MAX_HEIGHT ? "auto" : "hidden";
+    ta.style.overflowY = "hidden";
     if (overlayRef.current) {
       overlayRef.current.style.height = `${newHeight}px`;
     }
@@ -149,9 +165,10 @@ function PostCommentBox({
     }
   };
 
-  // Hard limit: truncate to MAX_CHARS on every change (covers typing + paste)
+  // Threads-style: typing past MAX_CHARS is allowed (the counter goes negative
+  // and submit is blocked) — no hard truncation.
   const handleTextChange = (e) => {
-    setText(e.target.value.slice(0, MAX_CHARS));
+    setText(e.target.value);
   };
 
   // Paste: normalizes the external text (CRLF→LF, nbsp, zero-width) before
@@ -166,12 +183,9 @@ function PostCommentBox({
     const el = textareaRef.current;
     const start = el ? el.selectionStart : text.length;
     const end = el ? el.selectionEnd : text.length;
-    const next = (text.slice(0, start) + clean + text.slice(end)).slice(
-      0,
-      MAX_CHARS
-    );
+    const next = text.slice(0, start) + clean + text.slice(end);
     setText(next);
-    const caret = Math.min(start + clean.length, MAX_CHARS);
+    const caret = start + clean.length;
     requestAnimationFrame(() => {
       if (el) el.setSelectionRange(caret, caret);
     });
@@ -226,16 +240,6 @@ function PostCommentBox({
   return (
     <div className={styles.wrapper} ref={boxRef}>
       <PostReplyContext target={replyingTo} onCancel={onCancelReply} />
-
-      {currentUserMask && (
-        <div className={styles.header}>
-          <span className={styles.identiconWrap}>
-            <MaskAvatar seed={currentUserMask.id} size={20} />
-          </span>
-          <span className={styles.label}>{t("compose.postingAs")}</span>
-          <span className={styles.maskId}>{currentUserMask.id}</span>
-        </div>
-      )}
 
       {submitError && (
         <div className={styles.errorBanner} role="alert">
@@ -295,37 +299,6 @@ function PostCommentBox({
 
       <MediaScanList media={media} />
 
-      <div className={styles.textareaWrapper}>
-        <div
-          ref={overlayRef}
-          className={styles.highlightLayer}
-          aria-hidden="true"
-        >
-          {renderTextWithHashtags(text, styles.highlightHashtag)}
-          {text === "" && <span>&#8203;</span>}
-        </div>
-        <textarea
-          ref={textareaRef}
-          id="comment-textarea"
-          name="comment"
-          className={styles.input}
-          placeholder={
-            replyingTo
-              ? t("post.commentPlaceholderUser")
-              : t("post.commentPlaceholderDefault")
-          }
-          value={text}
-          onChange={handleTextChange}
-          onPaste={handlePaste}
-          onScroll={handleScroll}
-          onFocus={() => setIsInputFocused(true)}
-          onBlur={() => setIsInputFocused(false)}
-          disabled={submitting}
-          style={submitting ? { opacity: 0.6 } : undefined}
-          rows={1}
-        />
-      </div>
-
       <input
         ref={fileInputRef}
         id="comment-file-input"
@@ -339,59 +312,103 @@ function PostCommentBox({
         tabIndex={-1}
       />
 
-      <div className={styles.toolbar}>
-        <button
-          type="button"
-          className={styles.attachButton}
-          onClick={handleAttachClick}
-          disabled={media.attachDisabled}
-          aria-label={t("post.attachMedia")}
-          title={t("post.attachMedia")}
-        >
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-          >
-            <rect x="3" y="3" width="18" height="18" rx="2" />
-            <circle cx="9" cy="9" r="2" />
-            <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
-          </svg>
-        </button>
-        <span className={styles.spacer} />
-        {tagsDetected > 0 && (
-          <span className={styles.tagsDetected}>
-            {t("common.tagsDetected", { count: tagsDetected })}
+      {/* Threads-style: just the mask avatar (no "posting as" text) to the left
+          of the rounded field, which holds the input AND the toolbar (icons +
+          Reply) inside its border. */}
+      <div className={styles.composeRow}>
+        {currentUserMask && (
+          <span className={styles.avatar}>
+            <MaskAvatar seed={currentUserMask.id} size={36} />
           </span>
         )}
-        <span
-          className={`${styles.charCount} ${
-            atLimit ? styles.charCountAtLimit : ""
-          }`}
-        >
-          {t("common.charCount", { count: charCount, max: MAX_CHARS })}
-        </span>
-        <button
-          type="button"
-          className={`${styles.submitButton} springPress`}
-          onClick={handleSubmit}
-          disabled={!isSubmittable}
-          aria-busy={submitting || undefined}
-          aria-label={submitting ? t("post.replying") : undefined}
-        >
-          {/* Label always renders "Reply" to keep the button's exact width;
-              while submitting it's hidden (box kept) and a spinner is centered
-              over it — no resize. */}
-          <span className={submitting ? styles.submitLabelHidden : undefined}>
-            {t("post.reply")}
-          </span>
-          {submitting && (
-            <span className={styles.spinner} aria-hidden="true" />
+        <div className={styles.field}>
+        <div className={styles.textareaWrapper}>
+          <div
+            ref={overlayRef}
+            className={styles.highlightLayer}
+            aria-hidden="true"
+          >
+            {renderTextWithHashtags(text, styles.highlightHashtag)}
+            {text === "" && <span>&#8203;</span>}
+          </div>
+          <textarea
+            ref={textareaRef}
+            id="comment-textarea"
+            name="comment"
+            className={styles.input}
+            placeholder={
+              replyingTo
+                ? t("post.commentPlaceholderUser")
+                : t("post.commentPlaceholderDefault")
+            }
+            value={text}
+            onChange={handleTextChange}
+            onPaste={handlePaste}
+            onScroll={handleScroll}
+            onFocus={() => setIsInputFocused(true)}
+            onBlur={() => setIsInputFocused(false)}
+            disabled={submitting}
+            style={submitting ? { opacity: 0.6 } : undefined}
+            rows={1}
+          />
+        </div>
+        <div className={styles.toolbar}>
+          <span className={styles.spacer} />
+          {tagsDetected > 0 && (
+            <span className={styles.tagsDetected}>
+              {t("common.tagsDetected", { count: tagsDetected })}
+            </span>
           )}
-        </button>
+          {/* Threads-style: the counter only appears once the limit is exceeded,
+              counting DOWN into the negative (e.g. "-394"). */}
+          {overLimit && <span className={styles.overLimit}>{remaining}</span>}
+
+          {/* Bottom-right slot: attach when empty, Reply once there's content
+              (Threads-style swap in the same place). */}
+          {hasContent ? (
+            <button
+              type="button"
+              className={`${styles.submitButton} springPress`}
+              onClick={handleSubmit}
+              disabled={!isSubmittable}
+              aria-busy={submitting || undefined}
+              aria-label={submitting ? t("post.replying") : undefined}
+            >
+              {/* Label always renders "Reply" to keep the button's exact width;
+                  while submitting it's hidden (box kept) and a spinner is
+                  centered over it — no resize. */}
+              <span className={submitting ? styles.submitLabelHidden : undefined}>
+                {t("post.reply")}
+              </span>
+              {submitting && (
+                <span className={styles.spinner} aria-hidden="true" />
+              )}
+            </button>
+          ) : (
+            <button
+              type="button"
+              className={styles.attachButton}
+              onClick={handleAttachClick}
+              disabled={media.attachDisabled}
+              aria-label={t("post.attachMedia")}
+              title={t("post.attachMedia")}
+            >
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              >
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <circle cx="9" cy="9" r="2" />
+                <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+              </svg>
+            </button>
+          )}
+        </div>
+        </div>
       </div>
     </div>
   );

@@ -5,6 +5,8 @@
   position: sticky;
   top: 0;
   z-index: 10;
+  /* Desktop: warm frosted glass (original tint). Mobile switches to white
+     (Threads-style) in the @media block below. */
   background: rgba(247, 245, 240, 0.85);
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
@@ -20,23 +22,39 @@
   }
 }
 
+/* White frosted bar on mobile (Threads-style); desktop keeps the warm tint. */
+@media (max-width: 700px) {
+  .appBar {
+    background: rgba(253, 252, 248, 0.85);
+  }
+
+  @supports not (
+    (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))
+  ) {
+    .appBar {
+      background: #fdfcf8;
+    }
+  }
+}
+
 .inner {
   position: relative;
-  max-width: 740px;
+  /* Match the screen's .main column (see CLAUDE.md → Layout). */
+  max-width: 640px;
   margin: 0 auto;
-  padding: 10px 20px;
+  padding: 10px 12px;
 }
 
 /* Hairline aligned with the content COLUMN: same max-width/centering as the
-   content (.inner / the screen's .main) with the side padding inset (20px), so
+   content (.inner / the screen's .main) with the side padding inset (12px), so
    it starts and ends exactly where the content does — not at the window edges.
    On mobile the column takes the full width and the border spans it naturally.
    Identical technique and values to the thread view (Post .appBarInner::after). */
 .inner::after {
   content: "";
   position: absolute;
-  left: 20px;
-  right: 20px;
+  left: 12px;
+  right: 12px;
   bottom: 0;
   border-bottom: 1px solid rgba(229, 224, 211, 0.75);
 }

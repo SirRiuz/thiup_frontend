@@ -8,7 +8,6 @@ import CloseYouRadiusBar from "../components/home/CloseYouRadiusBar";
 import HomeFeedCard from "../components/home/HomeFeedCard";
 import HomeFeedCardSkeleton from "../components/home/HomeFeedCardSkeleton";
 import HomeFeedSpinner from "../components/home/HomeFeedSpinner";
-import HomeFeedEndDivider from "../components/home/HomeFeedEndDivider";
 import HomeFeedEmptyState from "../components/home/HomeFeedEmptyState";
 import HomeFeedErrorState from "../components/home/HomeFeedErrorState";
 import HomeFeedRetryBanner from "../components/home/HomeFeedRetryBanner";
@@ -16,14 +15,20 @@ import { useFeedContext } from "../contexts/FeedContext";
 import { useCurrentUser } from "../contexts/CurrentUserContext";
 import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
 import usePageTitle from "../hooks/usePageTitle";
+import useMobileSurfacePage from "../hooks/useMobileSurfacePage";
 import styles from "../styles/screens/HomeNew.module.css";
 
 function HomeNew() {
   const composeRef = useRef(null);
+  const pageRef = useRef(null);
   const navigate = useNavigate();
   const { t } = useTranslation();
   // Home = solo la marca ("Thiup"), sin sufijo de página.
   usePageTitle();
+  // Mobile: full-bleed #fdfcf8 sheet — paint html/body/AppShell to match so the
+  // iOS elastic overscroll never shows a mismatched warm strip (same treatment
+  // as the thread view; restores on unmount / desktop).
+  useMobileSurfacePage(pageRef);
   // REAL current user (from /me/): a single global request, cached in the
   // context — here it is only consumed.
   const { currentUserMask } = useCurrentUser();
@@ -195,7 +200,7 @@ function HomeNew() {
   });
 
   const handlePostClick = (postId) => {
-    navigate(`/post/${postId}`);
+    navigate(`/p/${postId}`);
   };
 
   // A hashtag click is a normal search for that hashtag (q=#tag) — lands on
@@ -217,11 +222,33 @@ function HomeNew() {
   const showEmpty = !isLoading && !error && posts.length === 0;
   const showError = !isLoading && error;
   const showSpinner = isLoadingMore;
-  const showEndDivider = !isLoading && !error && !hasMore && posts.length > 0;
 
   return (
-    <div className={styles.page}>
+    <div className={styles.page} ref={pageRef}>
       <main className={styles.main}>
+        {/* Desktop masthead (Threads' 60px column header): sticky, opaque
+            page-bg bar with the centered feed title; the card's rounded top
+            (corner mask below) pins flush under it, exactly like Threads.
+            CSS-hidden on mobile (the NavRail app bar owns that breakpoint). */}
+        <header className={styles.desktopHeader}>
+          <span className={styles.desktopHeaderTitle}>{t("nav.home")}</span>
+        </header>
+        {/* Threads-style sticky corner mask (desktop only, CSS-hidden on
+            mobile): keeps the surface card's rounded top pinned while the feed
+            scrolls underneath. Same anatomy as the thread view's mask (see
+            Post.js) — here it pins flush under the 60px masthead. */}
+        <div className={styles.cornerMask} aria-hidden="true">
+          <div className={styles.cornerMaskEdge} />
+          <div className={`${styles.cornerCap} ${styles.cornerCapLeft}`}>
+            <div className={styles.cornerCapBox} />
+          </div>
+          <div className={`${styles.cornerCap} ${styles.cornerCapRight}`}>
+            <div className={styles.cornerCapBox} />
+          </div>
+        </div>
+        {/* Elevated surface (thread-view style guide): one card holds compose +
+            tabs + feed on desktop; full-bleed sheet on mobile. */}
+        <div className={styles.surface}>
         <div ref={composeRef}>
           {/* Compose is disabled during ANY busy window (see composeBusy):
               feed load, tab sync (both directions) and Close You GPS locating —
@@ -313,8 +340,8 @@ function HomeNew() {
               isRetrying={isLoadingMore}
             />
           )}
-          {showEndDivider && <HomeFeedEndDivider />}
         </section>
+        </div>
       </main>
     </div>
   );

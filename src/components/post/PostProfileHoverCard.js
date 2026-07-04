@@ -53,7 +53,9 @@ function PostProfileHoverCard({ mask, onMouseEnter, onMouseLeave }) {
       onMouseLeave={onMouseLeave}
     >
       <div className={styles.identiconWrap}>
-        <MaskAvatar seed={id} size={56} />
+        {/* Presence comes from the listing's mask (fresh per feed render) —
+            the profile fetch is session-cached and would show a stale dot. */}
+        <MaskAvatar seed={id} size={56} online={mask.isOnline} />
       </div>
       <p className={styles.hash} title={id}>
         {id}

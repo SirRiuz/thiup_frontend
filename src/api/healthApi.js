@@ -10,7 +10,12 @@
 
 import { apiFetch } from "./client";
 
-const HEALTH_TIMEOUT_MS = 5000;
+// Generous on purpose: on a slow network (3G / weak signal) or a briefly
+// saturated server, the full round-trip (TLS + encrypted envelope + response)
+// can easily exceed 5s — aborting that early misread "slow" as "down" and
+// showed the server-error screen (false positive). 15s only delays the REAL
+// outage verdict; a healthy-but-slow server now gets time to answer.
+const HEALTH_TIMEOUT_MS = 15000;
 
 export async function checkServerHealth() {
   const controller = new AbortController();

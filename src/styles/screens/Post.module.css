@@ -8,9 +8,39 @@
 }
 
 .main {
-  max-width: 740px;
+  /* Threads-like 640px column. The thread content now lives inside an elevated
+     .surface card; .main is just the centered column + a small gutter so the
+     card floats off the page background (#f7f5f0). NO top gap: the card's
+     rounded top rests FLUSH under the 60px app bar (Threads' anatomy) — rest
+     and scrolled are the same state, so the mouth never moves and never jumps
+     when navigating from a scrolled /home. */
+  max-width: 640px;
   margin: 0 auto;
-  padding: 24px 20px;
+  padding: 0 8px 70px;
+}
+
+/* Elevated surface card (Threads-style): lifts the thread off the flat page bg
+   with the warm surface color + a soft border, radius and shadow, giving the
+   view depth and contrast. The media carousel bleeds to this card's INNER edge
+   via --layout-pad-x (kept equal to the card's side padding); it reaches only
+   the STRAIGHT side edges (header above, reactions below — never a rounded
+   corner), so NO overflow:hidden is needed — which would otherwise clip the
+   reaction / profile-hover / sort / options popovers. */
+.surface {
+  background: #fdfcf8;
+  border: 1px solid #e5e0d3;
+  border-radius: 16px;
+  box-shadow: 0 0 12px rgba(26, 26, 26, 0.04);
+  /* Threads' post padding: 16px horizontal (--barcelona-post-horizontal-padding)
+     and 20px TOP (their post column's padding-top: 20px) — the breathing room
+     between the card's top edge / app bar and the OP header, so the thread
+     never touches the ceiling. The content sits ONLY inside the surface now —
+     the OP/replies sections add no extra horizontal padding — so 16px is the
+     single, exact content inset. */
+  padding: 20px 16px 12px;
+  /* Side padding of THIS card → drives the carousel bleed (--media-bleed-x ==
+     this, since the sections add 0). MUST equal the horizontal padding above. */
+  --layout-pad-x: 16px;
 }
 
 /* Sticky app bar — frosted glass over the page bg (#f7f5f0) as it scrolls.
@@ -23,43 +53,28 @@
      view. Defaults to 0 (normal sticky) when there's no keyboard. */
   top: var(--kb-top, 0px);
   z-index: 10;
-  background: rgba(247, 245, 240, 0.88);
-  -webkit-backdrop-filter: blur(28px) saturate(180%);
-  backdrop-filter: blur(28px) saturate(180%);
-}
-
-/* Fallback: solid bg where backdrop-filter is unsupported (keeps text legible). */
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .appBar {
-    background: #f7f5f0;
-  }
+  /* Desktop: SOLID warm page bg — no translucency/blur (the frosted glass is a
+     mobile-only treatment; see the @media block below). */
+  background: #f7f5f0;
 }
 
 .appBarInner {
   position: relative;
-  max-width: 740px;
+  /* Match .main so the bar + its hairline align with the content column. */
+  max-width: 640px;
   margin: 0 auto;
-  padding: 10px 20px;
+  /* 60px tall — SAME height as home's desktop masthead and the mobile NavRail
+     bar, so the surface card's rounded top sits at the exact same viewport
+     position on /home and /p/:id (no jump when navigating between them). */
+  height: 60px;
+  padding: 0 12px;
   display: flex;
   align-items: center;
   gap: 16px;
 }
 
-/* Hairline aligned with the content COLUMN: same max-width/centering
-   as .main and with the side padding inset (20px) — starts and ends
-   exactly where the thread content does (and where the reply
-   separators do). On mobile the column takes the full width and the border spans
-   the available width naturally. Same color/thickness as before. */
-.appBarInner::after {
-  content: "";
-  position: absolute;
-  left: 20px;
-  right: 20px;
-  bottom: 0;
-  /* Middle ground: 1px #e5e0d3 at 75% — more visible than the original
-     (0.5px at 60%) but softer than the solid at 100%. */
-  border-bottom: 1px solid rgba(229, 224, 211, 0.75);
-}
+/* No app-bar border (Threads-style): the frosted bar floats borderless over the
+   page; the elevated thread card below provides the only outline. */
 
 .backButton {
   flex: none;
@@ -145,46 +160,84 @@
 }
 
 .opSection {
-  margin-bottom: 24px;
-  padding: 0 8px;
+  position: relative;
+  /* No own horizontal padding — the surface's 16px IS the content inset
+     (Threads-exact). Carousel bleed therefore just cancels the surface padding
+     (--layout-pad-x) to reach the card edge, first item aligned with the text. */
+  --media-bleed-x: var(--layout-pad-x, 0px);
+}
+
+/* When there ARE replies, the OP gets the SAME edge-to-edge divider as the
+   replies (uniform separators, Threads-style) — bottom padding matches a
+   reply's so the line sits at the same rhythm. With no replies there's no
+   divider (the composer already has its own top divider below). */
+.opSectionDivided {
+  padding-bottom: 18px;
+}
+
+.opSectionDivided::after {
+  content: "";
+  position: absolute;
+  /* .opSection is a DIRECT child of .surface (inset only by the surface's 16px
+     padding) — so -16px reaches the card edge. (Replies also use -16px now that
+     .repliesList adds no extra padding.) Both land on the same line. */
+  left: -16px;
+  right: -16px;
+  bottom: 0;
+  height: 1px;
+  background: #ebe7dd;
 }
 
 .opHeader {
   display: flex;
   align-items: center;
-  gap: 14px;
-  margin-bottom: 24px;
-}
-
-.opMetaCol {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+  /* avatar↔mask spacing comes from the trigger (12px); this is Threads' exact
+     column-gap (6px) between mask · timestamp on the single line. */
+  gap: 6px;
+  /* Threads' username-row rhythm. */
+  line-height: 21px;
+  /* Tight header→body gap (Threads-style). */
+  margin-bottom: 8px;
 }
 
 .opMaskId {
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  font-size: 13px;
+  /* Threads-exact identity row: the name is the SAME SIZE as the body (15px in
+     Threads — hierarchy from weight/color only, never size). Same fluid clamp
+     as .opBody so they stay equal at every viewport. 600 / near-black. */
+  font-size: clamp(14px, 13.1px + 0.25vw, 15px);
   color: #1a1a1a;
   font-weight: 600;
-  letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .opMetaLine {
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  font-size: 11px;
+  /* Threads-exact <time>: same size as the name, 400, light secondary
+     (#9b9591 ≈ their light-theme #999), centered in a min 24px box like their
+     time element (even rhythm for short stamps). */
+  font-size: clamp(14px, 13.1px + 0.25vw, 15px);
+  font-weight: 400;
   color: #9b9591;
+  display: inline-block;
+  min-width: 24px;
+  text-align: center;
 }
 
 .opBody {
   color: #1a1a1a;
-  font-size: 17px;
-  /* Twitter metric for the parent thread: 17/24px (ratio ~1.41 — a bit
-     more breathing room than the 15/20px text, intentional). */
-  line-height: 24px;
+  /* Fluid body type (Threads-style): scales 14px → 15px between a phone and a
+     wide screen instead of a fixed size, so it reads right at every width.
+     Threads' body is system ~15px @ 140%; with Inter's larger x-height this
+     clamp matches it visually. line-height is unitless (1.4) so it scales with
+     the font. SAME size as replies (Threads doesn't size-distinguish OP from
+     replies — position / the 'Replies' separator / the avatar do). */
+  font-size: clamp(14px, 13.1px + 0.25vw, 15px);
+  line-height: 1.4;
   letter-spacing: -0.01em;
   font-weight: 400;
-  margin: 0 0 24px;
+  margin: 0 0 8px;
   /* Preserves the user's line breaks + breaks long words/URLs. */
   white-space: pre-wrap;
   overflow-wrap: break-word;
@@ -202,57 +255,52 @@
   text-underline-offset: 2px;
 }
 
-.opReactions {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-  margin-bottom: 28px;
+/* Facebook-style stacked reaction summary, sitting above the action bar. */
+.opReactionSummary {
+  display: inline-flex;
+  /* No bottom margin — the action bar below brings its own 6px (Threads). */
+  margin-bottom: 0;
 }
 
+/* Threads-style action bar: react + reply, each a borderless rounded button
+   with a warm hover circle. The negative margin pulls the first button's label
+   back to the body's left edge (the buttons carry their own hover padding). */
 .opActions {
   display: flex;
-  gap: 20px;
   align-items: center;
+  /* Threads-exact bar: no gap (buttons spaced by their own 12px paddings),
+     6px above, -8px start (4px net icon inset), -4px bottom trim. */
+  gap: 0;
+  margin: 6px 0 -4px -8px;
 }
 
 .actionActive {
-  background: transparent;
-  border: 0;
-  padding: 0;
-  cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  font-size: 11px;
-  letter-spacing: 0.04em;
-  color: #1a1a1a;
-  font-weight: 500;
-  transition: opacity 120ms ease;
-}
-
-.actionActive:hover {
-  opacity: 0.7;
-}
-
-.actionMuted {
-  background: transparent;
+  /* Threads-exact: 4px icon↔label gap (their --x-columnGap). */
+  gap: 4px;
+  /* Threads-exact action button: 36px tall touch target, 12px side padding. */
+  height: 36px;
+  padding: 0 12px;
   border: 0;
-  padding: 0;
+  border-radius: 999px;
+  background: transparent;
   cursor: pointer;
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  font-size: 11px;
-  letter-spacing: 0.04em;
-  color: #6b6b6b;
-  transition: color 120ms ease;
+  font-family: inherit;
+  /* Threads-exact label: 13px / 400 / charcoal #424242 (their
+     --barcelona-charcoal-text, light theme) — icon and text share the same
+     charcoal via currentColor. */
+  font-size: 13px;
+  font-weight: 400;
+  color: #424242;
+  transition: background 120ms ease, color 120ms ease;
 }
 
-.actionMuted:hover {
-  color: #1a1a1a;
-}
-
-.spacer {
-  flex: 1;
+@media (hover: hover) {
+  .actionActive:hover {
+    /* Wash only — Threads keeps the charcoal on hover. */
+    background: #f0ece3;
+  }
 }
 
 .repliesSeparator {
@@ -270,7 +318,7 @@
 }
 
 .repliesSeparatorLabel {
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-family: inherit;
   font-size: 10px;
   letter-spacing: 0.28em;
   text-transform: uppercase;
@@ -280,8 +328,12 @@
 }
 
 .repliesList {
-  padding: 0 8px;
   transition: opacity 200ms ease;
+  /* No own horizontal padding — replies inset by the surface's 16px only, so the
+     OP and replies share the exact same 16px content edge. (Sub-replies keep
+     their thread-line indent on the left; the carousel still bleeds to the
+     right — see PostReply .contentCell.) */
+  --media-bleed-x: var(--layout-pad-x, 0px);
 }
 
 /* Reload on sort change: dims the existing replies (same values as
@@ -320,7 +372,7 @@
   border: 1px solid #e8e5dd;
   border-radius: 8px;
   padding: 7px 16px;
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-family: inherit;
   font-size: 11px;
   letter-spacing: 0.04em;
   color: #1a1a1a;
@@ -338,4 +390,154 @@
 
 .noRepliesGap {
   height: 8px;
+}
+
+/* === Threads-style sticky corner mask (desktop) ===
+   Keeps the .surface card's rounded TOP pinned below the app bar while content
+   scrolls under it (Threads' column never "loses" its oval shape). Mechanism —
+   lifted from Threads' own markup: a 0-height sticky row whose children paint,
+   in page-bg (#f7f5f0), the region above the card's top edge:
+     • .cornerMaskEdge — the strip between the corners, carrying the 1px top
+       border line (like Threads' 12px strip with border-bottom).
+     • .cornerCap — a 16×31 overflow-hidden window at each end holding a 32×32
+       rounded box whose `box-shadow: 0 0 0 32px #f7f5f0` fills everything
+       OUTSIDE the 16px arc (Threads' `0 0 0 48px background-secondary` trick);
+       the box border redraws the arc outline.
+   Geometry: sticky top = app bar (60px — same height as home's masthead).
+   The card rests FLUSH under the bar (no top gap), so the mask is ALWAYS
+   pinned: rest and scrolled paint the same line (60..61) + arcs, identical to
+   the card's own top border/corners — the mouth never moves. The children's
+   -14px band tucks under the opaque bar. */
+.cornerMask {
+  position: sticky;
+  top: 60px;
+  height: 0;
+  z-index: 5;
+}
+
+.cornerMaskEdge {
+  position: absolute;
+  top: -14px;
+  left: 16px;
+  right: 16px;
+  height: 15px;
+  background: #f7f5f0;
+  border-bottom: 1px solid #e5e0d3;
+  overflow: hidden;
+}
+
+/* Threads' strip-shadow trick (their `top:100%` clipped child): an invisible
+   box just BELOW the strip whose blurred shadow bleeds up into it — recreates
+   the card's faint halo above its top edge, so the masked strip isn't a flat
+   patch against the shadowed corners. */
+.cornerMaskEdge::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  height: 100%;
+  box-shadow: 0 0 12px rgba(26, 26, 26, 0.04);
+}
+
+.cornerCap {
+  position: absolute;
+  top: -14px;
+  width: 16px;
+  height: 31px;
+  overflow: hidden;
+}
+
+.cornerCapLeft {
+  left: 0;
+}
+
+.cornerCapRight {
+  right: 0;
+}
+
+.cornerCapBox {
+  position: absolute;
+  top: 14px;
+  width: 32px;
+  height: 32px;
+  border: 1px solid #e5e0d3;
+  border-radius: 16px;
+  /* Two layers (same as Threads' caps: `0 0 12px shadow, 0 0 0 48px bg`):
+     1. the card's OWN ambient shadow re-cast by the arc, so the masked corner
+        blends with the shadowed page around the card (without it the corner
+        showed as a flat, lighter patch);
+     2. THE trick — the giant spread paints the page bg outside the rounded
+        arc, masking the content that scrolls beneath. */
+  box-shadow: 0 0 12px rgba(26, 26, 26, 0.04), 0 0 0 32px #f7f5f0;
+}
+
+.cornerCapLeft .cornerCapBox {
+  left: 0;
+}
+
+.cornerCapRight .cornerCapBox {
+  right: 0;
+}
+
+/* === Mobile: full-bleed, borderless thread card (Threads-style) ===
+   On phones the card spans the FULL viewport width with NO frame at all — no
+   side gutter, no top gap, no border, no rounded corners, no shadow — so the
+   thread sits flush under the app bar and reaches edge-to-edge like Threads. We
+   zero the .main side + top padding (bottom stays for the composer/bottom-bar
+   clearance) and strip the surface's border/radius/shadow entirely. The
+   carousel-bleed contract is untouched: the surface keeps its 12px side padding
+   (= --layout-pad-x), so media still reaches the screen edge and content stays
+   inset 12px — aligned with the app bar's 12px inset. */
+@media (max-width: 700px) {
+  /* The full-bleed card and the page become one uniform surface on mobile:
+     the page takes the surface color (#fdfcf8) so there's no seam around the
+     borderless card. */
+  .page {
+    background: #fdfcf8;
+  }
+
+  .main {
+    /* The app bar is FIXED on mobile (see below), so it no longer reserves flow
+       space — offset the content by its height (60px, same as the NavRail bar). */
+    padding-top: 60px;
+    padding-left: 0;
+    padding-right: 0;
+    /* Clear the FIXED composer (docked above the bottom nav) so the last reply
+       isn't hidden behind it. */
+    padding-bottom: calc(84px + env(safe-area-inset-bottom));
+  }
+
+  .surface {
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  /* No rounded corners to preserve on mobile (full-bleed card). */
+  .cornerMask {
+    display: none;
+  }
+
+  /* White FROSTED app bar on mobile (Threads-style) — the only breakpoint with
+     translucency/blur; desktop is solid (see the base rule). FIXED (not sticky)
+     so iOS's elastic overscroll can't drag it with the content during the
+     rubber-band — Threads' header is fixed too. It stays anchored to the
+     viewport top (top: var(--kb-top) follows the keyboard). */
+  .appBar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    background: rgba(253, 252, 248, 0.88);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    backdrop-filter: blur(28px) saturate(180%);
+  }
+
+  @supports not (
+    (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))
+  ) {
+    .appBar {
+      background: #fdfcf8;
+    }
+  }
 }

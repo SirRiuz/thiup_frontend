@@ -3,7 +3,6 @@ import { useTranslation } from "react-i18next";
 import HomeFeedCard from "../components/home/HomeFeedCard";
 import HomeFeedCardSkeleton from "../components/home/HomeFeedCardSkeleton";
 import HomeFeedSpinner from "../components/home/HomeFeedSpinner";
-import HomeFeedEndDivider from "../components/home/HomeFeedEndDivider";
 import HomeFeedErrorState from "../components/home/HomeFeedErrorState";
 import HomeFeedRetryBanner from "../components/home/HomeFeedRetryBanner";
 import MeProfileHeader from "../components/me/MeProfileHeader";
@@ -44,7 +43,7 @@ function MyThreads() {
   });
 
   const handlePostClick = (postId) => {
-    navigate(`/post/${postId}`);
+    navigate(`/p/${postId}`);
   };
 
   const handleHashtagClick = (tag) => {
@@ -56,7 +55,6 @@ function MyThreads() {
   const isReloading = isLoading && posts.length > 0;
   const showEmpty = !isLoading && !error && posts.length === 0;
   const showError = !isLoading && error;
-  const showEndDivider = !isLoading && !error && !hasMore && posts.length > 0;
 
   return (
     <div className={styles.page}>
@@ -158,7 +156,6 @@ function MyThreads() {
               isRetrying={isLoadingMore}
             />
           )}
-          {showEndDivider && <HomeFeedEndDivider />}
         </section>
       </main>
     </div>

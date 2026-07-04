@@ -1,6 +1,25 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { useTranslation } from "react-i18next";
 import MediaViewer from "./MediaViewer";
+import {
+  getAudioOwner,
+  setAudioOwner,
+  clearAudioOwnerIf,
+  subscribeAudioOwner,
+} from "../../services/media/audioOwner";
+import {
+  getPlaybackOwner,
+  setPlaybackCandidate,
+  forcePlaybackOwner,
+  removePlaybackCandidate,
+  subscribePlayback,
+} from "../../services/media/playbackArbiter";
 import styles from "../../styles/components/media/ThreadMedia.module.css";
 
 // Layout sizing. The cap/floor on the aspect-ratio gives the Threads look
@@ -69,7 +88,7 @@ function PlayIcon() {
 
 // Lazy image: native loading="lazy" + fade-in on load; reports its natural size
 // so the frame can size to the real aspect-ratio.
-function ImageMedia({ item, revealed, onNaturalSize }) {
+function ImageMedia({ item, revealed, onNaturalSize, eager }) {
   const [loaded, setLoaded] = useState(false);
   const handleLoad = (e) => {
     setLoaded(true);
@@ -80,7 +99,10 @@ function ImageMedia({ item, revealed, onNaturalSize }) {
     <img
       src={item.url}
       alt=""
-      loading="lazy"
+      // In a carousel, once the CARD is visible (eager) load now — native lazy
+      // only measures vertical viewport proximity, so an off-screen-right item
+      // would otherwise stay an empty hole. Standalone keeps native lazy.
+      loading={eager ? "eager" : "lazy"}
       decoding="async"
       draggable={false}
       onLoad={handleLoad}
@@ -91,16 +113,28 @@ function ImageMedia({ item, revealed, onNaturalSize }) {
   );
 }
 
-// Lazy video: IntersectionObserver for (1) load near viewport and (2) autoplay
-// while ≥50% visible / pause when it leaves. Muted + playsinline + loop by
-// default; a sound toggle (own icon) unmutes. prefers-reduced-motion → no
-// autoplay (a manual play button instead). Both observers cleaned up on unmount.
-function VideoMedia({ item, revealed, onNaturalSize }) {
+// Lazy video: IntersectionObserver for (1) load near viewport and (2) playback
+// candidacy while visible. Muted + playsinline + loop by default; a sound
+// toggle (own icon) unmutes. prefers-reduced-motion → no autoplay (a manual
+// play button instead). Both observers cleaned up on unmount.
+//
+// PLAYBACK is arbitrated globally (playbackArbiter): only the MOST VISIBLE
+// video in the app actually plays (Threads rule) — the rest sit paused on their
+// poster frame. Multiple 4K iPhone videos decoding at once is what crashed iOS
+// Safari (few hardware decoders + a low memory ceiling).
+function VideoMedia({ item, revealed, onNaturalSize, eager }) {
   const { t } = useTranslation();
   const videoRef = useRef(null);
   const [src, setSrc] = useState(null); // lazy: unset until near viewport
   const [loaded, setLoaded] = useState(false);
-  const [muted, setMuted] = useState(true);
+  // Audio is GLOBAL: this video is unmuted only while it owns the audio (one at
+  // a time across the whole feed). Deriving muted from the store means claiming
+  // audio elsewhere mutes this one reactively.
+  const audioOwner = useSyncExternalStore(subscribeAudioOwner, getAudioOwner);
+  const muted = audioOwner !== item.id;
+  // Playback is GLOBAL too: only the arbiter's owner plays.
+  const playbackOwner = useSyncExternalStore(subscribePlayback, getPlaybackOwner);
+  const isPlaybackOwner = playbackOwner === item.id;
   const [needsTap, setNeedsTap] = useState(false); // reduced-motion: manual play
   const visibleRef = useRef(false);
   const reducedRef = useRef(false);
@@ -114,13 +148,23 @@ function VideoMedia({ item, revealed, onNaturalSize }) {
   const tryPlay = useCallback(() => {
     const el = videoRef.current;
     if (!el || !visibleRef.current || !revealed || !src) return;
+    // Only the arbitrated owner may decode/play — everyone else stays paused.
+    if (getPlaybackOwner() !== item.id) return;
     if (reducedRef.current && !startedRef.current) {
       setNeedsTap(true);
       return;
     }
     const p = el.play();
     if (p && typeof p.catch === "function") p.catch(() => {});
-  }, [revealed, src]);
+  }, [revealed, src, item.id]);
+
+  // React to ownership changes: won → play; lost → pause (poster stays).
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!el) return;
+    if (isPlaybackOwner) tryPlay();
+    else el.pause();
+  }, [isPlaybackOwner, tryPlay]);
 
   useEffect(() => {
     reducedRef.current =
@@ -131,10 +175,19 @@ function VideoMedia({ item, revealed, onNaturalSize }) {
     if (reducedRef.current) setNeedsTap(true);
   }, []);
 
-  // (1) Lazy load: set the src once the video is near the viewport (one-shot).
+  // (1) Lazy load (poster only — preload="metadata" loads the first frame, NOT
+  // the whole video; the full download happens on play, see (2)). In a CAROUSEL
+  // (eager is a boolean) we load as soon as the CARD is visible — NOT when the
+  // item scrolls into horizontal view — so an off-screen-right item (e.g. the
+  // last video) never stays an empty hole. Standalone (eager === undefined) we
+  // fall back to the element's own viewport proximity.
   useEffect(() => {
     const el = videoRef.current;
     if (!el) return undefined;
+    if (eager !== undefined) {
+      if (eager) setSrc(item.url);
+      return undefined;
+    }
     if (typeof IntersectionObserver === "undefined") {
       setSrc(item.url);
       return undefined;
@@ -150,9 +203,12 @@ function VideoMedia({ item, revealed, onNaturalSize }) {
     );
     io.observe(el);
     return () => io.disconnect();
-  }, [item.url]);
+  }, [item.url, eager]);
 
-  // (2) Autoplay while visible / pause off-screen (data + battery friendly).
+  // (2) Playback candidacy while visible / drop out off-screen. The arbiter
+  // picks the MOST visible candidate as the single playing video (the ownership
+  // effect above does the actual play/pause), so N visible videos never decode
+  // at once (data + battery + the iOS decoder/memory crash).
   useEffect(() => {
     const el = videoRef.current;
     if (!el || typeof IntersectionObserver === "undefined") return undefined;
@@ -160,15 +216,31 @@ function VideoMedia({ item, revealed, onNaturalSize }) {
       (entries) => {
         const e = entries[entries.length - 1];
         if (!e) return;
-        visibleRef.current = e.isIntersecting && e.intersectionRatio >= 0.5;
-        if (visibleRef.current) tryPlay();
-        else el.pause();
+        const ratio = e.isIntersecting ? e.intersectionRatio : 0;
+        visibleRef.current = ratio >= 0.5;
+        setPlaybackCandidate(item.id, ratio);
+        if (!visibleRef.current) {
+          el.pause();
+          // Leaving the screen releases the audio so nothing plays sound
+          // off-screen; it returns muted next time it's visible.
+          clearAudioOwnerIf(item.id);
+        }
       },
-      { threshold: [0, 0.5, 1] }
+      { threshold: [0, 0.25, 0.5, 0.75, 1] }
     );
     io.observe(el);
-    return () => io.disconnect();
-  }, [tryPlay]);
+    return () => {
+      io.disconnect();
+      removePlaybackCandidate(item.id);
+    };
+  }, [tryPlay, item.id]);
+
+  // iOS Safari is lazy about decoding: once the src is set, explicitly load() so
+  // it fetches metadata + renders the #t=0.1 poster frame (no full download).
+  useEffect(() => {
+    const el = videoRef.current;
+    if (el && src) el.load();
+  }, [src]);
 
   // Play once an NSFW video is revealed (if it's already on screen).
   useEffect(() => {
@@ -177,21 +249,43 @@ function VideoMedia({ item, revealed, onNaturalSize }) {
 
   const toggleMute = (e) => {
     e.stopPropagation();
-    setMuted((m) => {
-      const next = !m;
+    // Read the LIVE owner (not the render-closure `muted`): after a fullscreen
+    // open/close this instance's render may lag the store for a tick, and a
+    // stale closure would make the first click only resync (the "double click"
+    // bug). The live value guarantees the first click toggles.
+    if (getAudioOwner() !== item.id) {
+      // Claim the audio → every other video mutes reactively. Unmuting is
+      // explicit intent to WATCH this one, so it also claims playback (the
+      // arbiter pauses whichever video was playing).
+      setAudioOwner(item.id);
+      forcePlaybackOwner(item.id);
       const el = videoRef.current;
-      if (el && !next && visibleRef.current) {
+      if (el && visibleRef.current) {
         const p = el.play();
         if (p && typeof p.catch === "function") p.catch(() => {});
       }
-      return next;
-    });
+    } else {
+      // Mute everyone (we were the owner).
+      setAudioOwner(null);
+    }
   };
+
+  // Release audio + playback candidacy on unmount (no phantom audio, and the
+  // arbiter can promote the next visible video).
+  useEffect(
+    () => () => {
+      clearAudioOwnerIf(item.id);
+      removePlaybackCandidate(item.id);
+    },
+    [item.id]
+  );
 
   const manualPlay = (e) => {
     e.stopPropagation();
     startedRef.current = true;
     setNeedsTap(false);
+    // Manual play is explicit intent — claim playback from whoever has it.
+    forcePlaybackOwner(item.id);
     const el = videoRef.current;
     if (el) {
       const p = el.play();
@@ -203,13 +297,19 @@ function VideoMedia({ item, revealed, onNaturalSize }) {
     <>
       <video
         ref={videoRef}
-        src={src || undefined}
+        // #t=0.1 makes iOS Safari seek to and RENDER that frame as the poster
+        // (it shows nothing without a poster). With preload="metadata" it fetches
+        // only metadata + that frame, NOT the whole video — the full download
+        // still waits for play() (autoplay-on-visible). The fragment is
+        // client-side, so it never breaks a presigned (query-string) URL.
+        src={src ? `${src}#t=0.1` : undefined}
         className={`${styles.img} ${loaded ? styles.loaded : ""} ${
           revealed ? "" : styles.blurred
         }`}
         muted
         loop
         playsInline
+        webkit-playsinline="true"
         preload="metadata"
         draggable={false}
         aria-label={t("media.video")}
@@ -238,10 +338,26 @@ function VideoMedia({ item, revealed, onNaturalSize }) {
           data-control=""
           className={styles.soundBtn}
           aria-label={muted ? t("media.unmute") : t("media.mute")}
-          onPointerDown={(e) => e.stopPropagation()}
+          // Bounce the whole card-item (the existing spring) as touch feedback,
+          // reusing pressEl/bounceEl on the frame. stopPropagation keeps the
+          // carousel/single from also handling it (no drag, no viewer open).
+          onPointerDown={(e) => {
+            e.stopPropagation();
+            pressEl(e.currentTarget.closest("[data-frame]"));
+          }}
+          onPointerUp={(e) => bounceEl(e.currentTarget.closest("[data-frame]"))}
+          onPointerCancel={(e) => cancelEl(e.currentTarget.closest("[data-frame]"))}
           onClick={toggleMute}
         >
-          <SpeakerIcon muted={muted} />
+          {/* Threads' two-layer structure: an invisible middle layer (16px
+              padding = the enlarged ~60×60 touch area) wraps the visible pill
+              (blur + dark fill + circular + 8px padding → 28×28). The button
+              itself carries no fill/size — interaction only. */}
+          <span className={styles.soundHit}>
+            <span className={styles.soundPill}>
+              <SpeakerIcon muted={muted} />
+            </span>
+          </span>
         </button>
       )}
     </>
@@ -260,6 +376,7 @@ function MediaFrame({
   frameRef,
   frameProps = {},
   onNaturalSize,
+  eager,
 }) {
   const { t } = useTranslation();
   const [revealed, setRevealed] = useState(!item.isNsfw);
@@ -274,9 +391,9 @@ function MediaFrame({
       {...frameProps}
     >
       {isVideo ? (
-        <VideoMedia item={item} revealed={revealed} onNaturalSize={onNaturalSize} />
+        <VideoMedia item={item} revealed={revealed} onNaturalSize={onNaturalSize} eager={eager} />
       ) : (
-        <ImageMedia item={item} revealed={revealed} onNaturalSize={onNaturalSize} />
+        <ImageMedia item={item} revealed={revealed} onNaturalSize={onNaturalSize} eager={eager} />
       )}
       {!revealed && (
         <button
@@ -304,7 +421,14 @@ function MediaFrame({
 // space to avoid layout shift; without backend dimensions we start from a
 // sensible default and refine once the real size is known.
 function SingleMedia({ item, onOpen }) {
-  const [ratio, setRatio] = useState(0.8);
+  // Start from the REAL aspect-ratio when the backend carries the stored
+  // dimensions (confirm-time width/height) — the frame reserves its final size
+  // from the FIRST paint and never jumps when the media loads (the scroll-shift
+  // bug). Old records without dims fall back to the 0.8 guess and refine on
+  // load, as before.
+  const [ratio, setRatio] = useState(() =>
+    item.width && item.height ? clampRatio(item.width / item.height) : 0.8
+  );
   const frameRef = useRef(null);
   const onOpenRef = useRef(onOpen);
   onOpenRef.current = onOpen;
@@ -384,9 +508,46 @@ function SingleMedia({ item, onOpen }) {
 // - Snap is disabled while dragging (so the drag is free) and re-enabled on
 //   release (soft proximity snap). Listeners + rAF are cleaned up on unmount.
 function Carousel({ images, onOpen }) {
+  const { t } = useTranslation();
   const ref = useRef(null);
+  // Inner track that carries the cells — the elastic overscroll stretches it
+  // with a transform (the scroller's scrollLeft clamps at the ends).
+  const innerRef = useRef(null);
   const onOpenRef = useRef(onOpen);
   onOpenRef.current = onOpen;
+  // Panorama mode (Threads): clicking the invisible seam button between two
+  // cells collapses every gap (animated) so the images join into one panorama.
+  // While joined, a tap ANYWHERE (a seam or an image) separates them again —
+  // the viewer only opens from normal mode (Threads' exact behavior). The ref
+  // mirrors the state for the pointer handlers (bound once in the effect).
+  const [pano, setPano] = useState(false);
+  const panoRef = useRef(false);
+  panoRef.current = pano;
+  // Load the carousel's items as soon as the CARD/container is visible (not when
+  // each item scrolls into HORIZONTAL view) — the IntersectionObserver only
+  // measures vertical viewport proximity, so an off-screen-right item (e.g. the
+  // last video) would otherwise never load and stay an empty hole. Feed-level
+  // lazy is preserved: off-screen cards never become eager.
+  const [eager, setEager] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || eager) return undefined;
+    if (typeof IntersectionObserver === "undefined") {
+      setEager(true);
+      return undefined;
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setEager(true);
+          io.disconnect();
+        }
+      },
+      { rootMargin: "200px 0px" }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [eager]);
   const drag = useRef({
     active: false,
     startX: 0,
@@ -402,9 +563,34 @@ function Carousel({ images, onOpen }) {
     const el = ref.current;
     if (!el) return undefined;
     const d = drag.current;
+    const inner = innerRef.current;
+
+    // Elastic overscroll on the MOUSE drag (Threads desktop): past the ends the
+    // strip keeps following the pointer with rubber-band resistance (transform
+    // on the inner track — scrollLeft clamps and can't stretch) and springs
+    // back on release. Asymptotic damping: approaches but never exceeds RUBBER.
+    const RUBBER = 110;
+    const reduceMotion =
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const rubber = (over) => (1 - 1 / (over / RUBBER + 1)) * RUBBER;
+    let stretched = 0;
 
     const apply = () => {
-      el.scrollLeft = d.target;
+      const max = el.scrollWidth - el.clientWidth;
+      const clamped = Math.max(0, Math.min(max, d.target));
+      el.scrollLeft = clamped;
+      const over = d.target - clamped; // <0 past the start, >0 past the end
+      const px =
+        over === 0 || reduceMotion || !inner
+          ? 0
+          : over > 0
+          ? -rubber(over)
+          : rubber(-over);
+      if (px !== stretched && inner) {
+        stretched = px;
+        inner.style.transform = px ? `translateX(${px}px)` : "";
+      }
       d.raf = 0;
     };
     const onDown = (e) => {
@@ -427,6 +613,8 @@ function Carousel({ images, onOpen }) {
       d.startScroll = el.scrollLeft;
       d.target = el.scrollLeft;
       el.classList.add(styles.dragging);
+      // The stretch must track the pointer 1:1 while dragging — no easing.
+      if (inner) inner.style.transition = "none";
       // Capture so move/up keep firing even if the cursor leaves the element.
       if (el.setPointerCapture) el.setPointerCapture(e.pointerId);
     };
@@ -446,19 +634,32 @@ function Carousel({ images, onOpen }) {
       if (!d.raf) d.raf = requestAnimationFrame(apply);
     };
     const onUp = (e) => {
-      // A tap (no significant move) springs back with the overshoot bounce and
-      // opens the viewer at that image (unless it was the reveal button).
+      // A tap (no significant move) springs back with the overshoot bounce.
+      // In panorama mode the tap SEPARATES the strip back to normal (Threads);
+      // otherwise it opens the viewer at that image.
       if (d.pressedEl) {
         if (!d.moved) {
           bounceEl(d.pressedEl);
-          const i = Number(d.pressedEl.dataset.index);
-          if (!Number.isNaN(i)) onOpenRef.current?.(i);
+          if (panoRef.current) {
+            setPano(false);
+          } else {
+            const i = Number(d.pressedEl.dataset.index);
+            if (!Number.isNaN(i)) onOpenRef.current?.(i);
+          }
         }
         d.pressedEl = null;
       }
       if (!d.active) return;
       d.active = false;
       el.classList.remove(styles.dragging);
+      // Release past the edge: spring the stretched track back to rest.
+      if (stretched && inner) {
+        inner.style.transition =
+          "transform 0.3s cubic-bezier(0.22, 1, 0.36, 1)";
+        inner.style.transform = "";
+        stretched = 0;
+        d.target = el.scrollLeft; // drop the out-of-bounds remainder
+      }
       if (el.releasePointerCapture && e.pointerId != null) {
         try {
           el.releasePointerCapture(e.pointerId);
@@ -501,22 +702,49 @@ function Carousel({ images, onOpen }) {
   }, []);
 
   return (
-    <div ref={ref} className={styles.carousel}>
-      {images.map((item, i) => (
-        <CarouselItem key={item.id} item={item} index={i} />
-      ))}
+    // data-media-zone: the whole track (cells AND the gaps/empty end space) is
+    // drag surface — clickable ancestors (feed card row navigation) skip it.
+    <div
+      ref={ref}
+      className={`${styles.carousel} ${pano ? styles.panorama : ""}`}
+      data-media-zone=""
+    >
+      <div ref={innerRef} className={styles.track}>
+        {images.map((item, i) => (
+          <div key={item.id} className={styles.cell}>
+            <CarouselItem item={item} index={i} eager={eager} />
+            {/* Threads' "Combine media into panorama" seam button — one per gap
+                (none after the last cell). data-control: the track's pointer
+                logic leaves it alone (no press/capture), like the sound button. */}
+            {i < images.length - 1 && (
+              <button
+                type="button"
+                data-control=""
+                className={styles.panoToggle}
+                aria-label={t("media.combinePanorama")}
+                aria-pressed={pano}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setPano((p) => !p);
+                }}
+              />
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
 
 // Carousel cell: a fixed 3/4 box (Threads-style); the media fills it with
 // object-fit: cover. No per-item aspect-ratio — every cell is identical.
-function CarouselItem({ item, index }) {
+function CarouselItem({ item, index, eager }) {
   return (
     <MediaFrame
       item={item}
       className={styles.carouselItem}
       frameProps={{ "data-index": index }}
+      eager={eager}
     />
   );
 }
@@ -534,11 +762,13 @@ function ThreadMedia({ items }) {
   const [viewerIndex, setViewerIndex] = useState(null);
   // Set when a tap opens the viewer so the resulting click is swallowed here
   // (capture phase) and never reaches the surrounding clickable card.
-  const suppressClickRef = useRef(false);
   // Images AND videos open in the fullscreen viewer (it renders both).
+  // NOTE: no click-suppression here. The card is no longer a button (navigation
+  // moved to navZone, a sibling of the media), so a tap on the media never
+  // reaches a navigation handler — and a stale suppress flag used to eat the
+  // first tap on the sound button after closing the viewer (the "double click").
   const open = (mediaIndex) => {
     if (!media[mediaIndex]) return;
-    suppressClickRef.current = true;
     setViewerIndex(mediaIndex);
   };
   const close = () => setViewerIndex(null);
@@ -546,15 +776,12 @@ function ThreadMedia({ items }) {
   if (media.length === 0) return null;
 
   return (
-    <div
-      className={styles.wrapper}
-      onClickCapture={(e) => {
-        if (suppressClickRef.current) {
-          suppressClickRef.current = false;
-          e.stopPropagation();
-        }
-      }}
-    >
+    // NOTE: no exclusion attribute on this wrapper — it spans the full column
+    // width, so the blank space beside a narrow single image must still
+    // navigate (feed card whole-row click). The opt-out hooks live on the
+    // actual media surfaces: [data-frame] (single frame + carousel cells) and
+    // [data-media-zone] on the carousel track (its empty track is drag area).
+    <div className={styles.wrapper}>
       {media.length === 1 ? (
         <SingleMedia item={media[0]} onOpen={() => open(0)} />
       ) : (

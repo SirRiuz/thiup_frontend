@@ -32,11 +32,12 @@ function resolveCurrentUserReaction(backendPost) {
 
 /**
  * Maps the backend media to the shape ThreadMedia consumes:
- *   { id, type, url, isNsfw }
- * The backend sends { id, uid, is_video, is_nsfw, file (public URL) } — it does
- * NOT send dimensions (width/height live in the internal metadata), so the
- * aspect-ratio is derived on load. RECOMMENDATION: expose width/height in the
- * public media serializer to fully avoid layout shift on single images.
+ *   { id, type, url, isNsfw, width, height }
+ * width/height (stored at confirm time) let the UI reserve the REAL
+ * aspect-ratio before the media loads — without them the placeholder guesses a
+ * default ratio and the layout JUMPS when the media resolves (the scroll-shift
+ * bug). Read defensively from the serializer fields or the metadata JSON
+ * fallback; 0 for old records → the on-load measurement refines as before.
  */
 export function mapMedia(media) {
   if (!Array.isArray(media) || media.length === 0) return null;
@@ -45,6 +46,8 @@ export function mapMedia(media) {
     type: m.is_video || m.type === "video" ? "video" : "image",
     url: m.file || m.url || null,
     isNsfw: m.is_nsfw ?? false,
+    width: m.width || m.metadata?.width || 0,
+    height: m.height || m.metadata?.height || 0,
     // Dominant color for the fullscreen viewer background (null → warm fallback).
     dominantColor: m.target_color || m.dominantColor || null,
   }));
@@ -78,6 +81,9 @@ export function mapBackendPostToFrontend(backendPost) {
       id: maskDisplayId,
       fullHash: backendPost.mask?.hash,
       countryCode: backendPost.mask?.country_code,
+      // Ephemeral presence from the backend (active in the last 60s):
+      // drives the Threads-style green dot on the avatar.
+      isOnline: Boolean(backendPost.mask?.is_online),
     },
     text: backendPost.text || "",
     time: backendPost.create_at || "",

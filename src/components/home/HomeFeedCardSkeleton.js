@@ -12,8 +12,11 @@ function HomeFeedCardSkeleton({ variant = "medium" }) {
   const { t } = useTranslation();
   return (
     <div className={styles.skeleton} aria-busy="true" aria-label={t("common.loadingPost")}>
+      {/* Mirrors HomeFeedCard's Threads grid: avatar gutter + content column. */}
+      <div className={styles.grid}>
+      <div className={`${styles.bar} ${styles.identicon}`}></div>
+      <div className={styles.content}>
       <div className={styles.header}>
-        <div className={`${styles.bar} ${styles.identicon}`}></div>
         <div className={`${styles.bar} ${styles.maskId}`}></div>
         <div className={`${styles.bar} ${styles.timestamp}`}></div>
         {variant === "medium" && (
@@ -46,6 +49,8 @@ function HomeFeedCardSkeleton({ variant = "medium" }) {
         <div className={`${styles.bar} ${styles.statSmall}`}></div>
         <div className={`${styles.bar} ${styles.statMedium}`}></div>
         <div className={`${styles.bar} ${styles.statLarge}`}></div>
+      </div>
+      </div>
       </div>
     </div>
   );

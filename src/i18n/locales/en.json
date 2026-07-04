@@ -9,17 +9,17 @@
     "play": "Play",
     "pause": "Pause",
     "seek": "Seek",
+    "combinePanorama": "Combine media into panorama",
     "viewer": {
       "label": "Image viewer",
       "close": "Close",
       "previous": "Previous image",
       "next": "Next image",
-      "position": "Image {{current}} of {{total}}"
+      "position": "Image {{current}} of {{total}}",
+      "loadError": "Couldn't load this media"
     }
   },
   "common": {
-    "showMore": "Show more",
-    "showLess": "Show less",
     "tryAgain": "Try again",
     "back": "Back",
     "backToHome": "Back to home",
@@ -98,6 +98,7 @@
     "newThread": "New thread",
     "newThreadBadge": "Your new thread",
     "yourThread": "Your thread",
+    "openThread": "Open thread",
     "endOfFeed": "End of feed",
     "loadingMore": "Loading more posts"
   },
@@ -173,6 +174,8 @@
     "reply": "Reply",
     "replies": "Replies",
     "opAuthor": "Thread author",
+    "author": "Author",
+    "react": "React",
     "addReaction": "Add reaction",
     "endOfThread": "End of thread",
     "loadMoreReplies": "Load more replies",

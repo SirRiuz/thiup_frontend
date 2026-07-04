@@ -22,8 +22,8 @@ export function mapBackendTagToFrontend(backendTag) {
 }
 
 /**
- * Mask/user: { hash, country_code, posts_count, joined_at, miniature }
- * → { maskId, fullHash, countryCode, postsCount, joinedAt }.
+ * Mask/user: { hash, country_code, posts_count, joined_at, is_online }
+ * → { maskId, fullHash, countryCode, postsCount, joinedAt, isOnline }.
  * maskId = first 6 chars of the hash (same criterion as the posts mapper).
  */
 export function mapBackendUserToFrontend(backendUser) {
@@ -34,5 +34,7 @@ export function mapBackendUserToFrontend(backendUser) {
     countryCode: backendUser.country_code,
     postsCount: backendUser.posts_count ?? 0,
     joinedAt: backendUser.joined_at || "",
+    // Ephemeral presence (active in the last 60s) — green dot on the card.
+    isOnline: Boolean(backendUser.is_online),
   };
 }

@@ -113,7 +113,7 @@ function SearchAppBar({ mode, query }) {
       setIsOpen(false);
       setHighlightIndex(-1);
       if (inputRef.current) inputRef.current.blur();
-      navigate(`/post/${item.uid}`);
+      navigate(`/p/${item.uid}`);
       return;
     }
     // tag/trending → búsqueda por tag; recent/new → búsqueda normal.

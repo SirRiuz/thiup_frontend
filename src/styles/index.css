@@ -38,9 +38,11 @@ body {
   /* Warm app background — prevents a white flash before React mounts and white
      overscroll/rubber-banding on mobile. */
   background: #f7f5f0;
-  /* Disable rubber-band/overscroll + pull-to-refresh. Must sit on <html> (the
-     document scroller), not just <body>, or Safari ignores it. */
-  overscroll-behavior: none;
+  /* Native vertical overscroll: keep the iOS rubber-band AND the browser's
+     pull-to-refresh (overscroll-behavior-y: auto). We still contain horizontal
+     overscroll so a sideways swipe can't trigger the back-nav / show a gutter. */
+  overscroll-behavior-y: auto;
+  overscroll-behavior-x: contain;
 }
 
 body {

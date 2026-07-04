@@ -1,15 +1,39 @@
 /* HomeFeedCardSkeleton — placeholders during feed loading */
 
 .skeleton {
-  padding: 18px 8px;
-  border-bottom: 1px solid #ebe7dd;
+  /* Mirrors HomeFeedCard: 12px vertical rhythm, NO horizontal padding (the
+     screen's container provides the 16px inset), full-bleed divider. */
+  position: relative;
+  padding: 12px 0;
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  left: calc(-1 * var(--layout-pad-x, 16px));
+  right: calc(-1 * var(--layout-pad-x, 16px));
+  bottom: 0;
+  height: 1px;
+  background: #ebe7dd;
+}
+
+/* Mirrors HomeFeedCard's Threads grid (36px avatar in a 48px lane). */
+.grid {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  column-gap: 12px;
+  align-items: start;
+}
+
+.content {
+  min-width: 0;
 }
 
 .header {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
+  gap: 6px;
+  margin-bottom: 8px;
 }
 
 .body {
@@ -32,10 +56,11 @@
 }
 
 .identicon {
-  width: 22px;
-  height: 22px;
+  width: 36px;
+  height: 36px;
   flex: none;
-  border-radius: 3px;
+  border-radius: 50%;
+  margin-top: 2px;
 }
 
 .maskId {

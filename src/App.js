@@ -1,5 +1,11 @@
 import { useState } from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  useParams,
+} from "react-router-dom";
 import Post from "./screens/Post";
 import NotFound from "./screens/NotFound";
 import HomeNew from "./screens/HomeNew";
@@ -21,6 +27,14 @@ import { ToastProvider } from "./contexts/ToastContext";
 import ServerError from "./screens/ServerError";
 import NetworkError from "./screens/NetworkError";
 import "./styles/index.css";
+
+// Legacy /post/:id → canonical short /p/:id (replace: the long URL doesn't
+// stay in history). Old shared links keep working and normalize to the short
+// form in the address bar.
+function LegacyPostRedirect() {
+  const { id } = useParams();
+  return <Navigate to={`/p/${id}`} replace />;
+}
 
 export default function App() {
   // The splash manages its own timing (short minimum + fade-out) and signals
@@ -72,10 +86,15 @@ export default function App() {
                         {/* The thread view also lives inside the shell:
                           rail visible (no active item — the route doesn't match
                           any) and bottom bar on mobile. The
-                          thread's content is not modified. */}
-                        <Route path="/post/:id/" element={<Post />} />
+                          thread's content is not modified. /p/:id is the
+                          CANONICAL short URL; every in-app navigation uses it. */}
+                        <Route path="/p/:id/" element={<Post />} />
                       </Route>
-                      {/* /post without id (hand-edited URL): to /home, not to 404. */}
+                      {/* Legacy long URL (back-compat): old shared /post/:id
+                        links redirect to the canonical /p/:id. */}
+                      <Route path="/post/:id/" element={<LegacyPostRedirect />} />
+                      {/* /p or /post without id (hand-edited URL): to /home, not 404. */}
+                      <Route path="/p" element={<Navigate to="/home" replace />} />
                       <Route
                         path="/post"
                         element={<Navigate to="/home" replace />}

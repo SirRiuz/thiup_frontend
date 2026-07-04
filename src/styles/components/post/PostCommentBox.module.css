@@ -1,13 +1,42 @@
 /* PostCommentBox — reply box with synchronized overlay for hashtags */
 
 .wrapper {
-  padding: 16px;
-  background: #fdfcf8;
-  border: 1px solid #e8e5dd;
-  border-radius: 8px;
-  /* generous margin-bottom so the box doesn't stick to the bottom of the
-   * scroll (the screen's .main contributes its own padding; this adds to it). */
-  margin: 0 8px 32px;
+  /* The composer now lives INSIDE the thread's elevated .surface card, so it
+   * drops its own card (border/bg/radius). It's a section at the bottom of the
+   * card, divided from the replies by a full-width top border (negative side
+   * margins cancel the surface's 12px padding → edge-to-edge, like the reply
+   * dividers); the side padding restores the content inset. */
+  margin: 0 -12px;
+  padding: 16px 12px 0;
+  border-top: 1px solid #ebe7dd;
+}
+
+/* Mobile: the composer detaches from the thread flow and docks as a FIXED bar
+   at the bottom (Threads-style), full-width, sitting just ABOVE the bottom nav.
+   When the keyboard opens the nav hides and --kb-inset-bottom (set by
+   useKeyboardOpen) lifts the composer to ride right above the keyboard. */
+@media (max-width: 700px) {
+  .wrapper {
+    position: fixed;
+    left: 0;
+    right: 0;
+    /* Above the bottom nav (46px item + 2×6px padding = 58px, + safe area) at
+       rest; above the keyboard when it's open (whichever is larger). */
+    bottom: max(
+      calc(58px + env(safe-area-inset-bottom)),
+      var(--kb-inset-bottom, 0px)
+    );
+    z-index: 39;
+    margin: 0;
+    padding: 10px 12px;
+    background: #fdfcf8;
+    border-top: 1px solid #ebe7dd;
+    /* Promote to its own compositor layer so iOS doesn't drag/jitter this
+       bottom-fixed bar with the document during momentum & elastic overscroll
+       (the app bar, being top-fixed, stays put without this — bottom-fixed bars
+       are the ones prone to it). translateZ(0) is a visual no-op. */
+    transform: translateZ(0);
+  }
 }
 
 /* === Header "posting as @maskId" (aligned with HomeCompose) === */
@@ -16,9 +45,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 12px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #ebe7dd;
+  margin-bottom: 10px;
 }
 
 .identiconWrap {
@@ -31,14 +58,14 @@
 }
 
 .label {
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-family: inherit;
   font-size: 11px;
   color: #1a1a1a;
   font-weight: 500;
 }
 
 .maskId {
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-family: inherit;
   font-size: 11px;
   color: #1a1a1a;
   font-weight: 600;
@@ -46,9 +73,53 @@
 
 /* === Textarea with synchronized overlay === */
 
+/* Threads-style: ONE rounded, bordered, tinted box holds the whole composer —
+   avatar on the left, the input + toolbar column on the right, all inline. */
+.composeRow {
+  display: flex;
+  align-items: flex-start;
+  /* Match Threads' composer height (~49px): 36px icon button + 6px top/bottom
+     padding + border. gap 8 + padding 6 mirror Threads' values. */
+  gap: 8px;
+  background: #f7f5f0;
+  border: 1px solid #e5e0d3;
+  border-radius: 24px;
+  padding: 6px 6px 6px 10px;
+}
+
+.avatar {
+  flex: none;
+  display: inline-flex;
+  /* Optically align the identicon with the input's first line. */
+  margin-top: 2px;
+}
+
+/* Threads-exact avatar ring: a hairline 0.5px outline hugging the circular
+   identicon (outline-offset: -0.5px keeps it on the edge, like Threads' avatar
+   img outline). Warm line token instead of Threads' neutral. */
+.avatar svg {
+  outline: 0.5px solid #e5e0d3;
+  outline-offset: -0.5px;
+}
+
+/* Input + toolbar on ONE ROW (Threads-style): the text fills the space and the
+   icon/Reply sits to its right; bottom-aligned so it tracks the last line as
+   the input grows. The box/border lives on .composeRow. */
+.field {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 8px;
+}
+
 .textareaWrapper {
+  /* Takes the row's free space; positioning context for the hashtag overlay
+     (padding lives on the input + overlay so they stay pixel-aligned). */
   position: relative;
-  width: 100%;
+  flex: 1;
+  min-width: 0;
 }
 
 /* CRITICAL: the overlay must match the textarea pixel-perfect.
@@ -68,7 +139,7 @@
   font-size: 14px;
   line-height: 1.55;
   color: #1a1a1a;
-  padding: 4px 0 12px;
+  padding: 6px 0;
   margin: 0;
   border: 0;
   box-sizing: border-box;
@@ -94,9 +165,11 @@
   line-height: 1.55;
   color: transparent;
   caret-color: #1a1a1a;
-  padding: 4px 0 12px;
+  padding: 6px 0;
   min-height: 24px;
-  max-height: 140px;
+  /* No max-height: the field GROWS with the content (Threads-style) — a cap
+     here would clip the textarea to 140px while the (absolute) overlay still
+     rendered the full text, spilling it out of the box. */
   overflow-y: hidden;
   box-sizing: border-box;
   transition: height 150ms ease;
@@ -121,19 +194,25 @@
 
 /* === Toolbar === */
 
+/* Toolbar to the RIGHT of the input, on the same row (icons/Reply). */
 .toolbar {
+  flex: none;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding-top: 12px;
-  border-top: 1px solid #ebe7dd;
+  gap: 6px;
+  padding: 0;
 }
 
+/* Plain icon button inside the field (Threads-style — no own border/box).
+   36×36 touch target so it's easy to tap on small screens. */
 .attachButton {
+  flex: none;
+  width: 36px;
+  height: 36px;
   background: transparent;
-  border: 1px solid #e8e5dd;
-  border-radius: 6px;
-  padding: 6px;
+  border: 0;
+  border-radius: 50%;
+  padding: 0;
   cursor: pointer;
   color: #6b6b6b;
   display: flex;
@@ -158,7 +237,7 @@
 }
 
 .tagsDetected {
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-family: inherit;
   font-size: 10px;
   color: #9b9591;
   letter-spacing: 0.04em;
@@ -166,10 +245,18 @@
 }
 
 .charCount {
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-family: inherit;
   font-size: 11px;
   color: #9b9591;
   font-variant-numeric: tabular-nums;
+}
+
+/* Over-limit countdown (Threads-style "-394") — only shown past the limit. */
+.overLimit {
+  font-size: 12px;
+  color: #c53030;
+  font-variant-numeric: tabular-nums;
+  padding: 0 4px;
 }
 
 .charCountAtLimit {
@@ -181,12 +268,11 @@
   background: #1a1a1a;
   color: #fdfcf8;
   border: 0;
-  border-radius: 6px;
-  padding: 7px 16px;
+  border-radius: 999px;
+  padding: 8px 18px;
   font-size: 13px;
-  font-weight: 500;
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  letter-spacing: 0.04em;
+  font-weight: 600;
+  font-family: inherit;
   cursor: pointer;
   /* Transition (opacity + the spring transform) comes from the global
      .springPress class. */
@@ -264,7 +350,7 @@
 
 .scanProgress {
   margin: 0 0 2px;
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-family: inherit;
   font-size: 11px;
   color: #6b6b6b;
   font-variant-numeric: tabular-nums;
@@ -301,7 +387,7 @@
 
 .errorText {
   flex: 1;
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-family: inherit;
   font-size: 11px;
   color: #c53030;
   min-width: 0;

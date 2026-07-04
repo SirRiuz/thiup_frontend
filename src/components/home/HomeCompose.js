@@ -393,7 +393,7 @@ function HomeCompose({ currentUserMask, isLoading = false }) {
       // (success default) + "Thread posted" + a "View" link to the new thread
       // (public id only, no author data). Now auto-dismisses (~3s).
       if (created?.id) {
-        const href = `/post/${created.id}`;
+        const href = `/p/${created.id}`;
         showToast.update(toastId, {
           type: "success",
           message: t("toast.posted"),

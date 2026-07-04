@@ -22,9 +22,21 @@ const BASE_LEFT_OFFSET = -8;
 // Clamp the tail: so it doesn't fall over the rounded corners (radius 28px).
 const TAIL_MIN_X = 24;
 
-function PostReactionPicker({ onSelect, contextId, currentReactionEmoji }) {
+function PostReactionPicker({
+  onSelect,
+  contextId,
+  currentReactionEmoji,
+  variant = "default",
+}) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
+  // Threads-style action button instead of the dashed "+" chip. When the user
+  // already has a reaction, the trigger shows that emoji + its name in the warm
+  // accent (Facebook-style "your reaction"); otherwise a neutral smiley + label.
+  const isAction = variant === "action";
+  const activeReaction = currentReactionEmoji
+    ? REACTIONS.find((r) => r.emoji === currentReactionEmoji)
+    : null;
   // Horizontal shift so the popover ALWAYS fits in the viewport, and X
   // position of the tail (relative to the popover) so the little tail keeps
   // pointing at the '+' even if the popover has shifted.
@@ -109,13 +121,51 @@ function PostReactionPicker({ onSelect, contextId, currentReactionEmoji }) {
       <button
         ref={triggerRef}
         type="button"
-        className={`${styles.trigger} ${open ? styles.triggerOpen : ""}`}
+        className={
+          isAction
+            ? `${styles.trigger} ${styles.triggerAction} ${
+                activeReaction ? styles.triggerActionActive : ""
+              }`
+            : `${styles.trigger} ${open ? styles.triggerOpen : ""}`
+        }
         onClick={() => setOpen(!open)}
         aria-label={t("post.addReaction")}
         aria-expanded={open}
         aria-haspopup="menu"
       >
-        +
+        {isAction ? (
+          activeReaction ? (
+            <>
+              <span className={styles.triggerEmoji}>{activeReaction.emoji}</span>
+              <span className={styles.triggerLabel}>
+                {t(activeReaction.labelKey)}
+              </span>
+            </>
+          ) : (
+            <>
+              <svg
+                className={styles.triggerIcon}
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <path d="M8 14s1.5 2 4 2 4-2 4-2" />
+                <line x1="9" y1="9" x2="9.01" y2="9" />
+                <line x1="15" y1="9" x2="15.01" y2="9" />
+              </svg>
+              <span className={styles.triggerLabel}>{t("post.react")}</span>
+            </>
+          )
+        ) : (
+          "+"
+        )}
       </button>
 
       {open && (

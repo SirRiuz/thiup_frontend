@@ -3,11 +3,20 @@ import MaskAvatar from "../MaskAvatar";
 import PostOptionsMenu from "./PostOptionsMenu";
 import PostProfileTrigger from "./PostProfileTrigger";
 import PostReactionPicker from "./PostReactionPicker";
-import PostReactionPill from "./PostReactionPill";
+import ReactionStack from "./ReactionStack";
 import ThreadMedia from "../media/ThreadMedia";
-import ThreadText from "./ThreadText";
 import { renderTextWithHashtags } from "../home/homeHelpers";
+import { fullDateTitle } from "../../utils/formatDate";
 import styles from "../../styles/components/post/PostReply.module.css";
+
+// Reddit-style nesting geometry. Each depth level shifts the comment right by
+// one STEP; the avatar lives in a STEP-wide gutter and the thread lines run down
+// the CENTER of each ancestor's gutter (LANE). STEP === gutter width so a child's
+// gutter starts exactly where its parent's content does → lines stack cleanly.
+// Gutter = 36 (Threads' avatar size; their feed lane is 36 avatar + 12 gap = 48).
+const STEP = 36;
+const LANE = 18; // center of a STEP-wide gutter
+const laneLeft = (level) => level * STEP + LANE;
 
 function PostReply({
   id,
@@ -18,121 +27,138 @@ function PostReply({
   repliesCount,
   publishedAt,
   media,
-  parentId,
-  parentMaskId,
   isOp,
   currentUserReaction,
   isLast = false,
-  isLastInChain = false,
+  depth = 0,
+  guides = [],
+  hasChildren = false,
+  dividerBelow = false,
   isHighlighted = false,
   onReaction,
   onReplyClick,
   onHashtagClick,
 }) {
-  const { t } = useTranslation();
-  const isSubReply = Boolean(parentId);
-  const identiconSize = isSubReply ? 18 : 20;
-  const replyClassName = `${styles.reply} ${isSubReply ? styles.subReply : ""} ${
-    isLast ? styles.lastReply : ""
-  } ${isHighlighted ? styles.highlighted : ""}`;
-  // Same size at ALL nesting levels (15/20px, like the first-level ones) —
-  // previously the sub-replies dropped to 14px.
-  const bodyClassName = styles.body;
+  const { t, i18n } = useTranslation();
+  const replyClassName = `${styles.reply} ${
+    dividerBelow ? styles.withDivider : ""
+  } ${isLast ? styles.lastReply : ""} ${
+    isHighlighted ? styles.highlighted : ""
+  }`;
 
   return (
-    <div className={replyClassName} data-reply-id={id}>
-      {isSubReply && (
-        <>
+    <div
+      className={replyClassName}
+      data-reply-id={id}
+      style={{ paddingLeft: depth * STEP }}
+    >
+      {/* === Threading lines (Reddit-style) ===
+          One vertical guide per ancestor lane whose line continues past this
+          reply; a curved branch from the parent's lane into this avatar; and,
+          when this reply has children, a trunk descending into them. */}
+      {guides.map((cont, level) =>
+        cont ? (
           <div
-            className={`${styles.subVerticalLine} ${
-              isLastInChain ? styles.subVerticalLineLast : ""
-            }`}
+            key={`g${level}`}
+            className={styles.guideLine}
+            style={{ left: laneLeft(level) }}
+            aria-hidden="true"
           />
-          <div className={styles.subHorizontalConnector} />
-        </>
+        ) : null
+      )}
+      {depth >= 1 && (
+        <div
+          className={styles.branch}
+          style={{ left: laneLeft(depth - 1), width: STEP }}
+          aria-hidden="true"
+        />
+      )}
+      {hasChildren && (
+        <div
+          className={styles.childTrunk}
+          style={{ left: laneLeft(depth) }}
+          aria-hidden="true"
+        />
       )}
 
-      <div className={styles.header}>
-        <PostProfileTrigger mask={mask}>
-          <MaskAvatar seed={mask.id} size={identiconSize} />
-          <span className={styles.maskId}>{mask.id}</span>
-        </PostProfileTrigger>
-        {/* OP: this reply's author is the thread's Original Poster (is_op, a
-            backend boolean local to this thread). Visible to everyone in the
-            thread. "OP" is a literal convention; aria-label spells it out. */}
-        {isOp && (
-          <span className={styles.opBadge} aria-label={t("post.opAuthor")}>
-            OP
-          </span>
-        )}
-        {/* No "·" between id and date — spaced only by the header's small flex
-            gap ("6be4a5 2w"). The "·" before "re:" below is kept. */}
-        <span className={styles.timestamp}>{time}</span>
-        {parentMaskId && (
-          <>
-            <span className={styles.divider}>·</span>
-            <span className={styles.parentRef}>
-              re: <span className={styles.parentRefId}>{parentMaskId}</span>
+      <div className={styles.main}>
+        <div className={styles.avatarCell}>
+          <PostProfileTrigger mask={mask}>
+            <MaskAvatar seed={mask.id} size={36} online={mask.isOnline} />
+          </PostProfileTrigger>
+        </div>
+
+        <div className={styles.contentCell}>
+          <div className={styles.header}>
+            <PostProfileTrigger mask={mask}>
+              <span className={styles.maskId}>{mask.id}</span>
+            </PostProfileTrigger>
+            <span
+              className={styles.timestamp}
+              title={fullDateTitle(publishedAt, i18n.language)}
+            >
+              {time}
             </span>
-          </>
-        )}
-        <span className={styles.spacer} />
-        <PostOptionsMenu
-          post={{ id, uid: id, repliesCount, reactions, publishedAt }}
-          variant="inline"
-        />
-      </div>
+            {/* OP: this reply's author is the thread's Original Poster (is_op, a
+                backend boolean local to this thread). Threads-style "· Author"
+                meta instead of a badge. */}
+            {isOp && (
+              <span className={styles.authorTag} aria-label={t("post.opAuthor")}>
+                <span className={styles.authorDivider} aria-hidden="true">·</span>
+                {t("post.author")}
+              </span>
+            )}
+            <span className={styles.spacer} />
+            <PostOptionsMenu
+              post={{ id, uid: id, repliesCount, reactions, publishedAt }}
+              variant="inline"
+            />
+          </div>
 
-      <ThreadText text={text} className={bodyClassName}>
-        {renderTextWithHashtags(text, styles.hashtag, onHashtagClick)}
-      </ThreadText>
+          {/* Replies (and replies-of-replies) show their FULL text — no clamp /
+              "Show more" toggle (same as the OP head). */}
+          <p className={styles.body}>
+            {renderTextWithHashtags(text, styles.hashtag, onHashtagClick)}
+          </p>
 
-      {media && media.length > 0 && <ThreadMedia items={media} />}
+          {media && media.length > 0 && <ThreadMedia items={media} />}
 
-      <div className={styles.reactions}>
-        {reactions.map((r) => (
-          <PostReactionPill
-            key={r.emoji}
-            emoji={r.emoji}
-            count={r.count}
-            name={r.name}
-            active={r.userReacted}
-            variant="reply"
-            onClick={() =>
-              onReaction?.({
-                id: r.id || r.emoji,
-                emoji: r.emoji,
-                label: r.label || r.emoji,
-              })
-            }
+          {/* FB-style stacked reaction summary above the action bar. */}
+          <ReactionStack
+            reactions={reactions}
+            className={styles.reactionSummary}
           />
-        ))}
-        <PostReactionPicker
-          contextId={id}
-          currentReactionEmoji={currentUserReaction}
-          onSelect={onReaction}
-        />
-      </div>
 
-      <div className={styles.actions}>
-        <button
-          type="button"
-          className={styles.actionActive}
-          onClick={onReplyClick}
-        >
-          <svg
-            width="12"
-            height="12"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-          >
-            <polyline points="9 17 4 12 9 7" />
-            <path d="M20 18v-2a4 4 0 0 0-4-4H4" />
-          </svg>
-          {t("post.reply")}
-        </button>
+          {/* Threads-style action bar: react (opens picker) + reply. */}
+          <div className={styles.actions}>
+            <PostReactionPicker
+              variant="action"
+              contextId={id}
+              currentReactionEmoji={currentUserReaction}
+              onSelect={onReaction}
+            />
+            <button
+              type="button"
+              className={styles.actionActive}
+              onClick={onReplyClick}
+            >
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+              </svg>
+              {t("post.reply")}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

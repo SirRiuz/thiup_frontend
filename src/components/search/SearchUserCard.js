@@ -14,13 +14,20 @@ function SearchUserCard({ user, highlightQuery, onClick }) {
     fullHash: user.fullHash,
     joinedAt: user.joinedAt,
     postsCount: user.postsCount,
+    isOnline: user.isOnline,
   };
 
   return (
     <button type="button" className={styles.card} onClick={onClick}>
       <PostProfileTrigger mask={hoverMask}>
         <div className={styles.identiconWrap}>
-          <MaskAvatar seed={user.maskId} size={36} />
+          {/* Search rows sit on the page bg, not a card — ring matches it. */}
+          <MaskAvatar
+            seed={user.maskId}
+            size={36}
+            online={user.isOnline}
+            ringColor="#f7f5f0"
+          />
         </div>
       </PostProfileTrigger>
       <div className={styles.info}>

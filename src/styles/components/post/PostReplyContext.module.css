@@ -2,13 +2,20 @@
 
 .banner {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  gap: 5px;
   padding: 8px 10px;
-  background: #ebe7dd;
-  border-radius: 6px;
+  background: #f0ece3;
+  border-radius: 8px;
   margin-bottom: 12px;
   animation: bannerSlideIn 180ms ease-out;
+}
+
+/* Identity row: avatar + "Replying to" + mask, with the cancel button at the end. */
+.header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 @keyframes bannerSlideIn {
@@ -22,11 +29,10 @@
   }
 }
 
+/* Inter throughout (matches the thread view's mask/timestamp typography). */
 .label {
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  font-size: 9px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
+  font-family: inherit;
+  font-size: 12px;
   color: #6b6b6b;
   font-weight: 500;
 }
@@ -39,8 +45,8 @@
 }
 
 .maskId {
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  font-size: 11px;
+  font-family: inherit;
+  font-size: 13px;
   color: #1a1a1a;
   font-weight: 600;
 }
@@ -63,6 +69,21 @@
 }
 
 .cancelButton:hover {
-  background: #ddd8c8;
+  background: #e5e0d3;
   color: #1a1a1a;
+}
+
+/* Muted preview of the message being replied to — clamped to 2 lines with an
+   ellipsis (Threads-style quote). Aligned to the banner's left edge, below the
+   identity row, so the user sees exactly what they're responding to. */
+.preview {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
+    sans-serif;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #6b6b6b;
+  /* Single line; truncate with an ellipsis when it overflows. */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }

@@ -20,8 +20,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
-  overflow: hidden;
+  /* No overflow: hidden — the avatar rounds itself (svg border-radius 50%) and
+     the activity dot's ring intentionally overflows the avatar box (Threads). */
   flex: none;
 }
 
@@ -33,16 +33,22 @@
 }
 
 .maskId {
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  font-size: 14px;
+  /* Reconciled identity row (Threads-exact, same as feed/thread): Inter, body-
+     sized, 600 near-black — the old monospace-in-search divergence is fixed. */
+  font-family: inherit;
+  font-size: clamp(14px, 13.1px + 0.25vw, 15px);
   color: #1a1a1a;
-  font-weight: 500;
+  font-weight: 600;
+  line-height: 21px;
 }
 
 .meta {
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  font-size: 11px;
-  color: #6b6b6b;
+  /* Meta line at the timestamp tone: same size, 400, light #9b9591 (≈ Threads'
+     light-theme secondary #999) — Threads sizes search-row meta at 15px too. */
+  font-family: inherit;
+  font-size: clamp(14px, 13.1px + 0.25vw, 15px);
+  font-weight: 400;
+  color: #9b9591;
 }
 
 /* Search match — emphasis from weight, no background (same color as the text). */

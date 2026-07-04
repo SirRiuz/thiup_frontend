@@ -1,4 +1,4 @@
-/* MyThreads — same warm template as home (#f7f5f0, Inter, 740px). */
+/* MyThreads — same warm template as home (#f7f5f0, Inter, 640px). */
 
 .page {
   background: #f7f5f0;
@@ -7,9 +7,16 @@
 }
 
 .main {
-  max-width: 740px;
+  /* Threads-like column: 640px wide, 24px side padding (Threads' feed
+     --barcelona-columns-item-horizontal-padding) — the feed cards carry NO
+     horizontal padding of their own, so this is the single content inset
+     (see CLAUDE.md → Layout). */
+  max-width: 640px;
   margin: 0 auto;
-  padding: 24px 20px 60px;
+  padding: 24px 24px 60px;
+  /* Column side padding for nested media-carousel edge-to-edge bleed — MUST
+     equal the side padding above. */
+  --layout-pad-x: 24px;
 }
 
 /* === Screen header === */
@@ -108,5 +115,13 @@
 @media (prefers-reduced-motion: reduce) {
   .feedItems {
     transition: none;
+  }
+}
+
+/* Mobile: the NavRail app bar is FIXED (60px) — it no longer reserves flow
+   space, so add its height on top of the column's own 24px gap. */
+@media (max-width: 700px) {
+  .main {
+    padding-top: 84px;
   }
 }

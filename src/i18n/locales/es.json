@@ -9,17 +9,17 @@
     "play": "Reproducir",
     "pause": "Pausar",
     "seek": "Cambiar posición",
+    "combinePanorama": "Combinar archivos en panorámica",
     "viewer": {
       "label": "Visor de imágenes",
       "close": "Cerrar",
       "previous": "Imagen anterior",
       "next": "Imagen siguiente",
-      "position": "Imagen {{current}} de {{total}}"
+      "position": "Imagen {{current}} de {{total}}",
+      "loadError": "No se pudo cargar el contenido"
     }
   },
   "common": {
-    "showMore": "Ver más",
-    "showLess": "Ver menos",
     "tryAgain": "Reintentar",
     "back": "Atrás",
     "backToHome": "Volver al inicio",
@@ -98,6 +98,7 @@
     "newThread": "Nuevo hilo",
     "newThreadBadge": "Tu nuevo hilo",
     "yourThread": "Mi hilo",
+    "openThread": "Abrir hilo",
     "endOfFeed": "Fin del feed",
     "loadingMore": "Cargando más publicaciones"
   },
@@ -173,6 +174,8 @@
     "reply": "Responder",
     "replies": "Respuestas",
     "opAuthor": "Autor del hilo",
+    "author": "Autor",
+    "react": "Reaccionar",
     "addReaction": "Añadir reacción",
     "endOfThread": "Fin del hilo",
     "loadMoreReplies": "Cargar más respuestas",

@@ -31,6 +31,63 @@
   color: #1a1a1a;
 }
 
+/* === Action variant (Threads-style action bar) ===
+   Overrides the dashed "+" chip: a borderless, rounded text+icon button with a
+   warm hover wash (#f0ece3) — the same language as the Reply action and the nav
+   controls. Declared after .trigger so it wins on the shared properties. */
+.triggerAction {
+  display: inline-flex;
+  align-items: center;
+  /* Threads-exact: 4px icon↔label gap (their --x-columnGap). */
+  gap: 4px;
+  /* Threads-exact action button: 36px tall touch target, 12px side padding —
+     same box as the Reply action (PostReply .actionActive). */
+  height: 36px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  /* Inter (inherited) instead of the chip's monospace. Threads-exact label:
+     13px / 400 / charcoal #424242 (--barcelona-charcoal-text, light theme) —
+     icon and text share the charcoal via currentColor. */
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 400;
+  color: #424242;
+}
+
+@media (hover: hover) {
+  .triggerAction:hover {
+    /* Wash only — Threads keeps the charcoal on hover. */
+    background: #f0ece3;
+  }
+}
+
+/* The user's own reaction: warm accent, like the app's other active states. */
+.triggerActionActive {
+  color: #a85432;
+}
+
+@media (hover: hover) {
+  .triggerActionActive:hover {
+    background: #f3e3d3;
+    color: #a85432;
+  }
+}
+
+.triggerIcon {
+  flex: none;
+}
+
+.triggerEmoji {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.triggerLabel {
+  line-height: 1;
+}
+
 .popover {
   position: absolute;
   bottom: 36px;

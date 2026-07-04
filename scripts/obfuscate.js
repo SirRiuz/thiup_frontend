@@ -101,6 +101,16 @@ const SENSITIVE_WORDS = [
 const HIDE_WORD_ROOTS = ["encrypt", "decrypt", "debug"];
 const HIDE_ROOT_RE = new RegExp(HIDE_WORD_ROOTS.join("|"), "i");
 
+// EXACT identifier-string tokens to hide as \xHH escapes (value-preserving),
+// beyond the substring roots above. This is for generic OBJECT KEYS that
+// `transformObjectKeys` leaves readable (it silently skips some objects, e.g.
+// those nested as array elements like the reaction catalog) — the keys
+// 'id'/'emoji'/'label'/'labelKey' stay as plain text otherwise. Whole-token
+// match (not substring), so it never touches "valid", "width", "hidden", etc.
+// The emoji VALUES (❤️😂…) are handled separately by escapeNonAscii below.
+const HIDE_EXACT_WORDS = ["id", "emoji", "label", "labelKey"];
+const HIDE_EXACT_SET = new Set(HIDE_EXACT_WORDS);
+
 // "encrypt" -> "\x65\x6e\x63\x72\x79\x70\x74" (mismo valor, texto ilegible).
 function hexEscape(str) {
   let out = "";
@@ -125,13 +135,30 @@ function hideReadableWords(code) {
     src.replace(
       new RegExp(`${quote}([A-Za-z0-9_$]+)${quote}`, "g"),
       (match, token) => {
-        if (!HIDE_ROOT_RE.test(token)) return match;
+        if (!HIDE_ROOT_RE.test(token) && !HIDE_EXACT_SET.has(token)) {
+          return match;
+        }
         count += 1;
         return `${quote}${hexEscape(token)}${quote}`;
       }
     );
   let out = rewrite(code, "'");
   out = rewrite(out, '"');
+  return { code: out, count };
+}
+
+// Escapes EVERY non-ASCII character in the bundle to a \uXXXX sequence. After
+// obfuscation, non-ASCII only lives inside string LITERALS (the reaction emojis
+// ❤️😂😮😢😡👏, accented i18n text…), so this is value-preserving — the runtime
+// string is byte-for-byte identical, only its SOURCE representation becomes
+// unreadable ('❤️' -> '❤️'). Surrogate pairs are escaped per code
+// unit, which reconstructs the exact same pair.
+function escapeNonAscii(code) {
+  let count = 0;
+  const out = code.replace(/[\u0080-\uFFFF]/g, (ch) => {
+    count += 1;
+    return `\\u${ch.charCodeAt(0).toString(16).padStart(4, "0")}`;
+  });
   return { code: out, count };
 }
 
@@ -210,15 +237,19 @@ function obfuscateFile(file) {
   const code = fs.readFileSync(file, "utf8");
   const before = Buffer.byteLength(code);
   const obfuscated = JavaScriptObfuscator.obfuscate(code, OPTIONS).getObfuscatedCode();
-  // Post-pass: hide any still-readable debug/encrypt/decrypt property keys as
-  // \xHH escapes (value-preserving — see HIDE_WORD_ROOTS).
-  const { code: result, count } = hideReadableWords(obfuscated);
+  // Post-pass 1: hide still-readable identifier-string KEYS as \xHH escapes —
+  // the sensitive roots (debug/encrypt/decrypt) AND the exact keys
+  // transformObjectKeys leaves behind (id/emoji/label/labelKey). Value-preserving.
+  const { code: hidden, count } = hideReadableWords(obfuscated);
+  // Post-pass 2: escape every non-ASCII char (the reaction emojis, accented
+  // text…) to \uXXXX so no emoji/glyph stays readable. Also value-preserving.
+  const { code: result, count: uni } = escapeNonAscii(hidden);
   fs.writeFileSync(file, result, "utf8");
   const after = Buffer.byteLength(result);
   console.log(
     `[obfuscate] ${path.basename(file)}: ` +
       `${(before / 1024).toFixed(0)}KB → ${(after / 1024).toFixed(0)}KB ` +
-      `(${count} sensitive tokens hidden)`
+      `(${count} key tokens + ${uni} non-ASCII chars hidden)`
   );
 }
 

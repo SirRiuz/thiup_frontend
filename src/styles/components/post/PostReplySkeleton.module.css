@@ -8,7 +8,8 @@
 .header {
   display: flex;
   align-items: center;
-  gap: 10px;
+  /* Threads' avatar↔name gap — matches the real reply lane (36 + 12). */
+  gap: 12px;
   margin-bottom: 12px;
 }
 
@@ -25,8 +26,10 @@
 }
 
 .identicon {
-  width: 20px;
-  height: 20px;
+  /* Mirrors the real reply avatar: 36px circle (Threads' single avatar size). */
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
   flex: none;
 }
 

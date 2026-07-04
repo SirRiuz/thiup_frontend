@@ -1,13 +1,11 @@
-import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import MaskAvatar from "../MaskAvatar";
 import PostProfileTrigger from "../post/PostProfileTrigger";
 import PostOptionsMenu from "../post/PostOptionsMenu";
+import ReactionStack from "../post/ReactionStack";
 import ThreadMedia from "../media/ThreadMedia";
-import ThreadText from "../post/ThreadText";
 import { formatCount, renderTextWithHashtags } from "./homeHelpers";
 import { DEBUG } from "../../settings";
-import { ensureScrollSuppressor } from "../../utils/scrollSuppressor";
 import styles from "../../styles/components/home/HomeFeedCard.module.css";
 
 // Optional explanatory badge on the just-created card ("Your new thread").
@@ -26,15 +24,6 @@ function HomeFeedCard({
   activeTag,
 }) {
   const { t } = useTranslation();
-  // Hides the reaction tooltips during scroll (global listener, idempotent:
-  // it only registers once even with many cards).
-  useEffect(() => {
-    ensureScrollSuppressor();
-  }, []);
-  // Translatable reaction name (reactions.<name> in i18n). Falls back to the
-  // raw backend name if there's no key.
-  const reactionLabel = (name) =>
-    name ? t(`reactions.${name}`, { defaultValue: name }) : "";
   const {
     mask,
     text,
@@ -48,10 +37,6 @@ function HomeFeedCard({
     media,
   } = post;
 
-  // ALL the reactions, same as the thread (previously: slice(0,3) truncated
-  // the feed to top-3 and hid the rest).
-  const visibleReactions = reactions;
-
   const renderOptions = {
     highlightQuery,
     highlightClassName: styles.highlight,
@@ -59,14 +44,42 @@ function HomeFeedCard({
     activeTagClassName: styles.hashtagActive,
   };
 
+  // Navigate from the text/identity zone (role=link, keyboard-accessible) AND,
+  // as a pointer convenience, from anywhere else on the card that isn't media
+  // or a control (Threads: the whole row opens the thread). The card is still
+  // NOT a button (no role/tabindex): a card-wide role=button made iOS paint its
+  // native tap highlight over everything and capture the carousel's swipe —
+  // a plain click handler that EXCLUDES the media zone keeps that fix.
+  const handleNavKeyDown = (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onClick?.(e);
+    }
+  };
+
+  // Card-level click: ignore anything self-handled — media frames (they open
+  // the viewer), the carousel track (drag surface, data-media-zone), real
+  // controls (options, reveal, sound…), and the navZone (its own handler
+  // already navigated; without this guard the bubbled click would navigate
+  // twice). The blank space BESIDE a narrow single image is none of these, so
+  // it navigates.
+  const handleCardClick = (e) => {
+    if (
+      e.target.closest(
+        "[data-frame], [data-media-zone], [data-hover-card], button, a, [role='link'], [role='button']"
+      )
+    ) {
+      return;
+    }
+    onClick?.(e);
+  };
+
   return (
     <article
       className={`${styles.card} ${isLast ? styles.cardLast : ""} ${
         isNew ? styles.cardNew : ""
       }`}
-      onClick={onClick}
-      role="button"
-      tabIndex={0}
+      onClick={handleCardClick}
     >
       {/* Three-dots options (View details / Copy link / Report). Self-contained;
           stops propagation so it never triggers the card's navigation. */}
@@ -78,13 +91,34 @@ function HomeFeedCard({
         <span className={styles.newBadge}>{t("home.newThreadBadge")}</span>
       )}
 
+      {/* Threads feed-row layout (their 48px threadline lane): avatar in a left
+          gutter; username + body + media + stats stacked in the content column
+          — same two-column grid as PostReply. */}
+      <div className={styles.grid}>
+        <div className={styles.avatarCell}>
+          <PostProfileTrigger mask={mask}>
+            <MaskAvatar seed={mask.id} size={36} online={mask.isOnline} />
+          </PostProfileTrigger>
+        </div>
+
+        <div className={styles.contentCell}>
+      {/* Navigable zone: header (identity) + body text. The media carousel and
+          footer live OUTSIDE it, so swiping the carousel never hits a clickable
+          ancestor (the iOS fix). Accessible: a focusable role=link with Enter/
+          Space + aria-label. Hashtags / the show-more toggle / the profile
+          trigger keep their own handlers (they stopPropagation). */}
+      <div
+        className={styles.navZone}
+        role="link"
+        tabIndex={0}
+        aria-label={t("home.openThread")}
+        onClick={onClick}
+        onKeyDown={handleNavKeyDown}
+      >
       <header className={styles.header}>
-        {/* Same mask hover card as the thread (reused component, same
-            delays/safe-zone). Its internal gap (10px) = the header's. */}
+        {/* Same mask hover card as the thread (reused component). The avatar
+            lives in the gutter; here only the mask id. */}
         <PostProfileTrigger mask={mask}>
-          <span className={styles.identiconWrap}>
-            <MaskAvatar seed={mask.id} size={22} />
-          </span>
           <span className={styles.maskId}>{mask.id}</span>
         </PostProfileTrigger>
         {/* No "·" separator — id and date sit close, spaced only by the
@@ -94,7 +128,13 @@ function HomeFeedCard({
             threads (is_mine, a backend boolean). Feed/search only; suppressed on
             the /me screen via hideMineTag (redundant there). */}
         {isMine && !hideMineTag && (
-          <span className={styles.mineBadge}>{t("home.yourThread")}</span>
+          <>
+            {/* Dot separator (same language as the replies' "· Author" meta). */}
+            <span className={styles.badgeDivider} aria-hidden="true">
+              ·
+            </span>
+            <span className={styles.mineBadge}>{t("home.yourThread")}</span>
+          </>
         )}
         {/* DEBUG tool (src/settings.js): momentum from the For You engine,
             visible only with REACT_APP_DEBUG=true. In production the flag is
@@ -125,40 +165,52 @@ function HomeFeedCard({
         )}
       </header>
 
-      <ThreadText text={text} className={styles.body}>
+      {/* Full text, no clamp / "Show more" (removed app-wide — same as the
+          thread view). */}
+      <p className={styles.body}>
         {renderTextWithHashtags(
           text,
           styles.hashtag,
           onHashtagClick,
           renderOptions
         )}
-      </ThreadText>
+      </p>
+      </div>
 
       {media && media.length > 0 && <ThreadMedia items={media} />}
 
       <footer className={styles.stats}>
+        {/* Facebook-style stacked reaction summary first, then the replies
+            count (thread-view speech bubble, 16px stroke 1.8 + Inter 13). */}
+        <ReactionStack reactions={reactions} className={styles.statReactions} />
         <span className={styles.statWithIcon}>
           <svg
-            width="11"
-            height="11"
+            width="16"
+            height="16"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
-            strokeWidth="1.5"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
           >
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
           </svg>
           {repliesCount}
         </span>
         {viewsCount > 0 && (
           <span className={styles.statWithIcon}>
             <svg
-              width="12"
-              height="12"
+              width="16"
+              height="16"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
-              strokeWidth="1.5"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
             >
               <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
               <circle cx="12" cy="12" r="3" />
@@ -166,30 +218,9 @@ function HomeFeedCard({
             {formatCount(viewsCount)}
           </span>
         )}
-        {visibleReactions.map((r, idx) => {
-          const label = reactionLabel(r.name);
-          return (
-            <span
-              key={idx}
-              className={`${styles.statReaction} ${
-                r.userReacted ? styles.statReactionActive : ""
-              }`}
-              // Accessible name (SR + mobile long-press). The visual desktop
-              // tooltip is provided by .reactionTooltip (CSS hover).
-              aria-label={label}
-              title={label}
-            >
-              <span className={styles.statReactionEmoji}>{r.emoji}</span>
-              {r.count}
-              {label && (
-                <span className={styles.reactionTooltip} aria-hidden="true">
-                  {label}
-                </span>
-              )}
-            </span>
-          );
-        })}
       </footer>
+        </div>
+      </div>
     </article>
   );
 }

@@ -1,16 +1,20 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { useTranslation } from "react-i18next";
+import {
+  getAudioOwner,
+  setAudioOwner,
+  subscribeAudioOwner,
+  VIEWER_AUDIO_ID,
+} from "../../services/media/audioOwner";
 import styles from "../../styles/components/media/VideoPlayer.module.css";
 
-const HIDE_DELAY = 2800; // ms of inactivity before controls fade (while playing)
 const SEEK_STEP = 5; // s per arrow key
-
-const fmt = (s) => {
-  const v = Number.isFinite(s) && s > 0 ? s : 0;
-  const m = Math.floor(v / 60);
-  const sec = Math.floor(v % 60);
-  return `${m}:${sec < 10 ? "0" : ""}${sec}`;
-};
 
 function PlayIcon({ size = 20 }) {
   return (
@@ -19,17 +23,9 @@ function PlayIcon({ size = 20 }) {
     </svg>
   );
 }
-function PauseIcon({ size = 20 }) {
+function SpeakerIcon({ muted, size = 18 }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <rect x="6" y="5" width="4" height="14" rx="1" />
-      <rect x="14" y="5" width="4" height="14" rx="1" />
-    </svg>
-  );
-}
-function SpeakerIcon({ muted }) {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M11 5 6 9H3v6h3l5 4V5Z" />
       {muted ? (
         <path d="M22 9l-6 6M16 9l6 6" />
@@ -44,64 +40,58 @@ function SpeakerIcon({ muted }) {
 }
 
 /**
- * Custom video player for the fullscreen viewer ONLY (the feed keeps its own
- * minimal controls). Own icons/palette (no native controls): play/pause, a
- * scrubbable progress slider (with buffered range, keyboard, aria), a sound
- * toggle, and auto-hide on inactivity with a legibility scrim.
+ * Custom video player for the fullscreen viewer. Threads-style MINIMAL controls:
+ * a mute toggle in the top-right corner + a thin, scrubbable progress bar pinned
+ * to the bottom edge — nothing else. Tapping the video toggles play/pause; a big
+ * centered play button shows while paused. No play/pause button, no time labels,
+ * no auto-hide (the two controls stay put, like Threads).
  *
  * Lives inside a [data-video-player] root so the viewer's swipe gesture bails on
- * it — scrubbing and button taps never trigger swipe/close/navigation.
+ * it — scrubbing and the mute tap never trigger swipe/close/navigation.
  */
-function VideoPlayer({ item }) {
+function VideoPlayer({ item, onReady, onError }) {
   const { t } = useTranslation();
   const videoRef = useRef(null);
   const trackRef = useRef(null);
-  const hideTimer = useRef(0);
   const scrubbingRef = useRef(false);
-  const playingRef = useRef(false);
 
   const [playing, setPlaying] = useState(false);
-  const [muted, setMuted] = useState(false);
+  // Whether playback has started at least once. Gates the big-play so it only
+  // shows when the USER paused — never during the initial autoplay startup (that
+  // was the play-button flash).
+  const [hasStarted, setHasStarted] = useState(false);
+  // Reveals the video + controls and clears the viewer's spinner. Flips on the
+  // first decoded frame (loadeddata) → the spinner shows ONLY while the video is
+  // still loading from the CDN, and the controls never appear over an empty box.
+  const [ready, setReady] = useState(false);
+  // Audio is GLOBAL (one player at a time). This player owns audio when the
+  // store owner is the viewer sentinel (shares the rule with the feed preview).
+  const audioOwner = useSyncExternalStore(subscribeAudioOwner, getAudioOwner);
+  const muted = audioOwner !== VIEWER_AUDIO_ID;
   const [current, setCurrent] = useState(0);
   const [duration, setDuration] = useState(0);
   const [buffered, setBuffered] = useState(0);
-  const [controlsVisible, setControlsVisible] = useState(true);
-
-  const scheduleHide = useCallback(() => {
-    clearTimeout(hideTimer.current);
-    if (playingRef.current && !scrubbingRef.current) {
-      hideTimer.current = window.setTimeout(
-        () => setControlsVisible(false),
-        HIDE_DELAY
-      );
-    }
-  }, []);
-  const showControls = useCallback(() => {
-    setControlsVisible(true);
-    scheduleHide();
-  }, [scheduleHide]);
 
   // Keep the element's muted state in sync.
   useEffect(() => {
     if (videoRef.current) videoRef.current.muted = muted;
   }, [muted]);
 
-  // Try to play with sound (the open tap is a recent user gesture); if the
-  // browser blocks it, fall back to a muted autoplay so it always plays.
-  useEffect(() => {
+  // Play if paused; safe to call repeatedly. Swallows the async rejection so a
+  // not-yet-ready play() never throws.
+  const playSafe = useCallback(() => {
     const v = videoRef.current;
-    if (!v) return undefined;
+    if (!v || !v.paused) return;
     const p = v.play();
-    if (p && typeof p.catch === "function") {
-      p.catch(() => {
-        v.muted = true;
-        setMuted(true);
-        const p2 = v.play();
-        if (p2 && typeof p2.catch === "function") p2.catch(() => {});
-      });
-    }
-    return () => clearTimeout(hideTimer.current);
+    if (p && typeof p.catch === "function") p.catch(() => {});
   }, []);
+
+  // Autoplay on mount AND again on canplay (the mount play() can race a still-
+  // loading src and reject → it would stay paused). Retrying on canplay
+  // guarantees it plays.
+  useEffect(() => {
+    playSafe();
+  }, [playSafe]);
 
   const togglePlay = useCallback(() => {
     const v = videoRef.current;
@@ -127,8 +117,6 @@ function VideoPlayer({ item }) {
   const onTrackDown = (e) => {
     e.stopPropagation();
     scrubbingRef.current = true;
-    setControlsVisible(true);
-    clearTimeout(hideTimer.current);
     if (trackRef.current?.setPointerCapture) {
       trackRef.current.setPointerCapture(e.pointerId);
     }
@@ -150,7 +138,6 @@ function VideoPlayer({ item }) {
         /* already released */
       }
     }
-    scheduleHide();
   };
   const onTrackKey = (e) => {
     const v = videoRef.current;
@@ -166,7 +153,6 @@ function VideoPlayer({ item }) {
       e.preventDefault();
       e.stopPropagation();
       setCurrent(v.currentTime);
-      showControls();
     }
   };
 
@@ -184,29 +170,22 @@ function VideoPlayer({ item }) {
   const pctBuf = duration ? Math.min(100, (buffered / duration) * 100) : 0;
 
   return (
-    <div className={styles.player} data-video-player="" onPointerMove={showControls}>
+    <div className={styles.player} data-video-player="">
       <video
         ref={videoRef}
         src={item.url}
-        className={styles.video}
+        className={`${styles.video} ${ready ? styles.ready : ""}`}
         loop
         playsInline
         onClick={(e) => {
           e.stopPropagation();
           togglePlay();
-          showControls();
         }}
         onPlay={() => {
-          playingRef.current = true;
           setPlaying(true);
-          scheduleHide();
+          setHasStarted(true);
         }}
-        onPause={() => {
-          playingRef.current = false;
-          setPlaying(false);
-          clearTimeout(hideTimer.current);
-          setControlsVisible(true);
-        }}
+        onPause={() => setPlaying(false)}
         onTimeUpdate={() => {
           const v = videoRef.current;
           if (v && !scrubbingRef.current) setCurrent(v.currentTime);
@@ -215,10 +194,18 @@ function VideoPlayer({ item }) {
           const v = videoRef.current;
           if (v) setDuration(v.duration || 0);
         }}
+        onLoadedData={() => {
+          // First frame decoded → reveal the video + controls and clear the
+          // viewer's spinner (so the spinner only shows during the CDN load).
+          setReady(true);
+          onReady?.();
+        }}
+        onError={() => onError?.()}
+        onCanPlay={playSafe}
         onProgress={onProgress}
       />
 
-      {!playing && (
+      {ready && !playing && hasStarted && (
         <button
           type="button"
           className={styles.bigPlay}
@@ -232,64 +219,52 @@ function VideoPlayer({ item }) {
         </button>
       )}
 
-      <div
-        className={`${styles.scrim} ${controlsVisible ? "" : styles.hidden}`}
-        aria-hidden="true"
-      />
+      {ready && (
+        <>
+          {/* Mute toggle — top-right corner (Threads-style). */}
+          <button
+            type="button"
+            className={styles.muteBtn}
+            aria-label={muted ? t("media.unmute") : t("media.mute")}
+            // data-video-control → the viewer's (native) pointerdown handler
+            // bails on controls, so the swipe gesture never starts here.
+            data-video-control=""
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              // Toggle via the global store (one audio at a time).
+              setAudioOwner(muted ? VIEWER_AUDIO_ID : null);
+            }}
+          >
+            <SpeakerIcon muted={muted} size={16} />
+          </button>
 
-      <div className={`${styles.controls} ${controlsVisible ? "" : styles.hidden}`}>
-        <button
-          type="button"
-          className={styles.iconBtn}
-          aria-label={playing ? t("media.pause") : t("media.play")}
-          onClick={(e) => {
-            e.stopPropagation();
-            togglePlay();
-            showControls();
-          }}
-        >
-          {playing ? <PauseIcon /> : <PlayIcon />}
-        </button>
-
-        <span className={styles.time}>{fmt(current)}</span>
-
-        <div
-          ref={trackRef}
-          className={styles.track}
-          role="slider"
-          tabIndex={0}
-          aria-label={t("media.seek")}
-          aria-valuemin={0}
-          aria-valuemax={Math.floor(duration) || 0}
-          aria-valuenow={Math.floor(current) || 0}
-          onPointerDown={onTrackDown}
-          onPointerMove={onTrackMove}
-          onPointerUp={onTrackUp}
-          onPointerCancel={onTrackUp}
-          onKeyDown={onTrackKey}
-        >
-          <div className={styles.bar}>
-            <div className={styles.buffer} style={{ width: `${pctBuf}%` }} />
-            <div className={styles.fill} style={{ width: `${pctCur}%` }} />
+          {/* Thin scrubbable progress bar pinned to the bottom edge. */}
+          <div
+            ref={trackRef}
+            className={styles.progress}
+            // data-video-control → the viewer's (native) pointerdown handler
+            // bails on controls, so scrubbing never triggers the swipe/close.
+            data-video-control=""
+            role="slider"
+            tabIndex={0}
+            aria-label={t("media.seek")}
+            aria-valuemin={0}
+            aria-valuemax={Math.floor(duration) || 0}
+            aria-valuenow={Math.floor(current) || 0}
+            onPointerDown={onTrackDown}
+            onPointerMove={onTrackMove}
+            onPointerUp={onTrackUp}
+            onPointerCancel={onTrackUp}
+            onKeyDown={onTrackKey}
+          >
+            <div className={styles.bar}>
+              <div className={styles.buffer} style={{ width: `${pctBuf}%` }} />
+              <div className={styles.fill} style={{ width: `${pctCur}%` }} />
+            </div>
           </div>
-          <div className={styles.thumb} style={{ left: `${pctCur}%` }} />
-        </div>
-
-        <span className={styles.time}>{fmt(duration)}</span>
-
-        <button
-          type="button"
-          className={styles.iconBtn}
-          aria-label={muted ? t("media.unmute") : t("media.mute")}
-          onClick={(e) => {
-            e.stopPropagation();
-            setMuted((m) => !m);
-            showControls();
-          }}
-        >
-          <SpeakerIcon muted={muted} />
-        </button>
-      </div>
+        </>
+      )}
     </div>
   );
 }
