@@ -16,6 +16,7 @@ import PostThreadNotFound from "../components/post/PostThreadNotFound";
 import { useThread } from "../hooks/useThread";
 import usePageTitle from "../hooks/usePageTitle";
 import useMobileSurfacePage from "../hooks/useMobileSurfacePage";
+import { useIsMobile } from "../hooks/useIsMobile";
 import {
   addInteraction,
   extractTags,
@@ -35,6 +36,10 @@ function Post() {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  // Desktop vs mobile app-bar anatomy: the DESKTOP bar is Threads' new one
+  // (circular floating back + centered title, options on the OP header); the
+  // MOBILE bar keeps the previous design untouched (plain arrow + right menu).
+  const isMobile = useIsMobile();
   // REAL current user (from /me/): a single global request, cached in the
   // context — here it is only consumed.
   const { currentUserMask } = useCurrentUser();
@@ -69,7 +74,10 @@ function Post() {
     loadMore,
     retry,
     toggleReaction,
-  } = useThread(id);
+    // Seed from the feed navigation (router state): the clicked card's post —
+    // paints the OP instantly; only the replies show a loading state. Absent
+    // on hard reloads / direct links → normal full-skeleton flow.
+  } = useThread(id, location.state?.seedThread);
 
   // Título de pestaña estilo Threads: muestra el texto del hilo una vez
   // cargado; mientras carga (o si falla) cae al genérico "Thread · Thiup".
@@ -269,25 +277,46 @@ function Post() {
     <div className={styles.page} ref={pageRef}>
       <header className={styles.appBar}>
         <div className={styles.appBarInner}>
+          {/* Back button. Desktop = Threads' exact floating circle (24px
+              elevated, hairline + soft shadow, their 12×12 arrow); mobile
+              keeps the previous plain arrow untouched. */}
           <button
             type="button"
             className={styles.backButton}
             onClick={handleBack}
             aria-label={t("common.back")}
           >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <line x1="19" y1="12" x2="5" y2="12" />
-              <polyline points="12 19 5 12 12 5" />
-            </svg>
+            {isMobile ? (
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <line x1="19" y1="12" x2="5" y2="12" />
+                <polyline points="12 19 5 12 12 5" />
+              </svg>
+            ) : (
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 12 12"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M1 6h10M1 6l4-4M1 6l4 4"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="1.5"
+                />
+              </svg>
+            )}
           </button>
           <div className={styles.titleBlock}>
             {post ? (
@@ -317,22 +346,10 @@ function Post() {
               <span className={styles.title}>{t("post.threadTitle")}</span>
             )}
           </div>
-          {/* Thread-level options (View details / Copy link / Report).
-              While loading, a skeleton keeps its slot so it doesn't pop in. */}
-          {post ? (
-            <PostOptionsMenu
-              post={post}
-              variant="inline"
-              className={styles.appBarMenu}
-              sortValue={sortBy}
-              onSortChange={selectSort}
-            />
-          ) : isLoading ? (
-            <span
-              className={`${styles.appBarMenu} ${styles.menuSkeleton} ${styles.skeletonBar}`}
-              aria-hidden="true"
-            />
-          ) : null}
+          {/* The thread options live on the parent thread's header row
+              (Threads' anatomy) at EVERY breakpoint — an empty span balances
+              the grid's right column so the title stays truly centered. */}
+          <span aria-hidden="true" />
         </div>
       </header>
 
@@ -412,6 +429,15 @@ function Post() {
           >
             {post.time}
           </span>
+          {/* Thread options on the parent thread's header row (Threads' new
+              anatomy) — every breakpoint; the app bar carries no menu. */}
+          <span className={styles.opHeaderSpacer} />
+          <PostOptionsMenu
+            post={post}
+            variant="inline"
+            sortValue={sortBy}
+            onSortChange={selectSort}
+          />
         </div>
 
         {/* The opened thread's head shows its FULL text — no "show more"
@@ -554,6 +580,18 @@ function Post() {
             );
           });
         })()}
+        {/* Seeded navigation (OP painted from the feed card, replies still
+            fetching): skeleton ONLY the replies — as many as the thread has,
+            capped at 3, so a 1-reply thread doesn't flash 3 ghosts. */}
+        {isLoading && displayReplies.length === 0 && hasReplies && (
+          <>
+            {["medium", "short", "long"]
+              .slice(0, Math.max(1, Math.min(replyCount, 3)))
+              .map((v) => (
+                <PostReplySkeleton key={v} variant={v} />
+              ))}
+          </>
+        )}
         {isLoadingMore && (
           <>
             <PostReplySkeleton variant="medium" />
@@ -566,8 +604,11 @@ function Post() {
       {hasMore && !isLoadingMore && <PostLoadMoreButton onClick={loadMore} />}
 
       {/* Composer lives INSIDE the elevated card (Threads-style), separated from
-          the replies by its own top divider. */}
-      <div ref={commentBoxRef}>
+          the replies by its own top divider. .composerDock pins it to the
+          card's BOTTOM edge on short threads (the surface is min-height full
+          viewport — without the pin the composer floats mid-card over dead
+          space). */}
+      <div ref={commentBoxRef} className={styles.composerDock}>
         <PostCommentBox
           thread={post}
           currentUserMask={currentUserMask}

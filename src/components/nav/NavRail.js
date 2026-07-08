@@ -22,6 +22,9 @@ import styles from "../../styles/components/nav/NavRail.module.css";
  *    to see the placement.
  */
 
+// Each item carries TWO glyphs: `icon` = the original stroke set (MOBILE bars,
+// untouched) and `railIcon` = Threads' EXACT desktop sidebar icon (24×24,
+// filled paths lifted verbatim from their markup — Home / Search / Profile).
 const NAV_ITEMS = [
   {
     to: "/home",
@@ -32,6 +35,16 @@ const NAV_ITEMS = [
         <path d="M5 9.5V21h5v-6h4v6h5V9.5" />
       </svg>
     ),
+    railIcon: (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path
+          clipRule="evenodd"
+          fillRule="evenodd"
+          fill="currentColor"
+          d="M13.4056 3.72522C12.5838 3.06783 11.4162 3.06783 10.5944 3.72522L4.28209 8.7751C3.62975 9.29697 3.25 10.0871 3.25 10.9225V18C3.25 19.5188 4.48122 20.75 6 20.75H18C19.5188 20.75 20.75 19.5188 20.75 18V10.9225C20.75 10.0871 20.3703 9.29697 19.7179 8.7751L13.4056 3.72522ZM9.0327 1.77305C10.7675 0.385221 13.2325 0.38522 14.9673 1.77305L21.2796 6.82293C22.525 7.81923 23.25 9.32762 23.25 10.9225V18C23.25 20.8995 20.8995 23.25 18 23.25H6C3.1005 23.25 0.75 20.8995 0.75 18V10.9225C0.75 9.32763 1.47497 7.81923 2.72035 6.82293L9.0327 1.77305Z"
+        />
+      </svg>
+    ),
   },
   {
     to: "/search",
@@ -40,6 +53,38 @@ const NAV_ITEMS = [
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
         <circle cx="11" cy="11" r="7.5" />
         <line x1="21" y1="21" x2="16.4" y2="16.4" />
+      </svg>
+    ),
+    railIcon: (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path
+          clipRule="evenodd"
+          fillRule="evenodd"
+          fill="currentColor"
+          d="M11.2607 1.01074C5.59982 1.01074 1.01074 5.59982 1.01074 11.2607C1.01074 16.9217 5.59982 21.5107 11.2607 21.5107C13.6407 21.5107 15.8312 20.6996 17.5709 19.3387L20.8554 22.6231C21.3435 23.1113 22.135 23.1113 22.6231 22.6231C23.1113 22.135 23.1113 21.3435 22.6231 20.8554L19.3387 17.5709C20.6996 15.8312 21.5107 13.6407 21.5107 11.2607C21.5107 5.59982 16.9217 1.01074 11.2607 1.01074ZM3.51074 11.2607C3.51074 6.98053 6.98054 3.51074 11.2607 3.51074C15.5409 3.51074 19.0107 6.98053 19.0107 11.2607C19.0107 15.541 15.5409 19.0107 11.2607 19.0107C6.98054 19.0107 3.51074 15.541 3.51074 11.2607Z"
+        />
+      </svg>
+    ),
+  },
+  {
+    // Threads' Notifications slot (the heart), in their exact order: right
+    // after Search, before the profile item. DESKTOP-ONLY for now (excluded
+    // from the mobile bars below).
+    to: "/notifications",
+    labelKey: "nav.notifications",
+    desktopOnly: true,
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+      </svg>
+    ),
+    railIcon: (
+      // Threads' EXACT Notifications heart (24×24 filled path, verbatim).
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path
+          fill="currentColor"
+          d="M16.4045 1.50879C14.785 1.50879 13.2185 2.16259 12 3.30764C10.7815 2.16259 9.215 1.50879 7.5955 1.50879C3.41766 1.50879 0.5 4.62796 0.5 9.09411C0.5 13.7857 4.70617 18.9703 11.2153 22.3022C11.4605 22.428 11.7298 22.4912 11.9995 22.4912C11.9993 22.4912 11.9997 22.4912 11.9995 22.4912C12.2692 22.4912 12.5395 22.428 12.7847 22.3022C19.2938 18.9703 23.5 13.7857 23.5 9.09411C23.5 4.62796 20.5823 1.50879 16.4045 1.50879ZM12 19.9518C6.65166 17.1137 2.94684 12.6864 2.94684 9.09411C2.94684 5.97251 4.77133 3.95556 7.5955 3.95556C9.825 3.95556 11.0773 5.80961 12 7.26504C12.9227 5.80961 14.175 3.95556 16.4045 3.95556C19.2287 3.95556 21.0532 5.97251 21.0532 9.09411C21.0532 12.6864 17.3483 17.1137 12 19.9518Z"
+        />
       </svg>
     ),
   },
@@ -54,13 +99,31 @@ const NAV_ITEMS = [
         <path d="M3.5 17 12 21.5 20.5 17" />
       </svg>
     ),
+    railIcon: (
+      // Threads' Profile glyph — their sidebar equivalent of the own-space tab.
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path
+          clipRule="evenodd"
+          fillRule="evenodd"
+          fill="currentColor"
+          d="M12 0.75C8.82431 0.75 6.25 3.32437 6.25 6.5C6.25 9.67563 8.82431 12.25 12 12.25C15.1757 12.25 17.75 9.67563 17.75 6.5C17.75 3.32437 15.1757 0.75 12 0.75ZM8.75 6.5C8.75 4.70507 10.205 3.25 12 3.25C13.795 3.25 15.25 4.70507 15.25 6.5C15.25 8.29493 13.795 9.75 12 9.75C10.205 9.75 8.75 8.29493 8.75 6.5Z"
+        />
+        <path
+          fill="currentColor"
+          d="M12.0003 13.75C6.97423 13.75 2.73384 17.086 1.30779 21.6254C1.10089 22.284 1.46707 22.9856 2.1257 23.1925C2.78432 23.3994 3.48596 23.0333 3.69287 22.3746C4.80482 18.835 8.10976 16.25 12.0003 16.25C15.8909 16.25 19.1958 18.835 20.3078 22.3746C20.5147 23.0333 21.2163 23.3994 21.8749 23.1925C22.5336 22.9856 22.8997 22.284 22.6928 21.6254C21.2668 17.086 17.0264 13.75 12.0003 13.75Z"
+        />
+      </svg>
+    ),
   },
 ];
 
 // Mobile bottom bar shows only Home + My threads (icon-only, no labels). Search
-// lives in the mobile header (magnifier) and the ☰ menu also lives there — so
-// the bottom bar stays to two primary destinations, Threads-style.
-const BOTTOM_NAV_ITEMS = NAV_ITEMS.filter((item) => item.to !== "/search");
+// lives in the mobile header (magnifier), the ☰ menu also lives there, and
+// Notifications is desktop-only for now — so the bottom bar stays to two
+// primary destinations, Threads-style.
+const BOTTOM_NAV_ITEMS = NAV_ITEMS.filter(
+  (item) => item.to !== "/search" && !item.desktopOnly
+);
 // Reused magnifier glyph for the mobile header search button.
 const SEARCH_ICON = NAV_ITEMS.find((item) => item.to === "/search").icon;
 
@@ -170,11 +233,11 @@ function MenuButton({ menuUp = false, variant = "rail" }) {
             <line x1="4" y1="16" x2="14" y2="16" />
           </svg>
         ) : (
-          // Desktop rail: unchanged 3-bar glyph.
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-            <line x1="4" y1="6" x2="20" y2="6" />
-            <line x1="4" y1="12" x2="20" y2="12" />
-            <line x1="4" y1="18" x2="20" y2="18" />
+          // Desktop rail: Threads' EXACT "More" glyph — two rounded bars
+          // (21px top / 14px bottom, 2.5px tall, rx 1.25) in a 24×24 box.
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <rect x="3" y="7" width="21" height="2.5" rx="1.25" />
+            <rect x="3" y="15" width="14" height="2.5" rx="1.25" />
           </svg>
         )}
         {!isHeader && <span className={styles.tooltip}>{t("nav.menu")}</span>}
@@ -269,12 +332,15 @@ function NavRail() {
 
   // The mobile header (☰ + logo + search) only appears on the feed-like screens
   // that have NO top bar of their own. Search and the thread view keep their own
-  // contextual bars (SearchAppBar / back bar), so we don't stack a second one.
+  // contextual bars (the "Search" masthead / back bar), so we don't stack a
+  // second one.
   const showMobileHeader =
     pathname.startsWith("/home") || pathname.startsWith("/me");
   const searchTarget = lastUrlByItem.get("/search") || "/search";
 
-  const renderItems = (items) =>
+  // useRailIcons: the desktop sidebar renders Threads' exact 24px glyphs
+  // (railIcon); the mobile bottom bar keeps the original stroke set (icon).
+  const renderItems = (items, useRailIcons = false) =>
     items.map((item) => {
       const isActive = pathname.startsWith(item.to);
       // Inactive → return to the last view of that screen (or the base
@@ -310,7 +376,7 @@ function NavRail() {
             setTipOffItem((v) => (v === item.to ? null : v))
           }
         >
-          {item.icon}
+          {useRailIcons ? item.railIcon : item.icon}
           <span className={styles.tooltip}>{label}</span>
         </Link>
       );
@@ -318,18 +384,43 @@ function NavRail() {
 
   return (
     <>
-      {/* Desktop: floating capsule on the left */}
+      {/* Desktop: Threads' fixed full-height side navigation — logo at the
+          top, nav items vertically centered (.items margin auto), ☰ at the
+          bottom. No dividers (Threads' sidebar has none). */}
       <nav className={styles.rail} aria-label={t("nav.primary")}>
         {/* Brand icon (thread + dot) — plain variant (no terracotta tile):
-            subtle, so it doesn't compete with the nav icons / active blob.
-            The short divider below gives it its own zone without boxing it
-            in; the SAME divider separates the ☰ at the bottom, so both
-            breathe identically (shared class = guaranteed consistency). */}
+            subtle, so it doesn't compete with the nav icons / active blob. */}
         <BrandLogo size={44} variant="plain" />
-        <div className={styles.divider} aria-hidden="true" />
-        <div className={styles.items}>{renderItems(NAV_ITEMS)}</div>
-        <div className={styles.divider} aria-hidden="true" />
-        <MenuButton menuUp={false} />
+        <div className={styles.items}>
+          {/* Threads' sidebar order: Home / Search / CREATE / ♥ / Profile. */}
+          {renderItems(NAV_ITEMS.slice(0, 2), true)}
+          {/* Create (+) — Threads' exact plated button (always-visible rounded
+              plate + their + glyph). PLACEHOLDER: no functionality yet — it
+              will open the composer once that flow exists. */}
+          <button
+            type="button"
+            className={`${styles.item} ${styles.createItem} springPressIcon`}
+            aria-label={t("nav.create")}
+          >
+            <span className={styles.createPlate} aria-hidden="true" />
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden="true"
+              className={styles.createGlyph}
+            >
+              <path
+                fill="currentColor"
+                d="M13.25 3.00001C13.25 2.30965 12.6904 1.75001 12 1.75001C11.3096 1.75001 10.75 2.30965 10.75 3.00001V10.75H3C2.30964 10.75 1.75 11.3097 1.75 12C1.75 12.6904 2.30964 13.25 3 13.25H10.75V21C10.75 21.6904 11.3096 22.25 12 22.25C12.6904 22.25 13.25 21.6904 13.25 21V13.25H21C21.6904 13.25 22.25 12.6904 22.25 12C22.25 11.3097 21.6904 10.75 21 10.75H13.25V3.00001Z"
+              />
+            </svg>
+            <span className={styles.tooltip}>{t("nav.create")}</span>
+          </button>
+          {renderItems(NAV_ITEMS.slice(2), true)}
+        </div>
+        <MenuButton menuUp={true} />
       </nav>
 
       {/* Mobile: top app bar — [☰] · [logo] · [search]. Sticky, so it offsets

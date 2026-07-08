@@ -154,44 +154,49 @@ a,
   }
 }
 
-/* Drop the mouse/click outline but KEEP it for keyboard users (focus-visible). */
-:focus:not(:focus-visible) {
+/* NO UA focus outline anywhere (the browser's blue ring) — e.g. the ring that
+ * appeared on the opener when a modal restored focus after Escape. The app
+ * draws its OWN warm focus treatment where a control needs it (the inset
+ * 0 0 0 2px #c5a572 box-shadow on inputs/controls — box-shadow, so this rule
+ * doesn't touch it). Focus itself is preserved (a11y: tab order and restores
+ * keep working); only the UA's outline paint is disabled. */
+:focus,
+:focus-visible {
   outline: none;
 }
 
-/* Silent focus restore: when a component returns focus to its opener after a
- * keyboard close (e.g. the media viewer on Escape), keyboard modality would make
- * the opener match :focus-visible and show a ring. The opener carries this
- * attribute only during that restore (removed on its next blur), so focus is
- * preserved for a11y without a visible ring. */
-[data-focus-silent]:focus,
-[data-focus-silent]:focus-visible {
-  outline: none !important;
+/*
+ * Press feedback (Threads-EXACT) — CENTRAL, reusable.
+ *   .springPress      → text buttons (scale 0.96, 0.15s)
+ *   .springPressIcon  → icon-only controls (scale 0.9, 0.2s — their action-
+ *                       icon pair)
+ * Threads does NOT overshoot: the press is a soft scale down/up on a PLAIN
+ * ease with a slightly longer duration (their transition-duration 0.15–0.2s,
+ * transition-property: transform, default ease — decoded from threads.css;
+ * the old 0.12s/1.56 overshoot bezier read abrupt). The transition also
+ * carries background/color/opacity so controls that fade those on hover
+ * (e.g. the nav icons' #f0ece3 wash) keep animating from this single
+ * declaration — their per-component `transition` is removed to avoid
+ * clobbering. `:not(:disabled)` means a disabled button (e.g. the inactive
+ * "Post" button) NEVER springs — no misleading press feedback. Honors
+ * reduced-motion.
+ */
+.springPress {
+  transition: transform 0.15s ease, background 0.14s ease, color 0.14s ease,
+    opacity 0.14s ease;
 }
 
-/*
- * Spring/bounce press feedback (Threads-style) — CENTRAL, reusable.
- *   .springPress      → text buttons (scale 0.93)
- *   .springPressIcon  → icon-only controls (scale 0.88, a touch stronger)
- * The bounce comes from the overshoot cubic-bezier (the >1 value). The
- * transition also carries background/color/opacity so controls that fade those
- * on hover (e.g. the nav icons' #f0ece3 wash) keep animating from this single
- * declaration — their per-component `transition` is removed to avoid clobbering.
- * `:not(:disabled)` means a disabled button (e.g. the inactive "Post" button)
- * NEVER springs — no misleading press feedback. Honors reduced-motion.
- */
-.springPress,
 .springPressIcon {
-  transition: transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1),
-    background 0.14s ease, color 0.14s ease, opacity 0.14s ease;
+  transition: transform 0.2s ease, background 0.14s ease, color 0.14s ease,
+    opacity 0.14s ease;
 }
 
 .springPress:not(:disabled):active {
-  transform: scale(0.93);
+  transform: scale(0.96);
 }
 
 .springPressIcon:not(:disabled):active {
-  transform: scale(0.88);
+  transform: scale(0.9);
 }
 
 @media (prefers-reduced-motion: reduce) {

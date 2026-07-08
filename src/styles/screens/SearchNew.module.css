@@ -4,17 +4,170 @@
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Helvetica, Arial, sans-serif;
 }
 
-.main {
-  /* Threads-like column: 640px wide, 24px side padding (Threads' feed
-     --barcelona-columns-item-horizontal-padding) — the feed cards carry NO
-     horizontal padding of their own, so this is the single content inset
-     (see CLAUDE.md → Layout). */
+/* === Masthead — Threads' search column header, EVERY breakpoint ===
+   Solid 60px bar with the centered "Search" title (their h1 with empty side
+   slots) — same anatomy as home's masthead. The old mobile SearchAppBar is
+   gone; on mobile this bar goes white FROSTED over the full-bleed sheet
+   (the thread app bar's exact recipe — see the @media block). */
+.appBar {
+  position: sticky;
+  /* Follows the visible top: --kb-top tracks the visual-viewport offset (set by
+     useKeyboardOpen) so iOS's keyboard shift doesn't push the header out of
+     view. Defaults to 0 (normal sticky) when there's no keyboard. */
+  top: var(--kb-top, 0px);
+  z-index: 10;
+  /* Desktop: SOLID warm page bg — no translucency/blur (the frosted glass is a
+     mobile-only treatment; see the @media block below). */
+  background: #f7f5f0;
+}
+
+.appBarInner {
   max-width: 640px;
   margin: 0 auto;
-  padding: 24px 24px 60px;
-  /* Column side padding for nested media-carousel edge-to-edge bleed — MUST
-     equal the side padding above. */
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mastheadTitle {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+/* === In-card search box — Threads' EXACT recessed field (responsive) ===
+   Their box: 44px tall (the 60px class is overridden by their later 44px
+   ones), radius 16, secondary background, hairline OUTLINE 0.5px (1px on
+   hover — outline, so no layout shift), padding-inline 16, icon 16px with
+   8px of its own trailing air, 15px input. 6px/1px block margins (their
+   wrapper paddings). Typing feeds the LIVE results below. */
+.searchBox {
+  display: flex;
+  align-items: center;
+  height: 44px;
+  /* Threads' exact top air: 18px (wrapper) + 6px (inner) = 24px from the
+     card's top edge — the surface already contributes 4px, so 20px here. */
+  margin: 20px 0 1px;
+  padding: 0 16px;
+  background: #f7f5f0;
+  outline: 0.5px solid #e5e0d3;
+  border-radius: 16px;
+}
+
+.searchBox:hover {
+  outline: 1px solid #e5e0d3;
+}
+
+.searchBoxIcon {
+  flex: none;
+  margin-right: 8px;
+  color: #b8b8b8;
+}
+
+.searchBoxInput {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  background: transparent;
+  border: 0;
+  outline: none;
+  font-family: inherit;
+  font-size: 15px;
+  color: #1a1a1a;
+}
+
+.searchBoxInput::placeholder {
+  color: #9b9591;
+}
+
+/* Kill the native WebKit clear/decoration so the field stays ours. */
+.searchBoxInput::-webkit-search-decoration,
+.searchBoxInput::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* === Elevated surface (the canonical card, third member after /home and
+   /p/:id): #fdfcf8, hairline outline, radius 24, NO shadow. It carries the
+   24px feed inset (--barcelona-columns-item-horizontal-padding) and the
+   --layout-pad-x contract for the cards' media bleed. */
+.main {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0 0 60px;
+}
+
+.surface {
+  background: #fdfcf8;
+  border: 1px solid #e5e0d3;
+  border-radius: 24px;
+  padding: 4px 24px 12px;
   --layout-pad-x: 24px;
+  /* Threads' column body: the card ALWAYS reaches the bottom of the viewport
+     (their full-height column), never sized by how few rows it holds — a
+     3-row trending list no longer leaves the card floating mid-page. */
+  min-height: calc(100vh - 60px);
+}
+
+/* === Threads-style sticky corner mask (desktop) — same anatomy as home/
+   thread (see Post.module.css for the full explanation): pins the card's
+   rounded top under the 60px header while content scrolls beneath. */
+.cornerMask {
+  position: sticky;
+  top: 60px;
+  height: 0;
+  z-index: 5;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.cornerMaskEdge {
+  position: absolute;
+  top: -14px;
+  left: 24px;
+  right: 24px;
+  height: 15px;
+  background: #f7f5f0;
+  border-bottom: 1px solid #e5e0d3;
+  overflow: hidden;
+}
+
+.cornerCap {
+  position: absolute;
+  top: -14px;
+  width: 24px;
+  height: 39px;
+  overflow: hidden;
+}
+
+.cornerCapLeft {
+  left: 0;
+}
+
+.cornerCapRight {
+  right: 0;
+}
+
+.cornerCapBox {
+  position: absolute;
+  top: 14px;
+  width: 48px;
+  height: 48px;
+  border: 1px solid #e5e0d3;
+  border-radius: 24px;
+  /* THE trick — the giant spread paints the page bg outside the rounded arc
+     (no ambient layer: the card casts no halo). */
+  box-shadow: 0 0 0 48px #f7f5f0;
+}
+
+.cornerCapLeft .cornerCapBox {
+  left: 0;
+}
+
+.cornerCapRight .cornerCapBox {
+  right: 0;
 }
 
 /* Sort dropdown row (tag feed): its own line, right-aligned — the sort control
@@ -23,6 +176,244 @@
   display: flex;
   justify-content: flex-end;
   margin-bottom: 16px;
+}
+
+/* Landing section title ("Trending") — quiet ink header over the suggestion
+   rows, same size family as the tabs/masthead. */
+.trendingTitle {
+  margin: 0;
+  padding: 14px 0 6px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+/* === Trending skeleton (first landing visit) ===
+   PIXEL-MIRROR of the real suggestion row (SearchTagCard suggestion variant):
+   same paddings/gaps, same 18px rank slot, 36px radius-12 tile, a 43px text
+   column (name line 21 + gap 4 + meta line 18), the 14px trailing arrow slot,
+   and the SAME inset divider (left 78px → full-bleed right, gone on the last
+   row) — the swap to real content must not move a single pixel. */
+.trendSkeletonRow {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+}
+
+.trendSkeletonRow::after {
+  content: "";
+  position: absolute;
+  left: 78px;
+  right: calc(-1 * var(--layout-pad-x, 0px));
+  bottom: 0;
+  height: 1px;
+  background: #ebe7dd;
+}
+
+.trendSkeletonRow:last-child::after {
+  display: none;
+}
+
+/* Solid warm shapes — the motion lives in ONE overlay band, not per bar. */
+.skeletonBar {
+  display: inline-block;
+  border-radius: 4px;
+  background: #ebe7dd;
+}
+
+/* THE shimmer: a single slanted band of the card's own white (#fdfcf8 at
+   alpha) sweeping across the WHOLE block once per beat. Over the card it's
+   invisible (white on white); over the warm bars it reads as a light pass —
+   so every shape, wide or narrow, is lit by the same coherent sweep (the
+   per-bar gradients desynced by width, which is what looked off). */
+.trendSkeleton {
+  position: relative;
+  overflow: hidden;
+}
+
+.trendSkeleton::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -60%;
+  width: 60%;
+  background: linear-gradient(
+    90deg,
+    rgba(253, 252, 248, 0) 0%,
+    rgba(253, 252, 248, 0.9) 50%,
+    rgba(253, 252, 248, 0) 100%
+  );
+  transform: skewX(-12deg);
+  animation: searchSkeletonSweep 1.8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.trendSkeletonRank {
+  width: 18px;
+  height: 13px;
+  border-radius: 3px;
+}
+
+.trendSkeletonTile {
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+}
+
+.trendSkeletonText {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+  /* Exact height of the real text column (21px name line + 4px gap + 18px
+     meta line) so the row height matches the real 67px. */
+  height: 43px;
+}
+
+.trendSkeletonName {
+  width: 120px;
+  height: 14px;
+}
+
+.trendSkeletonMeta {
+  width: 64px;
+  height: 12px;
+}
+
+/* The launch-arrow slot (14px), so the right edge weighs the same. */
+.trendSkeletonArrow {
+  margin-left: auto;
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+}
+
+@keyframes searchSkeletonSweep {
+  0% {
+    transform: translateX(0) skewX(-12deg);
+  }
+  /* The pass itself takes ~65% of the cycle; the rest is a quiet beat
+     before the next sweep (constant strobing reads anxious). */
+  65%,
+  100% {
+    transform: translateX(290%) skewX(-12deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .trendSkeleton::after {
+    display: none;
+  }
+}
+
+/* === Media tab — the gallery mosaic ===
+   The REAL anatomy of a media grid: FULL-BLEED to the card edges (the
+   --layout-pad-x cancellation, like every media surface in the app) and a
+   TIGHT 2px mesh — a mosaic, not a padded card grid. Empty tiles (skeleton
+   and files still in flight) alternate two warm tones (subtle checker
+   texture); loaded tiles paint the file's dominant color behind the media
+   (inline style) so nothing flashes white. */
+.mediaSection {
+  padding: 0;
+}
+
+.mediaGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+  /* Edge to edge: cancel the surface's 24px inset. */
+  margin: 0 calc(-1 * var(--layout-pad-x, 0px));
+}
+
+.mediaTile {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 3 / 4;
+  background: #f0ece3;
+  /* Tiles are BUTTONS (they open the post preview). */
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  /* Threads' media-cell press (same trio as ThreadMedia frames): soft
+     scale(0.98) at 0.2s plain ease — held while the button is down (:active
+     persists through movement), eased back on release. */
+  transition: background 120ms ease, transform 0.2s ease;
+}
+
+.mediaTile:active {
+  transform: scale(0.98);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mediaTile {
+    transition: background 120ms ease;
+  }
+
+  .mediaTile:active {
+    transform: none;
+  }
+}
+
+/* Soft checker: every other tile a half-step lighter — texture without noise. */
+.mediaTile:nth-child(even) {
+  background: #f3efe6;
+}
+
+@media (hover: hover) {
+  .mediaTile:hover {
+    background: #ebe6d9;
+  }
+
+  .mediaTile:hover .mediaTileMedia {
+    opacity: 0.92;
+  }
+}
+
+/* The file fills the tile, IG-crop style. The browser lazy-loads images per
+   tile (loading="lazy"); videos only fetch metadata for the first frame. */
+.mediaTileMedia {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: opacity 120ms ease;
+}
+
+/* Video marker — quiet dark chip, bottom-left (Twitter's grid language). */
+/* The tile's TYPE mark (top-right, like IG's explore grid): ONE plain glyph
+   per tile — the stacked-frames carousel mark when the thread has
+   media_count > 1, IG's exact Reel glyph for a lone video. Surface-white
+   with a soft drop shadow so it reads over any photo — no disc (it's an
+   indicator, not a control). */
+.mediaTileMark {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: inline-flex;
+  color: #fdfcf8;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
+  pointer-events: none;
+}
+
+/* Sensitive media stays blurred IN the grid (reveal happens in the preview,
+   like Twitter). The overscaled blur hides the tile edges bleeding. */
+.mediaTileNsfw .mediaTileMedia {
+  filter: blur(18px);
+  transform: scale(1.12);
+}
+
+.mediaTileNsfwGlyph {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fdfcf8;
+  filter: drop-shadow(0 1px 2px rgba(26, 26, 26, 0.4));
+  pointer-events: none;
 }
 
 .results {
@@ -41,4 +432,59 @@
 .sentinel {
   height: 1px;
   width: 100%;
+}
+
+/* === Mobile (≤700px): the SAME responsive layout, dissolved onto the
+   full-bleed sheet — masthead + in-card search box + results, no separate
+   SearchAppBar anymore. --layout-pad-x stays equal to the real side padding
+   (the HARD media-bleed rule). */
+@media (max-width: 700px) {
+  /* The full-bleed sheet: the page joins the surface color (same canonical
+     mobile treatment as /home and /p/:id — useMobileSurfacePage paints
+     <html>/<body>/AppShell too, so overscroll never shows a warm strip). */
+  .page {
+    background: #fdfcf8;
+  }
+
+  /* White FROSTED masthead on mobile — the EXACT thread app bar recipe
+     (Post .appBar): borderless translucent bar floating over the sheet,
+     content blurring through as it scrolls under. FIXED (not sticky) so
+     iOS's elastic overscroll can't drag it with the content during the
+     rubber-band; anchored to the visible top (top: var(--kb-top)). */
+  .appBar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    background: rgba(253, 252, 248, 0.88);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    backdrop-filter: blur(28px) saturate(180%);
+  }
+
+  @supports not (
+    (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))
+  ) {
+    .appBar {
+      background: #fdfcf8;
+    }
+  }
+
+  .main {
+    /* The masthead is FIXED on mobile (see above), so it no longer reserves
+       flow space — offset the content by its height (60px); the search box
+       brings its own 20px of air below it. */
+    padding: 60px 0 60px;
+  }
+
+  .surface {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    padding: 0 24px 12px;
+    /* Mobile keeps content-sized flow (the surface is dissolved anyway). */
+    min-height: 0;
+  }
+
+  .cornerMask {
+    display: none;
+  }
 }

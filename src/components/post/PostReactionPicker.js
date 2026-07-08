@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
+import ReactionEmoji from "./ReactionEmoji";
 import styles from "../../styles/components/post/PostReactionPicker.module.css";
 
 // Single source of truth for the reaction set (order = display order in the bar).
@@ -136,7 +137,9 @@ function PostReactionPicker({
         {isAction ? (
           activeReaction ? (
             <>
-              <span className={styles.triggerEmoji}>{activeReaction.emoji}</span>
+              <span className={styles.triggerEmoji}>
+                <ReactionEmoji name={activeReaction.id} size={16} />
+              </span>
               <span className={styles.triggerLabel}>
                 {t(activeReaction.labelKey)}
               </span>
@@ -187,7 +190,10 @@ function PostReactionPicker({
               aria-label={t(r.labelKey)}
             >
               <span className={styles.tooltip}>{t(r.labelKey)}</span>
-              <span className={styles.emoji}>{r.emoji}</span>
+              {/* Animated (FB-style loop) while the popover is open. */}
+              <span className={styles.emoji}>
+                <ReactionEmoji name={r.id} size={26} animated />
+              </span>
             </button>
           ))}
           {/* Chat-bubble-style little tail, pointing toward the '+' (below —

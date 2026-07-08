@@ -80,7 +80,7 @@
 }
 
 .triggerEmoji {
-  font-size: 16px;
+  display: inline-flex;
   line-height: 1;
 }
 
@@ -197,7 +197,26 @@
 
 .emoji {
   line-height: 1;
-  display: inline-block;
+  display: inline-flex;
+  /* FB-style pop when hovering an option (spring overshoot, like the app's
+     press feedback). */
+  transition: transform 0.16s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@media (hover: hover) {
+  .option:hover .emoji {
+    transform: scale(1.35) translateY(-3px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .emoji {
+    transition: none;
+  }
+
+  .option:hover .emoji {
+    transform: none;
+  }
 }
 
 .tooltip {

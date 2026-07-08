@@ -1,53 +1,44 @@
+/* Search empty state — the CloseYouGate language: INTEGRATED into the
+   results surface (no card-in-card: the old bordered #fdfcf8 card was
+   invisible on the #fdfcf8 surface), muted icon tile, current type scale. */
+
 .empty {
-  padding: 64px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 56px 22px 64px;
   text-align: center;
-  background: #fdfcf8;
-  border: 1px solid #e8e5dd;
-  border-radius: 8px;
 }
 
+/* Muted icon tile — same spec as the gate's (48px, radius 12, page-tone bg,
+   hairline, quiet glyph). */
 .iconWrap {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 48px;
   height: 48px;
-  border: 1.5px solid #c4bfb1;
-  border-radius: 50%;
-  margin-bottom: 16px;
+  border-radius: 12px;
+  background: #f7f5f0;
+  border: 1px solid #ebe7dd;
+  color: #9b9591;
+  margin: 0 0 16px;
 }
 
 .title {
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  font-family: inherit;
   font-size: 16px;
+  font-weight: 600;
   color: #1a1a1a;
-  margin: 0 0 6px;
-  font-weight: 500;
+  line-height: 1.3;
+  margin: 0 0 8px;
 }
 
 .subtitle {
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  font-size: 11px;
-  color: #9b9591;
-  margin: 0 0 20px;
-}
-
-.button {
-  background: transparent;
-  border: 1px solid #1a1a1a;
-  border-radius: 6px;
-  padding: 8px 18px;
-  cursor: pointer;
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  font-size: 11px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: #1a1a1a;
-  font-weight: 500;
-  transition: background 120ms ease, color 120ms ease;
-}
-
-.button:hover {
-  background: #1a1a1a;
-  color: #fdfcf8;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #6b6b6b;
+  margin: 0;
+  max-width: 340px;
 }

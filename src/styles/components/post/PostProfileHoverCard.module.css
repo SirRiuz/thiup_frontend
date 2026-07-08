@@ -30,24 +30,27 @@
   margin-bottom: 12px;
 }
 
-.identiconWrap > svg {
-  border-radius: 6px;
-}
+/* Inter everywhere (the app's reconciled identity typography) — the old
+   monospace treatment is gone; mono is reserved for machine-data chips. */
 
 .hash {
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  font-size: 12px;
+  /* Same spec as the identity rows (mask name): 15px / 600 / near-black. */
+  font-family: inherit;
+  font-size: 15px;
+  line-height: 21px;
   color: #1a1a1a;
   font-weight: 600;
-  margin: 0 0 4px;
+  margin: 0 0 2px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .joined {
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  font-size: 10px;
+  /* Meta tone — same family/color as timestamps. */
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 400;
   color: #9b9591;
   margin: 0 0 14px;
 }
@@ -68,19 +71,19 @@
 }
 
 .statValue {
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  font-size: 14px;
+  /* Inter, like the /me profile stats (scaled down for the compact card). */
+  font-family: inherit;
+  font-size: 16px;
   color: #1a1a1a;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 
 .statLabel {
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  font-size: 9px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: #9b9591;
+  /* Sentence-case quiet label (no mono/uppercase) — same as /me's stats. */
+  font-family: inherit;
+  font-size: 11px;
+  color: #6b6b6b;
 }
 
 .statDivider {
@@ -101,14 +104,14 @@
 }
 
 .skeletonJoined {
-  width: 96px;
-  height: 10px;
-  margin: 2px 0 10px;
+  width: 104px;
+  height: 12px;
+  margin: 2px 0 12px;
 }
 
 .skeletonStatValue {
-  width: 22px;
-  height: 12px;
+  width: 24px;
+  height: 15px;
   margin-bottom: 2px;
 }
 

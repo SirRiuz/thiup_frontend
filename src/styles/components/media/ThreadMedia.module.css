@@ -15,17 +15,16 @@
   overflow: hidden;
   border-radius: 8px;
   background: #f0ece3;
-  /* Tap spring (same overshoot bezier as the CLAUDE.md .springPress*), but
-   * JS-driven via .pressing instead of :active — a draggable carousel item must
-   * NOT shrink while dragging, which :active can't distinguish. Scale is gentle
-   * (0.97) since the element is large. border-radius animates for the panorama
-   * join (Threads: transition border-radius 0.3s, transform 0.2s). */
-  transition: transform 0.14s cubic-bezier(0.34, 1.56, 0.64, 1),
-    border-radius 0.3s ease;
+  /* Tap press — Threads' EXACT media-cell trio (xk4oym4/xd2fhk0/xwji4o3):
+   * scale(0.98), transition transform 0.2s + border-radius 0.3s, plain ease
+   * (no overshoot). JS-driven via .pressing instead of :active — a draggable
+   * carousel item must NOT shrink while dragging, which :active can't
+   * distinguish. border-radius animates for the panorama join. */
+  transition: transform 0.2s ease, border-radius 0.3s ease;
 }
 
 .pressing {
-  transform: scale(0.97);
+  transform: scale(0.98);
 }
 
 /* Threads-exact media outline: a translucent black HAIRLINE painted ON the
@@ -66,31 +65,88 @@
 
 /* === Sensitive reveal overlay === */
 
-/* Covers the whole (blurred) media — tapping anywhere reveals it. */
+/* Covers the whole (blurred) media — tapping anywhere reveals it. A soft
+   dark scrim guarantees the notice stays legible over ANY blurred colors. */
 .reveal {
   position: absolute;
   inset: 0;
   border: 0;
-  background: transparent;
+  background: rgba(26, 26, 26, 0.22);
   cursor: pointer;
   padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
 }
 
-/* Small eye badge in a corner, matching the mute button (same size/shape/blur). */
-.revealBadge {
-  position: absolute;
-  bottom: 8px;
-  right: 8px;
-  width: 26px;
-  height: 26px;
+/* Centered notice: dark-glass disc + title + hint (IG/Threads anatomy). */
+.revealContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px;
+  text-align: center;
+}
+
+.revealIcon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  background: rgba(26, 26, 26, 0.55);
+  background: rgba(26, 26, 26, 0.5);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
   color: #f7f5f0;
-  -webkit-backdrop-filter: blur(20px);
-  backdrop-filter: blur(20px);
+  margin-bottom: 2px;
+}
+
+.revealTitle {
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: #f7f5f0;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.35);
+}
+
+.revealHint {
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 400;
+  color: rgba(247, 245, 240, 0.85);
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.35);
+}
+
+/* Re-hide toggle after revealing — top-right dark-glass disc (the sound
+   button's recipe), so sensitive media can be covered again in one tap. */
+.rehideButton {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(26, 26, 26, 0.5);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  color: #f7f5f0;
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+
+@media (hover: hover) {
+  .rehideButton:hover {
+    background: rgba(26, 26, 26, 0.72);
+  }
 }
 
 /* === Video controls (dark scrim pill → legible on any video) === */

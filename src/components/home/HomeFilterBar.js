@@ -1,10 +1,11 @@
+import { useEffect, useRef } from "react";
 import { formatCompactNumber } from "../../utils/formatNumber";
 import styles from "../../styles/components/home/HomeFilterBar.module.css";
 
 const OPTIONS = ["trending", "newest", "oldest"];
 
-// label:   text before the options. Default "feed" (home stays identical);
-//          pass null/"" to show nothing.
+// label:   DEPRECATED — kept for API compatibility but no longer rendered
+//          (Threads' tab row has no eyebrow label).
 // options: list of options. Default the feed sort (home stays identical);
 //          search passes posts/tags/users.
 // counts:  optional { [option]: number } — shows a small count badge next to
@@ -29,6 +30,25 @@ function HomeFilterBar({
   const hasCounts = Boolean(counts);
   const labelOf = getOptionLabel || ((option) => option);
 
+  // When the row overflows (longer locales — e.g. the Spanish search tabs —
+  // don't fit the column), the bar scrolls on the x axis; keep the ACTIVE
+  // tab centered in view so the selection is never hidden off-screen.
+  const barRef = useRef(null);
+  const activeRef = useRef(null);
+  useEffect(() => {
+    const bar = barRef.current;
+    const tab = activeRef.current;
+    if (!bar || !tab || bar.scrollWidth <= bar.clientWidth) return;
+    const reduced =
+      typeof window !== "undefined" &&
+      window.matchMedia &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    bar.scrollTo({
+      left: tab.offsetLeft - (bar.clientWidth - tab.offsetWidth) / 2,
+      behavior: reduced ? "auto" : "smooth",
+    });
+  }, [value]);
+
   const handleClick = (option) => {
     if (isLoading) return;
     if (option === value) return;
@@ -36,8 +56,7 @@ function HomeFilterBar({
   };
 
   return (
-    <div className={styles.bar} role="tablist">
-      {label ? <span className={styles.label}>{label}</span> : null}
+    <div className={styles.bar} role="tablist" ref={barRef}>
       {options.map((option) => {
         const count = hasCounts ? counts[option] : null;
         // Only a real, positive count gets a badge (no placeholder / no 0).
@@ -52,6 +71,7 @@ function HomeFilterBar({
             key={option}
             type="button"
             role="tab"
+            ref={isActive ? activeRef : undefined}
             aria-selected={isActive}
             aria-disabled={isDisabled}
             aria-label={ariaLabel}

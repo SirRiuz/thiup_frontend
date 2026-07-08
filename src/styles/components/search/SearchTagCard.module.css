@@ -1,42 +1,120 @@
+/* SearchTagCard — tag result row, Threads-era anatomy (same rhythm as the
+   user/post rows): warm-tint # tile in the 36px identity lane · name + meta
+   in Inter · sparkline anchored right. Full-bleed divider between rows,
+   hidden on the last one. No mono, no chip-in-a-box. */
+
 .card {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 12px;
   width: 100%;
-  padding: 16px 8px;
+  padding: 12px 0;
   background: transparent;
   border: 0;
-  border-bottom: 1px solid #ebe7dd;
   cursor: pointer;
   text-align: left;
-  transition: background 120ms ease;
+  /* No hover wash — same quiet rows as the feed (Threads). */
 }
 
-.card:hover {
-  background: rgba(235, 231, 221, 0.4);
+/* Full-bleed hairline between rows (reaches the surface edges via the
+   --layout-pad-x contract), gone on the last row. */
+.card::after {
+  content: "";
+  position: absolute;
+  left: calc(-1 * var(--layout-pad-x, 0px));
+  right: calc(-1 * var(--layout-pad-x, 0px));
+  bottom: 0;
+  height: 1px;
+  background: #ebe7dd;
 }
 
-.tagChip {
+.card:last-child::after {
+  display: none;
+}
+
+/* Suggestion variant (search landing) — Threads' exact list divider: INSET,
+   starting where the TEXT column starts (rank 18 + gap 12 + tile 36 + gap 12)
+   and running to the surface's right edge, so consecutive rows read as one
+   column of text with the rank/tiles floating free (their hallmark). */
+.cardSuggestion::after {
+  left: 78px;
+}
+
+/* The tag's "avatar": 36px squircle + terracotta # — the app's chip/tag
+   color family, in the same lane as the avatars around it. A soft warm
+   GRADIENT + inner hairline give it paper depth (the flat tint read dull). */
+.tagTile {
+  flex: none;
+  width: 36px;
+  height: 36px;
   display: inline-flex;
   align-items: center;
-  padding: 6px 12px;
-  background: #ebe7dd;
-  border: 1px solid #ddd8c8;
-  border-radius: 14px;
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  font-size: 13px;
-  color: #1a1a1a;
-  font-weight: 500;
+  justify-content: center;
+  background: linear-gradient(135deg, #f7ead9, #efdabf);
+  box-shadow: inset 0 0 0 1px rgba(168, 84, 50, 0.08);
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 17px;
+  font-weight: 600;
+  color: #a85432;
+  line-height: 1;
 }
 
+/* Trending rank numeral — ghost tone, tabular; the top 3 wear the accent. */
+.rank {
+  flex: none;
+  width: 18px;
+  text-align: center;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: #c4bfb1;
+  font-variant-numeric: tabular-nums;
+}
+
+.rankTop {
+  color: #a85432;
+}
+
+/* Launch affordance (suggestion rows): the ↗ that says "runs this search". */
+.launchArrow {
+  margin-left: auto;
+  flex: none;
+  display: inline-flex;
+  color: #c4bfb1;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+/* Reconciled identity type: name body-sized 600 ink, one line. */
+.tagName {
+  font-family: inherit;
+  font-size: clamp(14px, 13.1px + 0.25vw, 15px);
+  font-weight: 600;
+  color: #1a1a1a;
+  line-height: 21px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Meta line at the timestamp tone. */
 .count {
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  font-size: 11px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.4;
   color: #9b9591;
   font-variant-numeric: tabular-nums;
 }
 
-/* Sparkline anchored to the right, fixed width so it does not deform. */
+/* Sparkline anchored to the right, fixed size so it never deforms. */
 .spark {
   margin-left: auto;
   flex-shrink: 0;
@@ -44,7 +122,7 @@
   align-items: center;
 }
 
-/* Search match in a tag — bold in the warm accent, no background. */
+/* Search match in a tag — emphasis via the warm accent, no background. */
 .highlight {
   background: none;
   color: #a85432;

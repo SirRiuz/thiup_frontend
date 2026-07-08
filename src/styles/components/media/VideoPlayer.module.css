@@ -30,6 +30,29 @@
     0 0 64px rgba(247, 245, 240, 0.12);
 }
 
+/* Stage-fill variant (embedded stages, e.g. the search media preview): the
+   player stretches to its CONTAINER instead of the viewport and the video
+   letterboxes inside it. No floating glow — the stage's flat black (IG) does
+   the separation. (Named stageFill: `.fill` is TAKEN by the progress bar's
+   played portion below — reusing it painted the whole player #f7f5f0.) */
+.stageFill {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+}
+
+.stageFill .video {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+}
+
+.stageFill .video.ready {
+  box-shadow: none;
+}
+
 /* Centered big play shown while paused. */
 .bigPlay {
   position: absolute;

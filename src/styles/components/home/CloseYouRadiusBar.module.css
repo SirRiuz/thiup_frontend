@@ -1,85 +1,275 @@
-/* Close You radius — mono uppercase chips like the rest of the feed
-   controls; active in warm terracotta. No #FFFFFF. */
+/* Close You radius — a MAP-SCALE RULER sunk into a RECESSED TRAY.
+   Design rationale: home's control zone (compose · tabs · radius) had become
+   a ladder of identical hairline rows — no figure/ground. This row is CHROME,
+   not content, so it changes PLANE instead of weight: a full-bleed band in
+   the page tone (#f7f5f0) recessed into the #fdfcf8 card, hairline-edged.
+   On that warmer ground: brand-terracotta ripple, a ruled scale with darker
+   ticks, the gliding dot, and the active distance in a warm-tint pill (the
+   "Your thread" pill language) — a real focal point. */
+
 .bar {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 6px 8px 10px;
+  gap: 14px;
+  padding: 12px 0;
+  /* The tray sits right under the tabs: overlap its top hairline with the
+     tabs' baseline so they read as ONE line, not a doubled 2px rule. */
+  margin-top: -1px;
 }
 
-.label {
-  flex-shrink: 0;
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: #a3a3a3;
+/* The recessed tray: page-tone band, full-bleed to the card edges, edged by
+   hairlines top and bottom. Children lift above it via position: relative. */
+.bar::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(-1 * var(--layout-pad-x, 0px));
+  right: calc(-1 * var(--layout-pad-x, 0px));
+  background: #f7f5f0;
+  border-top: 1px solid #ebe7dd;
+  border-bottom: 1px solid #ebe7dd;
 }
 
-.options {
-  display: flex;
-  gap: 6px;
-  /* ALWAYS a single line: no wrap (the "100 km" was wrapping on
-     small screens). If it doesn't fit, subtle horizontal scroll. */
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none; /* Firefox */
+/* Compass — brand terracotta on the tray (cartographic, never a pin).
+   Vertically CENTERED on the whole tray block (ruler + numbers), which reads
+   balanced — pinning it to the ruler line left it floating high. */
+.compass {
+  position: relative;
+  flex: none;
+  display: inline-flex;
+  color: #a85432;
+}
+
+.scale {
+  position: relative;
+  flex: 1;
   min-width: 0;
-}
-
-.options::-webkit-scrollbar {
-  display: none; /* Chrome/Safari */
-}
-
-.chip {
-  flex-shrink: 0; /* the chips don't compress or break */
-  white-space: nowrap;
-  padding: 4px 10px;
-  border: 1px solid #e5e0d3;
-  border-radius: 999px;
-  background: transparent;
+  /* Side room so the END labels ("15 km" / "100 km"), centered on the first
+     and last ticks, never clip against the container. */
+  padding: 0 26px;
+  /* Slider surface (Android-volume style): horizontal drags belong to the
+     control, never to page scroll; no text selection mid-gesture. */
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
   cursor: pointer;
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  font-size: 10.5px;
-  letter-spacing: 0.08em;
-  color: #666;
-  transition: color 120ms ease, border-color 120ms ease,
-    background 120ms ease;
 }
 
-.chip:hover:not(:disabled) {
-  color: #1a1a1a;
-  border-color: #c4bfb1;
+/* While dragging: position tracks the pointer 1:1 (no reveal easing —
+   the spring only plays on release, as the snap). The thumb GROWS under the
+   finger, volume-knob style (that growth does ease). */
+.dragging .track::after {
+  transition: none;
 }
 
-/* During reload the chips only block interaction — WITHOUT
-   visual change (opacity 0.6 made the whole row flash on every
-   request: the reported flicker). The feed already communicates loading
-   with its dimming, just like search. */
-.chip:disabled {
+.dragging .thumb {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transform: translate(-50%, -50%) scale(1.35);
+  box-shadow: 0 0 0 5px rgba(243, 227, 211, 0.9);
+}
+
+.dragging,
+.dragging .stop {
+  cursor: grabbing;
+}
+
+/* === The ruler === */
+
+.track {
+  position: relative;
+  /* Tall enough to contain the descending ticks (5px line + 9px comb). */
+  height: 14px;
+}
+
+/* Baseline of the scale — a step darker than the card hairlines so it holds
+   its own on the tray. It IS the end marks too: a rounded bracket (⊓) whose
+   top corners curve down into the 15 / 100 legs — no sharp 90° junction
+   between the line and the boundary marks (the old ├ ┤ end ticks read
+   pointy). ONE uniform color for the whole idle stroke (line + curves +
+   legs), so there is no tone change anywhere along the shape. */
+.track::before,
+.track::after {
+  content: "";
+  position: absolute;
+  top: 5px;
+  left: 0;
+  right: 0;
+  height: 11px;
+  border-top: 2px solid transparent;
+  border-left: 1.5px solid transparent;
+  border-right: 1.5px solid transparent;
+  border-radius: 5px 5px 0 0;
+}
+
+.track::before {
+  border-color: #d5cfc0;
+}
+
+/* Travelled span — the SAME bracket, painted with the warm gradient ONLY on
+   the stroke (gradient-border technique: bg on border-box, masked to the
+   border ring so the radius is respected), revealed left→right by
+   --fill-pct (background-size). Identical stacked geometry → the warm layer
+   can never mis-join the grey one: no cuts, no color seams, the gradient
+   bends through the corners and down the legs as one continuous stroke. */
+.track::after {
+  background: linear-gradient(90deg, #d8b89a, #a85432) border-box;
+  background-repeat: no-repeat;
+  background-size: var(--fill-pct, 0%) 100%;
+  -webkit-mask: linear-gradient(#000 0 0) padding-box,
+    linear-gradient(#000 0 0) border-box;
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0)
+    border-box;
+  mask-composite: exclude;
+  /* Same gentle spring as the thumb (see .thumb) — they travel together. */
+  transition: background-size 0.32s cubic-bezier(0.32, 1.12, 0.55, 1);
+}
+
+/* Ruler ticks (INNER presets only — the 15/100 boundary marks are the
+   bracket's own rounded legs, see .track::before) — hanging BELOW the
+   baseline like a real map scale (┬┬), never crossing it (a crossing tick
+   read as a "+"), each one descending toward its own number. */
+.tick {
+  position: absolute;
+  top: 5px;
+  width: 1.5px;
+  height: 9px;
+  border-radius: 0 0 1px 1px;
+  background: #c4bfb1;
+  transform: translateX(-50%);
+  transition: background 0.32s ease;
+}
+
+/* Ticks inside the travelled span light up warm — the scale "fills in" as
+   the radius grows. */
+.tickPassed {
+  background: #b8845f;
+}
+
+/* Compass needle: swings and settles (spring overshoot) each time the radius
+   changes — retriggered by the key remount. */
+.needle {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: compassSwing 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes compassSwing {
+  0% {
+    transform: rotate(-26deg);
+  }
+  60% {
+    transform: rotate(8deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+/* The dot: terracotta with a warm halo (activity-dot language), gliding with
+   a spring overshoot to the selected distance. GENTLER bezier than the house
+   press spring (1.56): overshoot scales with travel distance, and on the full
+   15→100 throw the strong curve shot the dot well past the bracket's end —
+   1.12 keeps the settle feel while staying inside the ruler. */
+.thumb {
+  position: absolute;
+  top: 6px;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #a85432;
+  box-shadow: 0 0 0 3px #f3e3d3;
+  transform: translate(-50%, -50%);
+  transition: left 0.32s cubic-bezier(0.32, 1.12, 0.55, 1),
+    transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* === The stops (tap targets) === */
+
+.stops {
+  position: relative;
+  height: 26px;
+  margin-top: 1px;
+}
+
+.stop {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  padding: 3px 9px;
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  color: #6b6b6b;
+  font-variant-numeric: tabular-nums;
+  transition: color 120ms ease, background 120ms ease;
+}
+
+/* Invisible hit extender: the WHOLE column around a stop is tappable — up
+   over its tick and the ruler line, and generously to the sides. Clicking
+   "near the mark" works, not just the tiny number (the reported confusion). */
+.stop::before {
+  content: "";
+  position: absolute;
+  left: -12px;
+  right: -12px;
+  top: -20px;
+  bottom: -6px;
+}
+
+@media (hover: hover) {
+  /* Visible affordance: the number is a BUTTON — soft pill wash + ink. */
+  .stop:hover:not(:disabled) {
+    color: #1a1a1a;
+    background: rgba(0, 0, 0, 0.04);
+  }
+}
+
+/* During reload the stops only block interaction — WITHOUT visual change
+   (an opacity dim made the whole row flash on every request). */
+.stop:disabled {
   cursor: default;
 }
 
-.chipActive,
-.chipActive:hover:not(:disabled) {
+/* Active distance: warm-tint pill (the "Your thread" pill language) — the
+   row's focal point, unmistakable against the plain idle numbers. */
+.stopActive,
+.stopActive:hover:not(:disabled) {
   background: #f3e3d3;
-  border-color: #b8845f;
   color: #a85432;
   font-weight: 600;
 }
 
 @media (max-width: 480px) {
   .bar {
-    gap: 8px;
-    padding: 6px 6px 10px;
+    gap: 10px;
   }
 
-  /* Compact but tappable (comfortable height, tight side padding):
-     the 4 presets fit on one line down to ~340px. */
-  .chip {
-    padding: 6px 8px;
-    font-size: 10px;
-    letter-spacing: 0.04em;
+  .scale {
+    padding: 0 22px;
+  }
+
+  .stop {
+    font-size: 11px;
+    padding: 3px 7px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .track::after,
+  .thumb,
+  .tick {
+    transition: none;
+  }
+
+  .needle {
+    animation: none;
   }
 }

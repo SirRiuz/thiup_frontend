@@ -48,8 +48,12 @@ function SpeakerIcon({ muted, size = 18 }) {
  *
  * Lives inside a [data-video-player] root so the viewer's swipe gesture bails on
  * it — scrubbing and the mute tap never trigger swipe/close/navigation.
+ *
+ * `fill`: embedded-stage variant (e.g. the search media preview) — the player
+ * stretches to its CONTAINER (not the viewport) and the video letterboxes
+ * inside it, without the viewer's floating glow.
  */
-function VideoPlayer({ item, onReady, onError }) {
+function VideoPlayer({ item, onReady, onError, fill = false }) {
   const { t } = useTranslation();
   const videoRef = useRef(null);
   const trackRef = useRef(null);
@@ -170,7 +174,10 @@ function VideoPlayer({ item, onReady, onError }) {
   const pctBuf = duration ? Math.min(100, (buffered / duration) * 100) : 0;
 
   return (
-    <div className={styles.player} data-video-player="">
+    <div
+      className={`${styles.player} ${fill ? styles.stageFill : ""}`}
+      data-video-player=""
+    >
       <video
         ref={videoRef}
         src={item.url}

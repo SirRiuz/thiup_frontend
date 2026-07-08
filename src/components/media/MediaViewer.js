@@ -57,20 +57,12 @@ const normalizeColor = (c) => {
 
 const colorOf = (images, i) => normalizeColor(images[i]?.dominantColor);
 
-// Return focus to the opener for a11y, but WITHOUT the keyboard focus ring:
-// closing via Escape leaves keyboard modality, which would make the opener match
-// :focus-visible. The data attribute suppresses the outline (see index.css) only
-// for this silent restore, and is removed on the next blur so real keyboard focus
-// still shows a ring.
+// Return focus to the opener for a11y. No ring-suppression dance needed: the
+// UA focus outline is disabled app-wide (see index.css), so the restore is
+// silent by default.
 const restoreFocusSilently = (el) => {
   if (!el || typeof el.focus !== "function") return;
-  el.setAttribute("data-focus-silent", "");
   el.focus({ preventScroll: true });
-  const cleanup = () => {
-    el.removeAttribute("data-focus-silent");
-    el.removeEventListener("blur", cleanup);
-  };
-  el.addEventListener("blur", cleanup);
 };
 
 function CloseIcon() {
@@ -620,6 +612,12 @@ function MediaViewer({ images, index: startIndex, onClose }) {
           bg.style.transition = "";
           bg.style.opacity = "1";
         }
+        // An aborted dismiss (second finger landed mid-drag) restores the
+        // cell's own backdrop — the bg is back at full, so it's invisible.
+        if (st.dimCell) {
+          st.dimCell.style.backgroundColor = st.dimCellBg;
+          st.dimCell = null;
+        }
         const [a, b] = Array.from(st.pts.values());
         st.zStartDist = dist2(a, b) || 1;
         st.zStartScale = st.zoom;
@@ -708,6 +706,20 @@ function MediaViewer({ images, index: startIndex, onClose }) {
         // Lock to the dominant axis at the start of the gesture (horizontal =
         // slide, vertical = close) so the two never get confused.
         st.axis = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
+        if (st.axis === "y") {
+          // The current CELL paints its own dominant-color background and
+          // would ride down with the image as an opaque slab (the backdrop
+          // fade never showed through it). Hand the backdrop duty to the
+          // full-screen bg for the drag: same color, still at opacity 1 →
+          // the swap is invisible, and from here the fade dims EVERYTHING
+          // behind the dragged image together.
+          const cell = track.querySelector(":scope > div:not([aria-hidden])");
+          if (cell) {
+            st.dimCell = cell;
+            st.dimCellBg = cell.style.backgroundColor;
+            cell.style.backgroundColor = "transparent";
+          }
+        }
       }
       if (st.axis === "x") {
         // Rubber-band at the ends (no neighbor in that direction).
@@ -845,7 +857,8 @@ function MediaViewer({ images, index: startIndex, onClose }) {
         stage.style.transition = "";
         if (bg) bg.style.transition = "";
         // Swipe-down past the threshold → close. Don't reset the backdrop
-        // opacity first: animateClose keeps fading it (and the image) from here.
+        // opacity first: animateClose keeps fading it (and the image) from
+        // here (the cell's own backdrop stays transparent — it's exiting).
         if (Math.abs(dy) > CLOSE_DISTANCE) {
           animateClose();
           return;
@@ -853,6 +866,16 @@ function MediaViewer({ images, index: startIndex, onClose }) {
         // Snap back up.
         if (bg) bg.style.opacity = "1";
         stage.style.transform = "translate3d(0, 0, 0) scale(1)";
+        // Give the cell its own backdrop back once the bg has faded to full
+        // — same color at opacity 1, so the restore is invisible.
+        const dimCell = st.dimCell;
+        const dimCellBg = st.dimCellBg;
+        st.dimCell = null;
+        if (dimCell) {
+          setTimeout(() => {
+            dimCell.style.backgroundColor = dimCellBg;
+          }, 260);
+        }
         return;
       }
 

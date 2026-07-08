@@ -8,8 +8,8 @@
  * from a tag search. If the server is compromised, there is no profile to
  * leak.
  *
- * Same defensive pattern as recentSearches.js: localStorage can be
- * disabled or full — the app never breaks because of that.
+ * Defensive localStorage access throughout: it can be disabled or full —
+ * the app never breaks because of that.
  */
 
 import { HASHTAG_RE } from "./hashtags";

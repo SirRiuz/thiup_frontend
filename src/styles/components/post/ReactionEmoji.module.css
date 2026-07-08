@@ -1,0 +1,253 @@
+/* ReactionEmoji — Thiup's own reaction set (inline SVG).
+   Static everywhere by default; `.animated` (the picker popover) runs each
+   face's FB-inspired loop. All parts animate transforms/opacity only (cheap),
+   with transform-box: fill-box so origins are per-shape, and everything is
+   disabled under prefers-reduced-motion. */
+
+.root {
+  display: block;
+  overflow: visible;
+  /* FIRM size. The global reset (`svg { max-width: 100% }` in index.css) let
+     a shrink-to-fit flex ancestor (the picker popover) collapse the glyph to
+     width 0 — the whole popover then shrank around the nothing (the "empty
+     reactions menu" bug). The glyph is fixed-size by definition: never shrink,
+     never cap. */
+  flex: none;
+  max-width: none;
+}
+
+.root * {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* ===== love — heartbeat (lub-dub, pause, repeat) ===== */
+@keyframes reactionHeartbeat {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  14% {
+    transform: scale(1.22);
+  }
+  28% {
+    transform: scale(1);
+  }
+  42% {
+    transform: scale(1.16);
+  }
+  60% {
+    transform: scale(1);
+  }
+}
+
+.animated .heart {
+  animation: reactionHeartbeat 1.2s ease-in-out infinite;
+}
+
+/* ===== laugh — rocking cackle ===== */
+@keyframes reactionLaughRock {
+  0%,
+  100% {
+    transform: rotate(-6deg) translateY(0.4px);
+  }
+  50% {
+    transform: rotate(6deg) translateY(-0.8px);
+  }
+}
+
+.animated .laughFace {
+  animation: reactionLaughRock 0.85s ease-in-out infinite;
+}
+
+/* ===== wow — brows lift, the "O" breathes wider ===== */
+@keyframes reactionWowBrows {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  40%,
+  60% {
+    transform: translateY(-1.4px);
+  }
+}
+
+@keyframes reactionWowMouth {
+  0%,
+  100% {
+    transform: scaleY(0.85) scaleX(0.95);
+  }
+  40%,
+  60% {
+    transform: scaleY(1.15) scaleX(1.05);
+  }
+}
+
+.animated .wowBrows {
+  animation: reactionWowBrows 1.6s ease-in-out infinite;
+}
+
+.animated .wowMouth {
+  animation: reactionWowMouth 1.6s ease-in-out infinite;
+}
+
+/* ===== sad — the face droops while the tear rolls down and fades ===== */
+@keyframes reactionSadDroop {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(0.9px);
+  }
+}
+
+@keyframes reactionSadTear {
+  0% {
+    transform: translateY(-2.5px) scale(0.4);
+    opacity: 0;
+  }
+  30% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  75% {
+    transform: translateY(4.5px) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(7px) scale(0.7);
+    opacity: 0;
+  }
+}
+
+.animated .sadFace {
+  animation: reactionSadDroop 2s ease-in-out infinite;
+}
+
+.animated .sadTear {
+  animation: reactionSadTear 2s ease-in infinite;
+}
+
+/* ===== angry — FB-style boiling rage: the face PRESSES DOWN (squash) while
+   a red flush rises from the chin, holds the glare, then releases with a
+   little puff. No jittery shake. ===== */
+.angryFace {
+  /* Squash toward the chin, not the center. */
+  transform-origin: center 88%;
+}
+
+.angryFlush {
+  opacity: 0;
+}
+
+@keyframes reactionAngryPress {
+  0%,
+  100% {
+    transform: translateY(0) scale(1, 1);
+  }
+  30%,
+  55% {
+    /* Wound up: pressed down and squashed, brows clamped. */
+    transform: translateY(1.4px) scale(0.97, 0.91);
+  }
+  72% {
+    /* The release overshoots up — the exhale. */
+    transform: translateY(-0.7px) scale(1.01, 1.04);
+  }
+}
+
+@keyframes reactionAngryFlush {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  30%,
+  58% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 0;
+  }
+}
+
+.animated .angryFace {
+  animation: reactionAngryPress 2s ease-in-out infinite;
+}
+
+.animated .angryFlush {
+  animation: reactionAngryFlush 2s ease-in-out infinite;
+}
+
+/* ===== applause — hands clap together, sparks pop at impact ===== */
+@keyframes reactionClapLeft {
+  0%,
+  100% {
+    transform: rotate(-10deg) translateX(-1.2px);
+  }
+  45%,
+  55% {
+    transform: rotate(3deg) translateX(0.8px);
+  }
+}
+
+@keyframes reactionClapRight {
+  0%,
+  100% {
+    transform: rotate(10deg) translateX(1.2px);
+  }
+  45%,
+  55% {
+    transform: rotate(-3deg) translateX(-0.8px);
+  }
+}
+
+@keyframes reactionSparks {
+  0%,
+  35%,
+  100% {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+  48% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  70% {
+    transform: scale(1.15);
+    opacity: 0;
+  }
+}
+
+.animated .handLeft {
+  animation: reactionClapLeft 0.8s ease-in-out infinite;
+}
+
+.animated .handRight {
+  animation: reactionClapRight 0.8s ease-in-out infinite;
+}
+
+.animated .sparks {
+  animation: reactionSparks 0.8s ease-in-out infinite;
+}
+
+/* Static sparks stay visible at rest (they ARE part of the applause glyph). */
+.sparks {
+  opacity: 0.9;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animated .heart,
+  .animated .laughFace,
+  .animated .wowBrows,
+  .animated .wowMouth,
+  .animated .sadFace,
+  .animated .sadTear,
+  .animated .angryFace,
+  .animated .angryFlush,
+  .animated .handLeft,
+  .animated .handRight,
+  .animated .sparks {
+    animation: none;
+  }
+}

@@ -1,6 +1,9 @@
 {
   "media": {
+    "multipleIndicator": "Contiene más archivos",
     "tapToView": "Toca para ver",
+    "sensitiveTitle": "Contenido sensible",
+    "hideSensitive": "Ocultar contenido sensible",
     "viewSensitive": "Ver contenido sensible",
     "video": "Video",
     "mute": "Silenciar",
@@ -38,10 +41,17 @@
     "primary": "Principal",
     "home": "Inicio",
     "search": "Buscar",
+    "notifications": "Notificaciones",
+    "create": "Nuevo hilo",
     "myThreads": "Mis hilos",
     "menu": "Menú",
     "about": "Acerca de",
     "languages": "Idioma"
+  },
+  "notifications": {
+    "title": "Notificaciones",
+    "emptyTitle": "Aún no hay nada aquí",
+    "emptyBody": "Las reacciones y respuestas a tus hilos aparecerán aquí."
   },
   "language": {
     "title": "Idioma",
@@ -54,6 +64,7 @@
   "pageTitle": {
     "search": "Buscar",
     "myThreads": "Mis hilos",
+    "notifications": "Notificaciones",
     "thread": "Hilo",
     "notFound": "Página no encontrada",
     "serverError": "Error del servidor",
@@ -105,7 +116,7 @@
   "compose": {
     "postingAs": "Publicando como",
     "postingAsPlaceholder": "Publicando como …",
-    "placeholder": "Inicia un hilo...",
+    "placeholder": "¿Qué hay de nuevo?",
     "post": "Publicar",
     "posting": "Publicando",
     "locationDefault": "Comparte tu zona aproximada al publicar (para Cerca de ti) — nunca tu ubicación exacta",
@@ -147,23 +158,19 @@
   },
   "search": {
     "placeholder": "Buscar en Thiup",
+    "tabMedia": "Media",
+    "mediaPreview": {
+      "label": "Vista previa del hilo",
+      "viewThread": "Ver hilo"
+    },
+    "trendingTitle": "Tendencias",
     "label": "Buscar",
-    "clearText": "Borrar texto de búsqueda",
     "tabTop": "Destacados",
     "tabLatest": "Recientes",
     "tabPeople": "Personas",
     "tabTags": "Etiquetas",
-    "tabWithCount": "{{label}}, {{countLabel}} resultados",
     "noResultsTitle": "No se encontraron resultados",
-    "noResultsSubtitle": "Prueba con otras palabras o explora las tendencias",
-    "searchForLead": "Buscar",
-    "removeRecent": "Quitar {{text}} de búsquedas recientes",
-    "clearAll": "Borrar todo",
-    "badgeRecent": "Reciente",
-    "badgeTag": "Etiqueta",
-    "badgeNew": "Nuevo",
-    "badgeTrending": "Tendencia",
-    "badgePost": "Publicación"
+    "noResultsSubtitle": "Prueba con otras palabras o explora las tendencias"
   },
   "post": {
     "threadTitle": "Hilo",

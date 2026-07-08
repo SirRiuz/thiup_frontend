@@ -16,6 +16,10 @@ import styles from "../../styles/components/post/PostReply.module.css";
 // Gutter = 36 (Threads' avatar size; their feed lane is 36 avatar + 12 gap = 48).
 const STEP = 36;
 const LANE = 18; // center of a STEP-wide gutter
+// Threads' threadline is 2px wide — offset by half so the line CENTERS on the
+// lane (their inset-inline-start: calc(50% - 1px)).
+const LINE_W = 2;
+const lineLeft = (level) => laneLeft(level) - LINE_W / 2;
 const laneLeft = (level) => level * STEP + LANE;
 
 function PostReply({
@@ -61,7 +65,7 @@ function PostReply({
           <div
             key={`g${level}`}
             className={styles.guideLine}
-            style={{ left: laneLeft(level) }}
+            style={{ left: lineLeft(level) }}
             aria-hidden="true"
           />
         ) : null
@@ -69,14 +73,18 @@ function PostReply({
       {depth >= 1 && (
         <div
           className={styles.branch}
-          style={{ left: laneLeft(depth - 1), width: STEP }}
+          /* The arm stops 4px short of the avatar's left edge (Threads'
+             breathing gap): STEP reaches the avatar CENTER, so trim the
+             avatar radius (18) + the gap (4), minus the 1px the lane is
+             already offset. */
+          style={{ left: lineLeft(depth - 1), width: STEP - 21 }}
           aria-hidden="true"
         />
       )}
       {hasChildren && (
         <div
           className={styles.childTrunk}
-          style={{ left: laneLeft(depth) }}
+          style={{ left: lineLeft(depth) }}
           aria-hidden="true"
         />
       )}

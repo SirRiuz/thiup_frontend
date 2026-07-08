@@ -149,22 +149,18 @@
   color: #9b9591;
   font-size: clamp(14px, 13.1px + 0.25vw, 15px);
   line-height: 1;
-  margin: 0 2px;
 }
 
 .mineBadge {
+  /* Threads-style quiet meta — EXACTLY the replies' "· Author" spec
+     (PostReply .authorTag): timestamp-identical type (body-sized, 400, light
+     #9b9591) after the dot divider. The old warm pill shouted next to the new
+     whisper-quiet identity row. */
   flex: none;
-  padding: 2px 8px;
-  background: #f3e3d3;
-  color: #a85432;
-  /* Inter (the project font, inherited) — matches the reconciled 13px header
-     row; warm tint pill (borderless, like the app's other quiet active states)
-     instead of the old mono 9px bordered chip that no longer contrasted. */
   font-family: inherit;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 600;
-  line-height: 1.4;
+  font-size: clamp(14px, 13.1px + 0.25vw, 15px);
+  font-weight: 400;
+  color: #9b9591;
   white-space: nowrap;
 }
 

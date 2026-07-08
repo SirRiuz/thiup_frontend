@@ -42,8 +42,10 @@ function MyThreads() {
     isLoading: isLoading || isLoadingMore || !!loadMoreError,
   });
 
-  const handlePostClick = (postId) => {
-    navigate(`/p/${postId}`);
+  // Seed the thread view with the card's already-loaded post (router state):
+  // the OP paints instantly there — only the replies show a loading state.
+  const handlePostClick = (post) => {
+    navigate(`/p/${post.uid}`, { state: { seedThread: post } });
   };
 
   const handleHashtagClick = (tag) => {
@@ -130,7 +132,7 @@ function MyThreads() {
                   key={post.uid}
                   post={post}
                   isLast={idx === posts.length - 1 && !hasMore}
-                  onClick={() => handlePostClick(post.uid)}
+                  onClick={() => handlePostClick(post)}
                   onHashtagClick={handleHashtagClick}
                   // Every thread here is the user's own — the "Your thread" tag
                   // would be redundant on this screen.

@@ -9,28 +9,86 @@ import styles from "../../styles/components/search/SearchTagCard.module.css";
  * `activityMax` = global maximum across the visible tags → shared scale of
  * the sparklines (heights comparable across tags).
  */
-function SearchTagCard({ tag, activityMax, highlightQuery, onClick }) {
+/**
+ * variant:
+ *   "result"     (default) — Tags tab row: sparkline + full-bleed divider.
+ *   "suggestion" — search-landing trending row (Threads' suggestion anatomy):
+ *                  INSET divider starting after the tile, NO sparkline (the
+ *                  landing has no comparable series — the mock would read as
+ *                  real data).
+ */
+function SearchTagCard({
+  tag,
+  activityMax,
+  highlightQuery,
+  onClick,
+  variant = "result",
+  rank,
+}) {
   const { t } = useTranslation();
+  const isSuggestion = variant === "suggestion";
   return (
-    <button type="button" className={styles.card} onClick={onClick}>
-      <span className={styles.tagChip}>
-        {/* Highlight over the FULL '#name' so splitByMatch handles the '#'
-            offset. The query arrives without its leading '#' (stripped in
-            SearchNew — tag-intent syntax, not part of the term), so 'tor' and
-            '#tor' both mark 'tor' inside '#tor' AND inside '#historia'. */}
-        {renderHighlighted(`#${tag.name}`, highlightQuery, styles.highlight)}
+    <button
+      type="button"
+      className={`${styles.card} ${isSuggestion ? styles.cardSuggestion : ""}`}
+      onClick={onClick}
+    >
+      {/* Trending rank — the list IS ordered, so the numeral carries real
+          information (not decoration). Top 3 in the brand accent. */}
+      {rank != null && (
+        <span
+          className={`${styles.rank} ${rank <= 3 ? styles.rankTop : ""}`}
+          aria-hidden="true"
+        >
+          {rank}
+        </span>
+      )}
+      {/* Leading tile — the tag's "avatar": warm-tint squircle with a
+          terracotta # (the app's chip/tag family), sized like the 36px
+          identity lane so tag rows rhyme with user/post rows. */}
+      <span className={styles.tagTile} aria-hidden="true">
+        #
       </span>
-      <span className={styles.count}>
-        {tag.postsCount} {t("profile.posts")}
+      <span className={styles.info}>
+        <span className={styles.tagName}>
+          {/* NO leading '#' here — the tile already carries it (a doubled
+              "# #tag" read broken). The query arrives without its leading '#'
+              too (stripped in SearchNew — tag-intent syntax), so highlighting
+              runs over the bare name: 'tor' marks 'tor' inside 'historia'. */}
+          {renderHighlighted(tag.name, highlightQuery, styles.highlight)}
+        </span>
+        <span className={styles.count}>
+          {tag.postsCount} {t("profile.posts")}
+        </span>
       </span>
-      <span className={styles.spark}>
-        {/* data = real series (posts/day); seed = mock fallback if absent */}
-        <TagSparkline
-          data={tag.activity}
-          maxValue={activityMax}
-          seed={tag.name}
-        />
-      </span>
+      {!isSuggestion && (
+        <span className={styles.spark}>
+          {/* data = real series (posts/day); seed = mock fallback if absent */}
+          <TagSparkline
+            data={tag.activity}
+            maxValue={activityMax}
+            seed={tag.name}
+          />
+        </span>
+      )}
+      {isSuggestion && (
+        /* Quiet launch affordance: tapping a trend RUNS that search. */
+        <span className={styles.launchArrow} aria-hidden="true">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M7 17 17 7" />
+            <path d="M9 7h8v8" />
+          </svg>
+        </span>
+      )}
     </button>
   );
 }

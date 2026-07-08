@@ -1,42 +1,119 @@
-/* NavRail — floating capsule (desktop) / bottom bar (mobile).
+/* NavRail — Threads' fixed side navigation (desktop) / bottom bar (mobile).
    Warm palette (never #FFFFFF), Inter, icon-only with tooltips. */
 
-/* ===== Desktop: floating capsule ===== */
-
+/* ===== Desktop: Threads' exact side navigation =====
+   Their container: position fixed, inset-inline-start 0, top 0, height 100%,
+   min-height 480px, width 76px (--barcelona-side-navigation-width), flex
+   column centered, translucent bg (their rgba(250,250,250,0.85) → our warm
+   #f7f5f0 @ 0.85) + backdrop blur 15px. No border/radius/shadow — the old
+   floating capsule is gone. Anatomy: logo top, items vertically centered,
+   ☰ at the bottom. */
 .rail {
   position: fixed;
-  left: 14px;
-  top: 50%;
-  transform: translateY(-50%);
+  left: 0;
+  top: 0;
+  height: 100%;
+  min-height: 480px;
   z-index: 40;
-  width: 68px;
+  width: 76px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  padding: 14px 0;
-  background: #fdfcf8;
-  border: 1px solid #e5e0d3;
-  border-radius: 22px;
-  box-shadow: 0 6px 22px rgba(26, 26, 26, 0.05);
+  padding: 16px 0;
+  background: rgba(247, 245, 240, 0.85);
+  -webkit-backdrop-filter: blur(15px);
+  backdrop-filter: blur(15px);
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Helvetica, Arial, sans-serif;
 }
 
-/* Rail divider — short and centered, shared by the logo zone and the ☰
-   zone so both always match. The 4px margins add to the rail's 10px gap:
-   14px of air on each side of the line. */
-.divider {
-  width: 28px;
-  height: 1px;
-  border-radius: 1px;
-  background: #e5e0d3;
-  margin: 4px 0;
+/* Fallback: solid page bg where backdrop-filter is unsupported. */
+@supports not (
+  (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))
+) {
+  .rail {
+    background: #f7f5f0;
+  }
 }
 
 .items {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  /* Threads' exact item separation (their row-gap: 4px). */
+  gap: 4px;
+  /* Centers the nav items in the leftover column height (logo above, ☰
+     below) — Threads' sidebar anatomy. */
+  margin: auto 0;
+}
+
+/* === Desktop sidebar items — Threads' exact spec ===
+   (Scoped to .rail so the mobile bars keep their own treatment untouched.)
+   Item box 60×60 (their xng8ra; the 50px variant applies only under their
+   @media (max-height: 600px) — mirrored below), idle icon rgb(184,184,184)
+   (their --barcelona-navigation-icon, light theme — much LIGHTER than our old
+   #666), hover = soft neutral wash (icon stays light), ACTIVE = the app's own
+   warm terracotta blob (#f3e3d3 + #a85432 — same language as the mobile
+   bottom bar; Threads' blob-less near-black active was tried and rolled back). */
+.rail .item {
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  color: #b8b8b8;
+}
+
+/* Threads' compact variant for short windows (their xijvv9e override). */
+@media (max-height: 600px) {
+  .rail .item {
+    height: 50px;
+  }
+}
+
+.rail .item:hover {
+  background: rgba(0, 0, 0, 0.04);
+  color: #b8b8b8;
+}
+
+/* Active route: the SAME warm blob as the mobile bottom bar (declared over
+   the hover wash — the blob wins for the current route even on hover). Idle
+   and hover stay Threads' light treatment above. */
+.rail .itemActive,
+.rail .itemActive:hover {
+  background: #f3e3d3;
+  color: #a85432;
+}
+
+/* === Create (+) — Threads' exact plated sidebar button ===
+   Their anatomy: the same 60×50 item box, but with an ALWAYS-VISIBLE rounded
+   plate behind the glyph (radius 10, inset 6px top/bottom → 60×38, bg
+   rgba(0,0,0,0.035) = their --barcelona-navigation-item-hover-background,
+   light theme) and the + in their --barcelona-secondary-icon (#999999) —
+   darker than the idle nav icons. Hover deepens the plate, not the item. */
+.rail .createItem {
+  border: 0;
+  cursor: pointer;
+  color: #999999;
+}
+
+.rail .createItem:hover {
+  background: transparent;
+  color: #999999;
+}
+
+.createPlate {
+  position: absolute;
+  inset: 6px 0;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.035);
+  transition: background 0.2s ease-out;
+}
+
+.rail .createItem:hover .createPlate {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+/* The glyph paints above the plate. */
+.createGlyph {
+  position: relative;
 }
 
 /* ===== Item (shared capsule/bar) ===== */
@@ -154,13 +231,14 @@
   }
 }
 
-/* In the bottom bar, the popover opens UPWARD (the button is at the
-   bottom-right → the origin follows). */
+/* Rail ☰ (bottom of the fixed side nav): the popover opens UPWARD and to the
+   RIGHT (the button hugs the viewport's left edge, so a right-anchored menu
+   would fall offscreen). */
 .menuUp {
-  left: auto;
-  right: 0;
+  left: 0;
+  right: auto;
   bottom: calc(100% + 12px);
-  transform-origin: bottom right;
+  transform-origin: bottom left;
 }
 
 .menuItem {
@@ -255,12 +333,11 @@
     /* 60px tall like Threads. The 36px logo keeps ~12px of air top/bottom. */
     height: 60px;
     padding: 0 8px;
-    /* SOLID warm bar — the same #f7f5f0 as the view-thread desktop app bar and
-       home's desktop masthead (no translucency/blur: over the feed's images
-       the frosted recipe read too transparent; the thread view's opaque bar is
-       the reference look). */
-    background: #f7f5f0;
-    border-bottom: 1px solid #ebe7dd;
+    /* SOLID WHITE bar — the app's white (#fdfcf8, never #FFFFFF), matching the
+       view-thread bar's white tone. Opaque on purpose: over the feed's images
+       a translucent recipe read too transparent. BORDERLESS (Threads-style):
+       it fuses seamlessly with the mobile #fdfcf8 sheet below — no hairline. */
+    background: #fdfcf8;
     font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Helvetica, Arial, sans-serif;
   }
 

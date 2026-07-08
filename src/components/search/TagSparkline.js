@@ -1,11 +1,14 @@
-import { useMemo } from "react";
+import { useId, useMemo } from "react";
 import generateTagActivity from "../../utils/generateTagActivity";
 
 /**
- * Line sparkline with area for a tag's activity.
+ * Line sparkline with area for a tag's activity (posts/day).
  *
- * Smooth line (Catmull-Rom → cubic bezier), area with a very subtle warm fill
- * and a dot at the end that anchors the last value.
+ * Mark spec (dataviz): 2px smooth line (Catmull-Rom → cubic bezier), an area
+ * that FADES to transparent at the baseline (vertical gradient, not a flat
+ * wash), and an EMPHASIZED endpoint — 3px dot with a surface ring so it reads
+ * above the line. Single series: no legend, no axes; decorative within the
+ * row (aria-hidden) — identity/values live in the row's text.
  *
  * Props:
  *   data:     REAL activity series (posts per day, chronological order).
@@ -16,12 +19,13 @@ import generateTagActivity from "../../utils/generateTagActivity";
  *             than a peak of 1, and the charts are comparable across tags.
  *             Without it (fallback) it normalizes to the local max, as before.
  *   seed:     string used as the seed of the mock fallback (the tag.name)
- *   width:    width in px (default 130)
- *   height:   height in px (default 34)
+ *   width:    width in px (default 104)
+ *   height:   height in px (default 32)
  */
 
-const STROKE = "#b8845f";
-const PAD = 3; // internal padding so the line doesn't touch the edges
+const STROKE = "#b8845f"; // warm accent — the app's data hue
+const RING = "#fdfcf8"; // surface ring around the endpoint
+const PAD = 5; // room for the ringed endpoint at the edges
 
 /**
  * Converts a list of points into a smooth SVG path using Catmull-Rom
@@ -45,7 +49,8 @@ function smoothLine(pts) {
   return d;
 }
 
-function TagSparkline({ data, maxValue, seed, width = 130, height = 34 }) {
+function TagSparkline({ data, maxValue, seed, width = 104, height = 32 }) {
+  const uid = useId().replace(/[^a-zA-Z0-9_-]/g, "");
   const { linePath, areaPath, end } = useMemo(() => {
     // Real series from the backend if it arrives; deterministic mock as fallback.
     const isReal = Array.isArray(data) && data.length >= 2;
@@ -87,19 +92,28 @@ function TagSparkline({ data, maxValue, seed, width = 130, height = 34 }) {
       width={width}
       height={height}
       viewBox={`0 0 ${width} ${height}`}
-      preserveAspectRatio="none"
       aria-hidden="true"
     >
-      <path d={areaPath} fill={STROKE} fillOpacity={0.11} stroke="none" />
+      <defs>
+        {/* The area fades OUT toward the baseline — reads as ink washing off
+            the line, not a solid band. */}
+        <linearGradient id={`${uid}-area`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={STROKE} stopOpacity="0.22" />
+          <stop offset="100%" stopColor={STROKE} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path d={areaPath} fill={`url(#${uid}-area)`} stroke="none" />
       <path
         d={linePath}
         fill="none"
         stroke={STROKE}
-        strokeWidth={1.5}
+        strokeWidth={2}
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      <circle cx={end[0]} cy={end[1]} r={2.2} fill={STROKE} />
+      {/* Emphasized endpoint: dot + surface ring, floating above the line. */}
+      <circle cx={end[0]} cy={end[1]} r={4.5} fill={RING} />
+      <circle cx={end[0]} cy={end[1]} r={3} fill={STROKE} />
     </svg>
   );
 }

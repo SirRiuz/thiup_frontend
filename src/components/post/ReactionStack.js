@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import ReactionEmoji from "./ReactionEmoji";
 import { formatCount } from "../home/homeHelpers";
 import styles from "../../styles/components/post/ReactionStack.module.css";
 
@@ -46,7 +47,9 @@ function ReactionStack({ reactions = [], className = "" }) {
             // Leftmost (dominant) bubble paints on top of the ones behind it.
             style={{ zIndex: top.length - i }}
           >
-            {r.emoji}
+            {/* Thiup's own drawn reaction (falls back to the raw char for
+                unknown names, so new backend reactions never break). */}
+            <ReactionEmoji name={r.name} emoji={r.emoji} size={16} />
           </span>
         ))}
       </span>

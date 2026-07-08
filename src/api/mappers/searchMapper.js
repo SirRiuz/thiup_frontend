@@ -1,10 +1,12 @@
 /**
- * Mappers of the search results (tags and users) from the backend to the shape
- * that SearchTagCard / SearchUserCard expect.
+ * Mappers of the search results (tags, users and media) from the backend to
+ * the shape that SearchTagCard / SearchUserCard / the media grid expect.
  *
  * Posts are NOT mapped here: they reuse mapBackendPostToFrontend (same shape
  * as the feed). Backend: apps/search/serializers/search_serializers.py.
  */
+
+import { mapMedia, mapBackendPostToFrontend } from "./postMapper";
 
 /**
  * Aggregated tag: { name, count, activity } → { name, postsCount, activity }.
@@ -36,5 +38,27 @@ export function mapBackendUserToFrontend(backendUser) {
     joinedAt: backendUser.joined_at || "",
     // Ephemeral presence (active in the last 60s) — green dot on the card.
     isOnline: Boolean(backendUser.is_online),
+  };
+}
+
+/**
+ * Media gallery item (search Media tab, IG-explore style): ONE tile per
+ * matching thread — its FIRST file. The backend item IS the thread-card
+ * media shape (uid, file, is_video, is_nsfw, width, height, target_color) —
+ * mapMedia understands it verbatim — plus `media_count` (the thread's total
+ * active files, for the tile's carousel mark) and `thread`, the parent's
+ * full card. The thread reuses the feed mapper so the preview panel and the
+ * "View thread" navigation can seed /p/:uid exactly like a feed card click.
+ */
+export function mapBackendMediaToFrontend(backendItem) {
+  const [media] = mapMedia([backendItem]) || [];
+  return {
+    ...media,
+    // Total active files of the parent thread (the tile shows only the
+    // first): > 1 → the grid renders IG's carousel mark on the tile.
+    mediaCount: backendItem.media_count ?? 1,
+    thread: backendItem.thread
+      ? mapBackendPostToFrontend(backendItem.thread)
+      : null,
   };
 }

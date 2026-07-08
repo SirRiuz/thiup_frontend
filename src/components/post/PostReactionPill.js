@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import AnimatedCounter from "./AnimatedCounter";
+import ReactionEmoji from "./ReactionEmoji";
 import { ensureScrollSuppressor } from "../../utils/scrollSuppressor";
 import styles from "../../styles/components/post/PostReactionPill.module.css";
 
@@ -33,7 +34,9 @@ function PostReactionPill({
       aria-label={label || undefined}
       title={label || undefined}
     >
-      <span className={styles.emoji}>{emoji}</span>
+      <span className={styles.emoji}>
+        <ReactionEmoji name={name} emoji={emoji} size={15} />
+      </span>
       <AnimatedCounter value={count} className={styles.count} />
       {label && (
         <span className={styles.tooltip} aria-hidden="true">

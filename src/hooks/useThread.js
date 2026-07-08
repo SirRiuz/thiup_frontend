@@ -96,7 +96,7 @@ function insertReply(list, newReply) {
   return [...list.slice(0, insertAt), newReply, ...list.slice(insertAt)];
 }
 
-export function useThread(threadId) {
+export function useThread(threadId, seedThread) {
   const { getCachedThread, setCachedThread } = useThreadCache();
 
   // Lazy init from the cache: if we return (POP) to an already-visited thread,
@@ -106,7 +106,24 @@ export function useThread(threadId) {
   // the restoration would fail.
   const initialCache = getCachedThread(threadId);
 
-  const [thread, setThread] = useState(() => initialCache?.thread || null);
+  // SEED: navigating from a feed passes the already-loaded card post (router
+  // state) — the SAME shape as the thread head (both come from
+  // mapBackendPostToFrontend). It paints the OP instantly (no head skeleton;
+  // only the replies still load). The cache wins over the seed (fresher), and
+  // a hard reload has no router state → the normal full-skeleton flow.
+  const seed =
+    seedThread &&
+    seedThread.id === threadId &&
+    !(initialCache && initialCache.thread)
+      ? {
+          ...seedThread,
+          replyCount: seedThread.replyCount ?? seedThread.repliesCount ?? 0,
+        }
+      : null;
+
+  const [thread, setThread] = useState(
+    () => initialCache?.thread || seed || null
+  );
   const [replies, setReplies] = useState(() => initialCache?.replies || []);
   const [isLoading, setIsLoading] = useState(
     () => !(initialCache && initialCache.thread)
@@ -287,8 +304,12 @@ export function useThread(threadId) {
   // the cache, indexed by threadId. This way, on return, the content —including
   // paginated replies and reactions— is available instantly. A single write
   // point avoids forgetting to sync on some specific mutation.
+  // NEVER while the initial load is in flight: with a seeded thread (feed
+  // navigation) that would persist {seed, replies: []} to the cache, and the
+  // fetch effect's next run (StrictMode remount, refetch) would treat it as a
+  // CACHE HIT and skip the fetch — replies would never load.
   useEffect(() => {
-    if (!threadId || !thread) return;
+    if (!threadId || !thread || isLoading) return;
     setCachedThread(threadId, {
       thread,
       replies,
@@ -296,7 +317,7 @@ export function useThread(threadId) {
       nextUrl: nextUrlRef.current,
       sortBy,
     });
-  }, [threadId, thread, replies, hasMore, sortBy, setCachedThread]);
+  }, [threadId, thread, replies, hasMore, sortBy, isLoading, setCachedThread]);
 
   const loadMore = useCallback(async () => {
     // Guard: don't paginate without next, nor with a fetch (initial or

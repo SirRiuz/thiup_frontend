@@ -98,16 +98,28 @@ export function renderTextWithHashtags(
           }}
         >
           {/* Highlight the searched term even when it falls inside a hashtag
-              (e.g. 'dns' inside '#dns'). splitByMatch runs over the full
-              '#dns', so the offset is correct; the <mark> nests inside the
-              hashtag span, preserving its color/link style. */}
+              (e.g. 'dns' inside '#dns'). The match runs over the tag NAME and
+              the '#' is folded into the FIRST segment — so when the match
+              starts at the name's beginning (searching 'motos' or '#motos'),
+              the WHOLE '#motos' token lights up, # included; a mid-name match
+              ('oto') leaves '#m' unmarked as expected. The <mark> nests
+              inside the hashtag span, preserving its color/link style. */}
           {highlightQuery && highlightClassName
-            ? renderTextSegment(
-                part,
-                highlightQuery,
-                highlightClassName,
-                `tag-seg-${idx}`
-              )
+            ? splitByMatch(tagName, highlightQuery).map((seg, i) => {
+                const textOut = i === 0 ? `#${seg.text}` : seg.text;
+                return seg.match ? (
+                  <mark
+                    key={`tag-seg-${idx}-m-${i}`}
+                    className={highlightClassName}
+                  >
+                    {textOut}
+                  </mark>
+                ) : (
+                  <React.Fragment key={`tag-seg-${idx}-t-${i}`}>
+                    {textOut}
+                  </React.Fragment>
+                );
+              })
             : part}
         </span>
       );

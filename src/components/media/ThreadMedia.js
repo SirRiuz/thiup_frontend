@@ -39,10 +39,26 @@ const TAP_MOVE_THRESHOLD = 8; // px
 const pressEl = (el) => {
   if (el) el.classList.add(styles.pressing);
 };
-// Tap release: remove .pressing → the CSS transition plays the overshoot bounce.
+// Tap release: remove .pressing → the CSS transition eases the frame back
+// (Threads' soft press, no overshoot).
 const bounceEl = (el) => {
   if (el) el.classList.remove(styles.pressing);
 };
+// Touch: when native scrolling steals the gesture the browser fires
+// pointercancel and no further pointer events arrive — but the FINGER is
+// still down. Threads keeps the frame pressed through the scroll and only
+// releases when the finger lifts: hold the class and ease back on touchend.
+const holdPressThroughScroll = (el) => {
+  if (!el) return;
+  const release = () => {
+    window.removeEventListener("touchend", release);
+    window.removeEventListener("touchcancel", release);
+    bounceEl(el);
+  };
+  window.addEventListener("touchend", release);
+  window.addEventListener("touchcancel", release);
+};
+
 // Drag/cancel: remove .pressing WITHOUT animating back (no bounce while dragging)
 // by suppressing the transition for that single frame.
 const cancelEl = (el) => {
@@ -53,11 +69,24 @@ const cancelEl = (el) => {
   el.style.transition = "";
 };
 
-function EyeIcon() {
+// Crossed-out eye — "hidden" (the IG/Threads sensitive-content glyph).
+function EyeOffIcon({ size = 16 }) {
   return (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" />
-      <circle cx="12" cy="12" r="3" />
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c6.5 0 10 8 10 8a13.16 13.16 0 0 1-1.67 2.68" />
+      <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3.5 8 10 8a9.74 9.74 0 0 0 5.39-1.61" />
+      <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
+      <line x1="2" y1="2" x2="22" y2="22" />
     </svg>
   );
 }
@@ -407,9 +436,34 @@ function MediaFrame({
             setRevealed(true);
           }}
         >
-          <span className={styles.revealBadge} aria-hidden="true">
-            <EyeIcon />
+          {/* IG/Threads-style centered notice over the blur: glyph in a
+              dark-glass disc + title + tap hint. */}
+          <span className={styles.revealContent} aria-hidden="true">
+            <span className={styles.revealIcon}>
+              <EyeOffIcon />
+            </span>
+            <span className={styles.revealTitle}>
+              {t("media.sensitiveTitle")}
+            </span>
+            <span className={styles.revealHint}>{t("media.tapToView")}</span>
           </span>
+        </button>
+      )}
+      {revealed && item.isNsfw && (
+        /* Re-hide toggle (top-right, dark-glass — the sound button's family).
+           data-control: the carousel/tap logic leaves it alone, so hiding
+           never opens the viewer or navigates. */
+        <button
+          type="button"
+          data-control=""
+          className={styles.rehideButton}
+          aria-label={t("media.hideSensitive")}
+          onClick={(e) => {
+            e.stopPropagation();
+            setRevealed(false);
+          }}
+        >
+          <EyeOffIcon size={13} />
         </button>
       )}
     </div>
@@ -436,53 +490,65 @@ function SingleMedia({ item, onOpen }) {
     if (w && h) setRatio(clampRatio(w / h));
   };
 
-  // Tap spring + open the viewer on tap. No carousel/capture here, so the frame
-  // gets its own pointer events. A press shrinks; if the pointer moves past the
-  // threshold (or the gesture is cancelled/leaves) it's not a tap → cancel
-  // without bounce. A tap (not on the reveal button) opens the viewer; the
-  // resulting click is swallowed by the wrapper so it can't navigate the card.
+  // Tap press + open the viewer on tap. A press shrinks and STAYS pressed
+  // while the button is down — moving the held cursor never releases it
+  // (Threads' behavior); only pointer-up eases the frame back, and only a
+  // clean tap (no significant move) opens the viewer. The pointer is
+  // captured so the release still lands here even if the cursor left the
+  // frame. pointercancel (e.g. touch turned into a page scroll) drops the
+  // press without the ease-back.
   useEffect(() => {
     const el = frameRef.current;
     if (!el) return undefined;
-    const s = { pressing: false, x: 0, y: 0 };
+    const s = { pressing: false, moved: false, x: 0, y: 0 };
     const onDown = (e) => {
       // Let the in-frame controls (sound/play) and the reveal button handle
-      // their own taps — no spring, no viewer-open, no capture.
+      // their own taps — no press, no viewer-open, no capture.
       if (e.target.closest("[data-control],[data-reveal]")) return;
       s.pressing = true;
+      s.moved = false;
       s.x = e.clientX;
       s.y = e.clientY;
       pressEl(el);
+      // Hold the press across the whole gesture, wherever the cursor goes.
+      if (el.setPointerCapture) {
+        try {
+          el.setPointerCapture(e.pointerId);
+        } catch (err) {
+          /* capture unavailable */
+        }
+      }
     };
     const onMove = (e) => {
-      if (!s.pressing) return;
+      if (!s.pressing || s.moved) return;
       if (Math.hypot(e.clientX - s.x, e.clientY - s.y) > TAP_MOVE_THRESHOLD) {
-        s.pressing = false;
-        cancelEl(el);
+        s.moved = true; // not a tap anymore — but the press HOLDS until up
       }
     };
     const onUp = () => {
       if (!s.pressing) return;
       s.pressing = false;
       bounceEl(el);
-      onOpenRef.current?.();
+      if (!s.moved) onOpenRef.current?.();
     };
-    const onCancel = () => {
+    const onCancel = (e) => {
       if (!s.pressing) return;
       s.pressing = false;
-      cancelEl(el);
+      // Touch scroll steals the gesture (pointercancel) while the finger is
+      // still down: HOLD the press and release on finger-lift (Threads).
+      // Other cancels (mouse/pen) drop it without animating.
+      if (e.pointerType === "touch") holdPressThroughScroll(el);
+      else cancelEl(el);
     };
     el.addEventListener("pointerdown", onDown);
     el.addEventListener("pointermove", onMove);
     el.addEventListener("pointerup", onUp);
     el.addEventListener("pointercancel", onCancel);
-    el.addEventListener("pointerleave", onCancel);
     return () => {
       el.removeEventListener("pointerdown", onDown);
       el.removeEventListener("pointermove", onMove);
       el.removeEventListener("pointerup", onUp);
       el.removeEventListener("pointercancel", onCancel);
-      el.removeEventListener("pointerleave", onCancel);
     };
   }, []);
 
@@ -619,14 +685,13 @@ function Carousel({ images, onOpen }) {
       if (el.setPointerCapture) el.setPointerCapture(e.pointerId);
     };
     const onMove = (e) => {
-      // Once the pointer moves past the threshold it's a drag/swipe, not a tap:
-      // cancel the spring (no shrink/bounce while dragging).
+      // Past the threshold it's a drag/swipe, not a tap — remember that for
+      // the release decision, but KEEP the frame pressed: Threads holds the
+      // pressed scale for as long as the button is down (moving the held
+      // cursor never releases it — only pointer-up does).
       if (!d.moved) {
         const dist = Math.hypot(e.clientX - d.startX, e.clientY - d.startY);
-        if (dist > TAP_MOVE_THRESHOLD) {
-          d.moved = true;
-          cancelEl(d.pressedEl);
-        }
+        if (dist > TAP_MOVE_THRESHOLD) d.moved = true;
       }
       if (!d.active) return;
       d.target = d.startScroll - (e.clientX - d.startX);
@@ -634,12 +699,13 @@ function Carousel({ images, onOpen }) {
       if (!d.raf) d.raf = requestAnimationFrame(apply);
     };
     const onUp = (e) => {
-      // A tap (no significant move) springs back with the overshoot bounce.
-      // In panorama mode the tap SEPARATES the strip back to normal (Threads);
-      // otherwise it opens the viewer at that image.
+      // Pointer-up ALWAYS releases the press (eases back, Threads-style —
+      // even after a drag). Only a clean tap (no significant move) also
+      // acts: in panorama mode it SEPARATES the strip back to normal
+      // (Threads); otherwise it opens the viewer at that image.
       if (d.pressedEl) {
+        bounceEl(d.pressedEl);
         if (!d.moved) {
-          bounceEl(d.pressedEl);
           if (panoRef.current) {
             setPano(false);
           } else {
@@ -668,10 +734,13 @@ function Carousel({ images, onOpen }) {
         }
       }
     };
-    // Cancel (e.g. touch turned into a native scroll): drop the press, no bounce.
+    // Cancel: a touch turned into a NATIVE SCROLL keeps the finger down —
+    // hold the press through the scroll and ease back on finger-lift
+    // (Threads). Non-touch cancels drop the press without animating.
     const onCancel = (e) => {
       if (d.pressedEl) {
-        cancelEl(d.pressedEl);
+        if (e.pointerType === "touch") holdPressThroughScroll(d.pressedEl);
+        else cancelEl(d.pressedEl);
         d.pressedEl = null;
       }
       onUp(e);

@@ -72,42 +72,50 @@
   --media-bleed-end: var(--layout-pad-x, 0px);
 }
 
-/* === Threading lines (positioned inline: left = lane*28 + 14) ===
- * All in the card's border tone (#e5e0d3) so they read as one quiet system. */
+/* === Threading lines (positioned inline: left = lane center - 1px) ===
+ * Threads' exact threadline: 2px wide, #e5e0d3 (their --barcelona-threadline
+ * rgb(229,229,229), warm-adjusted), 2px rounded caps, centered on the lane. */
 
 /* Vertical guide: an ancestor lane whose line continues past this comment
  * (that ancestor has a later sibling). Full height → joins the comment above
- * and below into one unbroken line. */
+ * and below into one unbroken line (no caps: it's a continuation). */
 .guideLine {
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 1.5px;
+  width: 2px;
   background: #e5e0d3;
 }
 
 /* Curved branch from the parent's lane into this comment's avatar — the rounded
- * elbow (└) that makes each reply a bifurcation off its parent's line. width is
- * set inline (= one STEP) so it reaches the avatar center; height lands on the
- * avatar's vertical center (12px reply padding + 4px cell offset + 18px radius). */
+ * elbow (└) that makes each reply a bifurcation off its parent's line. Width is
+ * set inline (STEP minus the avatar radius and the Threads breathing gap) so
+ * the arm STOPS 4px short of the avatar's left edge — Threads' threadlines
+ * never touch the avatar they point at. The tip ends SQUARE on purpose:
+ * rounding the corner of a border-drawn box tapers the stroke into a chewed
+ * diagonal (a visible notch), and at 2px a straight cut reads identical to a
+ * rounded cap — crisp, no artifact. Height lands on the avatar's vertical
+ * center (12px reply padding + 4px cell offset + 18px radius). */
 .branch {
   position: absolute;
   top: 0;
   height: 34px;
-  border-left: 1.5px solid #e5e0d3;
-  border-bottom: 1.5px solid #e5e0d3;
+  border-left: 2px solid #e5e0d3;
+  border-bottom: 2px solid #e5e0d3;
   border-bottom-left-radius: 12px;
 }
 
 /* Trunk descending from this comment's own avatar into its children (drawn only
- * when it has any). Starts at the avatar's center (the opaque avatar covers it
- * down to its bottom edge, so it visually emerges just below the avatar); the
- * first child's branch/guide continues it downward. */
+ * when it has any). Threads-style FLOATING start: it emerges 4px BELOW the
+ * avatar's bottom edge (y52 + 4) with their exact 2px rounded top caps
+ * (their xdocmp1/xja2y4p) — the small breathing gap of their --x-top offset
+ * segments. The first child's branch/guide continues it downward. */
 .childTrunk {
   position: absolute;
-  top: 34px;
+  top: 56px;
   bottom: 0;
-  width: 1.5px;
+  width: 2px;
+  border-radius: 2px 2px 0 0;
   background: #e5e0d3;
 }
 

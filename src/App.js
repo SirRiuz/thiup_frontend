@@ -11,6 +11,7 @@ import NotFound from "./screens/NotFound";
 import HomeNew from "./screens/HomeNew";
 import SearchNew from "./screens/SearchNew";
 import MyThreads from "./screens/MyThreads";
+import Notifications from "./screens/Notifications";
 import ScrollToTop from "./components/ScrollToTop";
 import SplashScreen from "./components/SplashSreen";
 import WelcomeModal, { hasSeenWelcome } from "./components/WelcomeModal";
@@ -82,6 +83,7 @@ export default function App() {
                       <Route element={<AppShell />}>
                         <Route path="/home" element={<HomeNew />} />
                         <Route path="/search" element={<SearchNew />} />
+                        <Route path="/notifications" element={<Notifications />} />
                         <Route path="/me" element={<MyThreads />} />
                         {/* The thread view also lives inside the shell:
                           rail visible (no active item — the route doesn't match

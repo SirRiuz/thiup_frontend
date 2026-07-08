@@ -48,6 +48,10 @@ function getErrorMessage(err, t) {
 function HomeCompose({ currentUserMask, isLoading = false }) {
   const { t } = useTranslation();
   const [text, setText] = useState("");
+  // Threads-style two-state composer: at rest a quiet one-line row (avatar ·
+  // "What's new?" · bordered Post); clicking it expands into the full inline
+  // composer. Collapses again on outside click while still empty.
+  const [expanded, setExpanded] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
   // AUTHOR opt-in: share approximate area when publishing. The PREFERENCE
@@ -91,6 +95,8 @@ function HomeCompose({ currentUserMask, isLoading = false }) {
     }, ms);
   };
   const textareaRef = useRef(null);
+  // The expanded composer's root — outside clicks (while empty) collapse it.
+  const rootRef = useRef(null);
   const overlayRef = useRef(null);
   const errorTimerRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -104,6 +110,24 @@ function HomeCompose({ currentUserMask, isLoading = false }) {
   const charCount = text.length;
   const atLimit = charCount >= MAX_CHARS;
   const isDisabled = isLoading || isSubmitting;
+
+  // Opening the composer focuses the textarea (typing can start immediately).
+  useEffect(() => {
+    if (expanded) textareaRef.current?.focus();
+  }, [expanded]);
+
+  // Outside click while the draft is EMPTY (no text, no media, not posting)
+  // → back to the quiet row. A non-empty draft never auto-collapses.
+  useEffect(() => {
+    if (!expanded) return undefined;
+    const onDown = (e) => {
+      if (rootRef.current?.contains(e.target)) return;
+      if (text.trim() !== "" || media.items.length > 0 || isSubmitting) return;
+      setExpanded(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [expanded, text, media.items.length, isSubmitting]);
   // Block submit while media is still processing/uploading (media.pending), so
   // the thread is never posted referencing an incomplete upload.
   const isSubmittable = text.trim().length > 0 && !isDisabled && !media.pending;
@@ -388,6 +412,8 @@ function HomeCompose({ currentUserMask, isLoading = false }) {
       setText("");
       media.clear();
       textareaRef.current?.blur();
+      // Posted: fold back into the quiet Threads row.
+      setExpanded(false);
       window.scrollTo({ top: 0, behavior: "smooth" });
       // Morph the SAME loading toast into the confirmation: white check
       // (success default) + "Thread posted" + a "View" link to the new thread
@@ -425,9 +451,42 @@ function HomeCompose({ currentUserMask, isLoading = false }) {
     setSubmitError(null);
   };
 
+  // === Collapsed — Threads' exact compose row ===
+  // avatar (36) · "What's new?" prompt (15/400, secondary) · bordered Post
+  // button (36px tall, radius 10, 1px hairline, 15/600). Both the prompt and
+  // the Post button just open the composer (Threads' row behaves the same).
+  if (!expanded) {
+    return (
+      <div className={styles.collapsedRow}>
+        <span className={styles.collapsedAvatar} aria-hidden="true">
+          {currentUserMask ? (
+            <MaskAvatar seed={currentUserMask.id} size={36} />
+          ) : (
+            <span className={styles.avatarGhost} />
+          )}
+        </span>
+        <button
+          type="button"
+          className={styles.collapsedPrompt}
+          onClick={() => setExpanded(true)}
+        >
+          {t("compose.placeholder")}
+        </button>
+        <button
+          type="button"
+          className={styles.collapsedPost}
+          onClick={() => setExpanded(true)}
+        >
+          {t("compose.post")}
+        </button>
+      </div>
+    );
+  }
+
   return (
     <>
       <div
+        ref={rootRef}
         className={`${styles.wrapper} ${isDisabled ? styles.disabled : ""} ${
           isSubmitting ? styles.submitting : ""
         }`}

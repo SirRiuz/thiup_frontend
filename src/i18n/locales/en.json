@@ -1,6 +1,9 @@
 {
   "media": {
+    "multipleIndicator": "Contains more media",
     "tapToView": "Tap to view",
+    "sensitiveTitle": "Sensitive content",
+    "hideSensitive": "Hide sensitive content",
     "viewSensitive": "View sensitive content",
     "video": "Video",
     "mute": "Mute",
@@ -38,10 +41,17 @@
     "primary": "Primary",
     "home": "Home",
     "search": "Search",
+    "notifications": "Notifications",
+    "create": "New thread",
     "myThreads": "My threads",
     "menu": "Menu",
     "about": "About",
     "languages": "Languages"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "emptyTitle": "Nothing here yet",
+    "emptyBody": "Reactions and replies to your threads will show up here."
   },
   "language": {
     "title": "Language",
@@ -54,6 +64,7 @@
   "pageTitle": {
     "search": "Search",
     "myThreads": "My threads",
+    "notifications": "Notifications",
     "thread": "Thread",
     "notFound": "Page not found",
     "serverError": "Server error",
@@ -105,7 +116,7 @@
   "compose": {
     "postingAs": "Posting as",
     "postingAsPlaceholder": "Posting as …",
-    "placeholder": "Start a thread...",
+    "placeholder": "What's new?",
     "post": "Post",
     "posting": "Posting",
     "locationDefault": "Share your approximate area when posting (for Close You) — never your exact location",
@@ -147,23 +158,19 @@
   },
   "search": {
     "placeholder": "Search Thiup",
+    "tabMedia": "Media",
+    "mediaPreview": {
+      "label": "Thread preview",
+      "viewThread": "View thread"
+    },
+    "trendingTitle": "Trending",
     "label": "Search",
-    "clearText": "Clear search text",
     "tabTop": "Top",
     "tabLatest": "Latest",
     "tabPeople": "People",
     "tabTags": "Tags",
-    "tabWithCount": "{{label}}, {{countLabel}} results",
     "noResultsTitle": "No results found",
-    "noResultsSubtitle": "Try different keywords or browse trending",
-    "searchForLead": "Search for",
-    "removeRecent": "Remove {{text}} from recent searches",
-    "clearAll": "Clear all",
-    "badgeRecent": "Recent",
-    "badgeTag": "Tag",
-    "badgeNew": "New",
-    "badgeTrending": "Trending",
-    "badgePost": "Post"
+    "noResultsSubtitle": "Try different keywords or browse trending"
   },
   "post": {
     "threadTitle": "Thread",

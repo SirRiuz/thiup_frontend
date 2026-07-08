@@ -199,8 +199,10 @@ function HomeNew() {
     isLoading: isLoading || isLoadingMore || !!loadMoreError,
   });
 
-  const handlePostClick = (postId) => {
-    navigate(`/p/${postId}`);
+  // Seed the thread view with the card's already-loaded post (router state):
+  // the OP paints instantly there — only the replies show a loading state.
+  const handlePostClick = (post) => {
+    navigate(`/p/${post.uid}`, { state: { seedThread: post } });
   };
 
   // A hashtag click is a normal search for that hashtag (q=#tag) — lands on
@@ -317,7 +319,7 @@ function HomeNew() {
                   post={post}
                   isNew={post.uid === newPostId}
                   isLast={idx === posts.length - 1 && !hasMore}
-                  onClick={() => handlePostClick(post.uid)}
+                  onClick={() => handlePostClick(post)}
                   onHashtagClick={handleHashtagClick}
                 />
               ))}

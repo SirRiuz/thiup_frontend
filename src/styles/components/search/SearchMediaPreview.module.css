@@ -1,0 +1,505 @@
+/* SearchMediaPreview — IG-explore-style post preview (real media + parent
+   thread panel), on the app's modal spec: warm backdrop + blur, #fdfcf8
+   surface, radius 4 (IG's exact post-modal rounding), deep modal shadow —
+   BORDERLESS (IG's dialog carries no outline; a hairline read ugly against
+   the black media stage). Desktop = two panes (black media stage · thread
+   panel) meeting in a clean hard edge, no divider (IG-exact); mobile = a
+   FULL-SCREEN sheet (stage takes the spare room, panel docks below). */
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(31, 26, 20, 0.42);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  animation: previewBackdropIn 160ms ease-out;
+}
+
+.dialog {
+  display: flex;
+  /* DYNAMIC width (IG): the dialog wraps its content — the stage sizes
+     itself from the media's aspect ratio (see .mediaPane) and the panel is
+     fixed, so the whole modal grows/shrinks with the photo. Capped at the
+     old 880 (stage 540 + panel 340). */
+  width: fit-content;
+  max-width: min(880px, 100%);
+  height: min(600px, calc(100vh - 64px));
+  background: #fdfcf8;
+  /* NO border (IG's post dialog carries none): the warm 1px hairline read as
+     an ugly fringe against the black media pane — the deep modal shadow
+     alone separates the dialog from the backdrop. */
+  /* IG's exact post-modal rounding (4px — their xjwep3j corners): barely
+     softened, media-viewer language; the roomy 18px is for the app's FORM
+     modals, not this stage. */
+  border-radius: 4px;
+  box-shadow: 0 18px 50px rgba(26, 26, 26, 0.18);
+  overflow: hidden;
+  animation: previewDialogIn 180ms ease-out;
+}
+
+@keyframes previewBackdropIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes previewDialogIn {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* === Graceful close: the whole modal fades out (mirror of the entrance —
+   the dialog eases back to its entry scale). The media itself never moves. */
+.backdropClosing {
+  animation: previewFadeOut 220ms ease forwards;
+}
+
+.dialogClosing {
+  animation: previewDialogOut 220ms ease forwards;
+}
+
+@keyframes previewFadeOut {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes previewDialogOut {
+  to {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+}
+
+/* === Left pane: the tapped media — IG's exact stage (_aatk): SOLID BLACK
+   (#000, their literal value), no dominant-color tint, no divider — the
+   black meets the white panel in a clean hard edge, and any letterboxing
+   around the contained media is black like a theater. === */
+.mediaPane {
+  position: relative;
+  /* IG's dynamic stage: width follows the media's aspect ratio at the
+     dialog's height (--stage-ratio, set inline from the lead media's real
+     dimensions) — in-bounds media fills it edge to edge, NO black side
+     bars. Capped so wide media never pushes the panel off (880 total). */
+  flex: none;
+  height: 100%;
+  aspect-ratio: var(--stage-ratio, 1);
+  max-width: min(540px, calc(100vw - 340px - 48px));
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #000;
+  /* No text/image selection mid-gesture. */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* The carousel track — a NATIVE horizontal snap scroller (Threads/IG's real
+   mechanism): the browser owns the swipe physics, so trackpad two-finger
+   swipes, touch flicks and their momentum are fluid and chainable.
+   scroll-snap-stop: always (on the slides) keeps it PAGED: one hard flick =
+   one slide, IG-style. Scrollbar hidden; horizontal overscroll contained so
+   the gesture never leaks into the page / history-swipe. */
+.track {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+
+.track::-webkit-scrollbar {
+  display: none;
+}
+
+/* While the MOUSE drags, the snap is suspended (it fights 1:1 scrollLeft
+   writes); release re-enables it and glides to the nearest slide. */
+.trackDragging {
+  scroll-snap-type: none;
+  cursor: grabbing;
+}
+
+.slide {
+  position: relative;
+  flex: none;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+.media {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Sensitive media: blurred (overscaled so edges don't bleed) until revealed. */
+.mediaBlurred {
+  filter: blur(26px);
+  transform: scale(1.1);
+}
+
+.revealButton {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  padding: 10px 16px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(26, 26, 26, 0.72);
+  color: #fdfcf8;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 130ms ease;
+}
+
+.revealButton:hover {
+  background: rgba(26, 26, 26, 0.85);
+}
+
+/* === In-modal carousel chrome (IG) === */
+
+/* Side arrows: dark-glass discs (the app's over-media control family),
+   vertically centered like IG's — hidden at the ends (rendered
+   conditionally). */
+.navArrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(26, 26, 26, 0.5);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  color: #f7f5f0;
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+
+.navArrow:hover {
+  background: rgba(26, 26, 26, 0.72);
+}
+
+.navPrev {
+  left: 12px;
+}
+
+.navNext {
+  right: 12px;
+}
+
+/* IG's dots: 6px, bottom-center over the media; active opaque, siblings
+   faded. Display-only (the arrows/keys navigate). */
+.dots {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  display: flex;
+  gap: 4px;
+  pointer-events: none;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(247, 245, 240, 0.4);
+  transition: background 160ms ease;
+}
+
+.dotActive {
+  background: #f7f5f0;
+}
+
+/* Visually-hidden carousel position for screen readers. */
+.srPosition {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+/* === Right pane: the thread panel === */
+.panel {
+  flex: none;
+  width: 340px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid #ebe7dd;
+}
+
+.panelBody {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 16px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* Identity next to the avatar — the CANONICAL inline row (Threads spec, same
+   as the feed card / thread view): mask 600 ink + time 400 #9b9591, SAME
+   size, hierarchy by weight/color only, never stacked. */
+.identity {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+  line-height: 21px;
+}
+
+.maskId {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a1a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.time {
+  flex: none;
+  font-size: 14px;
+  font-weight: 400;
+  color: #9b9591;
+}
+
+.threadText {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #1a1a1a;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+/* Live hashtags inside the text (the thread view's exact language) — tapping
+   one pivots the search to that tag. */
+.hashtag {
+  font-weight: 400;
+  color: #a85432;
+  cursor: pointer;
+}
+
+.hashtag:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Stats under the text — the feed card's OWN language: the stacked reaction
+   emojis (ReactionStack renders nothing at 0) + the replies bubble. Quiet,
+   display-only; interaction lives behind "View thread". */
+.stats {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-top: 2px;
+}
+
+.statWithIcon {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: #6b6b6b;
+  font-variant-numeric: tabular-nums;
+}
+
+.panelFooter {
+  padding: 12px 16px 16px;
+}
+
+/* Canonical primary — will jump to the parent thread once data exists. */
+.viewThreadButton {
+  width: 100%;
+  padding: 13px 14px;
+  border: 0;
+  border-radius: 12px;
+  background: #1a1a1a;
+  color: #fdfcf8;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 130ms ease;
+}
+
+.viewThreadButton:hover {
+  opacity: 0.9;
+}
+
+.closeButton {
+  margin-left: auto;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #6b6b6b;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.closeButton:hover {
+  background: #f0ece3;
+  color: #1a1a1a;
+}
+
+/* Floating close over the black stage — MOBILE ONLY (the full-screen sheet
+   needs its exit on top; desktop keeps the panel-header X). Dark-glass disc,
+   the app's over-media control recipe. */
+.stageClose {
+  display: none;
+  position: absolute;
+  top: calc(12px + env(safe-area-inset-top));
+  right: 12px;
+  z-index: 2;
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(26, 26, 26, 0.5);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  color: #f7f5f0;
+  cursor: pointer;
+}
+
+/* === Mobile: FULL-SCREEN takeover (the IG app's post anatomy) ===
+   The floating mini-card read cramped on phones. Instead the dialog owns the
+   whole viewport: the black media stage takes every spare pixel (flex: 1,
+   media contained inside), the thread panel docks below sized to its
+   content, and the whole thing slides up as a sheet. No radius/shadow — at
+   full bleed there is no "outside" to cast onto. */
+@media (max-width: 700px) {
+  .backdrop {
+    padding: 0;
+    /* The dialog covers everything — skip the pointless backdrop blur pass. */
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  .dialog {
+    flex-direction: column;
+    width: 100%;
+    height: 100vh;
+    height: 100dvh; /* keyboard/URL-bar aware where supported */
+    max-height: none;
+    border-radius: 0;
+    box-shadow: none;
+    animation: previewSheetIn 220ms ease-out;
+  }
+
+  /* The stage: all the room the panel doesn't need (the desktop's dynamic
+     aspect-ratio width doesn't apply — full-bleed sheet). min-height 0 lets
+     it shrink for long thread text (the panel body caps itself below). */
+  .mediaPane {
+    flex: 1;
+    height: auto;
+    aspect-ratio: auto;
+    max-width: none;
+    min-height: 0;
+  }
+
+  .panel {
+    width: 100%;
+    flex: none;
+  }
+
+  /* Long texts scroll INSIDE the panel (capped) — the media never gets
+     squeezed off-screen by a wall of text. */
+  .panelBody {
+    flex: none;
+    max-height: 30vh;
+    overflow-y: auto;
+  }
+
+  /* Clear the iOS home indicator. */
+  .panelFooter {
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+  }
+
+  /* The exit moves onto the stage; the panel-header X would be a duplicate. */
+  .stageClose {
+    display: inline-flex;
+  }
+
+  .closeButton {
+    display: none;
+  }
+}
+
+@keyframes previewSheetIn {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .backdrop,
+  .dialog {
+    animation: none;
+  }
+}

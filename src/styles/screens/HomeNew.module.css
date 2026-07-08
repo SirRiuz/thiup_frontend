@@ -5,15 +5,15 @@
 }
 
 .main {
-  /* Threads-like column: 640px wide. The content now lives inside an elevated
-     .surface card (thread-view style guide); .main is just the centered column
-     + a small gutter so the card floats off the page bg (#f7f5f0). NO top
-     padding on desktop: the masthead rests at y0 and the card's rounded top
-     sits FLUSH under it (y60) at ALL times — rest and scrolled are the same
-     state, identical to the thread view, so nothing ever shifts. */
+  /* Threads' EXACT column: a hard 640px (--barcelona-column-layout-max-width),
+     no side gutter — the .surface card is exactly 640px wide like theirs,
+     twin-matched with the thread view (the old 8px gutter made both 624). NO
+     top padding on desktop: the masthead rests at y0 and the card's rounded
+     top sits FLUSH under it (y60) at ALL times — rest and scrolled are the
+     same state, identical to the thread view, so nothing ever shifts. */
   max-width: 640px;
   margin: 0 auto;
-  padding: 0 8px 60px;
+  padding: 0 0 60px;
 }
 
 /* Elevated surface card (same guide as the thread view's .surface): one card
@@ -25,8 +25,9 @@
 .surface {
   background: #fdfcf8;
   border: 1px solid #e5e0d3;
-  border-radius: 16px;
-  box-shadow: 0 0 12px rgba(26, 26, 26, 0.04);
+  border-radius: 24px;
+  /* NO box-shadow — current Threads dropped the column's ambient halo and
+     keeps only the hairline outline (same as the thread view's .surface). */
   padding: 12px 24px;
   --layout-pad-x: 24px;
 }
@@ -80,29 +81,22 @@
 .cornerMaskEdge {
   position: absolute;
   top: -14px;
-  left: 16px;
-  right: 16px;
+  left: 24px;
+  right: 24px;
   height: 15px;
   background: #f7f5f0;
   border-bottom: 1px solid #e5e0d3;
   overflow: hidden;
 }
 
-.cornerMaskEdge::after {
-  content: "";
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  height: 100%;
-  box-shadow: 0 0 12px rgba(26, 26, 26, 0.04);
-}
+/* (The old strip-shadow ::after is gone: the card no longer casts a halo, so
+   the masked strip needs no re-cast shadow — border only.) */
 
 .cornerCap {
   position: absolute;
   top: -14px;
-  width: 16px;
-  height: 31px;
+  width: 24px;
+  height: 39px;
   overflow: hidden;
 }
 
@@ -117,11 +111,13 @@
 .cornerCapBox {
   position: absolute;
   top: 14px;
-  width: 32px;
-  height: 32px;
+  width: 48px;
+  height: 48px;
   border: 1px solid #e5e0d3;
-  border-radius: 16px;
-  box-shadow: 0 0 12px rgba(26, 26, 26, 0.04), 0 0 0 32px #f7f5f0;
+  border-radius: 24px;
+  /* THE trick — the giant spread paints the page bg outside the rounded arc.
+     (No ambient layer anymore: the card no longer casts a halo.) */
+  box-shadow: 0 0 0 48px #f7f5f0;
 }
 
 .cornerCapLeft .cornerCapBox {

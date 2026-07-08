@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useNavigationType } from "react-router-dom";
 import { fetchSearch, fetchSearchNext } from "../api/searchApi";
 import { mapBackendPostToFrontend } from "../api/mappers/postMapper";
 import {
   mapBackendTagToFrontend,
   mapBackendUserToFrontend,
+  mapBackendMediaToFrontend,
 } from "../api/mappers/searchMapper";
 import { useSearchCache } from "../contexts/SearchCacheContext";
 
@@ -17,6 +17,8 @@ import { useSearchCache } from "../contexts/SearchCacheContext";
  *   latest → posts ordered chronologically (-create_at)
  *   people → users
  *   tags   → hashtags matching the query
+ *   media  → gallery of the files of matching threads (backend order:
+ *            parent momentum, files in upload order — no ordering param)
  *
  * 'top' and 'latest' are the SAME post search in two orders — sort is no longer
  * a separate control, it's expressed as the two post tabs.
@@ -29,7 +31,13 @@ import { useSearchCache } from "../contexts/SearchCacheContext";
  */
 
 // Tab → backend params.
-const TYPE_OF = { top: "posts", latest: "posts", people: "users", tags: "tags" };
+const TYPE_OF = {
+  top: "posts",
+  latest: "posts",
+  people: "users",
+  tags: "tags",
+  media: "media",
+};
 const ORDERING_OF = { top: "-momentum_score", latest: "-create_at" };
 
 // Results mapper per tab.
@@ -38,6 +46,7 @@ const MAPPERS = {
   latest: mapBackendPostToFrontend,
   people: mapBackendUserToFrontend,
   tags: mapBackendTagToFrontend,
+  media: mapBackendMediaToFrontend,
 };
 
 // Identity key per tab (dedupe in loadMore, like the feed).
@@ -46,17 +55,16 @@ const KEY_OF = {
   latest: (p) => p.id,
   people: (u) => u.maskId,
   tags: (t) => t.name,
+  media: (m) => m.id,
 };
 
 export function useSearch(query, tab) {
   const { getCached, setCached } = useSearchCache();
-  // POP (back/forward to an already-loaded query|tab) restores from cache;
-  // PUSH/REPLACE (new search or tab change) fetches.
-  const navigationType = useNavigationType();
 
   const trimmed = (query || "").trim();
   const activeTab = TYPE_OF[tab] ? tab : "top";
-  // Cache per (query, tab): each tab's results restore independently on POP.
+  // Cache per (query, tab): each tab's results restore independently —
+  // on POP (back/forward) AND on plain tab switches within the session.
   const cacheKey = trimmed ? `q:${trimmed}|${activeTab}` : null;
 
   // Snapshot of the cache ONCE on mount (lazy): a POP back paints immediately.
@@ -71,8 +79,8 @@ export function useSearch(query, tab) {
   const [loadedTab, setLoadedTab] = useState(() =>
     initialCache ? activeTab : null
   );
-  // Counts of the 3 result types ({ posts, tags, users }) for the per-tab
-  // badges. GLOBAL to the query (every response carries all three), so they
+  // Counts of the 4 result types ({ posts, tags, users, media }) for the
+  // per-tab badges. GLOBAL to the query (every response carries all), so they
   // survive a tab change without flicker. `countsFor` ties them to the query
   // that produced them: a NEW query invalidates them (badges hide) until its
   // first response — never a stale or placeholder number.
@@ -127,10 +135,11 @@ export function useSearch(query, tab) {
     const runKey = `${trimmed}|${activeTab}|${refetchKey}`;
     if (satisfiedKeyRef.current === runKey) return undefined;
 
-    // CACHE HIT on POP WITHOUT remount (back/forward to a loaded query|tab):
-    // full restoration without a fetch. Only navigation via POP — a fresh
-    // search, a tab change (PUSH/REPLACE) or refetch() do fetch.
-    if (navChanged && !refetchForced && navigationType === "POP") {
+    // CACHE HIT on ANY return to an already-loaded query|tab (tab switches
+    // included — bouncing Top→People→Top must not refetch; the session cache
+    // answers, same philosophy as the thread/feed caches): full restoration
+    // without a fetch. Only refetch() (explicit retry) forces the network.
+    if (navChanged && !refetchForced) {
       const cached = getCached(cacheKey);
       if (cached && cached.results) {
         requestIdRef.current += 1; // invalidates any in-flight fetch
@@ -177,6 +186,7 @@ export function useSearch(query, tab) {
             posts: data.counts.posts ?? 0,
             tags: data.counts.tags ?? 0,
             users: data.counts.users ?? 0,
+            media: data.counts.media ?? 0,
           });
           setCountsFor(trimmed);
         }
@@ -197,7 +207,7 @@ export function useSearch(query, tab) {
 
     run();
     return () => controller.abort();
-    // navigationType/getCached/cacheKey are only read inside the guards; the
+    // getCached/cacheKey are only read inside the guards; the
     // effect's real triggers are query, tab and refetchKey.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trimmed, activeTab, refetchKey]);

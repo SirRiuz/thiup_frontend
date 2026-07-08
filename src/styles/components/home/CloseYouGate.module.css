@@ -1,34 +1,43 @@
-/* Close You gate — sober card (empty-state family) that fills the feed column
-   (margin 8px inset), #fdfcf8 surface, #e5e0d3 border, 8px radius, muted square
-   icon. Never #FFFFFF. The classes are shared by every gate state
-   (locating / error / denied / unsupported / prompt). */
+/* Close You gate — INTEGRATED into the home surface (the old bordered
+   #fdfcf8 card was invisible on the new #fdfcf8 surface): transparent,
+   borderless, generous air. Hero = the blurred-cell paper micro-map (the
+   compose privacy note's language) instead of a pin. The classes are shared
+   by every gate state (locating / error / denied / unsupported / prompt). */
 
 .gate {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 30px 22px;
+  padding: 56px 22px 64px;
   text-align: center;
-  background: #fdfcf8;
-  border: 1px solid #e5e0d3;
-  border-radius: 8px;
-  margin: 8px;
 }
 
-/* Top icon — sober muted square (empty-state family), NOT a terracotta tint.
-   The SVG uses stroke="currentColor", so `color` tints it gray; CSS width
-   overrides the inline 20px attribute. */
+/* Micro-map hero: the paper tile that holds the blurred cell. */
+.mapWrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 76px;
+  height: 76px;
+  border-radius: 16px;
+  background: #f7f5f0;
+  border: 1px solid #ebe7dd;
+  margin: 0 0 18px;
+  overflow: hidden;
+}
+
+/* Muted icon tile — the non-prompt states (error / denied / unsupported). */
 .iconWrap {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 8px;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
   background: #f7f5f0;
   border: 1px solid #ebe7dd;
   color: #9b9591;
-  margin: 0 0 14px;
+  margin: 0 0 16px;
 }
 
 .iconWrap svg {
@@ -51,23 +60,21 @@
 }
 
 .title {
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
-    system-ui, sans-serif;
-  font-size: 15px;
+  font-family: inherit;
+  font-size: 16px;
   font-weight: 600;
   color: #1a1a1a;
   line-height: 1.3;
-  margin: 0 0 7px;
+  margin: 0 0 8px;
 }
 
 .body {
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
-    system-ui, sans-serif;
-  font-size: 13px;
+  font-family: inherit;
+  font-size: 14px;
   line-height: 1.5;
-  color: #666;
-  margin: 0 0 9px;
-  max-width: 320px;
+  color: #6b6b6b;
+  margin: 0 0 12px;
+  max-width: 340px;
 }
 
 .body strong {
@@ -75,26 +82,29 @@
   font-weight: 600;
 }
 
-/* Privacy reassurance under the opt-in body — quieter, smaller tier so the
-   text reads as a clear hierarchy (what it does → privacy note). */
+/* Privacy guarantee under the opt-in body — the /me lock-note pattern: a
+   small lock + quiet meta text on one line. */
 .privacyNote {
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
-    system-ui, sans-serif;
-  font-size: 11.5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: inherit;
+  font-size: 12px;
   line-height: 1.45;
-  color: #a3a3a3;
-  margin: 0 0 18px;
-  max-width: 320px;
+  color: #9b9591;
+  margin: 0 0 22px;
+  max-width: 340px;
 }
 
-/* Subtitle — only the "finding your area…" state (mono, muted). */
+/* Subtitle — only the "finding your area…" state (quiet meta, Inter — the
+   mono treatment is reserved for machine-data chips). */
 .subtitle {
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  font-size: 11px;
+  font-family: inherit;
+  font-size: 13px;
   color: #9b9591;
   margin: 0 auto 20px;
   max-width: 380px;
-  line-height: 1.6;
+  line-height: 1.55;
 }
 
 /* Reload hint — quiet line that replaces the old buttons in the denied state.
@@ -133,7 +143,8 @@
   margin-top: 9px;
 }
 
-/* Primary — dark, cream text (canonical Thiup button), fills the capped column. */
+/* Primary — dark, cream text (canonical Thiup button: radius 12, 13px 600),
+   fills the capped column. */
 .primaryButton {
   width: 100%;
   display: inline-flex;
@@ -142,14 +153,13 @@
   gap: 8px;
   background: #1a1a1a;
   border: none;
-  border-radius: 8px;
-  padding: 11px 14px;
+  border-radius: 12px;
+  padding: 13px 14px;
   cursor: pointer;
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
-    system-ui, sans-serif;
+  font-family: inherit;
   font-size: 13.5px;
   font-weight: 600;
-  color: #f7f5f0;
+  color: #fdfcf8;
   transition: opacity 130ms ease;
 }
 

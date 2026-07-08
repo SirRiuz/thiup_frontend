@@ -1,19 +1,32 @@
+/* People result row — same quiet anatomy as the tag/feed rows: NO hover wash
+   (Threads' rows don't highlight), 12px rhythm in the surface's 24px inset,
+   FULL-BLEED divider (the old border-bottom stopped at the row's box and
+   read as a cut line), hidden on the last row. */
 .card {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 12px;
   width: 100%;
-  padding: 16px 8px;
+  padding: 12px 0;
   background: transparent;
   border: 0;
-  border-bottom: 1px solid #ebe7dd;
   cursor: pointer;
   text-align: left;
-  transition: background 120ms ease;
 }
 
-.card:hover {
-  background: rgba(235, 231, 221, 0.4);
+.card::after {
+  content: "";
+  position: absolute;
+  left: calc(-1 * var(--layout-pad-x, 0px));
+  right: calc(-1 * var(--layout-pad-x, 0px));
+  bottom: 0;
+  height: 1px;
+  background: #ebe7dd;
+}
+
+.card:last-child::after {
+  display: none;
 }
 
 .identiconWrap {

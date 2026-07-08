@@ -21,13 +21,9 @@ function SearchUserCard({ user, highlightQuery, onClick }) {
     <button type="button" className={styles.card} onClick={onClick}>
       <PostProfileTrigger mask={hoverMask}>
         <div className={styles.identiconWrap}>
-          {/* Search rows sit on the page bg, not a card — ring matches it. */}
-          <MaskAvatar
-            seed={user.maskId}
-            size={36}
-            online={user.isOnline}
-            ringColor="#f7f5f0"
-          />
+          {/* Rows live on the results surface (#fdfcf8) now — the dot's ring
+              uses the default surface tone. */}
+          <MaskAvatar seed={user.maskId} size={36} online={user.isOnline} />
         </div>
       </PostProfileTrigger>
       <div className={styles.info}>
