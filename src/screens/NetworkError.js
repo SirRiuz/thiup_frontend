@@ -2,6 +2,7 @@ import { useTranslation } from "react-i18next";
 import { useServerHealth } from "../contexts/ServerHealthContext";
 import usePageTitle from "../hooks/usePageTitle";
 import styles from "../styles/screens/ServerError.module.css";
+import cx from "../utils/cx";
 
 /**
  * No-connection screen — shown when a request fails WITHOUT an HTTP response
@@ -73,9 +74,7 @@ function NetworkError() {
           disabled={isChecking}
         >
           <svg
-            className={`${styles.reloadIcon} ${
-              isChecking ? styles.reloadIconSpinning : ""
-            }`}
+            className={cx(styles.reloadIcon, isChecking ? styles.reloadIconSpinning : "")}
             width="14"
             height="14"
             viewBox="0 0 24 24"

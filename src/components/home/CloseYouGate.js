@@ -1,5 +1,6 @@
 import { Trans, useTranslation } from "react-i18next";
 import styles from "../../styles/components/home/CloseYouGate.module.css";
+import cx from "../../utils/cx";
 
 /**
  * Close You gate — the states before the feed exists:
@@ -106,7 +107,7 @@ function CloseYouGate({ status, onEnable, onRetry, onBack }) {
   if (status === "locating") {
     return (
       <div className={styles.gate}>
-        <span className={`${styles.mapWrap} ${styles.iconPulse}`}>
+        <span className={cx(styles.mapWrap, styles.iconPulse)}>
           <BlurredAreaMap />
         </span>
         <p className={styles.title}>{t("closeYou.findingTitle")}</p>

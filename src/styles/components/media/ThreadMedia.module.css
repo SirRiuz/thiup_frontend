@@ -71,7 +71,7 @@
   position: absolute;
   inset: 0;
   border: 0;
-  background: rgba(26, 26, 26, 0.22);
+  background: rgba(26, 26, 26, 0.25);
   cursor: pointer;
   padding: 0;
   display: flex;
@@ -80,24 +80,34 @@
   z-index: 1;
 }
 
-/* Centered notice: dark-glass disc + title + hint (IG/Threads anatomy). */
+/* Centered notice — IG's sensitive-screen anatomy, compact: outlined ring +
+   title + action pill. Soft press on the whole notice (Threads' plain ease,
+   never the frame's — the reveal opts out of the frame press). */
 .revealContent {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   padding: 12px;
   text-align: center;
+  transition: transform 0.15s ease;
 }
 
+.reveal:not(:disabled):active .revealContent {
+  transform: scale(0.97);
+}
+
+/* IG's glyph treatment: a thin cream RING, not a filled disc — lighter, less
+   alarmist. A whisper of glass inside keeps the stroke legible over any blur. */
 .revealIcon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
-  background: rgba(26, 26, 26, 0.5);
+  border: 1.5px solid rgba(247, 245, 240, 0.9);
+  background: rgba(26, 26, 26, 0.18);
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
   color: #f7f5f0;
@@ -112,12 +122,37 @@
   text-shadow: 0 1px 8px rgba(0, 0, 0, 0.35);
 }
 
+/* The hint is an explicit ACTION pill (dark-glass family — sound/re-hide
+   buttons), so "tap to view" reads as a button, not a caption. The whole
+   overlay stays the hit target. */
 .revealHint {
   font-family: inherit;
-  font-size: 11px;
-  font-weight: 400;
-  color: rgba(247, 245, 240, 0.85);
-  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.35);
+  font-size: 12px;
+  font-weight: 600;
+  color: #f7f5f0;
+  margin-top: 3px;
+  padding: 7px 16px;
+  border-radius: 999px;
+  background: rgba(26, 26, 26, 0.5);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  transition: background 120ms ease;
+}
+
+@media (hover: hover) {
+  .reveal:hover .revealHint {
+    background: rgba(26, 26, 26, 0.72);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .revealContent {
+    transition: none;
+  }
+
+  .reveal:not(:disabled):active .revealContent {
+    transform: none;
+  }
 }
 
 /* Re-hide toggle after revealing — top-right dark-glass disc (the sound

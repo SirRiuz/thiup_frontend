@@ -160,6 +160,34 @@ a {
   color: var(--text);
 }
 
+.btn svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+
+/* Icon-only header link (GitHub). */
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  color: var(--text-2);
+  transition: background 140ms ease, color 140ms ease;
+}
+
+.icon-btn:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.icon-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
 /* ===== Header ===== */
 
 .site-header {
@@ -215,6 +243,30 @@ a {
   font-weight: 700;
   letter-spacing: -0.01em;
   color: var(--text);
+}
+
+.header-nav {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  margin-left: 6px;
+  margin-right: auto;
+}
+
+.header-nav a {
+  color: var(--text-2);
+  font-size: 14px;
+  font-weight: 500;
+  transition: color 140ms ease;
+}
+
+.header-nav a:hover {
+  color: var(--text);
+}
+
+.header-nav a[aria-current="page"] {
+  color: var(--text);
+  font-weight: 600;
 }
 
 .header-actions {
@@ -381,6 +433,174 @@ a {
   line-height: 1.5;
 }
 
+/* ===== How it works (in depth) ===== */
+
+.deep {
+  padding: clamp(56px, 9vw, 100px) 0;
+  text-align: center;
+}
+
+.how-list {
+  list-style: none;
+  margin: clamp(36px, 6vw, 56px) auto 0;
+  padding: 0;
+  max-width: 880px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 28px 32px;
+  text-align: left;
+}
+
+.how-item {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.how-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius);
+  background: var(--tint);
+  color: var(--accent);
+}
+
+.how-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.how-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.how-text {
+  color: var(--text-2);
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.how-close {
+  margin: clamp(32px, 5vw, 48px) auto 0;
+  max-width: 62ch;
+  color: var(--text-2);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+/* Quiet "read more" link rows under a section's content. */
+.section-links {
+  margin-top: 20px;
+  font-size: 14px;
+}
+
+.section-links a {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.section-links a:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* ===== Subpages (/how-it-works, /open-source, /privacy) ===== */
+
+.page {
+  padding: clamp(48px, 8vw, 88px) 0 clamp(64px, 10vw, 112px);
+}
+
+.page-inner {
+  max-width: 720px;
+}
+
+.page-title {
+  font-size: clamp(1.9rem, 4.4vw, 2.7rem);
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+}
+
+.page-lead {
+  margin-top: 14px;
+  color: var(--text-2);
+  font-size: 1.1rem;
+  line-height: 1.5;
+}
+
+.page h2 {
+  margin: clamp(30px, 5vw, 44px) 0 10px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.page p {
+  color: var(--text-2);
+  line-height: 1.65;
+}
+
+.page p + p {
+  margin-top: 12px;
+}
+
+.page-cta {
+  margin-top: clamp(30px, 5vw, 44px);
+  color: var(--text);
+  font-weight: 500;
+}
+
+.page .btn-primary {
+  margin-top: 16px;
+}
+
+/* ===== Open source band ===== */
+
+.open-source {
+  background: var(--surface);
+  border-top: 1px solid var(--border-soft);
+  border-bottom: 1px solid var(--border-soft);
+  padding: clamp(56px, 9vw, 96px) 0;
+  text-align: center;
+}
+
+.os-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.os-inner .section-lead {
+  max-width: 54ch;
+}
+
+.os-inner .btn {
+  margin-top: 28px;
+}
+
+.os-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: var(--tint);
+  color: var(--accent);
+  margin-bottom: 20px;
+}
+
+.os-icon svg {
+  width: 30px;
+  height: 30px;
+}
+
 /* ===== Final CTA band ===== */
 
 .cta-band {
@@ -435,10 +655,22 @@ a {
   font-weight: 500;
 }
 
+.footer-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+
 .footer-nav a {
   color: var(--accent);
   font-size: 14px;
   font-weight: 500;
+}
+
+.footer-dot {
+  color: #c4bfb1;
 }
 
 .footer-nav a:hover {
@@ -500,9 +732,18 @@ a {
 /* ===== Responsive ===== */
 
 @media (max-width: 760px) {
+  .header-nav {
+    display: none; /* anchors live in the footer on phones; keep the header light */
+  }
+
   .features {
     grid-template-columns: 1fr;
     gap: 14px;
+  }
+
+  .how-list {
+    grid-template-columns: 1fr;
+    gap: 24px;
   }
 
   .hero-thread {

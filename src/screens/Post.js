@@ -17,6 +17,7 @@ import { useThread } from "../hooks/useThread";
 import usePageTitle from "../hooks/usePageTitle";
 import useMobileSurfacePage from "../hooks/useMobileSurfacePage";
 import { useIsMobile } from "../hooks/useIsMobile";
+import cx from "../utils/cx";
 import {
   addInteraction,
   extractTags,
@@ -332,11 +333,11 @@ function Post() {
               // the title block (no jump).
               <>
                 <span
-                  className={`${styles.titleSkeleton} ${styles.skeletonBar}`}
+                  className={cx(styles.titleSkeleton, styles.skeletonBar)}
                   aria-hidden="true"
                 />
                 <span
-                  className={`${styles.subtitleSkeleton} ${styles.skeletonBar}`}
+                  className={cx(styles.subtitleSkeleton, styles.skeletonBar)}
                   aria-hidden="true"
                 />
               </>
@@ -364,10 +365,10 @@ function Post() {
       {(post || isLoading) && (
         <div className={styles.cornerMask} aria-hidden="true">
           <div className={styles.cornerMaskEdge} />
-          <div className={`${styles.cornerCap} ${styles.cornerCapLeft}`}>
+          <div className={cx(styles.cornerCap, styles.cornerCapLeft)}>
             <div className={styles.cornerCapBox} />
           </div>
-          <div className={`${styles.cornerCap} ${styles.cornerCapRight}`}>
+          <div className={cx(styles.cornerCap, styles.cornerCapRight)}>
             <div className={styles.cornerCapBox} />
           </div>
         </div>
@@ -410,9 +411,7 @@ function Post() {
       {/* Elevated surface: lifts the thread off the page bg so it isn't flat. */}
       <div className={styles.surface}>
       <section
-        className={`${styles.opSection} ${
-          hasReplies ? styles.opSectionDivided : ""
-        }`}
+        className={cx(styles.opSection, hasReplies ? styles.opSectionDivided : "")}
       >
         <div className={styles.opHeader}>
           {/* One line (Threads-style), same pattern as replies: avatar + mask
@@ -506,9 +505,7 @@ function Post() {
       )}
 
       <section
-        className={`${styles.repliesList} ${
-          isReloadingReplies ? styles.repliesListReloading : ""
-        }`}
+        className={cx(styles.repliesList, isReloadingReplies ? styles.repliesListReloading : "")}
       >
         {(() => {
           // === Reddit-style nested threading metadata ===

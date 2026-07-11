@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { formatCompactNumber } from "../../utils/formatNumber";
 import styles from "../../styles/components/home/HomeFilterBar.module.css";
+import cx from "../../utils/cx";
 
 const OPTIONS = ["trending", "newest", "oldest"];
 
@@ -75,9 +76,7 @@ function HomeFilterBar({
             aria-selected={isActive}
             aria-disabled={isDisabled}
             aria-label={ariaLabel}
-            className={`${styles.tab} ${isActive ? styles.tabActive : ""} ${
-              isDisabled ? styles.tabDisabled : ""
-            }`}
+            className={cx(styles.tab, isActive ? styles.tabActive : "", isDisabled ? styles.tabDisabled : "")}
             onClick={() => handleClick(option)}
           >
             <span>{labelOf(option)}</span>

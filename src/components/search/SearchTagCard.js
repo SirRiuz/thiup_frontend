@@ -3,6 +3,14 @@ import { useTranslation } from "react-i18next";
 import TagSparkline from "./TagSparkline";
 import { splitByMatch } from "../../utils/matchText";
 import styles from "../../styles/components/search/SearchTagCard.module.css";
+import cx from "../../utils/cx";
+
+// Honest no-data shape for the trending sparkline: when the payload doesn't
+// carry the real series (an older backend without the activity change), the
+// row draws a FLAT baseline — "no changes" — instead of TagSparkline's seed
+// mock, whose fake waves read as data that doesn't exist. 14 = the
+// backend's ACTIVITY_DAYS window.
+const FLAT_ACTIVITY = Array(14).fill(0);
 
 /**
  * Card for a tag in the 'Tags' tab of SearchNew query mode.
@@ -30,14 +38,14 @@ function SearchTagCard({
   return (
     <button
       type="button"
-      className={`${styles.card} ${isSuggestion ? styles.cardSuggestion : ""}`}
+      className={cx(styles.card, isSuggestion ? styles.cardSuggestion : "")}
       onClick={onClick}
     >
       {/* Trending rank — the list IS ordered, so the numeral carries real
           information (not decoration). Top 3 in the brand accent. */}
       {rank != null && (
         <span
-          className={`${styles.rank} ${rank <= 3 ? styles.rankTop : ""}`}
+          className={cx(styles.rank, rank <= 3 ? styles.rankTop : "")}
           aria-hidden="true"
         >
           {rank}
@@ -68,6 +76,23 @@ function SearchTagCard({
             data={tag.activity}
             maxValue={activityMax}
             seed={tag.name}
+          />
+        </span>
+      )}
+      {isSuggestion && (
+        /* Activity pulse — the result variant's sparkline, miniature, on the
+           REAL series (posts/day) the trending payload ships. No series
+           (older backend) → the honest FLAT baseline, never the seed mock. */
+        <span className={styles.suggestionSpark} aria-hidden="true">
+          <TagSparkline
+            data={
+              Array.isArray(tag.activity) && tag.activity.length > 1
+                ? tag.activity
+                : FLAT_ACTIVITY
+            }
+            maxValue={activityMax}
+            width={64}
+            height={24}
           />
         </span>
       )}

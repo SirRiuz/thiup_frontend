@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f7f5f0" />
+
+    <title>Open source · Thiup</title>
+    <meta
+      name="description"
+      content="Thiup's code is public. Read it, audit how privacy is handled, and contribute on GitHub — a promise you don't have to take on faith."
+    />
+    <link rel="canonical" href="https://thiup.com/open-source" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        "@id": "https://thiup.com/open-source#page",
+        "url": "https://thiup.com/open-source",
+        "name": "Open source",
+        "isPartOf": { "@id": "https://thiup.com/#website" },
+        "inLanguage": "en"
+      }
+    </script>
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Thiup" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:locale:alternate" content="es_ES" />
+    <meta property="og:url" content="https://thiup.com/open-source" />
+    <meta property="og:title" content="Open source · Thiup" />
+    <meta
+      property="og:description"
+      content="Thiup's code is public. Read it, audit how privacy is handled, and contribute on GitHub."
+    />
+    <meta property="og:image" content="https://thiup.com/assets/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:alt" content="Thiup — speak freely, stay anonymous" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Open source · Thiup" />
+    <meta
+      name="twitter:description"
+      content="Thiup's code is public. Read it, audit how privacy is handled, and contribute on GitHub."
+    />
+    <meta name="twitter:image" content="https://thiup.com/assets/og-image.png" />
+    <meta name="twitter:image:alt" content="Thiup — speak freely, stay anonymous" />
+
+    <link rel="icon" type="image/svg+xml" href="../assets/favicon.svg" />
+    <link rel="icon" type="image/x-icon" href="../assets/favicon.ico" />
+    <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png" />
+
+    <link
+      rel="preload"
+      href="../assets/fonts/InterVariable.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link rel="stylesheet" href="../styles.css" />
+
+    <script>
+      window.PAGE_I18N = {
+        en: {
+          "meta.title": "Open source · Thiup",
+          "meta.description":
+            "Thiup's code is public. Read it, audit how privacy is handled, and contribute on GitHub — a promise you don't have to take on faith.",
+          pageTitle: "Open source",
+          pageLead: "A privacy promise you don't have to take on faith.",
+          s1Title: "Why the code is public",
+          s1P1:
+            "Thiup asks you to trust it with sensitive conversations. The only honest way to earn that trust is to show the work: the code that runs Thiup is public, so \"we don't track you\" is something you can verify, not something you have to believe.",
+          s2Title: "What you can audit",
+          s2P1:
+            "The repository shows how masks are derived and why they can't be traced back to you, how the feeds rank threads without ad incentives, how uploads and reports are handled, and what the server stores — and, more importantly, what it never stores.",
+          s3Title: "A small, independent project",
+          s3P1:
+            "Thiup has no investors and no data business. It is built and run by people who think an anonymous, calm corner of the internet should exist.",
+          s4Title: "Open to community contributions",
+          s4P1:
+            "Thiup improves in the open: anyone can propose ideas, report bugs, discuss changes and submit code. Every contribution from the community — an audit, a fix, a translation, a new feature — makes the platform better and safer for everyone.",
+          s4P2:
+            "You don't need permission to start: open an issue or send a pull request on GitHub.",
+          osButton: "View on GitHub",
+        },
+        es: {
+          "meta.title": "Código abierto · Thiup",
+          "meta.description":
+            "El código de Thiup es público. Léelo, audita cómo se maneja la privacidad y contribuye en GitHub — una promesa que no tienes que creer por fe.",
+          pageTitle: "Código abierto",
+          pageLead: "Una promesa de privacidad que no tienes que creer por fe.",
+          s1Title: "Por qué el código es público",
+          s1P1:
+            "Thiup te pide confiarle conversaciones sensibles. La única forma honesta de ganarse esa confianza es mostrar el trabajo: el código que ejecuta Thiup es público, así que \"no te rastreamos\" es algo que puedes verificar, no algo que tengas que creer.",
+          s2Title: "Qué puedes auditar",
+          s2P1:
+            "El repositorio muestra cómo se derivan las máscaras y por qué no pueden rastrearse hasta ti, cómo los feeds ordenan los hilos sin incentivos publicitarios, cómo se manejan las subidas y los reportes, y qué guarda el servidor — y, más importante, qué no guarda nunca.",
+          s3Title: "Un proyecto pequeño e independiente",
+          s3P1:
+            "Thiup no tiene inversores ni negocio de datos. Lo construye y mantiene gente que cree que debe existir un rincón anónimo y tranquilo de internet.",
+          s4Title: "Abierto a contribuciones de la comunidad",
+          s4P1:
+            "Thiup se mejora en abierto: cualquiera puede proponer ideas, reportar errores, discutir cambios y enviar código. Cada aporte de la comunidad — una auditoría, un arreglo, una traducción, una función nueva — hace la plataforma mejor y más segura para todos.",
+          s4P2:
+            "No necesitas permiso para empezar: abre un issue o envía un pull request en GitHub.",
+          osButton: "Ver en GitHub",
+        },
+      };
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main" data-i18n="skip">Skip to content</a>
+
+    <header class="site-header">
+      <div class="container header-inner">
+        <a class="brand" href="/" aria-label="Thiup">
+          <svg
+            class="brand-mark"
+            width="30"
+            height="30"
+            viewBox="0 0 68 68"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <path
+              d="M24 17.5 Q46 25.75 24 34 Q46 42.25 24 50.5"
+              fill="none"
+              stroke="#a85432"
+              stroke-width="5.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <circle cx="44.5" cy="19" r="4.5" fill="#a85432" />
+          </svg>
+          <span class="brand-word">Thiup</span>
+        </a>
+
+        <nav class="header-nav" aria-label="Primary">
+          <a href="/how-it-works" data-i18n="navHow">How it works</a>
+          <a href="/open-source" aria-current="page" data-i18n="navOpenSource">Open source</a>
+          <a href="/privacy" data-i18n="navPrivacy">Privacy</a>
+        </nav>
+
+        <div class="header-actions">
+          <a
+            class="icon-btn"
+            href="https://github.com/SirRiuz/thiup_backend"
+            target="_blank"
+            rel="noopener"
+            aria-label="GitHub"
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
+              <path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.55 0-.27-.01-1.17-.02-2.12-3.2.7-3.88-1.36-3.88-1.36-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.19 1.76 1.19 1.03 1.76 2.69 1.25 3.35.96.1-.75.4-1.25.72-1.54-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 5.78 0c2.21-1.49 3.18-1.18 3.18-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.41-2.69 5.38-5.25 5.67.41.35.77 1.04.77 2.1 0 1.52-.01 2.74-.01 3.11 0 .3.2.66.8.55A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z" />
+            </svg>
+          </a>
+          <div
+            class="lang-toggle"
+            role="group"
+            aria-label="Language"
+            id="lang-toggle"
+          >
+            <button type="button" class="lang-btn" data-lang="en" aria-pressed="true">
+              EN
+            </button>
+            <button type="button" class="lang-btn" data-lang="es" aria-pressed="false">
+              ES
+            </button>
+          </div>
+          <a class="btn btn-ghost" href="/app" data-i18n="openApp">
+            Open the app
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <main id="main">
+      <article class="page">
+        <div class="container page-inner">
+          <h1 class="page-title" data-i18n="pageTitle">Open source</h1>
+          <p class="page-lead" data-i18n="pageLead">
+            A privacy promise you don't have to take on faith.
+          </p>
+
+          <h2 data-i18n="s1Title">Why the code is public</h2>
+          <p data-i18n="s1P1">
+            Thiup asks you to trust it with sensitive conversations. The only
+            honest way to earn that trust is to show the work: the code that
+            runs Thiup is public, so "we don't track you" is something you can
+            verify, not something you have to believe.
+          </p>
+
+          <h2 data-i18n="s2Title">What you can audit</h2>
+          <p data-i18n="s2P1">
+            The repository shows how masks are derived and why they can't be
+            traced back to you, how the feeds rank threads without ad
+            incentives, how uploads and reports are handled, and what the
+            server stores — and, more importantly, what it never stores.
+          </p>
+
+          <h2 data-i18n="s3Title">A small, independent project</h2>
+          <p data-i18n="s3P1">
+            Thiup has no investors and no data business. It is built and run by
+            people who think an anonymous, calm corner of the internet should
+            exist.
+          </p>
+
+          <h2 data-i18n="s4Title">Open to community contributions</h2>
+          <p data-i18n="s4P1">
+            Thiup improves in the open: anyone can propose ideas, report bugs,
+            discuss changes and submit code. Every contribution from the
+            community — an audit, a fix, a translation, a new feature — makes
+            the platform better and safer for everyone.
+          </p>
+          <p data-i18n="s4P2">
+            You don't need permission to start: open an issue or send a pull
+            request on GitHub.
+          </p>
+
+          <a
+            class="btn btn-primary page-cta-btn"
+            href="https://github.com/SirRiuz/thiup_backend"
+            target="_blank"
+            rel="noopener"
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
+              <path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.55 0-.27-.01-1.17-.02-2.12-3.2.7-3.88-1.36-3.88-1.36-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.19 1.76 1.19 1.03 1.76 2.69 1.25 3.35.96.1-.75.4-1.25.72-1.54-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 5.78 0c2.21-1.49 3.18-1.18 3.18-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.41-2.69 5.38-5.25 5.67.41.35.77 1.04.77 2.1 0 1.52-.01 2.74-.01 3.11 0 .3.2.66.8.55A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z" />
+            </svg>
+            <span data-i18n="osButton">View on GitHub</span>
+          </a>
+        </div>
+      </article>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <a class="brand brand-sm" href="/" aria-label="Thiup">
+          <svg width="22" height="22" viewBox="0 0 68 68" aria-hidden="true" focusable="false">
+            <path
+              d="M24 17.5 Q46 25.75 24 34 Q46 42.25 24 50.5"
+              fill="none"
+              stroke="#a85432"
+              stroke-width="5.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <circle cx="44.5" cy="19" r="4.5" fill="#a85432" />
+          </svg>
+          <span class="brand-word">Thiup</span>
+        </a>
+        <p class="footer-tagline" data-i18n="tagline">Speak nameless.</p>
+        <nav class="footer-nav" aria-label="Footer">
+          <a href="/how-it-works" data-i18n="navHow">How it works</a>
+          <span class="footer-dot" aria-hidden="true">·</span>
+          <a href="/open-source" data-i18n="navOpenSource">Open source</a>
+          <span class="footer-dot" aria-hidden="true">·</span>
+          <a href="/privacy" data-i18n="navPrivacy">Privacy</a>
+          <span class="footer-dot" aria-hidden="true">·</span>
+          <a href="/app" data-i18n="openApp">Open the app</a>
+          <span class="footer-dot" aria-hidden="true">·</span>
+          <a href="https://github.com/SirRiuz/thiup_backend" target="_blank" rel="noopener">GitHub</a>
+        </nav>
+        <p class="footer-legal">
+          <span id="year">2026</span> · Thiup ·
+          <span data-i18n="footerNote">Anonymous, privacy first</span>
+        </p>
+      </div>
+    </footer>
+
+    <script src="../main.js" defer></script>
+  </body>
+</html>

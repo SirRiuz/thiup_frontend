@@ -1,4 +1,7 @@
-/* MyThreads — same warm template as home (#f7f5f0, Inter, 640px). */
+/* MyThreads (/me) — the CANONICAL surface screen (fourth member after /home,
+   /search and /p/:id): 60px desktop masthead + corner mask + ONE elevated
+   card holding the Threads-style profile header, the tab row and the thread
+   list. Mobile dissolves into the full-bleed #fdfcf8 sheet. */
 
 .page {
   background: #f7f5f0;
@@ -7,50 +10,232 @@
 }
 
 .main {
-  /* Threads-like column: 640px wide, 24px side padding (Threads' feed
-     --barcelona-columns-item-horizontal-padding) — the feed cards carry NO
-     horizontal padding of their own, so this is the single content inset
-     (see CLAUDE.md → Layout). */
   max-width: 640px;
   margin: 0 auto;
-  padding: 24px 24px 60px;
-  /* Column side padding for nested media-carousel edge-to-edge bleed — MUST
-     equal the side padding above. */
-  --layout-pad-x: 24px;
+  padding: 0 0 60px;
 }
 
-/* === Screen header === */
-
-/* Light divider between the identity header and the thread list: lines icon +
-   real count + a thin rule filling the rest. Informative, not a heading. */
-.listDivider {
+/* === Desktop masthead (Threads' 60px column header — same as home) === */
+.desktopHeader {
+  position: sticky;
+  top: 0;
+  z-index: 6;
+  height: 60px;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 0 4px;
-  margin-bottom: 16px;
+  justify-content: center;
+  background: #f7f5f0;
 }
 
-.listDividerIcon {
-  flex: none;
-  color: #9b9591;
+.desktopHeaderTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1a1a;
 }
 
-.listDividerCount {
-  flex: none;
-  font-size: 12px;
-  font-weight: 500;
-  color: #666666;
+/* === /anon app bar — the thread app bar's EXACT anatomy at every
+   breakpoint (grid: back · centered title · balancing span). Desktop: solid
+   page-bg sticky bar + Threads' floating circular back; mobile: the frosted
+   FIXED bar with the plain arrow (only the title differs from /p/:id). */
+.profileAppBar {
+  position: sticky;
+  top: var(--kb-top, 0px);
+  z-index: 10;
+  background: #f7f5f0;
+}
+
+.profileAppBarInner {
+  max-width: 640px;
+  margin: 0 auto;
+  height: 60px;
+  padding: 0 12px;
+  display: grid;
+  grid-template-columns: 1fr minmax(auto, 65%) 1fr;
+  column-gap: 16px;
+  align-items: center;
+}
+
+/* App-bar entrance — the thread view's "you've arrived" choreography (see
+   Post.module.css): back slides in from the left, the title settles upward
+   one beat (70ms) later. Expo-out, no bounce. */
+@keyframes profileBarSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes profileBarPopIn {
+  from {
+    opacity: 0;
+    transform: translateX(-8px) scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes profileBarRiseIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.profileAppBarTitle {
+  justify-self: center;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1a1a;
+  animation: profileBarRiseIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) 70ms backwards;
 }
 
-.listDividerLine {
-  flex: 1;
-  height: 1px;
-  background: #f0ece2;
+.profileBackButton {
+  justify-self: start;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  color: #1a1a1a;
+  transition: background 200ms ease;
+  animation: profileBarSlideIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) backwards;
 }
 
-/* === Feed (mismos patrones que HomeNew) === */
+.profileBackButton:hover {
+  background: #f0ece3;
+}
+
+@media (min-width: 701px) {
+  .profileAppBarInner {
+    padding: 0 16px;
+  }
+
+  /* Threads' exact floating back button (the thread view's spec). */
+  .profileBackButton {
+    width: 24px;
+    height: 24px;
+    background: #fdfcf8;
+    border: 0.5px solid #e5e0d3;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: transform 0.2s ease;
+    /* The floating circle materializes (entrance scale on top of the slide). */
+    animation-name: profileBarPopIn;
+  }
+
+  .profileBackButton:hover {
+    background: #fdfcf8;
+    transform: scale(1.1);
+  }
+
+  .profileBackButton:active {
+    transform: scale(0.96);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .profileBackButton {
+    transition: background 200ms ease;
+  }
+
+  .profileBackButton:hover,
+  .profileBackButton:active {
+    transform: none;
+  }
+
+  .profileBackButton,
+  .profileAppBarTitle {
+    animation: none;
+  }
+}
+
+/* === Sticky corner mask (desktop) — same geometry as home/search/thread. */
+.cornerMask {
+  position: sticky;
+  top: 60px;
+  height: 0;
+  z-index: 5;
+}
+
+.cornerMaskEdge {
+  position: absolute;
+  top: -14px;
+  left: 24px;
+  right: 24px;
+  height: 15px;
+  background: #f7f5f0;
+  border-bottom: 1px solid #e5e0d3;
+  overflow: hidden;
+}
+
+.cornerCap {
+  position: absolute;
+  top: -14px;
+  width: 24px;
+  height: 39px;
+  overflow: hidden;
+}
+
+.cornerCapLeft {
+  left: 0;
+}
+
+.cornerCapRight {
+  right: 0;
+}
+
+.cornerCapBox {
+  position: absolute;
+  top: 14px;
+  width: 48px;
+  height: 48px;
+  border: 1px solid #e5e0d3;
+  border-radius: 24px;
+  box-shadow: 0 0 0 48px #f7f5f0;
+}
+
+.cornerCapLeft .cornerCapBox {
+  left: 0;
+}
+
+.cornerCapRight .cornerCapBox {
+  right: 0;
+}
+
+/* === The elevated surface card === */
+.surface {
+  background: #fdfcf8;
+  border: 1px solid #e5e0d3;
+  border-radius: 24px;
+  /* Threads' FEED inset (24px) — the cards/tab/profile add no horizontal
+     padding of their own; --layout-pad-x drives the media-bleed contract. */
+  padding: 12px 24px;
+  --layout-pad-x: 24px;
+  /* The card always reaches the bottom of the viewport (Threads' full-height
+     column), even with a short list. */
+  min-height: calc(100vh - 60px);
+}
+
+/* === Feed (same patterns as HomeNew) === */
 
 .feed {
   display: flex;
@@ -112,16 +297,159 @@
   color: #8a8578;
 }
 
+/* === Media tab — the profile gallery (search-grid language, verbatim) ===
+   FULL-BLEED 3-column mosaic with the 2px mesh; tiles are buttons opening
+   the thread (seeded). Dominant color paints the tile while it loads.
+   The SECTION carries the bleed and runs FLUSH to the card's bottom edge
+   (-12px cancels the surface's bottom padding — the warm gap between the
+   mosaic's last row and the rounded border read broken), clipping the
+   square tiles into the card's own 24px bottom corners (IG's profile
+   grid). */
+.mediaSection {
+  padding: 0;
+  margin: 0 calc(-1 * var(--layout-pad-x, 0px));
+  overflow: hidden;
+}
+
+/* Flush variant — ONLY when the mosaic really reaches the card's bottom
+   (measured: useFlushBottom): -12px eats the surface's bottom padding and
+   the corners clip into the card's 24px radius. A short grid floating
+   mid-card keeps square tiles (rounding them read broken). */
+.mediaSectionFlush {
+  margin-bottom: -12px;
+  border-radius: 0 0 24px 24px;
+}
+
+.mediaGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2px;
+}
+
+.mediaTile {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 3 / 4;
+  background: #f0ece3;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  /* Threads' media-cell press. */
+  transition: background 120ms ease, transform 0.2s ease;
+}
+
+.mediaTile:active {
+  transform: scale(0.98);
+}
+
+.mediaTile:nth-child(even) {
+  background: #f3efe6;
+}
+
+@media (hover: hover) {
+  .mediaTile:hover .mediaTileMedia {
+    opacity: 0.92;
+  }
+}
+
+.mediaTileMedia {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: opacity 120ms ease;
+}
+
+/* ONE type mark per tile, top-right (IG's grid rule): carousel or Reel. */
+.mediaTileMark {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: inline-flex;
+  color: #fdfcf8;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
+  pointer-events: none;
+}
+
+.mediaTileNsfw .mediaTileMedia {
+  filter: blur(18px);
+  transform: scale(1.12);
+}
+
+.mediaTileNsfwGlyph {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fdfcf8;
+  filter: drop-shadow(0 1px 2px rgba(26, 26, 26, 0.4));
+  pointer-events: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .feedItems {
     transition: none;
   }
+
+  .mediaTile {
+    transition: background 120ms ease;
+  }
+
+  .mediaTile:active {
+    transform: none;
+  }
 }
 
-/* Mobile: the NavRail app bar is FIXED (60px) — it no longer reserves flow
-   space, so add its height on top of the column's own 24px gap. */
+/* === Mobile: the canonical full-bleed sheet (home/search/thread guide) ===
+   The NavRail app bar is FIXED (60px) — offset the content by its height;
+   the surface dissolves (no border/radius/min-height) onto the #fdfcf8
+   sheet painted by useMobileSurfacePage. --layout-pad-x keeps matching the
+   real side padding (the HARD media-bleed rule). */
 @media (max-width: 700px) {
+  .page {
+    background: #fdfcf8;
+  }
+
   .main {
-    padding-top: 84px;
+    padding: 60px 0 60px;
+  }
+
+  .desktopHeader,
+  .cornerMask {
+    display: none;
+  }
+
+  /* /anon's app bar goes white FROSTED and FIXED on mobile — the thread app
+     bar's exact recipe (borderless, anti rubber-band; .main's 60px top
+     padding compensates the lost flow space). */
+  .profileAppBar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    background: rgba(253, 252, 248, 0.88);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    backdrop-filter: blur(28px) saturate(180%);
+  }
+
+  @supports not (
+    (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))
+  ) {
+    .profileAppBar {
+      background: #fdfcf8;
+    }
+  }
+
+  .surface {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    padding: 12px 24px;
+    min-height: 0;
+  }
+
+  /* The dissolved sheet has no rounded corners to clip into. */
+  .mediaSectionFlush {
+    border-radius: 0;
   }
 }

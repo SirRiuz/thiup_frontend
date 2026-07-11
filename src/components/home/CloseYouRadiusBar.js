@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import styles from "../../styles/components/home/CloseYouRadiusBar.module.css";
+import cx from "../../utils/cx";
 
 // Expandable radius for Close You — bounded presets (the backend adapts the
 // geohash precision to the radius; >25 km switches to coarse cells).
@@ -130,7 +131,7 @@ function CloseYouRadiusBar({ radius, onChange, isLoading }) {
       </span>
 
       <div
-        className={`${styles.scale} ${isDragging ? styles.dragging : ""}`}
+        className={cx(styles.scale, isDragging ? styles.dragging : "")}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
@@ -155,9 +156,7 @@ function CloseYouRadiusBar({ radius, onChange, isLoading }) {
             i === 0 || i === RADIUS_PRESETS.length - 1 ? null : (
               <span
                 key={km}
-                className={`${styles.tick} ${
-                  i <= previewIdx ? styles.tickPassed : ""
-                }`}
+                className={cx(styles.tick, i <= previewIdx ? styles.tickPassed : "")}
                 style={{ left: `${pctOf(i)}%` }}
               />
             )
@@ -172,9 +171,7 @@ function CloseYouRadiusBar({ radius, onChange, isLoading }) {
               type="button"
               role="radio"
               aria-checked={radius === km}
-              className={`${styles.stop} ${
-                i === previewIdx ? styles.stopActive : ""
-              }`}
+              className={cx(styles.stop, i === previewIdx ? styles.stopActive : "")}
               style={{ left: `${pctOf(i)}%` }}
               onClick={() => {
                 if (!isLoading && radius !== km) onChange(km);

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import styles from "../../styles/components/post/AnimatedCounter.module.css";
+import cx from "../../utils/cx";
 
 /**
  * Odometer-style counter (X / Twitter look).
@@ -46,7 +47,7 @@ function AnimatedCounter({ value, className }) {
 
   if (animatingValue === null) {
     return (
-      <span className={`${styles.counter} ${className || ""}`}>
+      <span className={cx(styles.counter, className || "")}>
         <span className={styles.value}>{displayValue}</span>
       </span>
     );
@@ -54,7 +55,7 @@ function AnimatedCounter({ value, className }) {
 
   return (
     <span
-      className={`${styles.counter} ${className || ""}`}
+      className={cx(styles.counter, className || "")}
       aria-live="polite"
     >
       <span className={`${styles.column} ${styles[`column_${direction}`]}`}>

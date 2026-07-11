@@ -97,9 +97,11 @@
   left: 0;
   right: 0;
   height: 11px;
+  /* ONE stroke weight all around: the 1.5px legs read thin/washed next to
+     the 2px line — the bracket is a single 2px thread everywhere. */
   border-top: 2px solid transparent;
-  border-left: 1.5px solid transparent;
-  border-right: 1.5px solid transparent;
+  border-left: 2px solid transparent;
+  border-right: 2px solid transparent;
   border-radius: 5px 5px 0 0;
 }
 

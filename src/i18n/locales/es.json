@@ -68,7 +68,8 @@
     "thread": "Hilo",
     "notFound": "Página no encontrada",
     "serverError": "Error del servidor",
-    "networkError": "Sin conexión"
+    "networkError": "Sin conexión",
+    "anonProfile": "Perfil"
   },
   "splash": {
     "loading": "Cargando"
@@ -164,6 +165,7 @@
       "viewThread": "Ver hilo"
     },
     "trendingTitle": "Tendencias",
+    "topicsTitle": "Explora temas",
     "label": "Buscar",
     "tabTop": "Destacados",
     "tabLatest": "Recientes",
@@ -317,7 +319,13 @@
     "posts": "Publicaciones",
     "replies": "Respuestas",
     "joined": "Se unió {{date}}",
-    "unknown": "Desconocido"
+    "unknown": "Desconocido",
+    "emptyTitle": "Aún no hay hilos",
+    "emptyBody": "Esta máscara no ha iniciado ninguna conversación.",
+    "notFound": "Perfil no encontrado",
+    "mediaEmptyTitle": "Aún no hay media",
+    "mediaEmptyBody": "Las fotos y videos de los hilos de esta máscara aparecerán aquí.",
+    "avatarLabel": "Foto de perfil"
   },
   "myThreads": {
     "title": "Mis hilos",
@@ -330,9 +338,12 @@
     "statThreads": "Hilos",
     "statReactions": "Reacciones",
     "statReplies": "Respuestas",
-    "privacyNote": "Solo tú ves esto",
-    "threadCount_one": "{{count}} hilo",
-    "threadCount_other": "{{count}} hilos"
+    "tabThreads": "Hilos",
+    "tabMedia": "Media",
+    "joined": "Se unió en {{date}}",
+    "mediaTileLabel": "Abrir hilo",
+    "mediaEmptyTitle": "Aún no hay media",
+    "mediaEmptyBody": "Las fotos y videos de tus hilos aparecerán aquí."
   },
   "notFound": {
     "code": "404",
@@ -346,6 +357,11 @@
     "tryAgain": "Intentar de nuevo",
     "code": "Error 503 · servicio no disponible"
   },
+  "antiSnoop": {
+    "title": "Cuidemos la privacidad de este espacio",
+    "body": "Thiup oculta su contenido mientras las herramientas de desarrollo están abiertas — es parte de cómo protegemos a una comunidad anónima. Sin resentimientos.",
+    "hint": "Cierra las herramientas de desarrollo y recarga para continuar."
+  },
   "networkError": {
     "title": "Sin conexión",
     "body": "Parece que te quedaste sin internet. Revisa tu conexión wifi o de datos e inténtalo de nuevo.",
@@ -355,8 +371,7 @@
   },
   "feedError": {
     "title": "No se pudo conectar con el servidor",
-    "subtitle": "Revisa tu conexión e inténtalo de nuevo",
-    "cloudAria": "Conexión con la nube perdida"
+    "subtitle": "Revisa tu conexión e inténtalo de nuevo"
   },
   "retryBanner": {
     "connectionAria": "Conexión perdida",
