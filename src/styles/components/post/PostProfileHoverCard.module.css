@@ -1,0 +1,165 @@
+/* PostProfileHoverCard — the profile header's anatomy in miniature (the /me
+   MeProfileHeader language: name block left · avatar right, quiet stats
+   line, "joined" whisper), on the popover spec. */
+
+.card {
+  background: #fdfcf8;
+  border: 1px solid #e5e0d3;
+  border-radius: 16px;
+  padding: 16px;
+  min-width: 250px;
+  max-width: 280px;
+  text-align: start;
+  /* Popover elevation (the design system's raised-popover shadow). */
+  box-shadow: 0 8px 24px rgba(26, 26, 26, 0.08);
+  animation: hoverCardAppear 180ms ease-out;
+}
+
+@keyframes hoverCardAppear {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Name block left, avatar right — the profile header's top row, scaled. */
+.topRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.identityBlock {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+/* The display name, scaled from the profile's 24px to the compact card. */
+.name {
+  margin: 0;
+  font-family: inherit;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: #1a1a1a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The hash as the handle line — the profile's mono pill (display-only
+   here; the copy affordance lives on the full profile). */
+.hashPill {
+  align-self: flex-start;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 11px;
+  color: #8b6f47;
+  background: #f7f5f0;
+  border: 1px solid #ebe7dd;
+  border-radius: 6px;
+  padding: 2px 7px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Hairline ring seating the identicon (the profile avatar's recipe). */
+.avatarWrap {
+  flex: none;
+  display: inline-flex;
+}
+
+.avatarWrap svg {
+  outline: 0.5px solid #e5e0d3;
+  outline-offset: -0.5px;
+}
+
+/* Stats as ONE quiet line — the /me statsLine spec, compact. */
+.statsLine {
+  margin: 12px 0 0;
+  font-size: 13px;
+  line-height: 19px;
+  color: #9b9591;
+  font-variant-numeric: tabular-nums;
+}
+
+.statPart {
+  white-space: nowrap;
+}
+
+.statValue {
+  font-weight: 600;
+  color: #6b6b6b;
+}
+
+.statDot {
+  color: #c4bfb1;
+}
+
+/* "Joined mar 2025" — the whisper line (calendar + text). */
+.joinedLine {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 5px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #9b9591;
+}
+
+.joinedLine svg {
+  /* Inherits the line's muted grey — no warm tint (it read orange). */
+  flex: none;
+}
+
+/* === Skeleton while the real data loads (project's warm pattern:
+   #ebe7dd + opacity pulse, like PostReplySkeleton) === */
+
+.skeletonBar {
+  display: block;
+  background: #ebe7dd;
+  border-radius: 3px;
+  animation: hoverCardPulse 1.4s ease-in-out infinite;
+}
+
+/* Mirror the real lines' boxes so the swap doesn't jump: stats line
+   (13px text in a 19px line) then the joined whisper (12px in 18px). */
+.skeletonStats {
+  width: 150px;
+  height: 13px;
+  margin: 15px 0 3px;
+}
+
+.skeletonJoined {
+  width: 110px;
+  height: 12px;
+  margin: 8px 0 3px;
+}
+
+@keyframes hoverCardPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    animation: none;
+  }
+
+  .skeletonBar {
+    animation: none;
+  }
+}

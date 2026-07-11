@@ -1,0 +1,202 @@
+.page {
+  background: #f7f5f0;
+  min-height: 100vh;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Helvetica, Arial, sans-serif;
+}
+
+.main {
+  /* Threads' EXACT column: a hard 640px (--barcelona-column-layout-max-width),
+     no side gutter — the .surface card is exactly 640px wide like theirs,
+     twin-matched with the thread view (the old 8px gutter made both 624). NO
+     top padding on desktop: the masthead rests at y0 and the card's rounded
+     top sits FLUSH under it (y60) at ALL times — rest and scrolled are the
+     same state, identical to the thread view, so nothing ever shifts. */
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0 0 60px;
+}
+
+/* Elevated surface card (same guide as the thread view's .surface): one card
+   holds compose + tabs + feed, carrying the exact Threads FEED padding 24px
+   (--barcelona-columns-item-horizontal-padding — their feed columns use 24,
+   unlike the post page's 16). The feed cards add NO horizontal padding of
+   their own, so this is the single content inset. --layout-pad-x = THIS
+   card's side padding (the media-bleed contract). */
+.surface {
+  background: #fdfcf8;
+  border: 1px solid #e5e0d3;
+  border-radius: 24px;
+  /* NO box-shadow — current Threads dropped the column's ambient halo and
+     keeps only the hairline outline (same as the thread view's .surface). */
+  padding: 12px 24px;
+  --layout-pad-x: 24px;
+}
+
+/* === Desktop masthead (Threads' 60px column header) ===
+   Sticky, OPAQUE page-bg bar (their x1d90nhi background-secondary + xng8ra
+   height 60px) with the feed title centered. It sits in flow as .main's first
+   child, RESTING already pinned at y0 (its 14px gap to the card is its own
+   margin-bottom, not .main padding — so it NEVER shifts on scroll, exactly
+   like the thread view's app bar); the corner mask below pins at top: 60 —
+   the card's rounded top rides flush under the header's bottom edge, exactly
+   Threads' masthead anatomy. */
+.desktopHeader {
+  position: sticky;
+  top: 0;
+  z-index: 6;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f7f5f0;
+  /* Extend 12px past the column on each side (Threads' exact xo2j3jz/x18zu7yx
+     inset-inline: -12px): the surface card's 0 0 12px shadow halo bleeds 12px
+     beyond its edges, and a header only as wide as the card lets that halo peek
+     out at the sides while scrolling. 12px wider = the halo is fully covered.
+     NO bottom margin: the card's rounded top rests FLUSH under the header
+     (Threads' anatomy) — rest and scrolled are the same state, so the mouth
+     never moves. */
+  margin: 0 -12px;
+}
+
+.desktopHeaderTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+/* === Threads-style sticky corner mask (desktop) ===
+   Same anatomy as the thread view's mask (see Post.module.css for the full
+   explanation of the inverted-corner box-shadow trick). The card rests FLUSH
+   under the 60px masthead, so the mask is ALWAYS pinned (rest == scrolled):
+   the line + arcs sit at y60 permanently; the bg-only band tucks under the
+   opaque header. */
+.cornerMask {
+  position: sticky;
+  top: 60px;
+  height: 0;
+  z-index: 5;
+}
+
+.cornerMaskEdge {
+  position: absolute;
+  top: -14px;
+  left: 24px;
+  right: 24px;
+  height: 15px;
+  background: #f7f5f0;
+  border-bottom: 1px solid #e5e0d3;
+  overflow: hidden;
+}
+
+/* (The old strip-shadow ::after is gone: the card no longer casts a halo, so
+   the masked strip needs no re-cast shadow — border only.) */
+
+.cornerCap {
+  position: absolute;
+  top: -14px;
+  width: 24px;
+  height: 39px;
+  overflow: hidden;
+}
+
+.cornerCapLeft {
+  left: 0;
+}
+
+.cornerCapRight {
+  right: 0;
+}
+
+.cornerCapBox {
+  position: absolute;
+  top: 14px;
+  width: 48px;
+  height: 48px;
+  border: 1px solid #e5e0d3;
+  border-radius: 24px;
+  /* THE trick — the giant spread paints the page bg outside the rounded arc.
+     (No ambient layer anymore: the card no longer casts a halo.) */
+  box-shadow: 0 0 0 48px #f7f5f0;
+}
+
+.cornerCapLeft .cornerCapBox {
+  left: 0;
+}
+
+.cornerCapRight .cornerCapBox {
+  right: 0;
+}
+
+/* === Mobile: full-bleed, borderless sheet (same guide as the thread view) === */
+@media (max-width: 700px) {
+  .page {
+    background: #fdfcf8;
+  }
+
+  .main {
+    /* The NavRail app bar is FIXED on mobile (60px) — offset the content by
+       its height since it no longer reserves flow space. */
+    padding: 60px 0 60px;
+  }
+
+  .surface {
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .cornerMask {
+    display: none;
+  }
+
+  /* Mobile keeps the NavRail app bar — no desktop masthead. */
+  .desktopHeader {
+    display: none;
+  }
+}
+
+.feed {
+  display: flex;
+  flex-direction: column;
+}
+
+/* === Sentinel for infinite scroll (invisible) === */
+.sentinel {
+  height: 1px;
+  width: 100%;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* === Feed items wrapper for reload dim === */
+.feedItems {
+  display: flex;
+  flex-direction: column;
+  transition: opacity 200ms ease;
+}
+
+.feedItemsReloading {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* Entrance of the new content after changing tab/radius: FIXED-duration
+   fade tied to the content change (visible even if the fetch is
+   instant — on localhost the dim above lasts ~2 frames). Starts
+   from the dim's opacity (0.5): perceived as dim-old → fade-in-new.
+   Only with motion allowed; with reduced-motion the swap is direct. */
+@media (prefers-reduced-motion: no-preference) {
+  .feedItemsEntering {
+    animation: feedEnter 240ms ease-out;
+  }
+}
+
+@keyframes feedEnter {
+  from {
+    opacity: 0.5;
+  }
+  to {
+    opacity: 1;
+  }
+}

@@ -1,0 +1,153 @@
+/* PostOptionsMenu — three-dots menu on a post card. Trigger + mobile sheet
+   styles only: the floating PANEL and its rows live in the shared
+   MenuSurface (one menu surface for the whole app). */
+
+.wrapper {
+  display: inline-flex;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
+    Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* Card placement: absolute top-right over the post card (feed/search).
+   Threads geometry: the 36px hover circle is centered on the username row
+   (card padding-top 12 + ~18px line → line center ≈ 21px; top 3 + 18 = 21) and
+   nudged past the text edge (right: -8px) so the GLYPH clears the text with
+   Threads' ~10px of air instead of hugging it. */
+.wrapperCard {
+  position: absolute;
+  top: 3px;
+  right: -8px;
+  z-index: 3;
+}
+
+/* Inline placement: sits in the flow (thread app bar, reply header). */
+.wrapperInline {
+  position: relative;
+}
+
+/* Trigger — Threads dimensions: a 36px visible hover circle around the 20px
+   glyph (their post-header button), with an invisible ::before extending the
+   real tap target to ~44px (mobile guideline). */
+.trigger {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  color: #a3a3a3;
+  border-radius: 50%;
+  cursor: pointer;
+  /* Transition (background/color + spring transform) comes from the global
+     .springPressIcon class applied to the trigger — single source. */
+}
+
+.trigger::before {
+  content: "";
+  position: absolute;
+  inset: -4px; /* → ~44px comfortable touch target */
+}
+
+.trigger:hover,
+.triggerOpen {
+  background: #f0ece3;
+  color: #1a1a1a;
+}
+
+/* Thread view (inline variant): the SAME 36px hover circle as the base trigger
+   (home/feed — Threads uses ONE More-button size everywhere), but with -6px
+   margins so it only OCCUPIES 24px in the header row: the row keeps its 21px
+   rhythm and the glyph center stays put, while the hover circle overflows into
+   the surrounding padding exactly like Threads'. Icon 20px (Threads). */
+.wrapperInline .trigger {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  margin: -6px;
+}
+
+.wrapperInline .trigger svg {
+  width: 20px;
+  height: 20px;
+}
+
+.wrapperInline .trigger::before {
+  content: "";
+  position: absolute;
+  inset: -4px; /* → ~44px comfortable touch target */
+}
+
+/* ===== Mobile bottom-sheet rows (same items, larger/touch-friendly) ===== */
+
+.sheetMenu {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Threads-style sheet row: bolder 16px/600 (their mobile menu rows), press
+   feedback identical to the desktop popover (wash + scale). */
+.sheetItem {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 15px 8px;
+  border: 0;
+  border-top: 1px solid #f0ece2;
+  border-radius: 12px;
+  background: transparent;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: #1a1a1a;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.1s ease, transform 0.1s ease;
+}
+
+.sheetItem:first-child {
+  border-top: 0;
+}
+
+.sheetItem:hover,
+.sheetItem:active {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.sheetItem:active {
+  transform: scale(0.98);
+}
+
+.sheetItemIcon {
+  display: inline-flex;
+  flex: none;
+  color: #424242;
+}
+
+.sheetItemIcon svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Threads' exact --barcelona-error-text. */
+.sheetItemDanger {
+  color: #ff3040;
+}
+
+.sheetItemDanger .sheetItemIcon {
+  color: #ff3040;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .trigger,
+  .sheetItem {
+    transition: none;
+  }
+
+  .sheetItem:active {
+    transform: none;
+  }
+}

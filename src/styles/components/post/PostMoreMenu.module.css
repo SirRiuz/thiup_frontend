@@ -1,0 +1,68 @@
+.wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.trigger {
+  background: transparent;
+  border: 0;
+  padding: 4px;
+  cursor: pointer;
+  color: #9b9591;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.trigger:hover {
+  background: #ebe7dd;
+  color: #1a1a1a;
+}
+
+.triggerOpen {
+  background: #ebe7dd;
+  color: #1a1a1a;
+}
+
+.popover {
+  position: absolute;
+  top: 28px;
+  right: 0;
+  background: #fdfcf8;
+  border: 1px solid #e8e5dd;
+  border-radius: 6px;
+  padding: 4px;
+  min-width: 150px;
+  z-index: 10;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  background: transparent;
+  border: 0;
+  padding: 8px 10px;
+  cursor: pointer;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 11px;
+  color: #1a1a1a;
+  letter-spacing: 0.02em;
+  border-radius: 4px;
+  text-align: left;
+  transition: background 120ms ease;
+}
+
+.item:hover {
+  background: #ebe7dd;
+}
+
+.divider {
+  height: 1px;
+  background: #ebe7dd;
+  margin: 4px 0;
+}

@@ -1,27 +1,181 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en" translate="no">
   <head>
-    <meta name="google" content="notranslate">
+    <!-- notranslate directives (NOT tracking): prevent Google Translate from
+         altering the UI. Kept intentionally. -->
+    <meta name="google" content="notranslate" />
     <meta charset="utf-8" />
-    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
-    <meta name="theme-color" content="#000000" />
-    <meta name="google-adsense-account" content="ca-pub-8440975526433939">
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!-- Preload the self-hosted Inter font so it is available before first
+         paint on EVERY platform (notably Android, where the wider Roboto
+         fallback otherwise rendered during the swap window and made some texts
+         wrap differently than on iOS/desktop). crossorigin is required to match
+         the font's CORS fetch even same-origin. -->
+    <link
+      rel="preload"
+      href="%PUBLIC_URL%/fonts/InterVariable.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin="anonymous"
+    />
+    <!-- Inter @font-face declared here (not in a CSS Module) so it can point at
+         the preloaded public/fonts asset by a stable URL. A single variable
+         woff2 covers weights 100-900. font-display: swap + the preload above =
+         Inter is ready before first paint, so no platform falls back to a wider
+         font (the Android line-wrap bug). -->
+    <style>
+      @font-face {
+        font-family: "Inter";
+        src: url("%PUBLIC_URL%/fonts/InterVariable.woff2") format("woff2");
+        font-weight: 100 900;
+        font-style: normal;
+        font-display: swap;
+      }
+    </style>
+    <!-- Brand icon ("thread + dot"): favicon.svg is the primary (scales with
+         the display); the .ico (16/32/48) is the fallback for legacy browsers.
+         The 16/32 PNGs use a slightly thicker stroke so the thread stays
+         legible at tiny sizes. -->
+    <link rel="icon" type="image/svg+xml" href="%PUBLIC_URL%/favicon.svg" />
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" sizes="48x48" />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="32x32"
+      href="%PUBLIC_URL%/favicon-32x32.png"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="16x16"
+      href="%PUBLIC_URL%/favicon-16x16.png"
+    />
+    <link
+      rel="apple-touch-icon"
+      sizes="180x180"
+      href="%PUBLIC_URL%/apple-touch-icon.png"
+    />
+    <link
+      rel="mask-icon"
+      href="%PUBLIC_URL%/safari-pinned-tab.svg"
+      color="#a85432"
+    />
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    <!-- Warm app background (#f7f5f0) applied to the mobile browser chrome, the
+         iOS status bar and the pre-React paint — no white flash / white
+         overscroll on mobile. -->
+    <meta name="theme-color" content="#f7f5f0" />
+    <!-- Standalone capability: standard tag + Apple's legacy alias (iOS only
+         reads the apple- one). status-bar-style "default" = light bar with dark
+         icons → legible over the warm #f7f5f0. -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, user-scalable=no"
+    />
+    <!-- SEO — privacy-aware. Only the public landing shell (this page, "/") is
+         crawlable; robots.txt blocks every user-content route (/home, /post,
+         /search, /me) so no anonymous or sensitive content is ever indexed.
+         These tags also power rich link previews when the app is shared
+         (sharing, not search, is how an anonymous app spreads). -->
+    <title>Thiup — speak freely, stay anonymous</title>
     <meta
       name="description"
-      content="Freedom absolute is what internet deserves, join this comunity to express all what you want beign total anonymous."
+      content="Thiup is an anonymous space to speak freely about what matters. Privacy first by design — no sign-ups, no profiles, your exact location is never stored."
     />
-    <link rel="apple-touch-icon" href="%PUBLIC_URL%/favicon.ico" />
-    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
-    <title>Thiup</title>
+    <link rel="canonical" href="https://app.thiup.com/" />
+
+    <!-- Open Graph (link previews) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Thiup" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:locale:alternate" content="es_ES" />
+    <meta property="og:title" content="Thiup — speak freely, stay anonymous" />
+    <meta
+      property="og:description"
+      content="An anonymous space to speak freely about what matters. Privacy first by design — no sign-ups, no profiles."
+    />
+    <meta property="og:url" content="https://app.thiup.com/" />
+    <!-- PRIVACY: the OG/Twitter image is ALWAYS this single static brand card
+         (logo + wordmark + tagline) for the whole app. Never generate per-thread
+         previews or include user content — crawlers cache these images outside
+         our control. Absolute URL required (crawlers don't resolve relative). -->
+    <meta property="og:image" content="https://app.thiup.com/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:type" content="image/png" />
+    <meta
+      property="og:image:alt"
+      content="Thiup — speak freely, stay anonymous"
+    />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Thiup — speak freely, stay anonymous" />
+    <meta
+      name="twitter:description"
+      content="An anonymous space to speak freely about what matters. Privacy first by design — no sign-ups, no profiles."
+    />
+    <meta name="twitter:image" content="https://app.thiup.com/og-image.png" />
+    <meta
+      name="twitter:image:alt"
+      content="Thiup — speak freely, stay anonymous"
+    />
+
+    <!-- Structured data (schema.org / JSON-LD) — BRAND ONLY. Describes what
+         Thiup IS for search engines and LLMs; contains zero user content,
+         masks or queries. No SearchAction on purpose: it would advertise the
+         (private, noindex) /search URL to crawlers. Helps generative engines
+         (GEO) describe Thiup correctly. -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://app.thiup.com/#organization",
+            "name": "Thiup",
+            "url": "https://app.thiup.com/",
+            "logo": "https://app.thiup.com/icon-512.png",
+            "description": "Thiup is an anonymous social space to speak freely about what matters. Privacy first by design — no sign-ups, no profiles, your exact location is never stored."
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://app.thiup.com/#website",
+            "name": "Thiup",
+            "url": "https://app.thiup.com/",
+            "description": "An anonymous space to speak freely about what matters. Privacy first by design — no sign-ups, no profiles.",
+            "inLanguage": ["en", "es"],
+            "publisher": { "@id": "https://app.thiup.com/#organization" }
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
     <script>
-        document.addEventListener('contextmenu', (e) => {
-            e.preventDefault()
-        });
+      (function () {
+        try {
+          var key = "__REACT_DEVTOOLS_GLOBAL_HOOK__";
+          Object.defineProperty(window, key, {
+            value: {
+              isDisabled: true,
+              supportsFiber: true,
+              inject: function () {},
+              onCommitFiberRoot: function () {},
+              onCommitFiberUnmount: function () {},
+            },
+            configurable: false,
+            writable: false,
+          });
+        } catch (e) {}
+      })();
+      document.addEventListener("contextmenu", (e) => {
+        e.preventDefault();
+      });
     </script>
   </body>
 </html>

@@ -1,7 +1,21 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
-import reportWebVitals from "./reportWebVitals";
+// Initialize the UI i18n (OS language + persisted preference).
+import "./i18n";
+import silenceResizeObserverError from "./utils/silenceResizeObserverError";
+import stripWafParams from "./utils/stripWafParams";
+import initAntiSnoop from "./utils/antiSnoop";
+
+// Swallow ONLY the benign "ResizeObserver loop ..." browser warning so it stops
+// tripping CRA's error overlay. All other errors still surface. Registered
+// before render so it precedes the dev overlay's own error listener.
+silenceResizeObserverError();
+
+// Scrub Cloudflare WAF challenge tokens (?__cf_chl_f_tk=...) that the challenge
+// redirect sometimes leaves in the URL — BEFORE the router mounts, so the clean
+// URL is what lands in the address bar, history and any copied link.
+stripWafParams();
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
@@ -10,7 +24,8 @@ root.render(
   </React.StrictMode>
 );
 
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-reportWebVitals();
+// Casual anti-prying guard: with REACT_APP_DEBUG=false it wipes the DOM and
+// shows a calm on-brand notice when the browser DevTools are detected open.
+// No-op with DEBUG=true so development keeps DevTools available. onLockdown
+// unmounts React first so it removes its portals cleanly before the wipe.
+initAntiSnoop({ onLockdown: () => root.unmount() });

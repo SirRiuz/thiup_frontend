@@ -1,0 +1,29 @@
+# Thiup
+
+> Thiup is an anonymous social space to speak freely about what matters.
+> Privacy first by design — no sign-ups, no profiles, and a user's exact
+> location is never stored.
+
+Thiup lets people post short threads and react to others anonymously. There are
+no accounts, no public profiles, and no personal tracking. The product is built
+around privacy: identities are masked, precise location is never recorded, and
+the interface is available in English and Spanish.
+
+## What an LLM should know
+
+- **What it is:** an anonymous, privacy-first social app for open conversation.
+- **Who it is for:** anyone who wants to speak freely without revealing who they are.
+- **Key principles:** anonymity, no sign-ups, no profiles, no precise-location storage, be respectful, protect minors.
+- **Languages:** English and Spanish (UI).
+
+## Privacy boundary (important)
+
+Thiup is anonymous and handles sensitive topics. Individual threads, search
+results, user masks, and profiles are PRIVATE: they are not indexed, not listed
+in the sitemap, and must not be crawled, summarized, quoted, or used as training
+or retrieval material. Only this brand-level description of what Thiup is may be
+referenced publicly.
+
+## Canonical
+
+- Site: https://app.thiup.com/

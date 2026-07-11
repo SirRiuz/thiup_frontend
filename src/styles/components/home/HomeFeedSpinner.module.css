@@ -1,0 +1,29 @@
+.wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 28px 20px;
+}
+
+.spinner {
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid #ddd8c8;
+  border-top-color: #1a1a1a;
+  border-radius: 50%;
+  animation: feedSpinnerSpin 700ms linear infinite;
+}
+
+.label {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #9b9591;
+}
+
+@keyframes feedSpinnerSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

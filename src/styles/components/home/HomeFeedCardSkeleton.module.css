@@ -1,0 +1,118 @@
+/* HomeFeedCardSkeleton — placeholders during feed loading */
+
+.skeleton {
+  /* Mirrors HomeFeedCard: 12px vertical rhythm, NO horizontal padding (the
+     screen's container provides the 16px inset), full-bleed divider. */
+  position: relative;
+  padding: 12px 0;
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  left: calc(-1 * var(--layout-pad-x, 16px));
+  right: calc(-1 * var(--layout-pad-x, 16px));
+  bottom: 0;
+  height: 1px;
+  background: #ebe7dd;
+}
+
+/* No divider under the LAST skeleton — mirrors the real list, where the last
+   card hides its divider (the dangling hairline read as a glitch). */
+.skeleton:last-child::after {
+  display: none;
+}
+
+/* Mirrors HomeFeedCard's Threads grid (36px avatar in a 48px lane). */
+.grid {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  column-gap: 12px;
+  align-items: start;
+}
+
+.content {
+  min-width: 0;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.stats {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.bar {
+  background: #ebe7dd;
+  border-radius: 2px;
+  animation: feedSkeletonPulse 1.4s ease-in-out infinite;
+}
+
+.identicon {
+  width: 36px;
+  height: 36px;
+  flex: none;
+  border-radius: 50%;
+  margin-top: 2px;
+}
+
+.maskId {
+  width: 58px;
+  height: 11px;
+}
+
+.timestamp {
+  width: 26px;
+  height: 11px;
+}
+
+.trendingBadge {
+  width: 72px;
+  height: 14px;
+  border-radius: 3px;
+}
+
+.bodyLine {
+  height: 12px;
+}
+
+.line100 { width: 100%; }
+.line94 { width: 94%; }
+.line88 { width: 88%; }
+.line65 { width: 65%; }
+.line62 { width: 62%; }
+.line48 { width: 48%; }
+
+.statSmall {
+  width: 28px;
+  height: 11px;
+}
+
+.statMedium {
+  width: 36px;
+  height: 11px;
+}
+
+.statLarge {
+  width: 42px;
+  height: 11px;
+}
+
+@keyframes feedSkeletonPulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}

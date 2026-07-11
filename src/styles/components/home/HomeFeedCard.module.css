@@ -1,0 +1,352 @@
+.card {
+  position: relative;
+  /* Thread-view rhythm: 12px vertical (same as a reply). NO own horizontal
+     padding — the screen's container provides the full 16px inset
+     (--layout-pad-x), exactly like the thread view's .surface. No hover wash
+     (Threads' feed rows don't highlight). */
+  padding: 12px 0;
+  transition: background 120ms ease;
+  /* The whole row navigates (Threads-style; media/controls opt out in JS) —
+     pointer everywhere, and no iOS tap flash on the plain click handler. */
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* === Threads feed-row grid (their 48px threadline lane) ===
+   Avatar in a fixed left gutter (36px avatar + 12px gap = Threads'
+   --barcelona-threadline-column-width: 48px); username, body, media and stats
+   stacked in the content column — same two-column anatomy as PostReply. */
+.grid {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  column-gap: 12px;
+  align-items: start;
+}
+
+.avatarCell {
+  display: flex;
+  justify-content: center;
+  /* Threads' exact avatar-cell offset (their x1iorvi4: padding-top 4px). */
+  padding-top: 4px;
+}
+
+/* Threads-exact hairline ring on the avatar (same as the composer's). */
+.avatarCell svg {
+  outline: 0.5px solid #e5e0d3;
+  outline-offset: -0.5px;
+}
+
+.contentCell {
+  min-width: 0;
+  /* Carousel bleed (same asymmetric contract as PostReply): START cancels the
+     avatar lane (36 + 12) + the container's padding so the track reaches the
+     container edge while the FIRST item stays aligned with the text; END
+     cancels just the container's padding. */
+  --media-bleed-x: calc(48px + var(--layout-pad-x, 16px));
+  --media-bleed-end: var(--layout-pad-x, 16px);
+}
+
+/* Divider between cards — full-bleed: the ::after cancels the container's side
+   padding (--layout-pad-x) so the line spans edge-to-edge (to the surface edge
+   on home, the column edge on search/me), exactly like the thread view's reply
+   dividers. A plain border-bottom would stop at the 16px inset (a "cut" line). */
+.card::after {
+  content: "";
+  position: absolute;
+  left: calc(-1 * var(--layout-pad-x, 16px));
+  right: calc(-1 * var(--layout-pad-x, 16px));
+  bottom: 0;
+  height: 1px;
+  background: #ebe7dd;
+}
+
+/* Only the text/identity zone navigates to the thread (the card is NOT a button
+   — that freed the carousel's swipe on iOS). The pointer cursor and keyboard
+   focus ring live here, not on the whole card. */
+.navZone {
+  cursor: pointer;
+}
+
+.navZone:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px #c5a572;
+  border-radius: 6px;
+}
+
+.cardLast::after {
+  display: none;
+}
+
+/* Just-created thread: a brief warm highlight (paper tint #f3e3d3 + a terracotta
+   inset ring #d8b89a) that fades to the normal card so the user can spot it at
+   the top of the feed. Animates ONLY background-color + box-shadow (the ring is
+   an inset shadow, not a real border) → no layout shift, no nudging of other
+   cards. The .cardNew class is removed by FeedContext after the fade (so it
+   never re-triggers on scroll/re-render). */
+.cardNew {
+  animation: cardHighlight 3600ms ease-out forwards;
+}
+
+@keyframes cardHighlight {
+  0%,
+  65% {
+    background-color: #f3e3d3;
+    box-shadow: inset 0 0 0 1px #d8b89a;
+  }
+  100% {
+    background-color: transparent;
+    box-shadow: inset 0 0 0 1px transparent;
+  }
+}
+
+/* Optional badge (prepared, off by default — see SHOW_NEW_BADGE): warm chip
+   explaining the highlight; fades out on the same timeline. */
+.newBadge {
+  position: absolute;
+  top: 14px;
+  left: 0;
+  z-index: 1;
+  padding: 2px 8px;
+  border: 1px solid #d8b89a;
+  border-radius: 999px;
+  background: #fdfcf8;
+  color: #a85432;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+  animation: badgeFade 3600ms ease-out forwards;
+}
+
+@keyframes badgeFade {
+  0%,
+  65% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* No fade: a simple static highlight that disappears (with the card's own
+     120ms background transition) when the mark clears — no harsh flicker. */
+  .cardNew {
+    animation: none;
+    background-color: #f3e3d3;
+    box-shadow: inset 0 0 0 1px #d8b89a;
+  }
+  .newBadge {
+    animation: none;
+  }
+}
+
+/* "Your thread" tag — warm pill next to the metadata. Private (only the author
+   sees it on their own threads). Same palette family as the active blob. */
+/* Dot between the timestamp and the badge (separator glyph token), with a bit
+   of extra air on each side beyond the header's 6px gap. */
+.badgeDivider {
+  /* Same tone/size as the replies' "· Author" divider (the new meta scale). */
+  color: #9b9591;
+  font-size: clamp(14px, 13.1px + 0.25vw, 15px);
+  line-height: 1;
+}
+
+.mineBadge {
+  /* Threads-style quiet meta — EXACTLY the replies' "· Author" spec
+     (PostReply .authorTag): timestamp-identical type (body-sized, 400, light
+     #9b9591) after the dot divider. The old warm pill shouted next to the new
+     whisper-quiet identity row. */
+  flex: none;
+  font-family: inherit;
+  font-size: clamp(14px, 13.1px + 0.25vw, 15px);
+  font-weight: 400;
+  color: #9b9591;
+  white-space: nowrap;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  /* mask · time sit close (Threads' tight username row). */
+  gap: 6px;
+  /* Threads' exact username row: 21px line-height, body 3px below. */
+  line-height: 21px;
+  margin-bottom: 3px;
+  /* Room for the absolutely-positioned options button (top-right) so long mask
+     ids / timestamps never slide underneath it. */
+  padding-right: 38px;
+}
+
+.maskId {
+  /* Same typography as the thread view's header (Post .opMaskId / PostReply
+     .maskId): Threads-exact — the name is the SAME SIZE as the body (15px in
+     Threads; hierarchy comes from weight/color only, never size). Same fluid
+     clamp as .body so they stay equal at every viewport. One uniform username
+     row across the app. */
+  font-family: inherit;
+  font-size: clamp(14px, 13.1px + 0.25vw, 15px);
+  color: #1a1a1a;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.maskId:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.divider {
+  color: #c4bfb1;
+  font-size: 11px;
+}
+
+.timestamp {
+  /* Threads-exact <time>, same as the thread view: name-sized, 400, light
+     secondary (#9b9591 ≈ Threads' light-theme #999 — the old darker #6b6b6b
+     competed with the name), centered in a min 24px box (their time element:
+     even rhythm for short stamps like "1m" / "4d"). */
+  font-size: clamp(14px, 13.1px + 0.25vw, 15px);
+  font-weight: 400;
+  color: #9b9591;
+  white-space: nowrap;
+  display: inline-block;
+  min-width: 24px;
+  text-align: center;
+}
+
+.trendingBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 6px;
+  background: rgba(197, 48, 48, 0.08);
+  border-radius: 3px;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #c53030;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.trendingTriangle {
+  font-size: 10px;
+  line-height: 1;
+}
+
+.body {
+  color: #1a1a1a;
+  /* Fluid body type — identical to the thread view (OP + replies), Threads-
+     style: scales 14px → 15px by viewport with a unitless 1.4 line-height, so
+     the feed text matches the thread everywhere. Keeps the subtle negative
+     tracking that brings Inter closer to the Chirp/Threads look. */
+  font-size: clamp(14px, 13.1px + 0.25vw, 15px);
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+  /* No own bottom margin (Threads): the gap below comes from the media
+     wrapper's margin-top or the stats row's margin-top (6px). */
+  margin: 0;
+  /* Preserves the user's line breaks + breaks long words/URLs. */
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+.hashtag {
+  font-weight: 400;
+  color: #a85432;
+  cursor: pointer;
+}
+
+.hashtag:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.stats {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  /* Threads' action-bar gap below the body/media (their x1k70j0n). */
+  margin-top: 6px;
+}
+
+/* Replies/views count — thread-view language: 16px outline glyph (stroke 1.8,
+   same speech bubble as the Reply action) + Inter 13/500 secondary, matching
+   the ReactionStack total beside it (was mono 10px + 11px icon: too faint). */
+.statWithIcon {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: #6b6b6b;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.statWithIcon svg {
+  flex: none;
+}
+
+/* The FB-style reaction cluster sits inline among the other footer stats. */
+.statReactions {
+  align-self: center;
+}
+
+/* === Highlight of query matches with <mark> === */
+
+/* Search match — Twitter-style: emphasis from WEIGHT, not a background.
+   color: inherit keeps the surrounding color (plain text = #1a1a1a; a match
+   inside a hashtag keeps its warm accent #a85432) and only goes bold. */
+.highlight {
+  background: none;
+  color: inherit;
+  font-weight: 700;
+}
+
+/* === Searched hashtag (tag mode in SearchNew) — Option C === */
+/* Only the hashtag matching the searched tag gets the chip; the rest
+   use the normal .hashtag. box-decoration-break: clone => if the chip breaks
+   across lines, the background and rounded borders look good on both. */
+
+.hashtagActive {
+  font-weight: 600;
+  color: #7a3015;
+  background: #f3e3d3;
+  padding: 1px 6px;
+  border-radius: 6px;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  cursor: pointer;
+}
+
+.hashtagActive:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* DEBUG badge: momentum score from the For You engine (only with
+   REACT_APP_DEBUG=true — see src/settings.js). Same visual language as
+   .trendingBadge, in the palette's warm orange (#a85432). */
+.momentumBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 6px;
+  background: rgba(168, 84, 50, 0.1);
+  border-radius: 3px;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 9px;
+  color: #a85432;
+  white-space: nowrap;
+}
+
+.momentumIcon {
+  flex-shrink: 0;
+}
+

@@ -1,0 +1,81 @@
+/* Feed error state — FLAT on the surface card (no card-in-card), the same
+   warm anatomy as the profile/media empty states: warm tile icon + quiet
+   title/body + dark primary retry. Low-arousal: a connection failure is not
+   the user's fault — no red framing; the mono detail line carries the
+   technical part quietly. */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 64px 24px;
+}
+
+/* Warm tile — the empty-state icon family (#f3e3d3 / #a85432, radius 16). */
+.iconTile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 16px;
+  background: #f3e3d3;
+  color: #a85432;
+  margin-bottom: 16px;
+}
+
+.title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: #1a1a1a;
+}
+
+.subtitle {
+  margin: 6px 0 0;
+  max-width: 320px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #6b6b6b;
+}
+
+/* Diagnostic detail — machine data, so mono (the app's technical-chip
+   language), muted, never red. */
+.detail {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 11px;
+  line-height: 1.45;
+  color: #9b9591;
+  margin: 8px 0 0;
+  max-width: 280px;
+  word-break: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Dark primary retry (the ServerError/NetworkError button family). */
+.button {
+  margin-top: 20px;
+  padding: 10px 24px;
+  border: none;
+  border-radius: 12px;
+  background: #1a1a1a;
+  color: #fdfcf8;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 200ms ease;
+}
+
+.button:hover {
+  background: #2d2d2d;
+}
+
+.button:focus-visible {
+  box-shadow: inset 0 0 0 2px #c5a572;
+}

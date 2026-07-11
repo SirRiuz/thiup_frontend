@@ -1,59 +1,211 @@
-body {
+/*
+ * Global styles (previously in src/theme/GlobalStyle.js with @emotion — ported
+ * to plain CSS to drop @emotion/@mui from the bundle) + the Inter @font-face
+ * (self-hosted — no requests to Google, in line with the project's privacy
+ * approach).
+ */
+
+/* Inter variable @font-face lives in public/index.html (inline <style>), not
+   here: it references the font from public/fonts with a STABLE url so it can be
+   <link rel="preload">-ed and is available before first paint on EVERY platform
+   (webpack/css-loader can't reference a public asset by absolute url from a
+   CSS Module — it tries to resolve it as a module). Self-hosted (no Google). */
+
+/* === Font tokens ===
+   ONE self-hosted family for the whole app (Inter variable woff2, all weights
+   100–900; declared in public/index.html). No system fallback should ever show
+   — the stack after Inter is only a safety net. IDs/timestamps that used to be
+   monospace now use this same family with tabular figures (see body), so the
+   typography is IDENTICAL on Android, iOS and desktop. */
+:root {
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    system-ui, Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* === Reset === */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
   margin: 0;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  -webkit-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
+  padding: 0;
 }
 
 html,
 body {
-  overscroll-behavior: none;
-  font-family: system-ui, -apple-system, "system-ui", Roboto, Helvetica, Arial,
-    sans-serif;
-  background: #f1f2f5;
+  height: 100%;
+  /* Warm app background — prevents a white flash before React mounts and white
+     overscroll/rubber-banding on mobile. */
+  background: #f7f5f0;
+  /* Native vertical overscroll: keep the iOS rubber-band AND the browser's
+     pull-to-refresh (overscroll-behavior-y: auto). We still contain horizontal
+     overscroll so a sideways swipe can't trigger the back-nav / show a gutter. */
+  overscroll-behavior-y: auto;
+  overscroll-behavior-x: contain;
 }
 
-.App {
-  display: flex;
-  height: 80vh;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  gap: 40px;
+body {
+  background: #f7f5f0;
+  color: #0f0f0f;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.55;
+  /* Tabular figures app-wide: aligned digits for IDs, timestamps and counts
+     (replaces what the monospace stack used to give). */
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
-.stepper {
-  display: flex;
-  position: relative;
-  top: 0;
-  transition: top 200ms linear;
-  flex-direction: column;
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
 }
 
-.odometer {
-  height: 20px;
-  display: flex;
-  overflow: hidden;
+textarea,
+input {
+  font: inherit;
+  color: inherit;
 }
 
-.stepper-value {
-  height: 20px;
-  line-height: 20px;
+img,
+svg,
+video {
+  display: block;
+  max-width: 100%;
+}
+
+::selection {
+  background: rgba(0, 0, 0, 0.1);
+  color: #0f0f0f;
 }
 
 ::-webkit-scrollbar {
   width: 8px;
+  height: 8px;
 }
 
-/* Track */
 ::-webkit-scrollbar-track {
-  background: #f1f2f5;
+  background: transparent;
 }
 
-/* Handle */
 ::-webkit-scrollbar-thumb {
-  background: #f1f2f5;
-  border-radius: 100px;
+  background: #e5e5e5;
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9b9a97;
+}
+
+/* === Native feel on touch (especially Android Chrome) ===
+   Overscroll/rubber-band and font smoothing are handled above. Here we kill the
+   remaining "web" artifacts and replace them with our own feedback. */
+
+/* No blue/grey tap flash on tap (inherited by everything). */
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Interactive controls: snappy taps (no ~300ms delay) and no stray tap flash.
+   NOTE: [role="button"] (the post card) is here for touch-action, but is
+   intentionally LEFT OUT of the user-select/callout block below so the thread
+   text inside the card stays selectable/copyable. */
+button,
+a,
+[role="button"],
+[role="menuitem"],
+[role="menuitemradio"],
+[role="tab"] {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* Non-textual controls: no accidental text selection and no long-press callout.
+   The real user content (thread/reply text) is NOT a control, so it is
+   unaffected and remains selectable/copyable. */
+button,
+a,
+[role="menuitem"],
+[role="menuitemradio"],
+[role="tab"] {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Own press feedback (replaces the removed tap highlight): a brief dim so a tap
+   is always acknowledged. Touch devices only — desktop keeps its hover states. */
+@media (hover: none) {
+  button:active,
+  a:active,
+  [role="button"]:active,
+  [role="menuitem"]:active,
+  [role="menuitemradio"]:active,
+  [role="tab"]:active {
+    opacity: 0.7;
+  }
+}
+
+/* NO UA focus outline anywhere (the browser's blue ring) — e.g. the ring that
+ * appeared on the opener when a modal restored focus after Escape. The app
+ * draws its OWN warm focus treatment where a control needs it (the inset
+ * 0 0 0 2px #c5a572 box-shadow on inputs/controls — box-shadow, so this rule
+ * doesn't touch it). Focus itself is preserved (a11y: tab order and restores
+ * keep working); only the UA's outline paint is disabled. */
+:focus,
+:focus-visible {
+  outline: none;
+}
+
+/*
+ * Press feedback (Threads-EXACT) — CENTRAL, reusable.
+ *   .springPress      → text buttons (scale 0.96, 0.15s)
+ *   .springPressIcon  → icon-only controls (scale 0.9, 0.2s — their action-
+ *                       icon pair)
+ * Threads does NOT overshoot: the press is a soft scale down/up on a PLAIN
+ * ease with a slightly longer duration (their transition-duration 0.15–0.2s,
+ * transition-property: transform, default ease — decoded from threads.css;
+ * the old 0.12s/1.56 overshoot bezier read abrupt). The transition also
+ * carries background/color/opacity so controls that fade those on hover
+ * (e.g. the nav icons' #f0ece3 wash) keep animating from this single
+ * declaration — their per-component `transition` is removed to avoid
+ * clobbering. `:not(:disabled)` means a disabled button (e.g. the inactive
+ * "Post" button) NEVER springs — no misleading press feedback. Honors
+ * reduced-motion.
+ */
+.springPress {
+  transition: transform 0.15s ease, background 0.14s ease, color 0.14s ease,
+    opacity 0.14s ease;
+}
+
+.springPressIcon {
+  transition: transform 0.2s ease, background 0.14s ease, color 0.14s ease,
+    opacity 0.14s ease;
+}
+
+.springPress:not(:disabled):active {
+  transform: scale(0.96);
+}
+
+.springPressIcon:not(:disabled):active {
+  transform: scale(0.9);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .springPress,
+  .springPressIcon {
+    transition: background 0.14s ease, color 0.14s ease, opacity 0.14s ease;
+  }
+  .springPress:active,
+  .springPressIcon:active {
+    transform: none;
+  }
 }

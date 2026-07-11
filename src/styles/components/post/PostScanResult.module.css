@@ -1,0 +1,396 @@
+/* PostScanResult — one file row in the client-side NSFW analysis list.
+ * Thumbnail + name + status/verdict + remove, on a warm surface. */
+
+.row {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  padding: 8px;
+  background: #fdfcf8;
+  border: 1px solid #e8e5dd;
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.rowError {
+  border-color: rgba(197, 48, 48, 0.2);
+  background: rgba(197, 48, 48, 0.04);
+}
+
+.thumbnail {
+  width: 44px;
+  height: 44px;
+  border-radius: 6px;
+  background: #f0ece3;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.thumbnailImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
+}
+
+.name {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 11px;
+  color: #1a1a1a;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #6b6b6b;
+  line-height: 1.4;
+}
+
+.statusError {
+  color: #c53030;
+}
+
+.size {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  color: #9b9591;
+  font-variant-numeric: tabular-nums;
+}
+
+.detail {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 10px;
+  color: #9b9591;
+  font-variant-numeric: tabular-nums;
+}
+
+.spinner {
+  width: 11px;
+  height: 11px;
+  flex: none;
+  border: 1.5px solid rgba(168, 84, 50, 0.25);
+  border-top-color: #a85432;
+  border-radius: 50%;
+  animation: scanSpin 700ms linear infinite;
+}
+
+@keyframes scanSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 1400ms;
+  }
+}
+
+/* === Details panel (toggled by the ⓘ button) === */
+
+.details {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #ebe7dd;
+  animation: scanDetailsIn 140ms ease-out;
+}
+
+.verdictRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+}
+
+@keyframes scanDetailsIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .details {
+    animation: none;
+  }
+}
+
+/* === Info (ⓘ) button — tinted by verdict as a quiet at-a-glance cue === */
+
+.infoButton {
+  background: transparent;
+  border: 0;
+  padding: 5px;
+  cursor: pointer;
+  flex: none;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 120ms ease;
+}
+
+.infoButton:hover,
+.infoButtonActive {
+  background: #f0ece3;
+}
+
+.info_safe {
+  color: #9b9591;
+}
+
+.info_review {
+  color: #a85432;
+}
+
+.info_block {
+  color: #c53030;
+}
+
+/* === Verdict badge === */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: none;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.badgeLabel {
+  white-space: nowrap;
+}
+
+.badgeScore {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.85;
+}
+
+/* Safe — neutral (no green; the design system reserves green out of the palette). */
+.badge_safe {
+  background: #f0ece3;
+  border-color: #e5e0d3;
+  color: #6b6b6b;
+}
+
+/* Review — warm tint. */
+.badge_review {
+  background: #f3e3d3;
+  border-color: #d8b89a;
+  color: #a85432;
+}
+
+/* Block — danger. */
+.badge_block {
+  background: rgba(197, 48, 48, 0.08);
+  border-color: rgba(197, 48, 48, 0.2);
+  color: #c53030;
+}
+
+/* === Remove === */
+
+.removeButton {
+  background: transparent;
+  border: 0;
+  padding: 5px;
+  cursor: pointer;
+  color: #6b6b6b;
+  flex: none;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.removeButton:hover {
+  background: #f0ece3;
+  color: #1a1a1a;
+}
+
+/* === Compression before/after comparison === */
+
+.compress {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #ebe7dd;
+}
+
+.compressHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.compressTitle {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #9b9591;
+}
+
+.chips {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.colorChip {
+  display: inline-flex;
+  align-items: center;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 999px;
+  border: 1px solid rgba(26, 26, 26, 0.12);
+  padding: 2px 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.savings {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: #a85432;
+  background: #f3e3d3;
+  border: 1px solid #d8b89a;
+  border-radius: 999px;
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+
+.savingsUp {
+  color: #c53030;
+  background: rgba(197, 48, 48, 0.08);
+  border-color: rgba(197, 48, 48, 0.2);
+}
+
+.compareGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+@media (max-width: 480px) {
+  .compareGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.colHead {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6b6b6b;
+}
+
+.kv {
+  margin: 0;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 8px;
+  font-size: 11px;
+}
+
+.kv dt {
+  color: #9b9591;
+}
+
+.kv dd {
+  margin: 0;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  text-align: right;
+  color: #1a1a1a;
+  font-variant-numeric: tabular-nums;
+}
+
+.compLoading {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #6b6b6b;
+}
+
+/* Retry (shown when an upload fails) */
+.retryButton {
+  flex: none;
+  background: transparent;
+  border: 1px solid #e5e0d3;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #a85432;
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+
+.retryButton:hover {
+  background: #f3e3d3;
+}
+
+/* === Video frame progress === */
+
+.progressBar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: #a85432;
+  transition: width 120ms linear;
+  border-radius: 0 1px 1px 0;
+}

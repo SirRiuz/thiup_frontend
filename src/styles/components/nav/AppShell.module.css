@@ -1,0 +1,29 @@
+/* AppShell — additive content wrapper.
+   Navigation breakpoint at 700px: >700 side capsule, ≤700 bottom bar.
+
+   Desktop (>700): SYMMETRIC 96px side padding — reserves the lane for the
+   fixed capsule (68px + margins) without decentering the column (symmetric =
+   stays centered in the viewport). At widths ≥932px it is identical to having
+   no padding (the centered 640px column doesn't move); at 700-932px it keeps
+   the capsule from covering the content and the column adapts fluidly.
+   Mobile (≤700): padding-bottom so the fixed bottom bar doesn't cover content. */
+
+.content {
+  min-height: 100vh;
+  /* Same warm paper as the shell pages: the side padding area must not
+     show a different color. */
+  background: #f7f5f0;
+}
+
+@media (min-width: 701px) {
+  .content {
+    padding-left: 96px;
+    padding-right: 96px;
+  }
+}
+
+@media (max-width: 700px) {
+  .content {
+    padding-bottom: 64px;
+  }
+}

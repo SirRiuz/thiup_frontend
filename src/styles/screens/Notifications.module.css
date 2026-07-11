@@ -1,0 +1,59 @@
+/* Notifications — placeholder screen (the feature is not wired to the backend
+   yet; the sidebar heart needs a real destination). Warm empty state on the
+   640px column, same language as the other *EmptyState components. */
+
+.main {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 24px 0 60px;
+}
+
+.empty {
+  padding: 72px 20px;
+  text-align: center;
+  background: #fdfcf8;
+  border: 1px solid #e5e0d3;
+  border-radius: 16px;
+}
+
+.iconWrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border: 1.5px solid #c4bfb1;
+  border-radius: 50%;
+  margin-bottom: 16px;
+  color: #9b9591;
+}
+
+.title {
+  font-size: 16px;
+  color: #1a1a1a;
+  margin: 0 0 6px;
+  font-weight: 600;
+}
+
+.subtitle {
+  font-size: 13px;
+  color: #6b6b6b;
+  margin: 0;
+}
+
+/* Visually-hidden landmark heading (CLAUDE.md a11y recommendation). */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+@media (max-width: 700px) {
+  .main {
+    /* Clear the fixed 60px mobile app bar (rendered on nav-item screens). */
+    padding: 84px 16px 80px;
+  }
+}

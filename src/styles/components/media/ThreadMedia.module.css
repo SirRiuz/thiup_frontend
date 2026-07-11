@@ -1,0 +1,413 @@
+/* ThreadMedia — Threads-style media: natural single / grid / swipe carousel,
+ * with sensitive-content blur. Warm palette, 12px radius. */
+
+.wrapper {
+  /* Breathe above and below — separate the media from the text and the
+   * reactions/actions below (Threads-like). */
+  margin-top: 10px;
+  margin-bottom: 12px;
+}
+
+/* === Frame: the image + blur overlay (sized by its layout class) === */
+
+.frame {
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #f0ece3;
+  /* Tap press — Threads' EXACT media-cell trio (xk4oym4/xd2fhk0/xwji4o3):
+   * scale(0.98), transition transform 0.2s + border-radius 0.3s, plain ease
+   * (no overshoot). JS-driven via .pressing instead of :active — a draggable
+   * carousel item must NOT shrink while dragging, which :active can't
+   * distinguish. border-radius animates for the panorama join. */
+  transition: transform 0.2s ease, border-radius 0.3s ease;
+}
+
+.pressing {
+  transform: scale(0.98);
+}
+
+/* Threads-exact media outline: a translucent black HAIRLINE painted ON the
+   image (inset ring, --barcelona-media-outline: rgba(0,0,0,.15)) instead of an
+   opaque warm border around it — it blends with the photo's own edge colors on
+   any image. pointer-events off; sits under the frame's controls (z-index 2). */
+.frame::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.15);
+  pointer-events: none;
+}
+
+.img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  -webkit-user-drag: none;
+  user-select: none;
+  /* Fade in over the placeholder once the (lazy) image loads. */
+  opacity: 0;
+  transition: opacity 220ms ease;
+}
+
+.loaded {
+  opacity: 1;
+}
+
+/* Sensitive content: blurred until revealed. The scale hides the soft edges
+ * the blur would otherwise leave at the borders. */
+.blurred {
+  filter: blur(22px);
+  transform: scale(1.06);
+}
+
+/* === Sensitive reveal overlay === */
+
+/* Covers the whole (blurred) media — tapping anywhere reveals it. A soft
+   dark scrim guarantees the notice stays legible over ANY blurred colors. */
+.reveal {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgba(26, 26, 26, 0.25);
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+
+/* Centered notice — IG's sensitive-screen anatomy, compact: outlined ring +
+   title + action pill. Soft press on the whole notice (Threads' plain ease,
+   never the frame's — the reveal opts out of the frame press). */
+.revealContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  padding: 12px;
+  text-align: center;
+  transition: transform 0.15s ease;
+}
+
+.reveal:not(:disabled):active .revealContent {
+  transform: scale(0.97);
+}
+
+/* IG's glyph treatment: a thin cream RING, not a filled disc — lighter, less
+   alarmist. A whisper of glass inside keeps the stroke legible over any blur. */
+.revealIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(247, 245, 240, 0.9);
+  background: rgba(26, 26, 26, 0.18);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  color: #f7f5f0;
+  margin-bottom: 2px;
+}
+
+.revealTitle {
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: #f7f5f0;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.35);
+}
+
+/* The hint is an explicit ACTION pill (dark-glass family — sound/re-hide
+   buttons), so "tap to view" reads as a button, not a caption. The whole
+   overlay stays the hit target. */
+.revealHint {
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: #f7f5f0;
+  margin-top: 3px;
+  padding: 7px 16px;
+  border-radius: 999px;
+  background: rgba(26, 26, 26, 0.5);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  transition: background 120ms ease;
+}
+
+@media (hover: hover) {
+  .reveal:hover .revealHint {
+    background: rgba(26, 26, 26, 0.72);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .revealContent {
+    transition: none;
+  }
+
+  .reveal:not(:disabled):active .revealContent {
+    transform: none;
+  }
+}
+
+/* Re-hide toggle after revealing — top-right dark-glass disc (the sound
+   button's recipe), so sensitive media can be covered again in one tap. */
+.rehideButton {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(26, 26, 26, 0.5);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  color: #f7f5f0;
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+
+@media (hover: hover) {
+  .rehideButton:hover {
+    background: rgba(26, 26, 26, 0.72);
+  }
+}
+
+/* === Video controls (dark scrim pill → legible on any video) === */
+
+/* Threads' two-layer mute button. LAYER 1 — the button itself: interaction
+   ONLY (no fill, no visible size). It shrink-wraps the layers below; sat with a
+   -8px offset so that, after the middle layer's 16px padding, the VISIBLE pill
+   lands at the usual 8px from the frame corner (the 8px of touch area past the
+   corner is trimmed by the frame's overflow:hidden — it expands inward where
+   mis-taps land). */
+.soundBtn {
+  position: absolute;
+  bottom: -8px;
+  right: -8px;
+  z-index: 2;
+  display: inline-flex;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* LAYER 2 — middle: 16px transparent padding = the enlarged ~60×60 touch area
+   (28 visible + 16·2). Invisible: no fill/blur lives here. */
+.soundHit {
+  display: inline-flex;
+  padding: 16px;
+}
+
+/* LAYER 3 — inner VISIBLE pill: 12px icon + 8px padding → 28×28 circle, with the
+   blur + dark fill. The blur/fill/circular live ONLY here, so the visible mark
+   stays 28×28 and never bleeds into the 60×60 touch area. */
+.soundPill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.45);
+  color: #f7f5f0;
+  -webkit-backdrop-filter: blur(22.5px);
+  backdrop-filter: blur(22.5px);
+}
+
+.playBtn {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  z-index: 2;
+  width: 56px;
+  height: 56px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(26, 26, 26, 0.5);
+  color: #f7f5f0;
+  cursor: pointer;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
+/* === Single (natural proportion, clamped, capped height) === */
+
+.single {
+  aspect-ratio: var(--ratio, 0.8);
+  /* max-width comes inline (min(100%, 360px * ratio)) so the width adapts to
+   * the ratio: narrow for verticals, wide for horizontals. */
+  /* Click opens the media viewer — the carousel signals it with cursor: grab,
+   * but a lone frame had no cursor affordance at all. */
+  cursor: pointer;
+}
+
+/* === Carousel (2+) === */
+
+.carousel {
+  display: flex;
+  /* No flex gap: the 6px carousel gap (Threads --barcelona-carousel-gap) lives
+     on each .cell as padding-inline-end so the panorama toggle can collapse it
+     (an animated flex gap can't host the seam button). */
+  overflow-x: auto;
+  /* Free horizontal scroll — no scroll-snap, so it stays exactly where the user
+   * leaves it (images may end half-shown). */
+  -webkit-overflow-scrolling: touch;
+  cursor: grab;
+  /* Edge-to-edge bleed: cancel the surrounding container's side padding so the
+   * carousel reaches the screen/column edge (items fade against the edge, not a
+   * dead margin), while the FIRST item stays aligned with the content. Each
+   * container sets --media-bleed-x to its own side padding (single source of
+   * truth); default 8px = the feed card. The end (right, in LTR) side can bleed
+   * by a DIFFERENT amount via --media-bleed-end (defaults to --media-bleed-x):
+   * replies use this to stay aligned with the text on the start side (no bleed
+   * over the threading lines) while still reaching the edge on the end side. */
+  margin-inline-start: calc(-1 * var(--media-bleed-x, 8px));
+  margin-inline-end: calc(-1 * var(--media-bleed-end, var(--media-bleed-x, 8px)));
+  padding-inline-start: var(--media-bleed-x, 8px);
+  padding-inline-end: var(--media-bleed-end, var(--media-bleed-x, 8px));
+  /* Hidden scrollbar. */
+  scrollbar-width: none;
+}
+
+.carousel::-webkit-scrollbar {
+  display: none;
+}
+
+/* While dragging with the mouse: grabbing cursor, no text/image selection. */
+.carousel.dragging {
+  cursor: grabbing;
+  scroll-behavior: auto;
+  user-select: none;
+}
+
+.carouselItem {
+  flex: 0 0 auto;
+  /* Threads carousel: EVERY item is a fixed 3/4 box (210×280), photos and videos
+     alike. The media (.img) fills it with object-fit: cover, cropping the
+     overflow — so the row is perfectly uniform regardless of each item's real
+     proportion. The single-item case (.single) keeps its natural proportion. */
+  width: 210px;
+  height: 280px;
+}
+
+/* Inner track: carries the cells inside the scroller. The desktop elastic
+   overscroll stretches IT with translateX (Threads' own track is transform-
+   driven — scrollLeft alone clamps at the ends and can't rubber-band).
+   flex: none → the track keeps its max-content width and overflows the
+   scroller, which is what makes it scrollable. */
+.track {
+  display: flex;
+  flex: none;
+  will-change: transform;
+}
+
+/* Carousel cell: hosts one frame + the panorama seam button. Carries the 6px
+   gap as animatable padding (Threads' exact mechanism: padding-inline-end:
+   var(--barcelona-carousel-gap) with transition padding-inline-end 0.3s ease). */
+.cell {
+  position: relative;
+  flex: none;
+  display: flex;
+  padding-inline-end: 6px;
+  transition: padding-inline-end 0.3s ease;
+}
+
+.cell:last-child {
+  padding-inline-end: 0;
+}
+
+/* Panorama mode: the gaps collapse (animated) and the images join. */
+.panorama .cell {
+  padding-inline-end: 0;
+}
+
+/* Inner seams square off (the frame's border-radius transition animates the
+   join); only the row's outer corners keep the 8px radius — Threads' exact
+   per-corner behavior. */
+.panorama .cell [data-frame] {
+  border-radius: 0;
+}
+
+.panorama .cell:first-child [data-frame] {
+  border-radius: 8px 0 0 8px;
+}
+
+.panorama .cell:last-child [data-frame] {
+  border-radius: 0 8px 8px 0;
+}
+
+/* Joined mode: no VERTICAL hairlines at the seams — each frame keeps only its
+   top/bottom edge of the inset ring, plus the row's outer left/right edge on
+   the first/last frame, so the panorama reads as ONE bordered strip. */
+.panorama .cell [data-frame]::after {
+  box-shadow: inset 0 0.5px 0 rgba(0, 0, 0, 0.15),
+    inset 0 -0.5px 0 rgba(0, 0, 0, 0.15);
+}
+
+.panorama .cell:first-child [data-frame]::after {
+  box-shadow: inset 0.5px 0 0 rgba(0, 0, 0, 0.15),
+    inset 0 0.5px 0 rgba(0, 0, 0, 0.15), inset 0 -0.5px 0 rgba(0, 0, 0, 0.15);
+}
+
+.panorama .cell:last-child [data-frame]::after {
+  box-shadow: inset -0.5px 0 0 rgba(0, 0, 0, 0.15),
+    inset 0 0.5px 0 rgba(0, 0, 0, 0.15), inset 0 -0.5px 0 rgba(0, 0, 0, 0.15);
+}
+
+/* Threads' "Combine media into panorama" seam button: an invisible 10px strip
+   astride the gap between two cells (their inset-inline-end: calc(-5px -
+   gap/2); with the 6px padding on this cell that resolves to right: -2px).
+   Pointer cursor over the seam; full cell height; above the images. */
+.panoToggle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: -2px;
+  width: 10px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  z-index: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .carousel {
+    scroll-behavior: auto;
+  }
+  .blurred {
+    transform: none;
+  }
+  /* No fade — show the image as soon as it loads. */
+  .img {
+    transition: none;
+  }
+  /* No tap spring (matches the CLAUDE.md spring rule). */
+  .frame {
+    transition: none;
+  }
+  /* Panorama joins/separates instantly instead of animating. */
+  .cell {
+    transition: none;
+  }
+  .pressing {
+    transform: none;
+  }
+}

@@ -1,0 +1,161 @@
+/* Minimal video controls (Threads-style): a mute toggle top-right + a thin
+ * scrubbable progress bar at the bottom. Nothing else. Own palette. */
+
+.player {
+  position: relative;
+  display: inline-flex;
+  max-width: 100vw;
+  max-height: 100dvh;
+}
+
+.video {
+  display: block;
+  max-width: 100vw;
+  max-height: 100dvh;
+  object-fit: contain;
+  /* While loading there's no frame yet — keep the element invisible (no empty
+     box / floating border). Only the viewer's centered spinner shows; the video
+     cross-fades in once the first frame is decoded (.ready). */
+  opacity: 0;
+  transition: opacity 260ms ease;
+}
+
+.video.ready {
+  opacity: 1;
+  /* Same premium float as the viewer image (soft ambient + warm edge + warm
+     glow) — separates the video off the dominant-color background for any color. */
+  box-shadow: 0 16px 48px rgba(26, 26, 26, 0.24),
+    0 2px 10px rgba(26, 26, 26, 0.14),
+    0 0 0 0.5px rgba(247, 245, 240, 0.14),
+    0 0 64px rgba(247, 245, 240, 0.12);
+}
+
+/* Stage-fill variant (embedded stages, e.g. the search media preview): the
+   player stretches to its CONTAINER instead of the viewport and the video
+   letterboxes inside it. No floating glow — the stage's flat black (IG) does
+   the separation. (Named stageFill: `.fill` is TAKEN by the progress bar's
+   played portion below — reusing it painted the whole player #f7f5f0.) */
+.stageFill {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+}
+
+.stageFill .video {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+}
+
+.stageFill .video.ready {
+  box-shadow: none;
+}
+
+/* Centered big play shown while paused. */
+.bigPlay {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 64px;
+  height: 64px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(26, 26, 26, 0.5);
+  color: #f7f5f0;
+  cursor: pointer;
+  z-index: 2;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
+/* Mute toggle — bottom-right corner (Threads-style): small dark blurred circle,
+   16px glyph in a 28px button. Sits just above the progress bar. */
+.muteBtn {
+  position: absolute;
+  bottom: 14px;
+  right: 12px;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(26, 26, 26, 0.5);
+  color: #f7f5f0;
+  cursor: pointer;
+  z-index: 3;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
+/* Thin progress bar pinned to the bottom edge. A TALL transparent hit-area
+   (40px) wraps the visible 3px bar so it's easy to grab with a big thumb — the
+   look is unchanged (the bar stays 3px at the very bottom; the faint legibility
+   gradient is a fixed-height pseudo, so the taller hit-area doesn't enlarge it). */
+.progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 40px;
+  display: flex;
+  align-items: flex-end;
+  cursor: pointer;
+  touch-action: none;
+  z-index: 2;
+}
+
+.progress::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 24px;
+  background: linear-gradient(to top, rgba(26, 26, 26, 0.28), rgba(26, 26, 26, 0));
+  pointer-events: none;
+}
+
+.progress:focus-visible {
+  outline: none;
+}
+
+.progress:focus-visible .bar {
+  box-shadow: 0 0 0 2px #c5a572;
+}
+
+.bar {
+  position: relative;
+  width: 100%;
+  height: 3px;
+  background: rgba(247, 245, 240, 0.28);
+  overflow: hidden;
+}
+
+.buffer,
+.fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+}
+
+.buffer {
+  background: rgba(247, 245, 240, 0.45);
+}
+
+.fill {
+  background: #f7f5f0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .video {
+    transition: none;
+  }
+}

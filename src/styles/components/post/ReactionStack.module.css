@@ -1,0 +1,45 @@
+/* Facebook-style reaction summary: overlapping emoji bubbles + total count.
+   Display-only; the warm palette keeps it quiet (no accent fill). */
+
+.stack {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.emojis {
+  display: inline-flex;
+  /* Bubbles overlap via negative margin; this keeps the box tight. */
+}
+
+/* Each reaction emoji sits in a roomy cream disc with a faint warm ring + a soft
+   shadow, so the cluster reads as stacked tokens with a touch of depth (FB-style)
+   on BOTH surfaces it's used on — the page bg (#f7f5f0, feed) and the elevated
+   card (#fdfcf8, thread). The disc is wider than the glyph so the cream shows
+   generously around each emoji. The ring uses the default border token so the
+   discs stay separated on either background. */
+.bubble {
+  position: relative;
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #fdfcf8;
+  border: 1px solid #ebe7dd;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(26, 26, 26, 0.06);
+  font-size: 14px;
+  line-height: 1;
+}
+
+.bubble + .bubble {
+  margin-left: -8px;
+}
+
+.total {
+  font-size: 13px;
+  font-weight: 500;
+  color: #6b6b6b;
+  font-variant-numeric: tabular-nums;
+}

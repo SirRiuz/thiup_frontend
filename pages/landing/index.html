@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f7f5f0" />
+
+    <!-- Title/description are localized at runtime by main.js; these are the
+         English defaults (and the no-JS fallback). -->
+    <title>Thiup — speak freely, stay anonymous</title>
+    <meta
+      name="description"
+      content="Thiup is an anonymous space to talk about what matters — no sign-ups, no profiles, no tracking."
+    />
+    <link rel="canonical" href="https://thiup.com/" />
+
+    <!-- Structured data (brand only, never user content): helps Google show a
+         rich, consistent brand result for the non-www canonical. -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://thiup.com/#org",
+            "name": "Thiup",
+            "url": "https://thiup.com/",
+            "logo": "https://thiup.com/assets/icon-512.png",
+            "sameAs": ["https://github.com/SirRiuz/thiup_backend"],
+            "description": "An anonymous, privacy-first space to talk about what matters."
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://thiup.com/#website",
+            "url": "https://thiup.com/",
+            "name": "Thiup",
+            "inLanguage": ["en", "es"],
+            "publisher": { "@id": "https://thiup.com/#org" }
+          },
+          {
+            "@type": "WebApplication",
+            "@id": "https://thiup.com/#app",
+            "name": "Thiup",
+            "url": "https://app.thiup.com/home",
+            "applicationCategory": "SocialNetworkingApplication",
+            "operatingSystem": "Any (web browser)",
+            "isAccessibleForFree": true,
+            "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+            "inLanguage": ["en", "es"],
+            "publisher": { "@id": "https://thiup.com/#org" },
+            "description": "An anonymous social app: no accounts, no profiles, no tracking. Every visitor gets a pseudonymous mask; conversation happens in short threads with replies, tags, media and reactions.",
+            "featureList": [
+              "No sign-up: no name, email, phone or password is ever asked for",
+              "Pseudonymous masks (short @id + generated avatar) instead of profiles",
+              "Threads with nested replies, tags, photos, video and six reactions",
+              "For you feed ranked by real conversation, never by ads",
+              "Close you feed with an opt-in, deliberately blurred location area",
+              "Open source and auditable (https://github.com/SirRiuz/thiup_backend)"
+            ]
+          }
+        ]
+      }
+    </script>
+
+    <!-- Open Graph / Twitter: BRAND card only (never user content). Absolute
+         og:image so the preview renders when the link is shared. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Thiup" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:locale:alternate" content="es_ES" />
+    <meta property="og:url" content="https://thiup.com/" />
+    <meta property="og:title" content="Thiup — speak freely, stay anonymous" />
+    <meta
+      property="og:description"
+      content="An anonymous, privacy-first space to talk about what matters."
+    />
+    <meta property="og:image" content="https://thiup.com/assets/og-image.png" />
+    <meta
+      property="og:image:secure_url"
+      content="https://thiup.com/assets/og-image.png"
+    />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:type" content="image/png" />
+    <meta
+      property="og:image:alt"
+      content="Thiup — speak freely, stay anonymous"
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Thiup — speak freely, stay anonymous" />
+    <meta
+      name="twitter:description"
+      content="An anonymous, privacy-first space to talk about what matters."
+    />
+    <meta name="twitter:image" content="https://thiup.com/assets/og-image.png" />
+    <meta
+      name="twitter:image:alt"
+      content="Thiup — speak freely, stay anonymous"
+    />
+
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+    <link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
+    <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
+
+    <!-- Inter: preload + self-hosted variable woff2 (one file covers 100–900). -->
+    <link
+      rel="preload"
+      href="assets/fonts/InterVariable.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main" data-i18n="skip">Skip to content</a>
+
+    <!-- ===== Header ===== -->
+    <header class="site-header">
+      <div class="container header-inner">
+        <a class="brand" href="/" aria-label="Thiup">
+          <svg
+            class="brand-mark"
+            width="30"
+            height="30"
+            viewBox="0 0 68 68"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <path
+              d="M24 17.5 Q46 25.75 24 34 Q46 42.25 24 50.5"
+              fill="none"
+              stroke="#a85432"
+              stroke-width="5.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <circle cx="44.5" cy="19" r="4.5" fill="#a85432" />
+          </svg>
+          <span class="brand-word">Thiup</span>
+        </a>
+
+        <nav class="header-nav" aria-label="Primary">
+          <a href="/how-it-works" data-i18n="navHow">How it works</a>
+          <a href="/open-source" data-i18n="navOpenSource">Open source</a>
+          <a href="/privacy" data-i18n="navPrivacy">Privacy</a>
+        </nav>
+
+        <div class="header-actions">
+          <a
+            class="icon-btn"
+            href="https://github.com/SirRiuz/thiup_backend"
+            target="_blank"
+            rel="noopener"
+            aria-label="GitHub"
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
+              <path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.55 0-.27-.01-1.17-.02-2.12-3.2.7-3.88-1.36-3.88-1.36-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.19 1.76 1.19 1.03 1.76 2.69 1.25 3.35.96.1-.75.4-1.25.72-1.54-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 5.78 0c2.21-1.49 3.18-1.18 3.18-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.41-2.69 5.38-5.25 5.67.41.35.77 1.04.77 2.1 0 1.52-.01 2.74-.01 3.11 0 .3.2.66.8.55A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z" />
+            </svg>
+          </a>
+          <div
+            class="lang-toggle"
+            role="group"
+            aria-label="Language"
+            id="lang-toggle"
+          >
+            <button type="button" class="lang-btn" data-lang="en" aria-pressed="true">
+              EN
+            </button>
+            <button type="button" class="lang-btn" data-lang="es" aria-pressed="false">
+              ES
+            </button>
+          </div>
+          <a class="btn btn-ghost" href="/app" data-i18n="openApp">
+            Open the app
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <main id="main">
+      <!-- ===== Hero ===== -->
+      <section class="hero">
+        <!-- Subtle "thread" motif: an enlarged serpentine line echoing the
+             brand glyph. Decorative, low-opacity, never loud. -->
+        <svg
+          class="hero-thread"
+          viewBox="0 0 1200 200"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          <path
+            class="thread-line thread-1"
+            pathLength="1"
+            d="M-20 100 Q150 20 300 100 Q450 180 600 100 Q750 20 900 100 Q1050 180 1220 100"
+            fill="none"
+            stroke="#a85432"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+          <path
+            class="thread-line thread-2"
+            pathLength="1"
+            d="M-20 124 Q150 54 300 124 Q450 194 600 124 Q750 54 900 124 Q1050 194 1220 124"
+            fill="none"
+            stroke="#a85432"
+            stroke-width="1.5"
+            stroke-linecap="round"
+          />
+        </svg>
+
+        <div class="container hero-inner">
+          <svg
+            class="hero-mark"
+            width="76"
+            height="76"
+            viewBox="0 0 68 68"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <rect width="68" height="68" rx="17" fill="#a85432" />
+            <path
+              d="M24 17.5 Q46 25.75 24 34 Q46 42.25 24 50.5"
+              fill="none"
+              stroke="#f7f5f0"
+              stroke-width="5.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <circle cx="44.5" cy="19" r="4.5" fill="#f7f5f0" />
+          </svg>
+
+          <span class="hero-eyebrow reveal" style="--rd: 60ms" data-i18n="eyebrow">
+            Anonymous · open source · no tracking
+          </span>
+          <h1 class="hero-title reveal" style="--rd: 120ms" data-i18n="heroTitle">
+            Speak freely. Stay anonymous.
+          </h1>
+          <p class="hero-subtitle reveal" style="--rd: 180ms" data-i18n="heroSubtitle">
+            Thiup is an anonymous space to talk about what matters — no sign-ups,
+            no profiles, no tracking.
+          </p>
+          <div class="hero-cta reveal" style="--rd: 240ms">
+            <a class="btn btn-primary" href="https://app.thiup.com/home" data-i18n="openApp">
+              Open the app
+            </a>
+            <a class="btn btn-quiet" href="#about" data-i18n="learnMore">
+              What is Thiup?
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== About / features ===== -->
+      <section class="about" id="about">
+        <div class="container">
+          <h2 class="section-title reveal" data-i18n="aboutTitle">What is Thiup?</h2>
+          <p class="section-lead reveal" style="--rd: 80ms" data-i18n="aboutLead">
+            A calm place to speak openly, built so you never have to reveal who
+            you are.
+          </p>
+
+          <ul class="features">
+            <li class="feature reveal">
+              <span class="feature-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="4" y="11" width="16" height="9" rx="2" />
+                  <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+                </svg>
+              </span>
+              <h3 class="feature-title" data-i18n="f1Title">Anonymous by default</h3>
+              <p class="feature-text" data-i18n="f1Text">
+                No accounts, no profiles. You are a pseudonymous mask, never a
+                real identity.
+              </p>
+            </li>
+
+            <li class="feature reveal">
+              <span class="feature-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="13 2 4 14 11 14 10 22 20 10 13 10 13 2" />
+                </svg>
+              </span>
+              <h3 class="feature-title" data-i18n="f2Title">Nothing to sign up for</h3>
+              <p class="feature-text" data-i18n="f2Text">
+                Open the app and start talking. No email, no password, no setup.
+              </p>
+            </li>
+
+            <li class="feature reveal">
+              <span class="feature-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 10c0 6-8 11-8 11s-8-5-8-11a8 8 0 0 1 8-8 8 8 0 0 1 8 8z" />
+                  <circle cx="12" cy="10" r="2.5" />
+                  <line x1="3" y1="3" x2="21" y2="21" />
+                </svg>
+              </span>
+              <h3 class="feature-title" data-i18n="f3Title">Your location stays yours</h3>
+              <p class="feature-text" data-i18n="f3Text">
+                Your precise location is never stored. Privacy is built in, not
+                bolted on.
+              </p>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- ===== How it works (in depth) ===== -->
+      <section class="deep" id="how">
+        <div class="container">
+          <h2 class="section-title reveal" data-i18n="howTitle">How Thiup works</h2>
+          <p class="section-lead reveal" style="--rd: 80ms" data-i18n="howLead">
+            Built for the conversations that are hard to have anywhere else.
+            Here is what that means in practice.
+          </p>
+
+          <ul class="how-list">
+            <li class="how-item reveal">
+              <span class="how-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+                </svg>
+              </span>
+              <div class="how-body">
+                <h3 class="how-title" data-i18n="how1Title">A place for what's hard to say</h3>
+                <p class="how-text" data-i18n="how1Text">
+                  Thiup exists for honest conversation about sensitive topics —
+                  the things you wouldn't post next to your name. The calm,
+                  quiet design is part of that promise: no noise, no clout, no
+                  pressure.
+                </p>
+              </div>
+            </li>
+
+            <li class="how-item reveal" style="--rd: 90ms">
+              <span class="how-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M9 9.5 Q14.5 11.25 9 13 Q14.5 14.75 9 16.5" />
+                  <circle cx="14.6" cy="9.4" r="1.1" fill="currentColor" stroke="none" />
+                </svg>
+              </span>
+              <div class="how-body">
+                <h3 class="how-title" data-i18n="how2Title">How masks work</h3>
+                <p class="how-text" data-i18n="how2Text">
+                  There is no account to create. When you arrive you get a mask
+                  — a pseudonymous identity derived from your connection, shown
+                  as a short @id and a generated avatar. Your name, email or
+                  phone are never asked for, so they can never leak.
+                </p>
+              </div>
+            </li>
+
+            <li class="how-item reveal" style="--rd: 180ms">
+              <span class="how-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
+              </span>
+              <div class="how-body">
+                <h3 class="how-title" data-i18n="how3Title">Real people, no bots</h3>
+                <p class="how-text" data-i18n="how3Text">
+                  Every thread, reply and reaction on Thiup comes from a real
+                  person. There are no bots, no fake engagement and no ads —
+                  just people talking.
+                </p>
+              </div>
+            </li>
+
+            <li class="how-item reveal" style="--rd: 270ms">
+              <span class="how-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                </svg>
+              </span>
+              <div class="how-body">
+                <h3 class="how-title" data-i18n="how4Title">Privacy as architecture</h3>
+                <p class="how-text" data-i18n="how4Text">
+                  Thiup doesn't track you. Your precise location is never
+                  stored (nearby feeds use a coarse, opt-in area), traffic is
+                  encrypted, and what is never collected can't be sold or
+                  leaked.
+                </p>
+              </div>
+            </li>
+          </ul>
+
+          <p class="how-close reveal" data-i18n="howClose">
+            Thiup is a small, independent project with one goal: a place where
+            anyone can speak freely and stay anonymous. No investors, no data
+            business, no growth tricks — the app only asks for what it needs,
+            and the code that proves it is one click away.
+          </p>
+
+          <p class="section-links reveal">
+            <a href="/how-it-works" data-i18n="linkHowMore">Read more about how Thiup works</a>
+            <span class="footer-dot" aria-hidden="true">·</span>
+            <a href="/privacy" data-i18n="linkPrivacyMore">Our privacy promise</a>
+          </p>
+        </div>
+      </section>
+
+      <!-- ===== Open source ===== -->
+      <section class="open-source" id="open-source">
+        <div class="container os-inner">
+          <span class="os-icon reveal" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="currentColor" focusable="false">
+              <path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.55 0-.27-.01-1.17-.02-2.12-3.2.7-3.88-1.36-3.88-1.36-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.19 1.76 1.19 1.03 1.76 2.69 1.25 3.35.96.1-.75.4-1.25.72-1.54-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 5.78 0c2.21-1.49 3.18-1.18 3.18-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.41-2.69 5.38-5.25 5.67.41.35.77 1.04.77 2.1 0 1.52-.01 2.74-.01 3.11 0 .3.2.66.8.55A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z" />
+            </svg>
+          </span>
+          <h2 class="section-title reveal" style="--rd: 60ms" data-i18n="osTitle">Open source</h2>
+          <p class="section-lead reveal" style="--rd: 120ms" data-i18n="osText">
+            Thiup's code is public. Anyone can read it, audit how privacy is
+            handled, and contribute — the promises above aren't marketing,
+            they're verifiable.
+          </p>
+          <a
+            class="btn btn-primary reveal"
+            style="--rd: 180ms"
+            href="https://github.com/SirRiuz/thiup_backend"
+            target="_blank"
+            rel="noopener"
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
+              <path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.55 0-.27-.01-1.17-.02-2.12-3.2.7-3.88-1.36-3.88-1.36-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.19 1.76 1.19 1.03 1.76 2.69 1.25 3.35.96.1-.75.4-1.25.72-1.54-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 5.78 0c2.21-1.49 3.18-1.18 3.18-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.41-2.69 5.38-5.25 5.67.41.35.77 1.04.77 2.1 0 1.52-.01 2.74-.01 3.11 0 .3.2.66.8.55A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z" />
+            </svg>
+            <span data-i18n="osButton">View on GitHub</span>
+          </a>
+
+          <p class="section-links reveal" style="--rd: 240ms">
+            <a href="/open-source" data-i18n="linkOsMore">More about the project</a>
+          </p>
+        </div>
+      </section>
+
+      <!-- ===== Final CTA band ===== -->
+      <section class="cta-band">
+        <div class="container cta-inner">
+          <h2 class="cta-title reveal" data-i18n="ctaTitle">Speak nameless.</h2>
+          <p class="cta-text reveal" style="--rd: 80ms" data-i18n="ctaText">
+            Join the conversation without giving up your privacy.
+          </p>
+          <a class="btn btn-primary reveal" style="--rd: 160ms" href="https://app.thiup.com/home" data-i18n="openApp">
+            Open the app
+          </a>
+        </div>
+      </section>
+    </main>
+
+    <!-- ===== Footer ===== -->
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <a class="brand brand-sm" href="/" aria-label="Thiup">
+          <svg width="22" height="22" viewBox="0 0 68 68" aria-hidden="true" focusable="false">
+            <path
+              d="M24 17.5 Q46 25.75 24 34 Q46 42.25 24 50.5"
+              fill="none"
+              stroke="#a85432"
+              stroke-width="5.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <circle cx="44.5" cy="19" r="4.5" fill="#a85432" />
+          </svg>
+          <span class="brand-word">Thiup</span>
+        </a>
+        <p class="footer-tagline" data-i18n="tagline">Speak nameless.</p>
+        <nav class="footer-nav" aria-label="Footer">
+          <a href="/how-it-works" data-i18n="navHow">How it works</a>
+          <span class="footer-dot" aria-hidden="true">·</span>
+          <a href="/open-source" data-i18n="navOpenSource">Open source</a>
+          <span class="footer-dot" aria-hidden="true">·</span>
+          <a href="/privacy" data-i18n="navPrivacy">Privacy</a>
+          <span class="footer-dot" aria-hidden="true">·</span>
+          <a href="/app" data-i18n="openApp">Open the app</a>
+          <span class="footer-dot" aria-hidden="true">·</span>
+          <a href="https://github.com/SirRiuz/thiup_backend" target="_blank" rel="noopener">GitHub</a>
+        </nav>
+        <p class="footer-legal">
+          <span id="year">2026</span> · Thiup ·
+          <span data-i18n="footerNote">Anonymous, privacy first</span>
+        </p>
+      </div>
+    </footer>
+
+    <script src="main.js" defer></script>
+  </body>
+</html>

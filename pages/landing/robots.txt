@@ -1,0 +1,43 @@
+# robots.txt for the public marketing site (https://thiup.com/).
+# This is the brand landing — fully crawlable, INCLUDING AI/LLM crawlers: this
+# site is the canonical source for describing Thiup, and /llms.txt gives
+# generative engines a concise, correct summary. The anonymous app and all of
+# its user content live on app.thiup.com, which has its own (restrictive)
+# robots that additionally blocks AI-training bots — user content must never
+# reach models; brand pages should.
+User-agent: *
+Allow: /
+
+# AI / LLM crawlers are explicitly welcome on the brand site (same policy as
+# *, stated on purpose). See https://thiup.com/llms.txt
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-User
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Perplexity-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+Sitemap: https://thiup.com/sitemap.xml

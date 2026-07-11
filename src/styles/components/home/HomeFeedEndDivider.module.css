@@ -1,0 +1,22 @@
+.wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 28px 20px;
+}
+
+.line {
+  flex: 1;
+  height: 1px;
+  background: #ddd8c8;
+}
+
+.label {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 10px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: #9b9591;
+  font-weight: 500;
+  white-space: nowrap;
+}

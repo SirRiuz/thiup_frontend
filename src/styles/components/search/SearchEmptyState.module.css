@@ -1,0 +1,44 @@
+/* Search empty state — the CloseYouGate language: INTEGRATED into the
+   results surface (no card-in-card: the old bordered #fdfcf8 card was
+   invisible on the #fdfcf8 surface), muted icon tile, current type scale. */
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 56px 22px 64px;
+  text-align: center;
+}
+
+/* Muted icon tile — same spec as the gate's (48px, radius 12, page-tone bg,
+   hairline, quiet glyph). */
+.iconWrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: #f7f5f0;
+  border: 1px solid #ebe7dd;
+  color: #9b9591;
+  margin: 0 0 16px;
+}
+
+.title {
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1a1a;
+  line-height: 1.3;
+  margin: 0 0 8px;
+}
+
+.subtitle {
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #6b6b6b;
+  margin: 0;
+  max-width: 340px;
+}

@@ -1,0 +1,392 @@
+{
+  "media": {
+    "multipleIndicator": "Contiene más archivos",
+    "tapToView": "Toca para ver",
+    "sensitiveTitle": "Contenido sensible",
+    "hideSensitive": "Ocultar contenido sensible",
+    "viewSensitive": "Ver contenido sensible",
+    "video": "Video",
+    "mute": "Silenciar",
+    "unmute": "Activar sonido",
+    "playVideo": "Reproducir video",
+    "play": "Reproducir",
+    "pause": "Pausar",
+    "seek": "Cambiar posición",
+    "combinePanorama": "Combinar archivos en panorámica",
+    "viewer": {
+      "label": "Visor de imágenes",
+      "close": "Cerrar",
+      "previous": "Imagen anterior",
+      "next": "Imagen siguiente",
+      "position": "Imagen {{current}} de {{total}}",
+      "loadError": "No se pudo cargar el contenido"
+    }
+  },
+  "common": {
+    "tryAgain": "Reintentar",
+    "back": "Atrás",
+    "backToHome": "Volver al inicio",
+    "loading": "Cargando",
+    "retrying": "Reintentando...",
+    "dismissError": "Descartar error",
+    "closeError": "Cerrar error",
+    "loadingPost": "Cargando publicación",
+    "loadingReply": "Cargando respuesta",
+    "loadingThread": "Cargando hilo",
+    "tagsDetected_one": "{{count}} etiqueta detectada",
+    "tagsDetected_other": "{{count}} etiquetas detectadas",
+    "charCount": "{{count}} / {{max}}"
+  },
+  "nav": {
+    "primary": "Principal",
+    "home": "Inicio",
+    "search": "Buscar",
+    "notifications": "Notificaciones",
+    "create": "Nuevo hilo",
+    "myThreads": "Mis hilos",
+    "menu": "Menú",
+    "about": "Acerca de",
+    "languages": "Idioma"
+  },
+  "notifications": {
+    "title": "Notificaciones",
+    "emptyTitle": "Aún no hay nada aquí",
+    "emptyBody": "Las reacciones y respuestas a tus hilos aparecerán aquí."
+  },
+  "language": {
+    "title": "Idioma",
+    "description": "Elige el idioma de la interfaz.",
+    "english": "English",
+    "spanish": "Español",
+    "close": "Cerrar",
+    "current": "Idioma actual"
+  },
+  "pageTitle": {
+    "search": "Buscar",
+    "myThreads": "Mis hilos",
+    "notifications": "Notificaciones",
+    "thread": "Hilo",
+    "notFound": "Página no encontrada",
+    "serverError": "Error del servidor",
+    "networkError": "Sin conexión",
+    "anonProfile": "Perfil"
+  },
+  "splash": {
+    "loading": "Cargando"
+  },
+  "welcome": {
+    "title": "Bienvenido a Thiup",
+    "mission": "Un espacio anónimo para hablar libremente de lo que importa — tu privacidad es lo primero.",
+    "rulesHeader": "Algunas cosas para tener en cuenta",
+    "button": "Entendido",
+    "rules": {
+      "anonymity": {
+        "lead": "Mantén el anonimato.",
+        "text": "Nunca compartas datos que te identifiquen a ti o a otros."
+      },
+      "respect": {
+        "lead": "Sé respetuoso.",
+        "text": "Este es un espacio para voces honestas, no para el acoso."
+      },
+      "protect": {
+        "lead": "Protéjanse entre todos.",
+        "text": "Nada de doxxing ni de exponer identidades."
+      },
+      "minors": {
+        "lead": "Protege a los menores.",
+        "text": "El contenido que sexualice o dañe a niños nunca se permite y será eliminado."
+      }
+    }
+  },
+  "home": {
+    "tabForYou": "Para ti",
+    "tabCloseYou": "Cerca de ti",
+    "filterLabel": "Feed",
+    "sortTrending": "Tendencia",
+    "sortNewest": "Recientes",
+    "sortOldest": "Antiguos",
+    "noPostsTitle": "Aún no hay publicaciones",
+    "noPostsSubtitle": "Sé el primero en iniciar un hilo",
+    "newThread": "Nuevo hilo",
+    "newThreadBadge": "Tu nuevo hilo",
+    "yourThread": "Mi hilo",
+    "openThread": "Abrir hilo",
+    "endOfFeed": "Fin del feed",
+    "loadingMore": "Cargando más publicaciones"
+  },
+  "compose": {
+    "postingAs": "Publicando como",
+    "postingAsPlaceholder": "Publicando como …",
+    "placeholder": "¿Qué hay de nuevo?",
+    "post": "Publicar",
+    "posting": "Publicando",
+    "locationDefault": "Comparte tu zona aproximada al publicar (para Cerca de ti) — nunca tu ubicación exacta",
+    "locationActive": "Compartiendo tu zona aproximada (~5 km, difuminada) — haz clic para desactivar",
+    "locationBlocked": "La ubicación está bloqueada — actívala en los ajustes de tu navegador",
+    "cannotShareTitle": "No se pudo compartir tu zona",
+    "cannotShareBody": "No pudimos obtener tu ubicación — inténtalo de nuevo.",
+    "blockedTitle": "La ubicación está bloqueada",
+    "blockedBody": "Actívala en los ajustes de tu navegador para adjuntar tu zona.",
+    "unsupportedBody": "La ubicación necesita un navegador compatible sobre https o localhost.",
+    "postedWithoutAreaTitle": "Publicado sin tu zona",
+    "postedWithoutAreaDenied": "La ubicación está bloqueada — actívala en los ajustes de tu navegador.",
+    "postedWithoutAreaTimeout": "No pudimos obtener tu ubicación a tiempo.",
+    "postedWithoutAreaUnsupported": "Tu navegador no admite la ubicación.",
+    "privacyNoteLead": "Zona aproximada de",
+    "privacyNoteChip": "~5 km",
+    "privacyGuarantee": "Tu ubicación exacta nunca se guarda",
+    "stopSharing": "Dejar de compartir mi zona"
+  },
+  "closeYou": {
+    "findingTitle": "Buscando tu zona…",
+    "findingBody": "Calculando tu celda aproximada (~5 km) — tus coordenadas nunca salen de este dispositivo",
+    "errorTitle": "No pudimos cargar tu zona",
+    "errorBody": "Algo salió mal al obtener tu ubicación. Puedes intentarlo de nuevo.",
+    "blocked": {
+      "title": "Ubicación desactivada",
+      "body": "Para ver Cerca de ti, activa la ubicación para este sitio en los ajustes de tu navegador o dispositivo.",
+      "hint": "Luego <b>recarga</b> la página para volver a intentarlo."
+    },
+    "unsupportedTitle": "La ubicación no es compatible",
+    "unsupportedBody": "Prueba un navegador con soporte de geolocalización para usar Cerca de ti.",
+    "promptTitle": "Mira lo que pasa cerca de ti",
+    "promptBody": "Usamos una zona aproximada (~5 km), nunca tu ubicación exacta.",
+    "enable": "Activar ubicación",
+    "notNow": "Ahora no",
+    "within": "Dentro de",
+    "radiusChip": "{{km}} km",
+    "promptPrivacy": "No se guarda en ningún servidor."
+  },
+  "search": {
+    "placeholder": "Buscar en Thiup",
+    "tabMedia": "Media",
+    "mediaPreview": {
+      "label": "Vista previa del hilo",
+      "viewThread": "Ver hilo"
+    },
+    "trendingTitle": "Tendencias",
+    "topicsTitle": "Explora temas",
+    "label": "Buscar",
+    "tabTop": "Destacados",
+    "tabLatest": "Recientes",
+    "tabPeople": "Personas",
+    "tabTags": "Etiquetas",
+    "noResultsTitle": "No se encontraron resultados",
+    "noResultsSubtitle": "Prueba con otras palabras o explora las tendencias"
+  },
+  "post": {
+    "threadTitle": "Hilo",
+    "postedAgo": "Publicado hace {{time}}",
+    "noReplies": "Aún no hay respuestas",
+    "replyCount_one": "{{count}} respuesta",
+    "replyCount_other": "{{count}} respuestas",
+    "reply": "Responder",
+    "replies": "Respuestas",
+    "opAuthor": "Autor del hilo",
+    "author": "Autor",
+    "react": "Reaccionar",
+    "addReaction": "Añadir reacción",
+    "endOfThread": "Fin del hilo",
+    "loadMoreReplies": "Cargar más respuestas",
+    "sort": "Ordenar",
+    "sortTop": "Destacados",
+    "sortTopDesc": "Lo más relevante primero",
+    "sortRecent": "Recientes",
+    "sortRecentDesc": "Lo más nuevo primero",
+    "replyingTo": "Respondiendo a",
+    "cancelReplyingTo": "Cancelar respuesta a",
+    "couldNotLoad": "No se pudo cargar este hilo.",
+    "commentPlaceholderUser": "Escribe tu respuesta...",
+    "commentPlaceholderDefault": "Responde a este hilo...",
+    "replying": "Respondiendo…",
+    "replyError": "No se pudo publicar tu respuesta. Inténtalo de nuevo.",
+    "fileTooLarge": "{{name}} es demasiado grande (máx. 10MB)",
+    "imageTooLarge": "Las imágenes no pueden superar 8 MB",
+    "gifTooLarge": "Los GIF no pueden superar 15 MB",
+    "videoTooLarge": "Los videos no pueden superar 512 MB",
+    "fileUnsupported": "{{name}} no es un tipo de archivo compatible",
+    "formatRejected": "Solo se admiten PNG, JPG, MP4 o MOV. Se omitió: {{names}}",
+    "maxFiles": "Solo se permiten {{max}} archivos",
+    "attachMedia": "Adjuntar imagen o video"
+  },
+  "scan": {
+    "queued": "En cola…",
+    "pending_one": "Analizando {{count}} archivo…",
+    "pending_other": "Analizando {{count}} archivos…",
+    "analyzing": "Analizando…",
+    "analyzingFrame": "Analizando… fotograma {{current}}/{{total}}",
+    "verdict_safe": "Seguro",
+    "verdict_review": "Revisar",
+    "verdict_block": "Bloquear",
+    "scorePercent": "{{percent}}%",
+    "detail": "explícito {{explicit}}% · sugerente {{suggestive}}%",
+    "errorModel": "No se pudo cargar el modelo de detección. Revisa tu conexión e inténtalo de nuevo.",
+    "errorAnalyze": "No se pudo analizar este archivo.",
+    "errorHevc": "Esto parece un video HEVC/H.265 que tu navegador no puede decodificar. Conviértelo a MP4/H.264 para analizarlo.",
+    "errorDecode": "Este video no se pudo decodificar en el navegador.",
+    "remove": "Quitar archivo",
+    "details": "Ver resultado",
+    "compressTitle": "Compresión",
+    "compressing": "Comprimiendo…",
+    "compressError": "No se pudo comprimir esta imagen.",
+    "uploading": "Subiendo {{percent}}%",
+    "uploaded": "Listo",
+    "uploadError": "No se pudo subir.",
+    "retry": "Reintentar",
+    "before": "Antes",
+    "after": "Después",
+    "format": "Formato",
+    "dimensions": "Dimensiones",
+    "weight": "Peso",
+    "saving": "ahorro",
+    "larger": "más grande",
+    "dominantColor": "Color predominante"
+  },
+  "postNotFound": {
+    "title": "Hilo no encontrado",
+    "subtitleWithId": "No pudimos encontrar <chip>{{shortId}}</chip> — puede que se haya eliminado.",
+    "subtitle": "Puede que este hilo se haya eliminado."
+  },
+  "moreMenu": {
+    "more": "Más opciones",
+    "copyId": "Copiar id",
+    "share": "Compartir",
+    "report": "Reportar"
+  },
+  "threadOptions": {
+    "more": "Más opciones",
+    "viewDetails": "Ver detalles",
+    "copyLink": "Copiar enlace",
+    "report": "Reportar"
+  },
+  "threadDetails": {
+    "title": "Detalles del hilo",
+    "threadId": "ID del hilo",
+    "author": "Autor",
+    "anonymous": "Anónimo",
+    "published": "Publicado",
+    "replies": "Respuestas",
+    "reactions": "Reacciones",
+    "copy": "Copiar",
+    "copied": "Copiado",
+    "close": "Cerrar"
+  },
+  "toast": {
+    "linkCopied": "Enlace copiado",
+    "linkCopyFailed": "No se pudo copiar el enlace",
+    "idCopied": "ID copiado",
+    "copied": "Copiado",
+    "copyFailed": "No se pudo copiar",
+    "publishing": "Publicando…",
+    "posted": "Hilo publicado",
+    "replyPosted": "Respuesta publicada",
+    "viewPost": "Ver"
+  },
+  "report": {
+    "title": "Reportar hilo",
+    "subtitle": "¿Por qué reportas esto? Tu reporte es anónimo.",
+    "spam": "Spam o engaño",
+    "harassment": "Acoso o intimidación",
+    "hate": "Discurso de odio",
+    "dangerous": "Contenido peligroso o autolesión",
+    "minors": "Contenido sobre menores",
+    "other": "Otro motivo…",
+    "placeholder": "Escribe el motivo del reporte…",
+    "submit": "Enviar reporte",
+    "back": "Volver",
+    "privacy": "Tu reporte es anónimo. No compartimos quién reportó.",
+    "sent": "Reporte enviado",
+    "failed": "No se pudo enviar el reporte",
+    "thanksTitle": "Gracias por cuidar Thiup",
+    "thanksBody": "Tu reporte nos ayuda a mantener un espacio seguro. Lo revisaremos.",
+    "thanksAnon": "Tu reporte es anónimo",
+    "done": "Listo",
+    "sendingShort": "Enviando…"
+  },
+  "attachment": {
+    "cancelUpload": "Cancelar subida",
+    "remove": "Quitar adjunto"
+  },
+  "reactions": {
+    "love": "Cariño",
+    "laugh": "Risa",
+    "wow": "Sorpresa",
+    "sad": "Tristeza",
+    "angry": "Enojo",
+    "applause": "Aplauso"
+  },
+  "profile": {
+    "posts": "Publicaciones",
+    "replies": "Respuestas",
+    "joined": "Se unió {{date}}",
+    "unknown": "Desconocido",
+    "emptyTitle": "Aún no hay hilos",
+    "emptyBody": "Esta máscara no ha iniciado ninguna conversación.",
+    "notFound": "Perfil no encontrado",
+    "mediaEmptyTitle": "Aún no hay media",
+    "mediaEmptyBody": "Las fotos y videos de los hilos de esta máscara aparecerán aquí.",
+    "avatarLabel": "Foto de perfil"
+  },
+  "myThreads": {
+    "title": "Mis hilos",
+    "subtitle": "Hilos que has iniciado, los más recientes primero",
+    "emptyTitle": "Aún no has creado ningún hilo",
+    "emptyBody": "Inicia una conversación desde el feed de inicio — tus hilos aparecerán aquí.",
+    "maskName": "Anónimo",
+    "youBadge": "Tú",
+    "copyHash": "Copiar el id de tu máscara",
+    "statThreads": "Hilos",
+    "statReactions": "Reacciones",
+    "statReplies": "Respuestas",
+    "tabThreads": "Hilos",
+    "tabMedia": "Media",
+    "joined": "Se unió en {{date}}",
+    "mediaTileLabel": "Abrir hilo",
+    "mediaEmptyTitle": "Aún no hay media",
+    "mediaEmptyBody": "Las fotos y videos de tus hilos aparecerán aquí."
+  },
+  "notFound": {
+    "code": "404",
+    "title": "Aquí no hay nada",
+    "subtitle": "Esta página se perdió en el vacío. Vamos a llevarte de vuelta."
+  },
+  "serverError": {
+    "title": "Algo salió mal",
+    "body": "Nuestros servidores están teniendo un momento. Es cosa nuestra, no tuya — inténtalo de nuevo en un rato.",
+    "checking": "Comprobando...",
+    "tryAgain": "Intentar de nuevo",
+    "code": "Error 503 · servicio no disponible"
+  },
+  "antiSnoop": {
+    "title": "Cuidemos la privacidad de este espacio",
+    "body": "Thiup oculta su contenido mientras las herramientas de desarrollo están abiertas — es parte de cómo protegemos a una comunidad anónima. Sin resentimientos.",
+    "hint": "Cierra las herramientas de desarrollo y recarga para continuar."
+  },
+  "networkError": {
+    "title": "Sin conexión",
+    "body": "Parece que te quedaste sin internet. Revisa tu conexión wifi o de datos e inténtalo de nuevo.",
+    "checking": "Comprobando...",
+    "tryAgain": "Reintentar",
+    "code": "Sin conexión de red"
+  },
+  "feedError": {
+    "title": "No se pudo conectar con el servidor",
+    "subtitle": "Revisa tu conexión e inténtalo de nuevo"
+  },
+  "retryBanner": {
+    "connectionAria": "Conexión perdida",
+    "generic": "No se pudo conectar con el servidor — revisa tu conexión",
+    "serverIssues": "El servidor tiene problemas",
+    "tooManyRequests": "Demasiadas solicitudes — espera un momento",
+    "couldNotLoadMore": "No se pudieron cargar más publicaciones"
+  },
+  "errors": {
+    "network": "No se pudo conectar con el servidor — revisa tu conexión",
+    "badRequest": "No se pudo crear la publicación — revisa tu texto e inténtalo de nuevo",
+    "unauthorized": "Tu sesión expiró — recarga la página",
+    "forbidden": "No tienes permiso para publicar",
+    "rateLimit": "Estás publicando demasiado rápido — espera un momento",
+    "server": "Algo salió mal de nuestro lado — inténtalo de nuevo en un momento",
+    "generic": "Algo salió mal — inténtalo de nuevo"
+  }
+}

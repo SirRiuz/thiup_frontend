@@ -1,0 +1,72 @@
+/* People result row — same quiet anatomy as the tag/feed rows: NO hover wash
+   (Threads' rows don't highlight), 12px rhythm in the surface's 24px inset,
+   FULL-BLEED divider (the old border-bottom stopped at the row's box and
+   read as a cut line), hidden on the last row. */
+.card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 0;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.card::after {
+  content: "";
+  position: absolute;
+  left: calc(-1 * var(--layout-pad-x, 0px));
+  right: calc(-1 * var(--layout-pad-x, 0px));
+  bottom: 0;
+  height: 1px;
+  background: #ebe7dd;
+}
+
+.card:last-child::after {
+  display: none;
+}
+
+.identiconWrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* No overflow: hidden — the avatar rounds itself (svg border-radius 50%) and
+     the activity dot's ring intentionally overflows the avatar box (Threads). */
+  flex: none;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.maskId {
+  /* Reconciled identity row (Threads-exact, same as feed/thread): Inter, body-
+     sized, 600 near-black — the old monospace-in-search divergence is fixed. */
+  font-family: inherit;
+  font-size: clamp(14px, 13.1px + 0.25vw, 15px);
+  color: #1a1a1a;
+  font-weight: 600;
+  line-height: 21px;
+}
+
+.meta {
+  /* Meta line at the timestamp tone: same size, 400, light #9b9591 (≈ Threads'
+     light-theme secondary #999) — Threads sizes search-row meta at 15px too. */
+  font-family: inherit;
+  font-size: clamp(14px, 13.1px + 0.25vw, 15px);
+  font-weight: 400;
+  color: #9b9591;
+}
+
+/* Search match — emphasis from weight, no background (same color as the text). */
+.highlight {
+  background: none;
+  color: inherit;
+  font-weight: 700;
+}

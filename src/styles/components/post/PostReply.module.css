@@ -1,0 +1,283 @@
+.reply {
+  /* paddingLeft is set inline = depth * 28px (one indent step per nesting level,
+     Reddit-style). Vertical padding is the comment rhythm (compact, Threads-style). */
+  padding: 12px 0;
+  position: relative;
+}
+
+/* Separator only BETWEEN top-level comment trees (set via dividerBelow). Within
+ * a tree the comments are joined by the thread lines, never split by a rule.
+ * Extends -16px each side to cancel the surface's 16px padding (the list adds
+ * none) so it spans the full card width regardless of the comment's own indent. */
+.withDivider::after {
+  content: "";
+  position: absolute;
+  left: -16px;
+  right: -16px;
+  bottom: 0;
+  height: 1px;
+  background: #ebe7dd;
+}
+
+/* Temporary highlight of the newly created reply: ring + warm background that
+ * fade out on their own (~2.5s visible + ~0.5s fade). inset box-shadow (not
+ * border) so it doesn't shift the layout or threading. */
+.highlighted {
+  border-radius: 8px;
+  animation: replyHighlightFade 3s ease forwards;
+}
+
+@keyframes replyHighlightFade {
+  0%,
+  83% {
+    background-color: #f5ead5;
+    box-shadow: inset 0 0 0 2px #c5a572;
+  }
+  100% {
+    background-color: transparent;
+    box-shadow: inset 0 0 0 2px transparent;
+  }
+}
+
+/* === Two-column layout (Reddit/Threads-style) ===
+ * Avatar in a fixed 36px gutter + 12px gap — Threads' exact 48px feed lane
+ * (36px avatar + 12px gap), same anatomy as HomeFeedCard. This is what lets
+ * the thread lines run down the (empty) avatar gutter without crossing text. */
+.main {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  column-gap: 12px;
+  align-items: start;
+}
+
+.avatarCell {
+  display: flex;
+  justify-content: center;
+  /* Threads' exact avatar-cell offset (their x1iorvi4: padding-top 4px) —
+     same as HomeFeedCard. */
+  padding-top: 4px;
+}
+
+.contentCell {
+  min-width: 0;
+  /* The media carousel bleeds OUT of the content column on scroll, reaching the
+     card/screen edge like the OP and the home feed (the negative margin extends
+     the scroll track; the matching padding keeps the FIRST item aligned with the
+     reply text, so it's the same "aligned-at-rest, bleeds-on-scroll" behavior as
+     home). START (left) cancels the avatar gutter (36) + grid gap (12) + surface
+     padding (--layout-pad-x; the list adds none) → the track reaches the card
+     edge on top-level replies and the indent start on nested ones. END (right)
+     cancels only the surface padding (no avatar gutter on that side). */
+  --media-bleed-x: calc(48px + var(--layout-pad-x, 0px));
+  --media-bleed-end: var(--layout-pad-x, 0px);
+}
+
+/* === Threading lines (positioned inline: left = lane center - 1px) ===
+ * Threads' exact threadline: 2px wide, #e5e0d3 (their --barcelona-threadline
+ * rgb(229,229,229), warm-adjusted), 2px rounded caps, centered on the lane. */
+
+/* Vertical guide: an ancestor lane whose line continues past this comment
+ * (that ancestor has a later sibling). Full height → joins the comment above
+ * and below into one unbroken line (no caps: it's a continuation). */
+.guideLine {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #e5e0d3;
+}
+
+/* Curved branch from the parent's lane into this comment's avatar — the rounded
+ * elbow (└) that makes each reply a bifurcation off its parent's line. Width is
+ * set inline (STEP minus the avatar radius and the Threads breathing gap) so
+ * the arm STOPS 4px short of the avatar's left edge — Threads' threadlines
+ * never touch the avatar they point at. The tip ends SQUARE on purpose:
+ * rounding the corner of a border-drawn box tapers the stroke into a chewed
+ * diagonal (a visible notch), and at 2px a straight cut reads identical to a
+ * rounded cap — crisp, no artifact. Height lands on the avatar's vertical
+ * center (12px reply padding + 4px cell offset + 18px radius). */
+.branch {
+  position: absolute;
+  top: 0;
+  height: 34px;
+  border-left: 2px solid #e5e0d3;
+  border-bottom: 2px solid #e5e0d3;
+  border-bottom-left-radius: 12px;
+}
+
+/* Trunk descending from this comment's own avatar into its children (drawn only
+ * when it has any). Threads-style FLOATING start: it emerges 4px BELOW the
+ * avatar's bottom edge (y52 + 4) with their exact 2px rounded top caps
+ * (their xdocmp1/xja2y4p) — the small breathing gap of their --x-top offset
+ * segments. The first child's branch/guide continues it downward. */
+.childTrunk {
+  position: absolute;
+  top: 56px;
+  bottom: 0;
+  width: 2px;
+  border-radius: 2px 2px 0 0;
+  background: #e5e0d3;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  /* Threads' username-row rhythm — same as HomeFeedCard (21px against the
+     36px avatar + 4px cell offset). */
+  line-height: 21px;
+}
+
+.maskId {
+  /* Threads-exact identity row: the username is the SAME SIZE as the body
+     (their name and body are both 15px system — hierarchy comes from weight
+     and color only, never from size). Same fluid clamp as .body so they stay
+     equal at every viewport. 600 / near-black, one line. */
+  font-size: clamp(14px, 13.1px + 0.25vw, 15px);
+  color: #1a1a1a;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* OP tag (Threads-style "· Author"): the reply author is the thread's Original
+   Poster. Quiet meta — EXACTLY the timestamp's type (same size as the name,
+   400, light #9b9591 ≈ Threads' light-theme --text-secondary #999); only the
+   weight/color drop marks it as meta. */
+.authorTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: clamp(14px, 13.1px + 0.25vw, 15px);
+  color: #9b9591;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.authorDivider {
+  color: #9b9591;
+  font-size: clamp(14px, 13.1px + 0.25vw, 15px);
+  line-height: 1;
+}
+
+.divider {
+  color: #c4bfb1;
+  font-size: 13px;
+}
+
+.timestamp {
+  /* Threads-exact <time>: same size as the name, 400, light secondary
+     (#9b9591 ≈ their light-theme #999 — NOT the darker #6b6b6b, which
+     competed with the name). Their time sits centered in a min 24px box,
+     which is what gives short stamps ("1m", "4d") their even rhythm. */
+  font-size: clamp(14px, 13.1px + 0.25vw, 15px);
+  font-weight: 400;
+  color: #9b9591;
+  display: inline-block;
+  min-width: 24px;
+  text-align: center;
+}
+
+.parentRef {
+  font-family: inherit;
+  font-size: 10px;
+  color: #9b9591;
+}
+
+.parentRefId {
+  color: #1a1a1a;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.body {
+  color: #1a1a1a;
+  /* Fluid body type — identical to the OP body (Threads-style): scales 14px →
+     15px by viewport, unitless 1.4 line-height (their 140%). */
+  font-size: clamp(14px, 13.1px + 0.25vw, 15px);
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+  /* Threads-exact rhythm: 3px below the header row, -2px bottom (their
+     margin-top: 3px / margin-bottom: -2px on the reply body — the negative
+     trims the line-height's built-in air so the action bar's own 6px margin
+     nets their exact 4px gap). */
+  margin: 3px 0 -2px;
+  /* Preserves the user's line breaks (the text carries \n from the backend) and
+   * breaks long words/joined URLs so they don't overflow the column. */
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+/* (The 14px .bodySubReply override was removed: ALL replies, at
+   any depth, use the same .body 15/20px.) */
+
+/* Hashtag highlight — identical to /home-new (HomeFeedCard.hashtag). */
+.hashtag {
+  font-weight: 400;
+  color: #a85432;
+  cursor: pointer;
+}
+
+.hashtag:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* FB-style stacked reaction summary above the reply's action bar (top margin
+   because the body no longer carries a bottom one). */
+.reactionSummary {
+  display: inline-flex;
+  margin: 8px 0 0;
+}
+
+/* Threads-exact action bar: margin-top 6px / margin-bottom -4px (nets 8px to
+   the row edge over the 12px row padding, like their rows) / -8px start so the
+   first button's 12px padding leaves their exact 4px icon inset. No gap —
+   buttons sit adjacent, spaced by their own 12px side paddings. */
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin: 6px 0 -4px -8px;
+}
+
+.actionActive {
+  display: inline-flex;
+  align-items: center;
+  /* Threads-exact: 4px icon↔label gap (their --x-columnGap). */
+  gap: 4px;
+  /* Threads-exact action button: 36px tall touch target, 12px side padding —
+     this height is what gives their rows the airy rhythm. */
+  height: 36px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+  /* Threads-exact label: 13px / 400 / charcoal #424242 (their
+     --barcelona-charcoal-text, light theme rgb(66,66,66)) — icon and text
+     share the same charcoal via currentColor. */
+  font-size: 13px;
+  font-weight: 400;
+  color: #424242;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+@media (hover: hover) {
+  .actionActive:hover {
+    /* Wash only — Threads keeps the charcoal on hover. */
+    background: #f0ece3;
+  }
+}
+
+/* === Hash hover underline (affordance) === */
+
+.maskId:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}

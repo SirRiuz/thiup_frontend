@@ -1,0 +1,108 @@
+/* PostInitialSkeleton — skeleton for the Post page during initial loading */
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.opCard {
+  /* No own padding: the skeleton now lives inside .surface (Post), which already
+     provides the exact 16px horizontal inset + the mobile full-bleed, so its rows
+     align 1:1 with the real .opSection — no shift when the thread loads. */
+  padding: 0 0 20px;
+}
+
+.opHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.opBody {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.opReactionBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.opDivider {
+  height: 1px;
+  background: #ebe7dd;
+  /* Bleed to the card edge like the real OP divider (opSectionDivided::after,
+     left/right: -16px → cancels the surface's 16px padding). */
+  margin: 0 -16px;
+}
+
+.sortRow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 0 14px;
+}
+
+.repliesList {
+  display: flex;
+  flex-direction: column;
+}
+
+.bar {
+  background: #ebe7dd;
+  border-radius: 2px;
+  animation: initialSkeletonPulse 1.4s ease-in-out infinite;
+}
+
+.opIdenticon {
+  /* Mirrors the real OP avatar: 36px circle (Threads' single avatar size). */
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.opMaskId {
+  width: 72px;
+  height: 13px;
+}
+
+.opTime {
+  width: 32px;
+  height: 11px;
+}
+
+.opBodyLine {
+  height: 14px;
+}
+
+.line100 { width: 100%; }
+.line95 { width: 95%; }
+.line75 { width: 75%; }
+.line60 { width: 60%; }
+
+.opReactionPill {
+  width: 56px;
+  height: 28px;
+  border-radius: 14px;
+}
+
+.sortLabel {
+  width: 28px;
+  height: 10px;
+}
+
+.sortTab {
+  width: 54px;
+  height: 11px;
+}
+
+@keyframes initialSkeletonPulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}

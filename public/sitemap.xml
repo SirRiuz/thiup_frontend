@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Privacy: ONLY the public landing shell is listed. Thiup is anonymous and
+  handles sensitive topics, so individual threads (/post/:id), search (/search)
+  and profiles (/me) are NEVER listed here — they must not be discoverable or
+  indexable. This file lists brand/public surfaces only.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://app.thiup.com/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>

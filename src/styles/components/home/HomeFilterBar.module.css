@@ -1,0 +1,106 @@
+/* === Threads' exact tab anatomy, on the warm palette ===
+   Full-width EQUAL cells (flex 1 1 0), 48px tall, centered 15/600 labels, a
+   1px baseline hairline under the whole row, and the ACTIVE tab painted with
+   ink text + a 1px ink underline sitting exactly over the baseline (their
+   bottom: -1px bar). No eyebrow label, no mono, no accent — Threads' tabs are
+   monochrome; ours speak the app's ink/muted tokens. */
+
+.bar {
+  display: flex;
+  /* Full-bleed within the surface: the baseline hairline reaches the card
+     edges, like the compose row's and the feed dividers. */
+  margin: 0 calc(-1 * var(--layout-pad-x, 0px));
+  /* When the labels don't fit (longer locales — the Spanish search tabs
+     overflow the column), the row SCROLLS on the x axis instead of crushing
+     the cells out of proportion. Hidden scrollbar; the horizontal gesture
+     never leaks into the page / history-swipe. The baseline hairline lives
+     on each tab, so it travels with the scrolled content. */
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.bar::-webkit-scrollbar {
+  display: none;
+}
+
+.tab {
+  /* Equal cells while they fit (basis 0 + grow shares the row evenly, the
+     Threads look); when a label needs more, the cell refuses to shrink below
+     its content (min-width) and the ROW overflows into scroll — cells keep
+     their true proportions in every locale. */
+  flex: 1 0 0;
+  min-width: max-content;
+  white-space: nowrap;
+  position: relative;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 16px;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid #ebe7dd;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  color: #9b9591;
+  transition: color 120ms ease;
+}
+
+/* Threads' pressed state (their :active opacity 0.6). */
+.tab:active {
+  opacity: 0.6;
+}
+
+.tabActive {
+  color: #1a1a1a;
+}
+
+/* Active underline over the baseline hairline (Threads' bottom: -1px bar). */
+.tabActive::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  border-bottom: 1px solid #1a1a1a;
+}
+
+/* === Tab disabled during loading (or count at 0 in tabs with counts) === */
+
+.tabDisabled {
+  opacity: 0.4;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* === Count next to the label (search tabs: posts 120 / tags 1 / ...) === */
+
+.count {
+  font-size: 12px;
+  color: inherit;
+  opacity: 0.75;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
+/* === Mini spinner shown next to the active tab during loading === */
+.tabSpinner {
+  width: 9px;
+  height: 9px;
+  border: 1.2px solid rgba(26, 26, 26, 0.18);
+  border-top-color: #1a1a1a;
+  border-radius: 50%;
+  animation: tabSpinnerSpin 700ms linear infinite;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+@keyframes tabSpinnerSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

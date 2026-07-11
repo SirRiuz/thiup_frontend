@@ -11,6 +11,10 @@
 # production
 /build
 
+# self-hosted vendor assets (reproducible from pinned devDependencies via
+# scripts/copy-nsfw-assets.js — regenerated on postinstall/prebuild)
+/public/vendor/nsfwjs
+
 # misc
 .DS_Store
 .env.local
@@ -23,3 +27,6 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Respaldos temporales del build seguro (scripts/build-secure.js)
+*.secure-build-bak

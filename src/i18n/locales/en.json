@@ -1,0 +1,392 @@
+{
+  "media": {
+    "multipleIndicator": "Contains more media",
+    "tapToView": "Tap to view",
+    "sensitiveTitle": "Sensitive content",
+    "hideSensitive": "Hide sensitive content",
+    "viewSensitive": "View sensitive content",
+    "video": "Video",
+    "mute": "Mute",
+    "unmute": "Unmute",
+    "playVideo": "Play video",
+    "play": "Play",
+    "pause": "Pause",
+    "seek": "Seek",
+    "combinePanorama": "Combine media into panorama",
+    "viewer": {
+      "label": "Image viewer",
+      "close": "Close",
+      "previous": "Previous image",
+      "next": "Next image",
+      "position": "Image {{current}} of {{total}}",
+      "loadError": "Couldn't load this media"
+    }
+  },
+  "common": {
+    "tryAgain": "Try again",
+    "back": "Back",
+    "backToHome": "Back to home",
+    "loading": "Loading",
+    "retrying": "Retrying...",
+    "dismissError": "Dismiss error",
+    "closeError": "Close error",
+    "loadingPost": "Loading post",
+    "loadingReply": "Loading reply",
+    "loadingThread": "Loading thread",
+    "tagsDetected_one": "{{count}} tag detected",
+    "tagsDetected_other": "{{count}} tags detected",
+    "charCount": "{{count}} / {{max}}"
+  },
+  "nav": {
+    "primary": "Primary",
+    "home": "Home",
+    "search": "Search",
+    "notifications": "Notifications",
+    "create": "New thread",
+    "myThreads": "My threads",
+    "menu": "Menu",
+    "about": "About",
+    "languages": "Languages"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "emptyTitle": "Nothing here yet",
+    "emptyBody": "Reactions and replies to your threads will show up here."
+  },
+  "language": {
+    "title": "Language",
+    "description": "Choose the language for the interface.",
+    "english": "English",
+    "spanish": "Español",
+    "close": "Close",
+    "current": "Current language"
+  },
+  "pageTitle": {
+    "search": "Search",
+    "myThreads": "My threads",
+    "notifications": "Notifications",
+    "thread": "Thread",
+    "notFound": "Page not found",
+    "serverError": "Server error",
+    "networkError": "No connection",
+    "anonProfile": "Profile"
+  },
+  "splash": {
+    "loading": "Loading"
+  },
+  "welcome": {
+    "title": "Welcome to Thiup",
+    "mission": "An anonymous space to speak freely about what matters — your privacy always comes first.",
+    "rulesHeader": "A few things to keep in mind",
+    "button": "I understand",
+    "rules": {
+      "anonymity": {
+        "lead": "Stay anonymous.",
+        "text": "Never share details that could identify you or others."
+      },
+      "respect": {
+        "lead": "Be respectful.",
+        "text": "This is a space for honest voices, not harassment."
+      },
+      "protect": {
+        "lead": "Protect each other.",
+        "text": "No doxxing, no exposing identities."
+      },
+      "minors": {
+        "lead": "Protect minors.",
+        "text": "Content that sexualizes or harms children is never allowed and will be removed."
+      }
+    }
+  },
+  "home": {
+    "tabForYou": "For You",
+    "tabCloseYou": "Close You",
+    "filterLabel": "Feed",
+    "sortTrending": "Trending",
+    "sortNewest": "Newest",
+    "sortOldest": "Oldest",
+    "noPostsTitle": "No posts yet",
+    "noPostsSubtitle": "Be the first to start a thread",
+    "newThread": "New thread",
+    "newThreadBadge": "Your new thread",
+    "yourThread": "Your thread",
+    "openThread": "Open thread",
+    "endOfFeed": "End of feed",
+    "loadingMore": "Loading more posts"
+  },
+  "compose": {
+    "postingAs": "Posting as",
+    "postingAsPlaceholder": "Posting as …",
+    "placeholder": "What's new?",
+    "post": "Post",
+    "posting": "Posting",
+    "locationDefault": "Share your approximate area when posting (for Close You) — never your exact location",
+    "locationActive": "Sharing your approximate area (~5 km, blurred) — click to turn off",
+    "locationBlocked": "Location is blocked — enable it in your browser settings",
+    "cannotShareTitle": "Can't share your area",
+    "cannotShareBody": "We couldn't get your location — try again.",
+    "blockedTitle": "Location is blocked",
+    "blockedBody": "Enable it in your browser settings to attach your area.",
+    "unsupportedBody": "Location needs a supported browser over https or localhost.",
+    "postedWithoutAreaTitle": "Posted without your area",
+    "postedWithoutAreaDenied": "Location is blocked — enable it in your browser settings.",
+    "postedWithoutAreaTimeout": "We couldn't get your location in time.",
+    "postedWithoutAreaUnsupported": "Your browser doesn't support location.",
+    "privacyNoteLead": "Location blurred into a",
+    "privacyNoteChip": "~5 km area",
+    "privacyGuarantee": "Your exact spot is never stored",
+    "stopSharing": "Stop sharing my area"
+  },
+  "closeYou": {
+    "findingTitle": "Finding your area…",
+    "findingBody": "Computing your approximate cell (~5 km) — your coordinates never leave this device",
+    "errorTitle": "We couldn't load your area",
+    "errorBody": "Something went wrong getting your location. You can try again.",
+    "blocked": {
+      "title": "Location turned off",
+      "body": "To see Close You, turn on location for this site in your browser or device settings.",
+      "hint": "Then <b>reload</b> the page to try again."
+    },
+    "unsupportedTitle": "Location isn't supported",
+    "unsupportedBody": "Try a browser with geolocation support to use Close You.",
+    "promptTitle": "See what's happening near you",
+    "promptBody": "We use an approximate area (~5 km), never your exact location.",
+    "enable": "Enable location",
+    "notNow": "Not now",
+    "within": "Within",
+    "radiusChip": "{{km}} km",
+    "promptPrivacy": "Never stored on any server."
+  },
+  "search": {
+    "placeholder": "Search Thiup",
+    "tabMedia": "Media",
+    "mediaPreview": {
+      "label": "Thread preview",
+      "viewThread": "View thread"
+    },
+    "trendingTitle": "Trending",
+    "topicsTitle": "Explore topics",
+    "label": "Search",
+    "tabTop": "Top",
+    "tabLatest": "Latest",
+    "tabPeople": "People",
+    "tabTags": "Tags",
+    "noResultsTitle": "No results found",
+    "noResultsSubtitle": "Try different keywords or browse trending"
+  },
+  "post": {
+    "threadTitle": "Thread",
+    "postedAgo": "Posted {{time}} ago",
+    "noReplies": "No replies yet",
+    "replyCount_one": "{{count}} reply",
+    "replyCount_other": "{{count}} replies",
+    "reply": "Reply",
+    "replies": "Replies",
+    "opAuthor": "Thread author",
+    "author": "Author",
+    "react": "React",
+    "addReaction": "Add reaction",
+    "endOfThread": "End of thread",
+    "loadMoreReplies": "Load more replies",
+    "sort": "Sort",
+    "sortTop": "Top",
+    "sortTopDesc": "Most relevant first",
+    "sortRecent": "Recent",
+    "sortRecentDesc": "Newest first",
+    "replyingTo": "Replying to",
+    "cancelReplyingTo": "Cancel replying to",
+    "couldNotLoad": "This thread could not be loaded.",
+    "commentPlaceholderUser": "Type your reply...",
+    "commentPlaceholderDefault": "Reply to this thread...",
+    "replying": "Replying…",
+    "replyError": "Your reply couldn't be posted. Please try again.",
+    "fileTooLarge": "{{name}} is too large (max 10MB)",
+    "imageTooLarge": "Images can't exceed 8 MB",
+    "gifTooLarge": "GIFs can't exceed 15 MB",
+    "videoTooLarge": "Videos can't exceed 512 MB",
+    "fileUnsupported": "{{name}} is not a supported file type",
+    "formatRejected": "Only PNG, JPG, MP4 or MOV are supported. Skipped: {{names}}",
+    "maxFiles": "Only {{max}} files allowed",
+    "attachMedia": "Attach image or video"
+  },
+  "scan": {
+    "queued": "Queued…",
+    "pending_one": "Analyzing {{count}} file…",
+    "pending_other": "Analyzing {{count}} files…",
+    "analyzing": "Analyzing…",
+    "analyzingFrame": "Analyzing… frame {{current}}/{{total}}",
+    "verdict_safe": "Safe",
+    "verdict_review": "Review",
+    "verdict_block": "Block",
+    "scorePercent": "{{percent}}%",
+    "detail": "explicit {{explicit}}% · suggestive {{suggestive}}%",
+    "errorModel": "Couldn't load the detection model. Check your connection and try again.",
+    "errorAnalyze": "Couldn't analyze this file.",
+    "errorHevc": "This looks like an HEVC/H.265 video your browser can't decode. Convert it to MP4/H.264 to analyze it.",
+    "errorDecode": "This video couldn't be decoded in the browser.",
+    "remove": "Remove file",
+    "details": "View result",
+    "compressTitle": "Compression",
+    "compressing": "Compressing…",
+    "compressError": "Couldn't compress this image.",
+    "uploading": "Uploading {{percent}}%",
+    "uploaded": "Ready",
+    "uploadError": "Upload failed.",
+    "retry": "Retry",
+    "before": "Before",
+    "after": "After",
+    "format": "Format",
+    "dimensions": "Dimensions",
+    "weight": "Size",
+    "saving": "saving",
+    "larger": "larger",
+    "dominantColor": "Dominant color"
+  },
+  "postNotFound": {
+    "title": "Thread not found",
+    "subtitleWithId": "We couldn't find <chip>{{shortId}}</chip> — it may have been removed.",
+    "subtitle": "This thread may have been removed."
+  },
+  "moreMenu": {
+    "more": "More options",
+    "copyId": "Copy id",
+    "share": "Share",
+    "report": "Report"
+  },
+  "threadOptions": {
+    "more": "More options",
+    "viewDetails": "View details",
+    "copyLink": "Copy link",
+    "report": "Report"
+  },
+  "threadDetails": {
+    "title": "Thread details",
+    "threadId": "Thread ID",
+    "author": "Author",
+    "anonymous": "Anonymous",
+    "published": "Published",
+    "replies": "Replies",
+    "reactions": "Reactions",
+    "copy": "Copy",
+    "copied": "Copied",
+    "close": "Close"
+  },
+  "toast": {
+    "linkCopied": "Link copied",
+    "linkCopyFailed": "Couldn't copy link",
+    "idCopied": "ID copied",
+    "copied": "Copied",
+    "copyFailed": "Couldn't copy",
+    "publishing": "Publishing…",
+    "posted": "Thread posted",
+    "replyPosted": "Reply posted",
+    "viewPost": "View"
+  },
+  "report": {
+    "title": "Report thread",
+    "subtitle": "Why are you reporting this? Your report is anonymous.",
+    "spam": "Spam or deception",
+    "harassment": "Harassment or bullying",
+    "hate": "Hate speech",
+    "dangerous": "Dangerous content or self-harm",
+    "minors": "Content involving minors",
+    "other": "Other reason…",
+    "placeholder": "Write the reason for your report…",
+    "submit": "Send report",
+    "back": "Back",
+    "privacy": "Your report is anonymous. We don't share who reported.",
+    "sent": "Report sent",
+    "failed": "Couldn't send report",
+    "thanksTitle": "Thanks for looking out for Thiup",
+    "thanksBody": "Your report helps keep this a safe space. We'll review it.",
+    "thanksAnon": "Your report is anonymous",
+    "done": "Done",
+    "sendingShort": "Sending…"
+  },
+  "attachment": {
+    "cancelUpload": "Cancel upload",
+    "remove": "Remove attachment"
+  },
+  "reactions": {
+    "love": "Love",
+    "laugh": "Laugh",
+    "wow": "Wow",
+    "sad": "Sad",
+    "angry": "Angry",
+    "applause": "Applause"
+  },
+  "profile": {
+    "posts": "Posts",
+    "replies": "Replies",
+    "joined": "Joined {{date}}",
+    "unknown": "Unknown",
+    "emptyTitle": "No threads yet",
+    "emptyBody": "This mask hasn't started any conversations.",
+    "notFound": "Profile not found",
+    "mediaEmptyTitle": "No media yet",
+    "mediaEmptyBody": "Photos and videos from this mask's threads will show up here.",
+    "avatarLabel": "Profile picture"
+  },
+  "myThreads": {
+    "title": "My threads",
+    "subtitle": "Threads you've started, newest first",
+    "emptyTitle": "You haven't created any threads yet",
+    "emptyBody": "Start a conversation from the home feed — your threads will show up here.",
+    "maskName": "Anonymous",
+    "youBadge": "You",
+    "copyHash": "Copy your mask id",
+    "statThreads": "Threads",
+    "statReactions": "Reactions",
+    "statReplies": "Replies",
+    "tabThreads": "Threads",
+    "tabMedia": "Media",
+    "joined": "Joined {{date}}",
+    "mediaTileLabel": "Open thread",
+    "mediaEmptyTitle": "No media yet",
+    "mediaEmptyBody": "Photos and videos from your threads will show up here."
+  },
+  "notFound": {
+    "code": "404",
+    "title": "Nothing to see here",
+    "subtitle": "This page slipped into the void. Let's get you back."
+  },
+  "serverError": {
+    "title": "Something went wrong",
+    "body": "Our servers are having a moment. This is on us, not you — try again in a bit.",
+    "checking": "Checking...",
+    "tryAgain": "Try again",
+    "code": "Error 503 · service unavailable"
+  },
+  "antiSnoop": {
+    "title": "Let's keep this space private",
+    "body": "Thiup hides its content while developer tools are open — it's part of how we protect an anonymous community. No hard feelings.",
+    "hint": "Close developer tools and reload to continue."
+  },
+  "networkError": {
+    "title": "No connection",
+    "body": "Looks like you're offline. Check your wifi or mobile data and try again.",
+    "checking": "Checking...",
+    "tryAgain": "Try again",
+    "code": "No network connection"
+  },
+  "feedError": {
+    "title": "Couldn't reach the server",
+    "subtitle": "Check your connection and try again"
+  },
+  "retryBanner": {
+    "connectionAria": "Connection lost",
+    "generic": "Couldn't reach the server — check your connection",
+    "serverIssues": "Server is having issues",
+    "tooManyRequests": "Too many requests — wait a moment",
+    "couldNotLoadMore": "Couldn't load more posts"
+  },
+  "errors": {
+    "network": "Couldn't reach the server — check your connection",
+    "badRequest": "The post couldn't be created — check your text and try again",
+    "unauthorized": "Your session expired — refresh the page",
+    "forbidden": "You don't have permission to post",
+    "rateLimit": "You're posting too fast — wait a moment",
+    "server": "Something went wrong on our side — try again in a moment",
+    "generic": "Something went wrong — try again"
+  }
+}

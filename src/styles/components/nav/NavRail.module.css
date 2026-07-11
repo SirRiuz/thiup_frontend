@@ -1,0 +1,493 @@
+/* NavRail — Threads' fixed side navigation (desktop) / bottom bar (mobile).
+   Warm palette (never #FFFFFF), Inter, icon-only with tooltips. */
+
+/* ===== Desktop: Threads' exact side navigation =====
+   Their container: position fixed, inset-inline-start 0, top 0, height 100%,
+   min-height 480px, width 76px (--barcelona-side-navigation-width), flex
+   column centered, translucent bg (their rgba(250,250,250,0.85) → our warm
+   #f7f5f0 @ 0.85) + backdrop blur 15px. No border/radius/shadow — the old
+   floating capsule is gone. Anatomy: logo top, items vertically centered,
+   ☰ at the bottom. */
+.rail {
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 100%;
+  min-height: 480px;
+  z-index: 40;
+  width: 76px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 0;
+  background: rgba(247, 245, 240, 0.85);
+  -webkit-backdrop-filter: blur(15px);
+  backdrop-filter: blur(15px);
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* Fallback: solid page bg where backdrop-filter is unsupported. */
+@supports not (
+  (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))
+) {
+  .rail {
+    background: #f7f5f0;
+  }
+}
+
+/* Threads' exact logo slot (their sidebar mark): a 34×34 logo with 15px of
+   block padding, LINKED home. Hover grows the mark to scale(1.07) and a
+   press dips it to 0.98 — their transform 0.2s ease-in-out, on the svg so
+   the hit area never moves. */
+.railLogo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 15px 0;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.railLogo svg {
+  transition: transform 0.2s ease-in-out;
+}
+
+.railLogo:hover svg {
+  transform: scale(1.07);
+}
+
+.railLogo:active svg {
+  transform: scale(0.98);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .railLogo svg {
+    transition: none;
+  }
+
+  .railLogo:hover svg,
+  .railLogo:active svg {
+    transform: none;
+  }
+}
+
+.items {
+  display: flex;
+  flex-direction: column;
+  /* Threads' exact item separation (their row-gap: 4px). */
+  gap: 4px;
+  /* Centers the nav items in the leftover column height (logo above, ☰
+     below) — Threads' sidebar anatomy. */
+  margin: auto 0;
+}
+
+/* === Desktop sidebar items — Threads' exact spec ===
+   (Scoped to .rail so the mobile bars keep their own treatment untouched.)
+   Item box 60×60 (their xng8ra; the 50px variant applies only under their
+   @media (max-height: 600px) — mirrored below), idle icon rgb(184,184,184)
+   (their --barcelona-navigation-icon, light theme — much LIGHTER than our old
+   #666), hover = soft neutral wash (icon stays light), ACTIVE = the app's own
+   warm terracotta blob (#f3e3d3 + #a85432 — same language as the mobile
+   bottom bar; Threads' blob-less near-black active was tried and rolled back). */
+.rail .item {
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  color: #b8b8b8;
+}
+
+/* Threads' compact variant for short windows (their xijvv9e override). */
+@media (max-height: 600px) {
+  .rail .item {
+    height: 50px;
+  }
+}
+
+.rail .item:hover {
+  background: rgba(0, 0, 0, 0.04);
+  color: #b8b8b8;
+}
+
+/* Active route: the SAME warm blob as the mobile bottom bar (declared over
+   the hover wash — the blob wins for the current route even on hover). Idle
+   and hover stay Threads' light treatment above. */
+.rail .itemActive,
+.rail .itemActive:hover {
+  background: #f3e3d3;
+  color: #a85432;
+}
+
+/* === Create (+) — Threads' exact plated sidebar button ===
+   Their anatomy: the same 60×50 item box, but with an ALWAYS-VISIBLE rounded
+   plate behind the glyph (radius 10, inset 6px top/bottom → 60×38, bg
+   rgba(0,0,0,0.035) = their --barcelona-navigation-item-hover-background,
+   light theme) and the + in their --barcelona-secondary-icon (#999999) —
+   darker than the idle nav icons. Hover deepens the plate, not the item. */
+.rail .createItem {
+  border: 0;
+  cursor: pointer;
+  color: #999999;
+}
+
+.rail .createItem:hover {
+  background: transparent;
+  color: #999999;
+}
+
+.createPlate {
+  position: absolute;
+  inset: 6px 0;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.035);
+  transition: background 0.2s ease-out;
+}
+
+.rail .createItem:hover .createPlate {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+/* The glyph paints above the plate. */
+.createGlyph {
+  position: relative;
+}
+
+/* ===== Item (shared capsule/bar) ===== */
+
+.item {
+  position: relative;
+  width: 46px;
+  height: 46px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  color: #666666;
+  cursor: pointer;
+  text-decoration: none;
+  /* Transition (background/color + the spring transform) comes from the global
+     .springPressIcon class applied to every nav item — single source. */
+}
+
+.item:hover {
+  background: #f0ece3;
+  color: #1a1a1a;
+}
+
+/* Active: warm terracotta blob */
+.itemActive,
+.itemActive:hover {
+  background: #f3e3d3;
+  color: #a85432;
+}
+
+/* CSS tooltip (desktop, icon-only needs a visible accessible label) — the
+   dark-pill voice (the toast palette: ink + #f7f5f0), radius 8, a soft
+   popover shadow, and a 4px slide-in from the rail. */
+.tooltip {
+  position: absolute;
+  left: calc(100% + 12px);
+  top: 50%;
+  transform: translateY(-50%) translateX(-4px);
+  background: #1a1a1a;
+  color: #f7f5f0;
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(26, 26, 26, 0.22);
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 140ms ease, transform 140ms ease, visibility 140ms ease;
+  z-index: 50;
+}
+
+/* HOVER-INTENT delay: the tooltip appears only after the cursor RESTS on an
+   item (~450ms) — sweeping down the rail no longer flashes a parade of
+   pills. Hiding stays immediate (the base rule has no delay). */
+.item:hover .tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(-50%) translateX(0);
+  transition-delay: 450ms;
+}
+
+/* Tooltip SUPPRESSED after the click (until the next mouseenter): the
+   pointer stays over the button after clicking → :hover would keep it
+   stuck. Higher specificity than the hover rule above. */
+.item.tipOff:hover .tooltip {
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* ===== ☰ menu — anchors only: the PANEL itself is the shared MenuSurface
+   (one menu surface app-wide; see components/menu/MenuSurface). NavRail owns
+   just the anchor position per variant and the animated close. ===== */
+
+.menuWrapper {
+  position: relative;
+}
+
+/* Rail variant (side): opens to the RIGHT of the ☰, bottom-aligned. */
+.menuSide {
+  position: absolute;
+  left: calc(100% + 12px);
+  bottom: 0;
+  transform-origin: bottom left;
+}
+
+/* Rail variant at the rail's bottom: opens UPWARD, anchored LEFT (the button
+   hugs the viewport's left edge — a right-anchored menu would fall off). */
+.menuUp {
+  position: absolute;
+  left: 0;
+  right: auto;
+  bottom: calc(100% + 12px);
+  transform-origin: bottom left;
+}
+
+/* Animated close: the class is applied BEFORE unmounting; the JS unmounts
+   on animationend. */
+.menuClosing {
+  animation: menuOut 140ms ease-in forwards;
+}
+
+@keyframes menuOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menuClosing {
+    animation: none;
+  }
+}
+
+/* Header variant: the popover opens DOWNWARD, anchored to the left edge of the
+   ☰ button (which sits at the top-left of the mobile app bar). */
+.menuDown {
+  position: absolute;
+  left: 0;
+  right: auto;
+  top: calc(100% + 8px);
+  bottom: auto;
+  transform-origin: top left;
+}
+
+/* ===== Mobile: top app bar ([☰] · logo · [search]) ===== */
+
+/* Hidden by default (desktop uses the rail); shown only at the mobile
+   breakpoint below. */
+.appBar {
+  display: none;
+}
+
+/* Header icon button (☰ and search): comfortable 44px touch target, no
+   tooltip. Idle grey glyph (shared nav idle); the hover/active treatment is
+   centralized in the mobile block below. */
+.appBarButton {
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: #a3a3a3;
+  cursor: pointer;
+  text-decoration: none;
+  /* Transition comes from the global .springPressIcon class (single source). */
+}
+
+/* Threads' exact mobile-header logo slot: 32×32 box, glyph-filled, a LINK
+   home (their anatomy) with the logo's soft press. */
+.appBarBrand {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.appBarBrand svg {
+  transition: transform 0.2s ease-in-out;
+}
+
+.appBarBrand:active svg {
+  transform: scale(0.98);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .appBarBrand svg {
+    transition: none;
+  }
+
+  .appBarBrand:active svg {
+    transform: none;
+  }
+}
+
+/* ===== Mobile: bottom bar ===== */
+
+.bottomBar {
+  display: none;
+}
+
+@media (max-width: 700px) {
+  .rail {
+    display: none;
+  }
+
+  /* Top app bar: [☰] · [logo centered] · [search]. Grid 1fr·auto·1fr keeps the
+     logo perfectly centered regardless of the side buttons' widths. FIXED (not
+     sticky, same treatment as the thread view's app bar): iOS's elastic
+     overscroll drags sticky bars with the content during the rubber-band —
+     fixed stays anchored to the viewport. It no longer offsets the content in
+     flow, so /home and /me compensate with 60px of mobile top padding. It
+     follows the keyboard via --kb-top (set by useKeyboardOpen), like the
+     thread bar. */
+  .appBar {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: var(--kb-top, 0px);
+    z-index: 41;
+    /* 60px tall like Threads. The 36px logo keeps ~12px of air top/bottom. */
+    height: 60px;
+    padding: 0 8px;
+    /* SOLID WHITE bar — the app's white (#fdfcf8, never #FFFFFF), matching the
+       view-thread bar's white tone. Opaque on purpose: over the feed's images
+       a translucent recipe read too transparent. BORDERLESS (Threads-style):
+       it fuses seamlessly with the mobile #fdfcf8 sheet below — no hairline. */
+    background: #fdfcf8;
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  .appBar > :first-child {
+    justify-self: start;
+  }
+
+  .appBar > :last-child {
+    justify-self: end;
+  }
+
+  .bottomBar {
+    display: flex;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    justify-content: space-around;
+    align-items: center;
+    padding: 6px 12px calc(6px + env(safe-area-inset-bottom));
+    /* Same frosted glass as the header / view-thread app bar. The padding keeps
+       the blur extending into the safe-area inset (no odd opaque strip). */
+    background: rgba(253, 252, 248, 0.88);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    backdrop-filter: blur(28px) saturate(180%);
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Helvetica, Arial, sans-serif;
+    transition: transform 0.2s ease;
+  }
+
+  /* Fallback: solid white bg where backdrop-filter is unsupported (old Android),
+     so the bar never sits translucent-without-blur over content (illegible).
+     (The app bar is solid #f7f5f0 now — only the bottom bar stays frosted.) */
+  @supports not (
+    (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))
+  ) {
+    .bottomBar {
+      background: #fdfcf8;
+    }
+  }
+
+  /* Bottom bar items idle = grey (shared nav idle with the app bar buttons). */
+  .bottomBar .item {
+    color: #a3a3a3;
+  }
+
+  /* Shared interaction for ALL mobile nav icons (☰, search, Home, My threads):
+     hover (desktop) AND active/tap (mobile) → black icon + a subtle #f0ece3
+     pill. Centralized here so every nav icon speaks one language. The 44–46px
+     item with its radius makes the fill read as a centered rounded pill, with
+     the touch target untouched. */
+  .appBarButton:active,
+  .bottomBar .item:active {
+    background: #f0ece3;
+    color: #1a1a1a;
+  }
+
+  @media (hover: hover) {
+    .appBarButton:hover,
+    .bottomBar .item:hover {
+      background: #f0ece3;
+      color: #1a1a1a;
+    }
+  }
+
+  /* The active route keeps its OWN terracotta blob (#f3e3d3 + #a85432) —
+     distinct from the hover pill and NOT overridden by it (declared last, equal
+     specificity → wins for the current route even on hover/tap). */
+  .bottomBar .itemActive,
+  .bottomBar .itemActive:hover,
+  .bottomBar .itemActive:active {
+    background: #f3e3d3;
+    color: #a85432;
+  }
+
+  /* Heavier, Threads-like stroke for the mobile nav icons (☰, search, Home, My
+     threads). Set via CSS — it overrides each SVG's stroke-width="1.8" attribute
+     — so the shared NAV_ITEMS glyphs stay 1.8 on the DESKTOP rail (untouched) and
+     only thicken on mobile. Centralized here = one knob. Excludes the brand logo
+     (it lives in .appBarBrand, not .appBarButton). Round caps/joins are kept (SVG
+     attributes), so the thicker stroke stays smooth, not blocky. */
+  .appBarButton svg,
+  .bottomBar .item svg {
+    stroke-width: 2.3px;
+  }
+
+  /* Keyboard open (iOS): slide the bar off-screen so it doesn't ride up on top
+     of the keyboard. It comes back when the keyboard closes. */
+  .bottomBarHidden {
+    transform: translateY(100%);
+    pointer-events: none;
+  }
+
+  /* On mobile there is no hover — no tooltips. */
+  .bottomBar .tooltip {
+    display: none;
+  }
+}
+
+/* Honoring prefers-reduced-motion: no transitions or animations —
+   the menu appears/disappears instantly (the JS also unmounts directly in
+   that case: no frozen frame on close). */
+@media (prefers-reduced-motion: reduce) {
+  .item,
+  .appBarButton,
+  .tooltip {
+    transition: none;
+  }
+
+  .menuClosing {
+    animation: none;
+  }
+}

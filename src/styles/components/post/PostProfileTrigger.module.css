@@ -1,0 +1,19 @@
+/* PostProfileTrigger — wrapper that anchors the absolute hover card */
+
+.trigger {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  /* Threads' avatar↔name gap (their 48px lane = 36px avatar + 12px gap). Only
+     the OP header puts avatar + mask in ONE trigger, so this is what aligns the
+     OP mask with the replies' content column (36 gutter + 12 grid gap). */
+  gap: 12px;
+  cursor: pointer;
+}
+
+.cardContainer {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 20;
+}
