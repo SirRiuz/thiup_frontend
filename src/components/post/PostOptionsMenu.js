@@ -6,7 +6,9 @@ import ThreadDetailsModal from "./ThreadDetailsModal";
 import ReportModal from "./ReportModal";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import { useToast } from "../../contexts/ToastContext";
+import MenuSurface, { menuStyles } from "../menu/MenuSurface";
 import styles from "../../styles/components/post/PostOptionsMenu.module.css";
+import cx from "../../utils/cx";
 
 /**
  * Three-dots options menu for a post card (feed + search). Responsive: an
@@ -27,22 +29,30 @@ const MoreIcon = () => (
   </svg>
 );
 const InfoIcon = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <circle cx="12" cy="12" r="9.5" />
     <path d="M12 11v5" />
     <path d="M12 7.5h.01" />
   </svg>
 );
+/* Threads' EXACT "Copy link" glyph (their 20px filled chain, lifted verbatim). */
 const LinkIcon = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="M10 13a5 5 0 0 0 7.07 0l3-3A5 5 0 0 0 13 3l-1 1" />
-    <path d="M14 11a5 5 0 0 0-7.07 0l-3 3A5 5 0 0 0 11 21l1-1" />
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M4.21806 9.21699C4.6086 8.82701 5.24177 8.82671 5.63212 9.21699C6.02227 9.60735 6.02206 10.2406 5.63212 10.6311L4.60282 11.6603C2.53307 13.7303 2.46839 17.0452 4.40849 19.1926L4.60282 19.3967L4.80693 19.591C6.95427 21.5317 10.2696 21.4666 12.3392 19.3967L13.3684 18.3674C13.7591 17.9773 14.3932 17.9779 14.7835 18.3684C15.1735 18.7589 15.1727 19.3921 14.7825 19.7824L13.7532 20.8117L13.7522 20.8107C10.8349 23.7283 6.10597 23.7285 3.18876 20.8107C0.270964 17.8934 0.271164 13.1641 3.18876 10.2463L4.21806 9.21699Z" />
+    <path d="M15.2933 7.29316C15.6838 6.90272 16.3168 6.90269 16.7073 7.29316C17.0976 7.68368 17.0977 8.31678 16.7073 8.70722L8.70732 16.7072C8.31688 17.0976 7.68379 17.0975 7.29325 16.7072C6.90274 16.3167 6.90276 15.6837 7.29325 15.2932L15.2933 7.29316Z" />
+    <path d="M10.5247 2.92402C13.4571 0.273656 17.9845 0.362116 20.8108 3.18867L21.0765 3.46699C23.6409 6.30485 23.6406 10.6365 21.0765 13.4748L20.8108 13.7541L19.7825 14.7824C19.392 15.1726 18.7589 15.1728 18.3685 14.7824C17.9782 14.392 17.9783 13.7589 18.3685 13.3684L19.3968 12.34L19.5911 12.1359C21.4693 10.0573 21.4691 6.88499 19.5911 4.80683L19.3968 4.60273C17.3272 2.53299 14.0118 2.46786 11.8645 4.4084L11.6604 4.60273L10.6311 5.63203C10.2406 6.02207 9.60744 6.02225 9.21708 5.63203C8.82685 5.24151 8.82682 4.60742 9.21708 4.21699L10.2464 3.18867L10.5247 2.92402Z" />
   </svg>
 );
+/* Threads' EXACT "Report" glyph (their 20px circle-! — lifted verbatim). */
 const FlagIcon = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
-    <line x1="4" x2="4" y1="22" y2="15" />
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M12.001 15.0625C12.6223 15.0625 13.126 15.5662 13.126 16.1875C13.126 16.8088 12.6223 17.3125 12.001 17.3125C11.3798 17.3123 10.876 16.8087 10.876 16.1875C10.876 15.5663 11.3798 15.0627 12.001 15.0625Z" />
+    <path d="M12.001 6.6875C12.5533 6.6875 13.001 7.13522 13.001 7.6875V12.4375C13.001 12.9898 12.5533 13.4375 12.001 13.4375C11.4489 13.4373 11.001 12.9897 11.001 12.4375V7.6875C11.001 7.13534 11.4489 6.6877 12.001 6.6875Z" />
+    <path
+      clipRule="evenodd"
+      fillRule="evenodd"
+      d="M12 1C18.0751 1 23 5.92488 23 12C23 13.6202 22.6483 15.1606 22.0176 16.5479L22.9834 21.8193C23.0425 22.1418 22.9403 22.4737 22.709 22.7061C22.4777 22.9383 22.1469 23.042 21.8242 22.9844L16.5117 22.0342C15.1338 22.6547 13.606 23 12 23C5.92488 23 1 18.0752 1 12C1 5.92481 5.92488 1 12 1ZM12 3C7.02944 3 3 7.02939 3 12C3 16.9706 7.02944 21 12 21C13.414 21 14.7495 20.6748 15.9375 20.0957L16.084 20.0381C16.2347 19.9922 16.3952 19.9818 16.5518 20.0098L20.7559 20.7617L19.9922 16.5928C19.9535 16.3815 19.9842 16.1634 20.0791 15.9707C20.6684 14.7742 21 13.4272 21 12C21 7.02944 16.9706 3 12 3Z"
+    />
   </svg>
 );
 
@@ -57,9 +67,13 @@ const BackIcon = () => (
     <path d="M15 18l-6-6 6-6" />
   </svg>
 );
+/* Threads' EXACT chevron (their 16px "Next" glyph, rotated to point right). */
 const ChevronRight = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="m9 6 6 6-6 6" />
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path
+      transform="rotate(-90 12 12)"
+      d="M20.70703 8.29297C21.09755 8.68349 21.09755 9.31651 20.70703 9.70703L12.707 17.707C12.3165 18.0976 11.6835 18.0976 11.293 17.707L3.293 9.70703C2.9024 9.31651 2.9024 8.68349 3.293 8.29297C3.6835 7.90245 4.3165 7.90245 4.707 8.29297L12 15.5859L19.29297 8.29297C19.68349 7.90245 20.31651 7.90245 20.70703 8.29297Z"
+    />
   </svg>
 );
 const CheckIcon = () => (
@@ -186,7 +200,16 @@ function PostOptionsMenu({
   // Single source of the menu content; rendered in both presentations.
   // Shows the root items, or the Sort sub-panel when submenu === "sort"
   // (Threads-style: a ">" item opens it, a back row returns).
-  const renderItems = (itemClass, iconClass, dangerClass, dividerClass) => {
+  // iconRight (desktop menu only): Threads' row anatomy — label on the left,
+  // the glyph riding the right edge (their Save/Report/Copy-link rows). The
+  // mobile sheet keeps the icon-first layout untouched.
+  const renderItems = (
+    itemClass,
+    iconClass,
+    dangerClass,
+    dividerClass,
+    iconRight = false
+  ) => {
     if (submenu === "sort") {
       return (
         <>
@@ -243,15 +266,23 @@ function PostOptionsMenu({
           type="button"
           role="menuitem"
           aria-haspopup={it.submenu ? "menu" : undefined}
-          className={`${itemClass} ${it.danger ? dangerClass : ""}`}
+          className={cx(itemClass, it.danger ? dangerClass : "")}
           onClick={() => (it.submenu ? setSubmenu("sort") : handle(it.key))}
         >
-          <span className={iconClass}>{it.icon}</span>
+          {!iconRight && <span className={iconClass}>{it.icon}</span>}
           {t(it.labelKey)}
-          {it.submenu && (
+          {it.submenu ? (
+            /* Submenu rows always trail the chevron (Threads' Add-to-feed
+               row) — on desktop it IS the row's right glyph. */
             <span style={{ marginLeft: "auto", display: "inline-flex", color: "#9b9591" }}>
               <ChevronRight />
             </span>
+          ) : (
+            iconRight && (
+              <span className={cx(iconClass, menuStyles.itemIconRight)}>
+                {it.icon}
+              </span>
+            )
           )}
         </button>
       </Fragment>
@@ -260,18 +291,14 @@ function PostOptionsMenu({
 
   return (
     <div
-      className={`${styles.wrapper} ${
-        variant === "card" ? styles.wrapperCard : styles.wrapperInline
-      } ${className}`}
+      className={cx(styles.wrapper, variant === "card" ? styles.wrapperCard : styles.wrapperInline, className)}
       ref={wrapperRef}
       onClick={(e) => e.stopPropagation()}
     >
       <button
         ref={triggerRef}
         type="button"
-        className={`${styles.trigger} springPressIcon ${
-          open ? styles.triggerOpen : ""
-        }`}
+        className={cx(styles.trigger, "springPressIcon", open ? styles.triggerOpen : "")}
         onClick={toggle}
         aria-label={t("threadOptions.more")}
         aria-haspopup="menu"
@@ -285,14 +312,18 @@ function PostOptionsMenu({
         !isMobile &&
         pos &&
         createPortal(
-          <div
-            className={styles.menu}
-            role="menu"
+          <MenuSurface
             ref={menuRef}
             style={{ position: "fixed", top: pos.top, right: pos.right }}
           >
-            {renderItems(styles.item, styles.itemIcon, styles.itemDanger, styles.divider)}
-          </div>,
+            {renderItems(
+              menuStyles.item,
+              menuStyles.itemIcon,
+              menuStyles.itemDanger,
+              menuStyles.divider,
+              true // desktop: Threads' label-left · icon-right rows
+            )}
+          </MenuSurface>,
           document.body
         )}
 

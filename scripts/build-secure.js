@@ -40,6 +40,9 @@ for (const name of DOTENV_FILES) {
 
 try {
   execSync('react-scripts build', { stdio: 'inherit', env: buildEnv, cwd: ROOT });
+  // CSS classes first: obfuscate.js moves the bundle's strings into a base64
+  // string-array and splits them — after that they are no longer findable.
+  execSync('node scripts/obfuscate-css.js', { stdio: 'inherit', env: buildEnv, cwd: ROOT });
   execSync('node scripts/obfuscate.js', { stdio: 'inherit', env: buildEnv, cwd: ROOT });
 } finally {
   // Restaura los .env apartados, ocurra lo que ocurra.

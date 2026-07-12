@@ -1,5 +1,6 @@
 import { useId } from "react";
 import styles from "../../styles/components/post/ReactionEmoji.module.css";
+import cx from "../../utils/cx";
 
 /**
  * ReactionEmoji — Thiup's OWN reaction set, drawn as inline SVG so it renders
@@ -340,7 +341,7 @@ function ReactionEmoji({ name, emoji, size = 20, animated = false, className = "
 
   return (
     <svg
-      className={`${styles.root} ${animated ? styles.animated : ""} ${className}`}
+      className={cx(styles.root, animated ? styles.animated : "", className)}
       width={size}
       height={size}
       viewBox="0 0 32 32"

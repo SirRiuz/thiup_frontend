@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import styles from "../../styles/components/post/PostMoreMenu.module.css";
+import cx from "../../utils/cx";
 
 function PostMoreMenu({ maskId }) {
   const { t } = useTranslation();
@@ -38,7 +39,7 @@ function PostMoreMenu({ maskId }) {
     <div className={styles.wrapper} ref={ref}>
       <button
         type="button"
-        className={`${styles.trigger} ${open ? styles.triggerOpen : ""}`}
+        className={cx(styles.trigger, open ? styles.triggerOpen : "")}
         onClick={() => setOpen(!open)}
         aria-label={t("moreMenu.more")}
         aria-expanded={open}

@@ -3,11 +3,13 @@
 .wrapper {
   /* The composer now lives INSIDE the thread's elevated .surface card, so it
    * drops its own card (border/bg/radius). It's a section at the bottom of the
-   * card, divided from the replies by a full-width top border (negative side
-   * margins cancel the surface's 12px padding → edge-to-edge, like the reply
-   * dividers); the side padding restores the content inset. */
-  margin: 0 -12px;
-  padding: 16px 12px 0;
+   * card, divided from the replies by a full-width top border: the negative
+   * side margins cancel the surface's REAL side padding via --layout-pad-x
+   * (16px on the thread card — a hardcoded -12px went stale when that
+   * padding changed and left the hairline floating 4px short of the edges);
+   * the side padding restores the content inset. */
+  margin: 0 calc(-1 * var(--layout-pad-x, 12px));
+  padding: 16px var(--layout-pad-x, 12px) 0;
   border-top: 1px solid #ebe7dd;
 }
 
@@ -78,20 +80,20 @@
 .composeRow {
   display: flex;
   align-items: flex-start;
-  /* Match Threads' composer height (~49px): 36px icon button + 6px top/bottom
-     padding + border. gap 8 + padding 6 mirror Threads' values. */
-  gap: 8px;
+  /* Threads' EXACT composer box (decoded from their markup): padding 6px on
+     every side (their x1yrsyyn/x10b6aqq + --x-paddingInline: 6px), 12px
+     column-gap between avatar · field · toolbar (their xtqikln), radius 24,
+     36px avatar/toolbar row inside. */
+  gap: 12px;
   background: #f7f5f0;
   border: 1px solid #e5e0d3;
   border-radius: 24px;
-  padding: 6px 6px 6px 10px;
+  padding: 6px;
 }
 
 .avatar {
   flex: none;
   display: inline-flex;
-  /* Optically align the identicon with the input's first line. */
-  margin-top: 2px;
 }
 
 /* Threads-exact avatar ring: a hairline 0.5px outline hugging the circular
@@ -137,9 +139,11 @@
   overflow: hidden;
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Helvetica, Arial, sans-serif;
   font-size: 14px;
-  line-height: 1.55;
+  /* Threads' exact composer line-height (their --x-lineHeight: 1.4em). */
+  line-height: 1.4;
   color: #1a1a1a;
-  padding: 6px 0;
+  /* MUST mirror .input's padding exactly (pixel-synced overlay). */
+  padding: 7px 0;
   margin: 0;
   border: 0;
   box-sizing: border-box;
@@ -162,10 +166,14 @@
   resize: none;
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Helvetica, Arial, sans-serif;
   font-size: 14px;
-  line-height: 1.55;
+  /* Threads' exact composer line-height (their --x-lineHeight: 1.4em). */
+  line-height: 1.4;
   color: transparent;
   caret-color: #1a1a1a;
-  padding: 6px 0;
+  /* Threads' exact input paddings (their xm7lytj/x1ykpatu: 7px top/bottom) —
+     with their 1.4 line-height the single-line field lands at 35px, sitting
+     flush inside the 36px row. */
+  padding: 7px 0;
   min-height: 24px;
   /* No max-height: the field GROWS with the content (Threads-style) — a cap
      here would clip the textarea to 140px while the (absolute) overlay still
@@ -194,17 +202,20 @@
 
 /* === Toolbar === */
 
-/* Toolbar to the RIGHT of the input, on the same row (icons/Reply). */
+/* Toolbar to the RIGHT of the input, on the same row (icons/Reply) —
+   Threads' exact 12px gap between toolbar items (their xtqikln). */
 .toolbar {
   flex: none;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 12px;
   padding: 0;
 }
 
 /* Plain icon button inside the field (Threads-style — no own border/box).
-   36×36 touch target so it's easy to tap on small screens. */
+   36×36 touch target (their toolbar row height); idle glyph in their
+   --barcelona-secondary-icon (light: #999999); press = their exact
+   scale(0.97) at 0.15s (the xd3so5o/xx6bhzk pair on this very button). */
 .attachButton {
   flex: none;
   width: 36px;
@@ -214,11 +225,15 @@
   border-radius: 50%;
   padding: 0;
   cursor: pointer;
-  color: #6b6b6b;
+  color: #999999;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 120ms ease, color 120ms ease;
+  transition: background 120ms ease, color 120ms ease, transform 0.15s ease;
+}
+
+.attachButton:not(:disabled):active {
+  transform: scale(0.97);
 }
 
 .attachButton:hover {

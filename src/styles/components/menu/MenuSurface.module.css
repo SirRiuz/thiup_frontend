@@ -1,0 +1,110 @@
+/* MenuSurface — THE app's floating menu panel (Threads' exact dropdown):
+   240px, radius 16, 8px inner padding, hairline 0.5px outline under their
+   triple shadow, opening pop scale(0)→1. ONE source of truth — the thread
+   options menu and the nav ☰ menu both render this surface; never
+   re-implement the panel per component.
+
+   Positioning is the CALLER's job (inline fixed coords, or an anchor class
+   composed on top) — the surface only owns the look and the entry pop. */
+
+.menu {
+  width: 240px;
+  max-width: calc(100vw - 24px);
+  padding: 8px;
+  background: #fdfcf8;
+  border: 0;
+  outline: 0.5px solid #e5e0d3;
+  border-radius: 16px;
+  box-shadow: 0 0 80px rgba(0, 0, 0, 0.25), 1px 1px 2px rgba(0, 0, 0, 0.05),
+    0 8px 16px rgba(0, 0, 0, 0.06);
+  z-index: 1000;
+  transform-origin: top right;
+  /* Threads' opening pop: scale(0) → 1 + fade, growing out of the anchor. */
+  animation: menuSurfaceIn 0.15s ease-in-out;
+  /* Often portaled to body — declare the family so it never depends on
+     context. */
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    system-ui, Roboto, Helvetica, Arial, sans-serif;
+}
+
+@keyframes menuSurfaceIn {
+  from {
+    opacity: 0;
+    transform: scale(0);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Menu row — Threads' exact item: 15/600 ink, radius 8, quiet hover wash,
+   soft press. */
+.item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: #1a1a1a;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.1s ease, transform 0.1s ease;
+}
+
+@media (hover: hover) {
+  .item:hover {
+    background: rgba(0, 0, 0, 0.04);
+  }
+}
+
+.item:active {
+  background: rgba(0, 0, 0, 0.04);
+  transform: scale(0.98);
+}
+
+/* Item glyph at the item's charcoal (Threads' menu glyph tone). */
+.itemIcon {
+  display: inline-flex;
+  flex: none;
+  color: #424242;
+}
+
+/* Desktop rows (Threads' anatomy): the glyph rides the RIGHT edge. */
+.itemIconRight {
+  margin-left: auto;
+}
+
+/* Destructive action — Threads' exact --barcelona-error-text. */
+.itemDanger {
+  color: #ff3040;
+}
+
+.itemDanger .itemIcon {
+  color: #ff3040;
+}
+
+/* Group boundary: full-bleed 1px line (Threads' bordered groups — the -8px
+   cancels the menu's own padding so the line spans edge to edge). */
+.divider {
+  height: 1px;
+  background: #ebe7dd;
+  margin: 8px -8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menu {
+    animation: none;
+  }
+
+  .item:active {
+    transform: none;
+  }
+}

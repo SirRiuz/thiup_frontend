@@ -81,27 +81,33 @@
   justify-content: space-between;
   gap: 16px;
   padding: 13px 0;
-  border-bottom: 1px solid #f0ece2;
+  border-bottom: 1px solid #ebe7dd;
 }
 
 .row:last-child {
   border-bottom: 0;
 }
 
+/* Keys — the app's canonical quiet-meta voice (the profile/joined tone):
+   13/400 #9b9591, icon a step lighter. The old #666666 was an orphan grey. */
 .key {
   display: inline-flex;
   align-items: center;
   gap: 9px;
   flex: none;
-  color: #666666;
+  color: #9b9591;
   font-size: 13px;
+  font-weight: 400;
+  line-height: 1.4;
 }
 
 .keyIcon {
   display: inline-flex;
-  color: #a3a3a3;
+  color: #b8b8b8;
 }
 
+/* Values — ink 600 (the stats-line value weight) with tabular numerals so
+   counts align like machine data; keys whisper, values answer. */
 .value {
   margin: 0;
   display: inline-flex;
@@ -110,42 +116,44 @@
   min-width: 0;
   color: #1a1a1a;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
+  line-height: 1.4;
   text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
-.mono {
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  font-size: 13px;
-  color: #1a1a1a;
-  overflow-wrap: anywhere;
-}
-
-/* Copy button — comfortable hit area, warm hover, terracotta "Copied". */
-.copyBtn {
-  flex: none;
+/* The thread id — the profile's hash-pill verbatim: the WHOLE mono pill is
+   the copy button (recessed field, mono machine tone, warm hover). */
+.idPill {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  min-height: 32px;
-  padding: 5px 8px;
-  border: 0;
+  gap: 6px;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 12px;
+  color: #8b6f47;
+  background: #f7f5f0;
+  border: 1px solid #ebe7dd;
   border-radius: 6px;
-  background: transparent;
-  color: #a3a3a3;
+  padding: 3px 8px;
+  max-width: 100%;
   cursor: pointer;
-  transition: background 120ms ease, color 120ms ease;
+  transition: background 120ms ease, border-color 120ms ease;
 }
 
-.copyBtn:hover {
-  background: #f3e3d3;
-  color: #1a1a1a;
+.idPill:hover {
+  background: #f0ece3;
+  border-color: #e5e0d3;
 }
 
-.copyLabel {
-  font-size: 11px;
-  font-weight: 600;
-  color: #a85432;
+.idPill svg {
+  flex: none;
+  color: #b8a98f;
+}
+
+.idText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 @keyframes backdropIn {
@@ -210,7 +218,7 @@
   }
 
   .close,
-  .copyBtn {
+  .idPill {
     transition: none;
   }
 }

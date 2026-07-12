@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useScrollLock } from "../utils/scrollLock";
 import BrandLogo from "./BrandLogo";
 import styles from "../styles/components/WelcomeModal.module.css";
+import cx from "../utils/cx";
 
 /**
  * Welcome modal — shown ONCE on the user's first visit. Greets them, states the
@@ -195,20 +196,23 @@ function WelcomeModal({ onClose, mandatory = false }) {
         <ul className={styles.rules}>
           {RULES.map((rule) => (
             <li key={rule.key} className={styles.rule}>
-              <svg
-                className={styles.ruleIcon}
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                {rule.icon}
-              </svg>
+              {/* Warm icon TILE — the app's current glyph-tile language
+                  (report categories / empty states): #f3e3d3 square,
+                  terracotta glyph. */}
+              <span className={styles.ruleIcon} aria-hidden="true">
+                <svg
+                  width="17"
+                  height="17"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  {rule.icon}
+                </svg>
+              </span>
               <span className={styles.ruleText}>
                 <span className={styles.ruleLead}>
                   {t(`welcome.rules.${rule.key}.lead`)}
@@ -221,7 +225,7 @@ function WelcomeModal({ onClose, mandatory = false }) {
 
         <button
           type="button"
-          className={styles.button}
+          className={cx(styles.button, "springPress")}
           ref={primaryButtonRef}
           onClick={accept}
         >

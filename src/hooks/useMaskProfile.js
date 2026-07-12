@@ -17,6 +17,10 @@ function mapProfile(data) {
     joinedAt: data.joined,
     postsCount: data.posts_count ?? 0,
     repliesCount: data.replies_count ?? 0,
+    // Reactions RECEIVED across the mask's posts (same aggregate as /me).
+    reactionsCount: data.reactions_count ?? 0,
+    // Ephemeral presence (60s TTL on the backend) — the green activity dot.
+    isOnline: Boolean(data.is_online),
   };
 }
 

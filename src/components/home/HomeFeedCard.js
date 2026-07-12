@@ -7,6 +7,7 @@ import ThreadMedia from "../media/ThreadMedia";
 import { formatCount, renderTextWithHashtags } from "./homeHelpers";
 import { DEBUG } from "../../settings";
 import styles from "../../styles/components/home/HomeFeedCard.module.css";
+import cx from "../../utils/cx";
 
 // Optional explanatory badge on the just-created card ("Your new thread").
 // Prepared but OFF by default — flip to true to make the reason for the
@@ -76,9 +77,7 @@ function HomeFeedCard({
 
   return (
     <article
-      className={`${styles.card} ${isLast ? styles.cardLast : ""} ${
-        isNew ? styles.cardNew : ""
-      }`}
+      className={cx(styles.card, isLast ? styles.cardLast : "", isNew ? styles.cardNew : "")}
       onClick={handleCardClick}
     >
       {/* Three-dots options (View details / Copy link / Report). Self-contained;

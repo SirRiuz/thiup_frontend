@@ -1,72 +1,69 @@
-/* /me profile header — warm identity card (anonymous mask + private stats).
-   Palette from CLAUDE.md; never #FFFFFF. */
+/* MeProfileHeader — Threads' exact profile-header anatomy on the warm
+   tokens, FLAT on the surface card (the old boxed card-in-card is gone):
+   name block left · avatar right, then the quiet stats line and the privacy
+   note. The screen's surface provides the 24px column inset. */
 
-.card {
-  background: #fdfcf8;
-  border: 1px solid #e5e0d3;
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 24px;
+.header {
+  padding: 12px 0 16px;
 }
 
-/* ── Identity: identicon + name + hash ── */
-.identity {
+/* Name block left, avatar right — Threads' top row. */
+.topRow {
   display: flex;
   align-items: center;
-  gap: 14px;
+  justify-content: space-between;
+  gap: 16px;
 }
 
-.avatarRing {
-  flex: none;
-  display: inline-flex;
-  border-radius: 50%;
-  border: 2px solid #d8b89a;
-  /* The avatar is 58px; the ring sits just outside it. */
-  padding: 0;
-  line-height: 0;
-}
-
-.identityText {
+.identityBlock {
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 6px;
-  min-width: 0;
 }
 
 .nameRow {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 10px;
+  min-width: 0;
 }
 
-.maskName {
-  font-size: 17px;
+/* Threads' display name: their --system-24-font-size / 600 / 1.4. */
+.name {
+  margin: 0;
+  font-size: 24px;
   font-weight: 600;
+  line-height: 1.4;
   color: #1a1a1a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-/* "You" badge next to the mask name — warm tag (same family as the "Your
-   thread" tag): #f3e3d3 fill, #a85432 text, #d8b89a border. */
+/* "You" — the warm pill (the app's identity-badge language), /me only. */
 .youBadge {
   flex: none;
-  padding: 1px 8px;
-  border: 1px solid #d8b89a;
+  padding: 3px 9px;
   border-radius: 20px;
   background: #f3e3d3;
   color: #a85432;
   font-size: 10px;
   font-weight: 700;
-  line-height: 1.6;
-  white-space: nowrap;
+  letter-spacing: 0.04em;
 }
 
+/* The hash IS the username line (Threads' @handle slot): the WHOLE mono
+   pill is the copy button — one obvious tap target instead of a tiny icon. */
 .hashRow {
   display: flex;
   align-items: center;
-  gap: 6px;
 }
 
 .hashPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   font-size: 12px;
   color: #8b6f47;
@@ -74,82 +71,117 @@
   border: 1px solid #ebe7dd;
   border-radius: 6px;
   padding: 3px 8px;
-  letter-spacing: 0.02em;
-}
-
-.copyBtn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border: 0;
-  border-radius: 8px;
-  background: transparent;
-  color: #8b6f47;
+  max-width: 260px;
   cursor: pointer;
-  transition: background 140ms ease, color 140ms ease;
+  transition: background 120ms ease, border-color 120ms ease;
 }
 
-@media (hover: hover) {
-  .copyBtn:hover {
-    background: #f0ece3;
-    color: #1a1a1a;
+.hashPill:hover {
+  background: #f0ece3;
+  border-color: #e5e0d3;
+}
+
+.hashPill:disabled {
+  opacity: 0.4;
+  cursor: default;
+  pointer-events: none;
+}
+
+.hashPill svg {
+  flex: none;
+  color: #b8a98f;
+}
+
+.hashText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Hairline ring seating the big identicon on the cream surface (the compose
+   avatar's outline recipe). It's a BUTTON now: tapping opens the fullscreen
+   avatar viewer (IG's profile-picture dialog) — soft Threads press. */
+.avatarWrap {
+  flex: none;
+  display: inline-flex;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.avatarWrap:active {
+  transform: scale(0.97);
+}
+
+.avatarWrap svg {
+  outline: 0.5px solid #e5e0d3;
+  outline-offset: -0.5px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .avatarWrap {
+    transition: none;
+  }
+
+  .avatarWrap:active {
+    transform: none;
   }
 }
 
-.copyBtn:focus-visible {
-  outline: none;
-  box-shadow: inset 0 0 0 2px #c5a572;
-}
-
-.copyBtn:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
-
-/* ── Stats row (3 columns, subtle dividers) ── */
-.stats {
-  display: flex;
-  margin-top: 18px;
-}
-
-.stat {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  padding: 4px 8px;
-}
-
-.stat:not(:first-child) {
-  border-left: 1px solid #f0ece2;
-}
-
-.statValue {
-  font-size: 20px;
-  font-weight: 600;
-  color: #1a1a1a;
+/* Stats as ONE quiet line — Threads' "N followers" language: 15px muted, no
+   boxes, dots between; the VALUES half a step darker/bolder so the line
+   scans at a glance. */
+.statsLine {
+  margin: 14px 0 0;
+  font-size: 15px;
+  line-height: 21px;
+  color: #9b9591;
   font-variant-numeric: tabular-nums;
 }
 
-.statLabel {
-  font-size: 11px;
-  color: #666666;
+.statPart {
+  white-space: nowrap;
 }
 
-/* Skeleton bar standing in for a stat number while /me loads. */
-.statSkeleton {
-  display: block;
-  width: 28px;
-  height: 18px;
+.statValue {
+  font-weight: 600;
+  color: #6b6b6b;
+}
+
+.statDot {
+  color: #c4bfb1;
+}
+
+/* "Joined April 2020" — quiet whisper under the stats (calendar + text). */
+.joinedLine {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #9b9591;
+}
+
+.joinedLine svg {
+  /* Inherits the line's muted grey — no warm tint (it read orange). */
+  flex: none;
+}
+
+.statsSkeleton {
+  display: inline-block;
+  width: 220px;
+  max-width: 60%;
+  height: 13px;
   border-radius: 4px;
   background: #ebe7dd;
-  animation: meStatPulse 1.4s ease-in-out infinite;
+  animation: meStatsPulse 1.4s ease-in-out infinite;
 }
 
-@keyframes meStatPulse {
+@keyframes meStatsPulse {
   0% {
     opacity: 0.6;
   }
@@ -161,26 +193,8 @@
   }
 }
 
-/* ── Privacy note ── */
-.privacy {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin: 16px 0 0;
-  padding-top: 14px;
-  border-top: 1px solid #f0ece2;
-  font-size: 12px;
-  color: #9b9591;
-  line-height: 1.4;
-}
-
-.privacy svg {
-  flex: none;
-  color: #b8845f;
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .statSkeleton {
+  .statsSkeleton {
     animation: none;
   }
 }

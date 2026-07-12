@@ -77,9 +77,18 @@
   color: #a85432;
 }
 
+/* Suggestion rows: the miniature activity sparkline rides the row's free
+   space (right-aligned, before the arrow) — the pulse that made the flat
+   trending list breathe. */
+.suggestionSpark {
+  margin-left: auto;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+}
+
 /* Launch affordance (suggestion rows): the ↗ that says "runs this search". */
 .launchArrow {
-  margin-left: auto;
   flex: none;
   display: inline-flex;
   color: #c4bfb1;

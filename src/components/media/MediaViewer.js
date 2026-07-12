@@ -9,6 +9,7 @@ import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { useScrollLock } from "../../utils/scrollLock";
 import VideoPlayer from "./VideoPlayer";
+import cx from "../../utils/cx";
 import {
   setAudioOwner,
   clearAudioOwnerIf,
@@ -995,9 +996,7 @@ function MediaViewer({ images, index: startIndex, onClose }) {
             ref={isCurrent ? imageRef : undefined}
             src={it.url}
             alt=""
-            className={`${styles.image} ${
-              isCurrent ? (mediaLoaded ? styles.loaded : "") : styles.loaded
-            }`}
+            className={cx(styles.image, isCurrent ? (mediaLoaded ? styles.loaded : "") : styles.loaded)}
             draggable={false}
             decoding="async"
             loading={isCurrent ? undefined : "lazy"}
@@ -1012,9 +1011,7 @@ function MediaViewer({ images, index: startIndex, onClose }) {
   return createPortal(
     <div
       ref={viewerRef}
-      className={`${styles.viewer} ${entered ? styles.entered : ""} ${
-        closing ? styles.closing : ""
-      }`}
+      className={cx(styles.viewer, entered ? styles.entered : "", closing ? styles.closing : "")}
       role="dialog"
       aria-modal="true"
       aria-label={t("media.viewer.label")}
@@ -1052,7 +1049,7 @@ function MediaViewer({ images, index: startIndex, onClose }) {
         <>
           <button
             type="button"
-            className={`${styles.arrow} ${styles.arrowPrev}`}
+            className={cx(styles.arrow, styles.arrowPrev)}
             aria-label={t("media.viewer.previous")}
             disabled={index === 0}
             onClick={() => navTo(-1)}
@@ -1061,7 +1058,7 @@ function MediaViewer({ images, index: startIndex, onClose }) {
           </button>
           <button
             type="button"
-            className={`${styles.arrow} ${styles.arrowNext}`}
+            className={cx(styles.arrow, styles.arrowNext)}
             aria-label={t("media.viewer.next")}
             disabled={index === last}
             onClick={() => navTo(1)}
@@ -1101,9 +1098,7 @@ function MediaViewer({ images, index: startIndex, onClose }) {
           (showSpinner) avoids a flash on cached/instant loads. */}
       {!mediaError && (
         <div
-          className={`${styles.loader} ${
-            showSpinner && !mediaLoaded ? styles.loaderShown : ""
-          }`}
+          className={cx(styles.loader, showSpinner && !mediaLoaded ? styles.loaderShown : "")}
           aria-hidden={mediaLoaded ? "true" : undefined}
           role={!mediaLoaded ? "status" : undefined}
           aria-label={!mediaLoaded ? t("common.loading") : undefined}

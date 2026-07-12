@@ -177,7 +177,7 @@ Pure `#FFFFFF` is **FORBIDDEN** — use `#fdfcf8` for elevated/white-feeling sur
   - **Feed screens (`HomeNew`, `SearchNew`, `MyThreads` + `HomeFeedCard`)** — the SAME single-inset
     contract as the thread view, but at Threads' FEED padding **`24px`**
     (`--barcelona-columns-item-horizontal-padding` — their feed columns use 24, unlike the post
-    page's 16): the container (home's and search's `.surface`; me's `.main`) carries the full
+    page's 16): the container (the `.surface` of home, search and me) carries the full
     `24px` side padding and exposes `--layout-pad-x: 24px`; **`HomeFeedCard` adds NO horizontal
     padding of its own** (`padding: 12px 0`), so `--media-bleed-x: var(--layout-pad-x)` reaches
     the container edge. **Search is the third canonical surface screen and is ONE responsive
@@ -196,8 +196,8 @@ Pure `#FFFFFF` is **FORBIDDEN** — use `#fdfcf8` for elevated/white-feeling sur
   **every breakpoint** — if you change the padding (incl. inside a media query), change
   `--layout-pad-x` to match, or the carousel over/under-shoots the column edge (last item cut off /
   first item misaligned). The carousel **gap is `6px`** (`--barcelona-carousel-gap`, in `ThreadMedia`).
-- **Elevated surface screens (`/p/:id`, `/home` and `/search` results) — the canonical screen
-  pattern:** the
+- **Elevated surface screens (`/p/:id`, `/home`, `/search`, `/me` and `/m/:maskId`) — the
+  canonical screen pattern:** the
   content lives inside one `.surface` card (`#fdfcf8`, border `#e5e0d3`, radius `24px` —
   Threads' exact column corners — **no shadow**, current Threads keeps only the hairline
   outline), floating on the `#f7f5f0` page.
@@ -235,7 +235,9 @@ Pure `#FFFFFF` is **FORBIDDEN** — use `#fdfcf8` for elevated/white-feeling sur
     height (`min-height: 480px`), **`width: 76px`** (their `--barcelona-side-navigation-width`),
     translucent `rgba(247,245,240,0.85)` + `backdrop-filter: blur(15px)` (their
     `--barcelona-side-navigation-background` @ 0.85, warm-adjusted), NO border/radius/shadow (the
-    old floating capsule is gone), no dividers. Anatomy: logo top, items vertically centered
+    old floating capsule is gone), no dividers. Anatomy: logo top (Threads' exact slot: **34×34**
+    mark + 15px block padding, a LINK home whose svg grows `scale(1.07)` on hover / dips `0.98`
+    on press, `transform 0.2s ease-in-out`), items vertically centered
     (`.items { margin: auto 0 }`, `row-gap: 4px` — Threads' exact), ☰ at the bottom (its popover
     opens up-right). Items **60×60px** (Threads' exact box; their 50px-tall compact variant is
     mirrored under `@media (max-height: 600px)`), radius `12px`, **idle `#b8b8b8`**
@@ -259,16 +261,19 @@ Pure `#FFFFFF` is **FORBIDDEN** — use `#fdfcf8` for elevated/white-feeling sur
     frosted: over the feed's images the translucent recipe read too transparent; it fuses with the
     mobile `#fdfcf8` sheet, BORDERLESS — no hairline, the bar and the sheet read as one), grid
     `[☰] · [logo centered] · [search]`. The **☰ reuses the SAME NavRail menu**
-    (Languages / About — the `MenuButton` with `variant="header"`); the logo is `BrandLogo
-    variant="plain"` (`size 36`); the magnifier links to `/search`. The header renders **only on
+    (Languages / About — the `MenuButton` with `variant="header"`); the logo is Threads' EXACT
+    mobile-header slot — a **32×32 box the glyph FILLS** (`BrandLogo size={32} variant="plain"
+    fit="glyph"`; at the old `size 36` the master viewBox's air shrank the visible mark to ~20px),
+    a **button → `/home`** like theirs (press `scale(0.98)` on the svg, 0.2s ease-in-out);
+    the magnifier links to `/search`. The header renders **only on
     `/home` and `/me`** (Search and the thread view keep their own top bars → no double headers).
     The asymmetric ☰ glyph: two rounded lines, the bottom one shorter (see Iconography).
   - **Mobile bottom bar** — fixed, frosted glass, **two icon-only items: Home + My threads** (Search
     moved to the app-bar magnifier; the ☰ moved to the app bar). Idle/active states per Interaction
     patterns. Hidden while the keyboard is open (`useKeyboardOpen`); honors `safe-area-inset-bottom`.
 - **AppShell** mobile `padding-bottom: 64px` keeps the bottom bar clear; the FIXED app bar does NOT
-  offset the top — each screen that shows it adds the 60px itself (home mobile `padding-top: 60px`,
-  me `84px` = 60 + its 24px gap).
+  offset the top — each screen that shows it adds the 60px itself (home and me: mobile
+  `padding-top: 60px`).
 
 ## Components (catalog)
 
@@ -281,13 +286,14 @@ Reference component: **`HomeFeedCard`** — the thread cell that defines the fee
 | Chips / tags | `search/SearchTagCard`, compose tags | Rounded (`3–8px`), warm tint `#f3e3d3` bg or subtle border; small mono/`11px` text. |
 | Inputs | `HomeCompose`, `SearchNew .searchBox` | Surface `#fdfcf8`, border `#e5e0d3`, focus ring `inset 0 0 0 2px #c5a572`. **`HomeCompose` is two-state (Threads' exact compose row):** at rest a quiet strip — avatar 36 · "What's new?" prompt (`15/400 #9b9591`, 8px margins + 4px lead) · bordered Post button (36px tall, radius 10, `1px rgba(0,0,0,0.15)`, `15/600 #1a1a1a`) — `padding: 16px 0` + full-bleed bottom hairline; click expands the full inline composer IN PLACE (transparent/borderless — integrated into the surface, no card-in-card), collapsing back on outside click only while the draft is empty. |
 | Tabs | `HomeFilterBar` (home + search) | **Threads' exact tab anatomy, warm-monochrome:** full-width EQUAL cells (`flex: 1 0 0` + `min-width: max-content` — equal while they fit; when a locale's labels overflow (ES search tabs) the row **scrolls on x** with a hidden scrollbar instead of crushing the cells, and the active tab auto-centers into view), 48px tall, centered `15px/600` labels (Inter, sentence case via i18n), baseline hairline `#ebe7dd` under the whole row (full-bleed via `-var(--layout-pad-x)` margins; it lives on each tab, so it travels with the scroll), inactive `#9b9591`, **active = `#1a1a1a` text + 1px `#1a1a1a` underline** over the baseline (`::after` at `bottom: -1px`), pressed = `opacity 0.6`. No eyebrow label, no mono, no accent color, NO count badges (with five equal search cells they threw the centered labels off — labels sit clean, Threads-style). |
+| Floating menu panel | `menu/MenuSurface` | **THE app's menu surface (Threads' exact dropdown), single source:** 240px, radius 16, 8px padding, 0.5px `#e5e0d3` outline + their triple shadow (`0 0 80px .25 / 1px 1px 2px .05 / 0 8px 16px .06`), opening pop `scale(0)→1` 0.15s. Rows via its exported `menuStyles` (`item` 15/600 ink radius 8, hover `rgba(0,0,0,0.04)`, press `scale(0.98)`; `itemIcon` charcoal, `itemIconRight`, `itemDanger` `#ff3040`, full-bleed `divider`). Consumers: `PostOptionsMenu` (desktop panel) and the NavRail ☰ (which adds only anchor classes + its animated close). Never re-implement a floating menu panel. |
 | Dropdown / select menu | `post/PostSortMenu` | Trigger (44px touch target) + floating menu of options (name + description + check). The canonical anchored-dropdown pattern — reuse it. See Dropdown menu. |
 | Modals | `WelcomeModal`, `nav/LanguageModal` | Portal to body, surface `#fdfcf8`, border `#e5e0d3`, radius `18px`, backdrop `rgba(31,26,20,0.42)` + blur, shadow `0 18px 50px rgba(26,26,26,0.18)`. Focus trap + Escape + `aria-modal`. |
 | Reaction picker / pill | `post/PostReactionPicker`, `post/PostReactionPill` | Popover radius `28px`; see Reactions. |
-| Mask avatar | `MaskAvatar` | Identicon for the pseudonymous mask; procedural SVG from a seed (the mask hash) — same seed → same avatar, no network, no uploads. Small radius `3px`, never a real photo. **Avatar size is `36px` everywhere content rows exist** (feed, search rows, thread OP AND replies at every depth — Threads' single avatar size); `56px` only in the profile hover card. **Activity dot (`online`)**: Threads-exact — green `rgb(94,231,71)` (their `--barcelona-green-dot`), **10px content-box** dot (at 36px; scales `size·10/36`, min 8) + **2px outward ring** (total 14px), anchored `bottom:-1px; right:-2px` so the ring overflows the avatar curve like Threads. Ring color = the surface BEHIND the avatar: default `#fdfcf8` (cards — incl. the search results surface); `ringColor` prop for other grounds. |
+| Mask avatar | `MaskAvatar` | Identicon for the pseudonymous mask; procedural SVG from a seed (the mask hash) — same seed → same avatar, no network, no uploads; CIRCLE (radius 50%), never a real photo. **The mask IS the brand mark retold: a thread + its dot**, in FOUR seed-picked archetypes (normalized 36-unit box, rounded strokes): single coil (arc 130–260°, dot in the opening), double coil (two concentric arcs, offset mouths), the logo's own SERPENTINE (scaled master path, rotated in 45° steps), and orbit (tight off-center coil, dot orbiting opposite) — plus per-seed start angle, sweep, coil radius and dot size (2.7–3.6). All on a **curated warm duotone pair** (10 pre-checked bg·thread combos — terracotta/cream, tint/terracotta, umber/wheat, rare ink/sand… no independent bg/fg roll, no off-palette greens/blues). **Avatar size is `36px` everywhere content rows exist** (feed, search rows, thread OP AND replies at every depth — Threads' single avatar size); `56px` only in the profile hover card. **Activity dot (`online`)**: Threads-exact — green `rgb(94,231,71)` (their `--barcelona-green-dot`), **10px content-box** dot (at 36px; scales `size·10/36`, min 8) + **2px outward ring** (total 14px), anchored `bottom:-1px; right:-2px` so the ring overflows the avatar curve like Threads. Ring color = the surface BEHIND the avatar: default `#fdfcf8` (cards — incl. the search results surface); `ringColor` prop for other grounds. |
 | Toasts | `contexts/ToastContext` + `ToastViewport` | Dark pill `#1a1a1a` / text `#f7f5f0`, **min-height `53px`**, **dynamic width** (`max-width: min(360px, calc(100vw-32px))`, wraps past it), radius `12px`, bottom-floating portal. `showToast({type,message,duration,action,icon})→id`; `type:"loading"` = persistent spinner; `icon:"none"` (copy confirms) / `icon:"check"` not needed (success check is **white `#f7f5f0`**, never green). `showToast.update(id,…)` morphs a toast in place (same node → no jump) for **"Publishing… → Thread posted"** sequences; `.dismiss(id)`. `action` renders a trailing link (e.g. "View"). aria-live polite / assertive(error) / busy(loading). |
 | Identity tags | `home/HomeFeedCard` (`is_mine`), `post/PostReply` (`is_op`), `me/MeProfileHeader` (You) | Derived from backend **booleans** `is_mine`/`is_op` (anonymity — no author id leaves the server; `is_op` is local to the thread). "Your thread" (feed/search) and the thread-author "· Author" reply meta share ONE pattern: Threads-style **quiet meta** — a `·` divider + Inter timestamp-identical text (body-sized `400 #9b9591`) after the timestamp. No pill, no badge (the old warm pill shouted next to the whisper-quiet identity row). The `/me` "You" badge is the warmer pill (`10px/700`, radius `20px`). |
-| /me profile header | `me/MeProfileHeader` | **/me only.** Card (`#fdfcf8`/`#e5e0d3`/radius `12`): identicon (58px, ring `#d8b89a`) + "Anonymous" + "You" badge + short hash pill (`#f7f5f0`/`#ebe7dd`/text `#8b6f47`/mono/radius `6`) with copy→toast + 3 **private** stats (Threads/Reactions/Replies, from `/me`, owner-only) with `#f0ece2` dividers + a short lock privacy note. A light divider (lines icon + real count + `#f0ece2` rule) separates it from the list — no explanatory heading. |
+| /me profile header | `me/MeProfileHeader` | **Threads' exact profile anatomy, FLAT on the surface** (no card-in-card; /me is the fourth canonical surface screen) — the BASE for anonymous profiles (everything but the "You" pill generalizes to other users' masks): name block left ("Anonymous" `24px/600/1.4`, their `--system-24` h1, + the "You" warm pill `10px/700` radius 20 — /me only) with the **mask hash as the @handle line** — the WHOLE mono pill is the copy button (`#f7f5f0`/`#ebe7dd`/`#8b6f47`, hover `#f0ece3`, copy→toast) · **identicon right, Threads' 84px desktop / 64px mobile**, hairline `#e5e0d3` ring. Below: the stats as ONE quiet meta line ("**12** threads · **40** reactions · **5** replies" — `15px`, labels `#9b9591`, VALUES `600 #6b6b6b`, `·` in `#c4bfb1`; their followers-line language) + the "Joined April 2020" whisper (calendar glyph + `13px #9b9591`; from `/me`'s `joined` = the mask's create_at, month+year via `Intl.DateTimeFormat` in the UI language). No privacy note. **Profile tabs (Threads' strip): Threads · Media** (`HomeFilterBar`) — Media = the search grid verbatim (3-col 2px mosaic, one tile per thread = first file, carousel/Reel marks, NSFW blur), derived CLIENT-SIDE from the loaded threads (the pagination sentinel renders on the THREADS tab only — on the short media grid it stayed in view and chain-loaded every page), tile → `/p/:id` seeded. **`PostProfileHoverCard` mirrors this anatomy in miniature** (name 17/600 + mono hash pill left · 56px identicon right, quiet stats line, joined whisper — popover spec: radius 16, `0 8px 24px` shadow). **`/m/:maskId` is the PUBLIC twin (legacy `/anon/:maskId` redirects)** (`AnonProfileHeader`, same stylesheet): no You pill, public stats pair (posts · replies from `/users/<id>/`, which accepts the 6-hex public id), thread list via the search author filter (`@<id>`); clicking any avatar/mask (`PostProfileTrigger`, now a role=link) opens it — your own mask routes to /me. |
 | Error screens | `screens/ServerError`, `screens/NetworkError` | Classified centrally (`ServerHealthContext`): a 5xx (HTTP response) → **server-down** screen; a request that failed **without a response** / `navigator.onLine===false` → **no-connection** screen (wifi-off icon, no HTTP code). Auto-recovers on the browser `online` event; manual retry re-checks `/health/`. Same warm layout for both. |
 | States | `*EmptyState`, `*ErrorState`, `*Skeleton`, `*Spinner`, `*RetryBanner` | Every feed/screen ships loading (skeleton), empty, and error/retry variants — reuse them, don't reinvent. |
 
@@ -370,9 +376,10 @@ CSS Module) — never re-implement it per component:
   so the global class is the single source (no cascade clash). (4) Visual-only — never affects
   focus (`:focus-visible` intact) or `aria`.
 - **Applied to** (only these, for now — do not spread app-wide): nav controls (desktop NavRail
-  items + mobile bottom-bar items + app-bar ☰/search), the three-dots options trigger, and the
-  primary submit buttons ("Post" in `HomeCompose`, "Reply" in `PostCommentBox`) — the latter
-  spring only when enabled.
+  items + mobile bottom-bar items + app-bar ☰/search), the three-dots options trigger, the
+  primary submit buttons ("Post" in `HomeCompose`, "Reply" in `PostCommentBox` — these spring
+  only when enabled), and the modal CTAs/options (`WelcomeModal` "I understand",
+  `LanguageModal` options + "Close").
 
 ### Nav icon states (mobile)
 
@@ -398,6 +405,21 @@ the NavRail mobile app bar + bottom bar don't exist on desktop; the search masth
 `@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)))` → solid
 (`#fdfcf8` mobile / `#f7f5f0` desktop; never illegible). On mobile, content blurs through as it
 scrolls under the fixed bar.
+
+### App-bar entrance ("you've arrived")
+
+The drill-in screens (thread view `/p/:id` + public profile `/m/:maskId`) share the shell with the
+screen you came from, so their app bar plays a one-shot mount choreography that signals the context
+switch: the **back button slides in from the left** (`translateX(-10px)→0` + fade — the direction
+you came from; the desktop floating circle adds `scale(0.7)` so the disc "materializes"), and the
+**title settles upward one beat later** (`translateY(5px)→0`, `70ms` delay). Both `0.45s
+cubic-bezier(0.16, 1, 0.3, 1)` (expo-out — decelerates, never bounces) with
+`animation-fill-mode: backwards` so the delayed title is invisible until its beat. The thread
+subtitle ("N replies") carries its own quiet `0.3s` rise so it announces itself whenever the data
+lands (instant from cache, later from network). Removed under `prefers-reduced-motion`. Keyframes
+live per stylesheet (`Post.module.css` `barSlideIn/barPopIn/barRiseIn`, `MyThreads.module.css`
+`profileBar*` for the profile bar). Top-level screens (home/search/me) do NOT play it — arriving
+somewhere is the signal, switching tabs is not.
 
 ### New-thread highlight
 
@@ -504,7 +526,7 @@ rejected smooth-S/loop variant.
   brand card, so nothing leaks to crawlers or link previews.
 - The OG/share image is the **static brand card** for the whole app — never per-thread.
 - `/p/:id` (canonical short thread URL; legacy `/post/:id` redirects to it), `/search`,
-  `/notifications`, `/me` are `noindex` (via `usePageTitle(key, { noindex: true })`) and
+  `/notifications`, `/me`, `/m/:maskId` (legacy `/anon/:maskId` redirects to it) are `noindex` (via `usePageTitle(key, { noindex: true })`) and
   blocked in `robots.txt`. Only `/` is indexable.
 
 ## DESIGN RULES for AI agents

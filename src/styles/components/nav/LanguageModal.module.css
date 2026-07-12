@@ -40,8 +40,8 @@
 .description {
   margin: 0 0 16px;
   font-size: 13px;
-  line-height: 1.45;
-  color: #666666;
+  line-height: 1.5;
+  color: #6b6b6b;
 }
 
 .options {
@@ -64,11 +64,14 @@
   font-weight: 500;
   color: #1a1a1a;
   cursor: pointer;
-  transition: background 130ms ease, border-color 130ms ease;
+  /* Transition (hover wash + the soft press transform) comes from the global
+     .springPress class — single source. */
 }
 
+/* Hover = the option wash (dropdown spec); #f0ece3 is reserved for the
+   SELECTED neutral fill below. */
 .option:hover {
-  background: #f0ece3;
+  background: #f7f5f0;
 }
 
 .option:focus-visible {
@@ -76,17 +79,23 @@
   outline-offset: 2px;
 }
 
-/* Active option: warm terracotta blob (same language as the rail's active
-   item). */
+/* Selected — the CANONICAL select pattern (see Dropdown menu in CLAUDE.md):
+   neutral #f0ece3 fill + #e5e0d3 border; the terracotta CHECK carries the
+   selection, never an accent fill. */
 .optionActive,
 .optionActive:hover {
-  background: #f3e3d3;
-  border-color: #e6cdb3;
-  color: #a85432;
+  background: #f0ece3;
+  border-color: #e5e0d3;
 }
 
 .check {
   flex-shrink: 0;
+  color: #a85432;
+}
+
+/* Kept in layout (no row shift when the selection moves). */
+.checkHidden {
+  visibility: hidden;
 }
 
 .closeButton {
@@ -101,7 +110,7 @@
   font-weight: 600;
   color: #fdfcf8;
   cursor: pointer;
-  transition: opacity 130ms ease;
+  /* Transition from the global .springPress class — single source. */
 }
 
 .closeButton:hover {
@@ -140,8 +149,5 @@
     animation: none;
   }
 
-  .option,
-  .closeButton {
-    transition: none;
-  }
+
 }

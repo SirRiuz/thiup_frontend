@@ -99,6 +99,45 @@
 /* No app-bar border (Threads-style): the frosted bar floats borderless over the
    page; the elevated thread card below provides the only outline. */
 
+/* === App-bar entrance — the "you've arrived" choreography ===
+   The screens share one layout, so the bar itself is what signals the context
+   switch: on mount the back button slides in FROM the left (the direction you
+   came from — it points home) and the title settles upward one beat later
+   (70ms). Expo-out deceleration, no bounce (the app's motion language); the
+   subtitle has its own quiet fade for whenever the data lands. */
+@keyframes barSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes barPopIn {
+  from {
+    opacity: 0;
+    transform: translateX(-8px) scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes barRiseIn {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 .backButton {
   flex: none;
   width: 32px;
@@ -112,6 +151,7 @@
   cursor: pointer;
   color: #1a1a1a;
   transition: background 200ms ease;
+  animation: barSlideIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) backwards;
 }
 
 .backButton:hover {
@@ -126,6 +166,7 @@
   text-align: center;
   line-height: 1.2;
   min-width: 0;
+  animation: barRiseIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) 70ms backwards;
 }
 
 /* The back button hugs the grid's left edge at every breakpoint. */
@@ -149,6 +190,9 @@
     border: 0.5px solid #e5e0d3;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     transition: transform 0.2s ease;
+    /* The floating circle MATERIALIZES: same beat, plus a scale so the
+       elevated disc pops into place. */
+    animation-name: barPopIn;
   }
 
   .backButton:hover {
@@ -175,6 +219,12 @@
   .backButton:active {
     transform: none;
   }
+
+  .backButton,
+  .titleBlock,
+  .subtitle {
+    animation: none;
+  }
 }
 
 .title {
@@ -188,6 +238,9 @@
 .subtitle {
   font-size: 12px;
   color: #a3a3a3;
+  /* The replies count arrives with the data — it announces itself softly
+     whenever that is (instant from cache, later from the network). */
+  animation: barRiseIn 0.3s ease-out backwards;
 }
 
 /* Loading skeletons for the app-bar title block — same warm pulse as the other

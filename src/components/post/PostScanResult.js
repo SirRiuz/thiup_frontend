@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import styles from "../../styles/components/post/PostScanResult.module.css";
+import cx from "../../utils/cx";
 
 function formatBytes(bytes) {
   if (bytes < 1024) return `${bytes} B`;
@@ -61,7 +62,7 @@ function CompressionView({ compression, t }) {
   if (compression.status === "error" || !compression.report) {
     return (
       <div className={styles.compress}>
-        <span className={`${styles.compLoading} ${styles.statusError}`}>
+        <span className={cx(styles.compLoading, styles.statusError)}>
           {t("scan.compressError")}
         </span>
       </div>
@@ -79,7 +80,7 @@ function CompressionView({ compression, t }) {
       <div className={styles.compressHead}>
         <span className={styles.compressTitle}>{t("scan.compressTitle")}</span>
         <span className={styles.chips}>
-          <span className={`${styles.savings} ${up ? styles.savingsUp : ""}`}>
+          <span className={cx(styles.savings, up ? styles.savingsUp : "")}>
             {savingsText}
           </span>
           {r.dominantColor && (
@@ -182,7 +183,7 @@ function PostScanResult({ item, compression, upload, onRetry, onRemove }) {
   const rowHasError = compStatus === "error" || upStatus === "error";
 
   return (
-    <div className={`${styles.row} ${rowHasError ? styles.rowError : ""}`}>
+    <div className={cx(styles.row, rowHasError ? styles.rowError : "")}>
       <div className={styles.main}>
         <div className={styles.thumbnail}>
           {thumbnail ? (
@@ -199,7 +200,7 @@ function PostScanResult({ item, compression, upload, onRetry, onRemove }) {
             {name}
           </span>
           <span
-            className={`${styles.status} ${lineError ? styles.statusError : ""}`}
+            className={cx(styles.status, lineError ? styles.statusError : "")}
             role="status"
             aria-live="polite"
           >
@@ -221,9 +222,7 @@ function PostScanResult({ item, compression, upload, onRetry, onRemove }) {
         {canShowDetails && (
           <button
             type="button"
-            className={`${styles.infoButton} ${
-              expanded ? styles.infoButtonActive : ""
-            }`}
+            className={cx(styles.infoButton, expanded ? styles.infoButtonActive : "")}
             onClick={() => setExpanded((v) => !v)}
             aria-expanded={expanded}
             aria-controls={detailsId}

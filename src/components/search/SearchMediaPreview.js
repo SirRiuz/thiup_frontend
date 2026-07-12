@@ -5,6 +5,7 @@ import MaskAvatar from "../MaskAvatar";
 import ReactionStack from "../post/ReactionStack";
 import { renderTextWithHashtags } from "../home/homeHelpers";
 import VideoPlayer from "../media/VideoPlayer";
+import cx from "../../utils/cx";
 import {
   setAudioOwner,
   VIEWER_AUDIO_ID,
@@ -250,11 +251,11 @@ function SearchMediaPreview({ item, onClose, onViewThread, onHashtag }) {
 
   return createPortal(
     <div
-      className={`${styles.backdrop} ${closing ? styles.backdropClosing : ""}`}
+      className={cx(styles.backdrop, closing ? styles.backdropClosing : "")}
       onClick={requestClose}
     >
       <div
-        className={`${styles.dialog} ${closing ? styles.dialogClosing : ""}`}
+        className={cx(styles.dialog, closing ? styles.dialogClosing : "")}
         role="dialog"
         aria-modal="true"
         aria-label={t("search.mediaPreview.label")}
@@ -297,9 +298,7 @@ function SearchMediaPreview({ item, onClose, onViewThread, onHashtag }) {
                     ) : (
                       /* Adjacent/NSFW video: a bare muted frame (no player). */
                       <video
-                        className={`${styles.media} ${
-                          mRevealed ? "" : styles.mediaBlurred
-                        }`}
+                        className={cx(styles.media, mRevealed ? "" : styles.mediaBlurred)}
                         src={m.url}
                         muted
                         playsInline
@@ -308,9 +307,7 @@ function SearchMediaPreview({ item, onClose, onViewThread, onHashtag }) {
                     )
                   ) : (
                     <img
-                      className={`${styles.media} ${
-                        mRevealed ? "" : styles.mediaBlurred
-                      }`}
+                      className={cx(styles.media, mRevealed ? "" : styles.mediaBlurred)}
                       src={m.url}
                       alt=""
                       draggable={false}
@@ -338,7 +335,7 @@ function SearchMediaPreview({ item, onClose, onViewThread, onHashtag }) {
               {index > 0 && (
                 <button
                   type="button"
-                  className={`${styles.navArrow} ${styles.navPrev}`}
+                  className={cx(styles.navArrow, styles.navPrev)}
                   onClick={() => goTo(index - 1)}
                   aria-label={t("media.viewer.previous")}
                 >
@@ -360,7 +357,7 @@ function SearchMediaPreview({ item, onClose, onViewThread, onHashtag }) {
               {index < mediaList.length - 1 && (
                 <button
                   type="button"
-                  className={`${styles.navArrow} ${styles.navNext}`}
+                  className={cx(styles.navArrow, styles.navNext)}
                   onClick={() => goTo(index + 1)}
                   aria-label={t("media.viewer.next")}
                 >
@@ -383,9 +380,7 @@ function SearchMediaPreview({ item, onClose, onViewThread, onHashtag }) {
                 {mediaList.map((m, i) => (
                   <span
                     key={m.id}
-                    className={`${styles.dot} ${
-                      i === index ? styles.dotActive : ""
-                    }`}
+                    className={cx(styles.dot, i === index ? styles.dotActive : "")}
                   />
                 ))}
               </div>

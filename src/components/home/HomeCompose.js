@@ -6,6 +6,7 @@ import { useFeedContext } from "../../contexts/FeedContext";
 import { useToast } from "../../contexts/ToastContext";
 import { geohashForPosition } from "../../utils/geohash";
 import { ACCEPT_ATTR } from "../../services/media/allowedFormats";
+import cx from "../../utils/cx";
 import {
   queryGeolocationPermission,
   subscribeGeolocationPermission,
@@ -492,9 +493,7 @@ function HomeCompose({ currentUserMask, isLoading = false }) {
     <>
       <div
         ref={rootRef}
-        className={`${styles.wrapper} ${isDisabled ? styles.disabled : ""} ${
-          isSubmitting ? styles.submitting : ""
-        }`}
+        className={cx(styles.wrapper, isDisabled ? styles.disabled : "", isSubmitting ? styles.submitting : "")}
       >
         <div className={styles.header}>
           {/* Discreet placeholder while /me/ loads (a single global
@@ -580,9 +579,7 @@ function HomeCompose({ currentUserMask, isLoading = false }) {
           </button>
           <button
             type="button"
-            className={`${styles.locationButton} ${
-              shareLocation ? styles.locationButtonActive : ""
-            } ${permissionBlocked ? styles.locationButtonBlocked : ""}`}
+            className={cx(styles.locationButton, shareLocation ? styles.locationButtonActive : "", permissionBlocked ? styles.locationButtonBlocked : "")}
             onClick={toggleShareLocation}
             disabled={isDisabled}
             aria-pressed={shareLocation}
@@ -610,15 +607,13 @@ function HomeCompose({ currentUserMask, isLoading = false }) {
           </button>
           <span className={styles.spacer} />
           <span
-            className={`${styles.charCount} ${
-              atLimit ? styles.charCountAtLimit : ""
-            }`}
+            className={cx(styles.charCount, atLimit ? styles.charCountAtLimit : "")}
           >
             {t("common.charCount", { count: charCount, max: MAX_CHARS })}
           </span>
           <button
             type="button"
-            className={`${styles.submitButton} springPress`}
+            className={cx(styles.submitButton, "springPress")}
             onClick={handleSubmit}
             disabled={!isSubmittable}
             aria-busy={isSubmitting || undefined}
@@ -722,7 +717,7 @@ function HomeCompose({ currentUserMask, isLoading = false }) {
       )}
       {locationNotice && (
         <aside
-          className={`${styles.privacyNote} ${styles.noteWarning}`}
+          className={cx(styles.privacyNote, styles.noteWarning)}
           role="status"
         >
           {/* WARNING variant of the privacy note: same layout and

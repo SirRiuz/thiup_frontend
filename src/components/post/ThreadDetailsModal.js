@@ -199,26 +199,27 @@ function ThreadDetailsModal({ post, onClose }) {
         <dl className={styles.rows}>
           <Row icon={<HashIcon />} label={t("threadDetails.threadId")}>
             {details.threadId ? (
-              <>
-                <code className={styles.mono}>{details.threadId}</code>
-                <button
-                  type="button"
-                  className={styles.copyBtn}
-                  onClick={copyId}
-                  aria-label={t("threadDetails.copy")}
-                >
-                  {copied ? (
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <path d="M20 6 9 17l-5-5" />
-                    </svg>
-                  ) : (
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <rect x="9" y="9" width="13" height="13" rx="2" />
-                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                    </svg>
-                  )}
-                </button>
-              </>
+              /* The profile's hash-pill language: the WHOLE mono pill is the
+                 copy button — one obvious target, machine-data mono tone. */
+              <button
+                type="button"
+                className={styles.idPill}
+                onClick={copyId}
+                aria-label={t("threadDetails.copy")}
+                title={t("threadDetails.copy")}
+              >
+                <span className={styles.idText}>{details.threadId}</span>
+                {copied ? (
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M20 6 9 17l-5-5" />
+                  </svg>
+                ) : (
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <rect x="9" y="9" width="11" height="11" rx="2" />
+                    <path d="M5 15V5a2 2 0 0 1 2-2h10" />
+                  </svg>
+                )}
+              </button>
             ) : (
               EMPTY
             )}

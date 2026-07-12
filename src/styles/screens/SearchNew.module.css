@@ -188,6 +188,59 @@
   color: #1a1a1a;
 }
 
+/* === Explore topics — the landing's curated chip cloud ===
+   The app's chip language (rounded pill, warm recessed field, terracotta #)
+   in a wrapping cloud: a second, tactile door into the content under the
+   trends list. */
+.topicChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 4px 0 16px;
+}
+
+.topicChip {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 13px;
+  background: #f7f5f0;
+  border: 1px solid #ebe7dd;
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: #1a1a1a;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease,
+    transform 0.15s ease;
+}
+
+.topicChip:hover {
+  background: #f0ece3;
+  border-color: #e5e0d3;
+}
+
+/* Threads' soft press (the house spec). */
+.topicChip:active {
+  transform: scale(0.96);
+}
+
+.topicChipHash {
+  color: #a85432;
+  font-weight: 600;
+  margin-right: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .topicChip {
+    transition: background 120ms ease, border-color 120ms ease;
+  }
+
+  .topicChip:active {
+    transform: none;
+  }
+}
+
 /* === Trending skeleton (first landing visit) ===
    PIXEL-MIRROR of the real suggestion row (SearchTagCard suggestion variant):
    same paddings/gaps, same 18px rank slot, 36px radius-12 tile, a 43px text
@@ -326,6 +379,19 @@
   gap: 2px;
   /* Edge to edge: cancel the surface's 24px inset. */
   margin: 0 calc(-1 * var(--layout-pad-x, 0px));
+}
+
+/* LAST page AND the mosaic really reaches the card's bottom (measured via
+   useFlushBottom — the surface is min-height stretched, so a short result
+   set ends mid-card and must keep square tiles; rounding them read broken):
+   -12px eats the surface's bottom padding (the warm gap after the last row
+   read broken) and clips the square tiles into the card's 24px bottom
+   corners (IG's grid ending). While more pages exist the sentinel/spinner
+   live below the grid. */
+.mediaGridEnd {
+  margin-bottom: -12px;
+  overflow: hidden;
+  border-radius: 0 0 24px 24px;
 }
 
 .mediaTile {
@@ -486,5 +552,10 @@
 
   .cornerMask {
     display: none;
+  }
+
+  /* The dissolved sheet has no rounded corners to clip into. */
+  .mediaGridEnd {
+    border-radius: 0;
   }
 }

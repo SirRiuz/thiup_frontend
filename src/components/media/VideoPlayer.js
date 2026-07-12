@@ -6,6 +6,7 @@ import {
   useSyncExternalStore,
 } from "react";
 import { useTranslation } from "react-i18next";
+import cx from "../../utils/cx";
 import {
   getAudioOwner,
   setAudioOwner,
@@ -175,13 +176,13 @@ function VideoPlayer({ item, onReady, onError, fill = false }) {
 
   return (
     <div
-      className={`${styles.player} ${fill ? styles.stageFill : ""}`}
+      className={cx(styles.player, fill ? styles.stageFill : "")}
       data-video-player=""
     >
       <video
         ref={videoRef}
         src={item.url}
-        className={`${styles.video} ${ready ? styles.ready : ""}`}
+        className={cx(styles.video, ready ? styles.ready : "")}
         loop
         playsInline
         onClick={(e) => {
