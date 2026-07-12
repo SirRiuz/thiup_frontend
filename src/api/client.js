@@ -1,21 +1,22 @@
 /**
- * Fetch wrapper que añade base URL, transporte (gateway/directo), cifrado y
- * errores tipados.
+ * Fetch wrapper that adds the base URL, transport (gateway/direct),
+ * encryption and typed errors.
  *
- * El backend corre en dos modos según ENCRYPTED_RESPONSE:
+ * The backend runs in two modes depending on ENCRYPTED_RESPONSE:
  *
- *  - Modo cifrado: TODA petición (ticket y config incluidos) se enruta por
- *    el GATEWAY de path rotativo /{hash}/ — el destino real (method, path,
- *    query, body) viaja dentro del sobre cifrado y el backend despacha
- *    internamente. La respuesta llega cifrada (X-Response-Payload) y se
- *    descifra con el `decrypt` existente. Uniformidad: todo se ve igual.
+ *  - Encrypted mode: EVERY request (ticket and config included) is routed
+ *    through the rotating-path GATEWAY /{hash}/ — the real destination
+ *    (method, path, query, body) travels inside the encrypted envelope and
+ *    the backend dispatches internally. The response arrives encrypted
+ *    (X-Response-Payload) and is decrypted with the existing `decrypt`.
+ *    Uniformity: everything looks the same.
  *
- *  - Modo plano: llamadas directas y legibles a los endpoints reales.
+ *  - Plain mode: direct, readable calls to the real endpoints.
  *
- * El modo se resuelve UNA vez al bootstrap (transport.js, fail-closed a
- * gateway). apiFetch NO conoce la cripto: orquesta retry + errores y delega
- * la salida en dispatchRequest (punto único). SINGLE_REQUEST_PROTECT: se
- * envía siempre el `client-assertion` (inocuo si el flag está off).
+ * The mode is resolved ONCE at bootstrap (transport.js, fail-closed to
+ * gateway). apiFetch does NOT know the crypto: it orchestrates retry + errors
+ * and delegates egress to dispatchRequest (single point). SINGLE_REQUEST_
+ * PROTECT: the `client-assertion` is always sent (harmless if the flag is off).
  */
 
 import { parseResponseBody } from "./decode";
@@ -33,15 +34,15 @@ import { BASE_URL } from "../settings";
 
 const API_BASE_URL = BASE_URL;
 
-// Refresh-and-retry: máximo 3 INTENTOS por petición (original + 2 retries).
-// Solo el 403 dispara refresh+retry — ticket expirado o, en escrituras,
-// pase humano expirado (code CAPTCHA_FAILED); otros errores se propagan tal
-// cual. Contador LOCAL por petición (nunca compartido).
+// Refresh-and-retry: at most 3 ATTEMPTS per request (original + 2 retries).
+// Only a 403 triggers refresh+retry — expired ticket or, on writes, an
+// expired human pass (code CAPTCHA_FAILED); other errors propagate as-is.
+// LOCAL counter per request (never shared).
 const MAX_ATTEMPTS = 3;
 
-// Escrituras que exigen el pase humano (CAPTCHA_PROTECT): espejo EXACTO de
-// las acciones decoradas con @human_validator en el backend. Los POST de
-// solo lectura (/threads/foryou/, /threads/closeyou/) NO están aquí.
+// Writes that require the human pass (CAPTCHA_PROTECT): an EXACT mirror of
+// the actions decorated with @human_validator in the backend. Read-only
+// POSTs (/threads/foryou/, /threads/closeyou/) are NOT here.
 const HUMAN_PASS_PATHS = new Set([
   "/threads/",
   "/reactions/",
@@ -66,19 +67,19 @@ export class APIError extends Error {
  * Performs a request to the backend.
  *
  * @param {string} url      Relative path ('/threads/') or absolute URL
- *                          (útil para usar `response.next` directo en paginación).
- * @param {object} options  Fetch options, incluye `signal` para AbortController.
+ *                          (useful for passing `response.next` directly in pagination).
+ * @param {object} options  Fetch options, includes `signal` for AbortController.
  * @returns {Promise<any>}  Decrypted JSON.
- * @throws  {APIError}      Si la respuesta no es OK (payload descifrado en .payload).
+ * @throws  {APIError}      If the response is not OK (decrypted payload in .payload).
  */
 export async function apiFetch(url, options = {}) {
-  // El modo (gateway vs directo) debe estar resuelto ANTES de enviar.
-  // ensureTransportMode obtiene ticket+config por su propio canal de bajo
-  // nivel (no por apiFetch) → sin recursión. Fail-closed: ante duda, gateway.
+  // The mode (gateway vs direct) must be resolved BEFORE sending.
+  // ensureTransportMode fetches ticket+config on its own low-level channel
+  // (not via apiFetch) → no recursion. Fail-closed: when in doubt, gateway.
   await ensureTransportMode();
 
-  // Destino real: separamos path+query (sirve para paths relativos y para
-  // los `next` absolutos de paginación). El body se normaliza a string.
+  // Real destination: split path+query (works for relative paths and for the
+  // absolute `next` URLs in pagination). The body is normalized to a string.
   const dest = new URL(
     url.startsWith("http") ? url : `${API_BASE_URL}${url}`,
     API_BASE_URL
@@ -94,20 +95,20 @@ export async function apiFetch(url, options = {}) {
       : JSON.stringify(options.body);
 
   for (let attempt = 1; ; attempt += 1) {
-    // Client-assertion EMITIDO POR EL SERVER (el FE no tiene secreto). En un
-    // reintento (attempt > 1) forzamos un ticket nuevo.
+    // Client-assertion ISSUED BY THE SERVER (the FE has no secret). On a
+    // retry (attempt > 1) we force a fresh ticket.
     let assertion = "";
     try {
       assertion =
         attempt === 1 ? await getClientAssertion() : await refreshTicket();
     } catch (err) {
-      /* sin ticket: la petición sale sin assertion y el backend la rechaza */
+      /* no ticket: the request goes out without an assertion and the backend rejects it */
     }
 
-    // Pase humano (solo escrituras protegidas): viaja como header REAL de la
-    // petición exterior, igual que client-assertion. Si no se pudo obtener
-    // (Cap caído, solver falló), la petición sale SIN pase y el backend
-    // responde su 403/503 tipado — el error visible es el del servidor.
+    // Human pass (protected writes only): travels as a REAL header on the
+    // outer request, just like client-assertion. If it couldn't be obtained
+    // (Cap down, solver failed), the request goes out WITHOUT a pass and the
+    // backend answers its typed 403/503 — the visible error is the server's.
     let extraHeaders = options.headers;
     if (needsHumanPass(method, path)) {
       try {
@@ -116,14 +117,14 @@ export async function apiFetch(url, options = {}) {
           extraHeaders = { ...(options.headers || {}), "x-human-pass": pass };
         }
       } catch (err) {
-        /* sin pase: el backend decide */
+        /* no pass: the backend decides */
       }
     }
 
     let response;
     try {
-      // Punto ÚNICO de salida. Re-arma el sobre del gateway en CADA intento
-      // → sobre fresco en el retry (sin doble cifrado, sin stream consumido).
+      // SINGLE egress point. Rebuilds the gateway envelope on EVERY attempt
+      // → a fresh envelope on retry (no double-encryption, no consumed stream).
       response = await dispatchRequest({
         method,
         path,
@@ -135,19 +136,20 @@ export async function apiFetch(url, options = {}) {
         extraHeaders,
       });
     } catch (err) {
-      // Política "cifrado o nada": si no se pudo cifrar/derivar el sobre, la
-      // petición NO salió; fallamos local con el shape estándar (jamás plano).
+      // "Encrypted or nothing" policy: if the envelope couldn't be
+      // encrypted/derived, the request did NOT go out; we fail locally with
+      // the standard shape (never plain).
       if (err instanceof DispatchEncryptError) {
-        // E_ENC1 = no se pudo cifrar el sobre local (la petición no salió).
-        // Mensaje opaco; el shape (status 0 + detail) se conserva idéntico
-        // para el manejo de errores existente.
+        // E_ENC1 = the local envelope couldn't be encrypted (request never
+        // left). Opaque message; the shape (status 0 + detail) is kept
+        // identical for the existing error handling.
         throw new APIError("E_ENC1", 0, {
           detail: "encryption_failed",
         });
       }
-      // La petición FALLÓ SIN respuesta HTTP (red caída / server inalcanzable):
-      // es un error de RED, no de servidor → evento distinto para que se muestre
-      // la pantalla de "sin conexión". Los aborts del consumidor no cuentan.
+      // The request FAILED WITH NO HTTP response (network down / server
+      // unreachable): a NETWORK error, not a server one → a distinct event so
+      // the "no connection" screen shows. Consumer aborts don't count.
       if (!err || err.name !== "AbortError") {
         window.dispatchEvent(new Event(NETWORK_ERROR_EVENT));
       }
@@ -158,16 +160,16 @@ export async function apiFetch(url, options = {}) {
       return parseResponseBody(response);
     }
 
-    // 403: si quedan intentos, se distingue POR EL CÓDIGO del cuerpo qué
-    // credencial expiró — CAPTCHA_FAILED → renovar el pase humano (resolver
-    // otro PoW); cualquier otro 403 → refrescar el ticket (comportamiento de
-    // siempre). Otros errores (400/404/5xx) NO se reintentan.
+    // 403: if attempts remain, the body CODE tells which credential expired
+    // — CAPTCHA_FAILED → renew the human pass (solve another PoW); any other
+    // 403 → refresh the ticket (the usual behavior). Other errors (400/404/
+    // 5xx) are NOT retried.
     if (response.status === 403 && attempt < MAX_ATTEMPTS) {
       let body403 = null;
       try {
         body403 = await parseResponseBody(response);
       } catch (err) {
-        /* cuerpo ilegible: se trata como 403 de ticket */
+        /* unreadable body: treated as a ticket 403 */
       }
       try {
         if (body403 && body403.code === "CAPTCHA_FAILED") {
@@ -176,9 +178,9 @@ export async function apiFetch(url, options = {}) {
         } else {
           await refreshTicket();
         }
-        continue; // reintentar con la credencial fresca
+        continue; // retry with the fresh credential
       } catch (err) {
-        /* la renovación falló: propagar el 403 original abajo */
+        /* renewal failed: propagate the original 403 below */
       }
       // Solving a fresh PoW still failed to yield a usable pass → we can't
       // prove this session is human. Wipe the app behind the wall.
@@ -190,13 +192,13 @@ export async function apiFetch(url, options = {}) {
       );
     }
 
-    // Sin reintento (o agotados): propagar con el MISMO shape de hoy.
+    // No retry (or exhausted): propagate with the SAME shape as today.
     const data = await parseResponseBody(response);
     // Retries exhausted and the backend STILL rejects the human pass: the
     // session could not be verified as human → anti-scraping wall.
     if (response.status === 403 && data?.code === "CAPTCHA_FAILED") blockAsBot();
-    // El 503 CAPTCHA_UNAVAILABLE (servidor Cap caído) NO es una caída del
-    // backend: se propaga al call site sin disparar el aviso global.
+    // The 503 CAPTCHA_UNAVAILABLE (Cap server down) is NOT a backend outage:
+    // it propagates to the call site without firing the global notice.
     if (response.status >= 500 && data?.code !== "CAPTCHA_UNAVAILABLE") {
       window.dispatchEvent(new Event(SERVER_ERROR_EVENT));
     }

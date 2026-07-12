@@ -1,14 +1,14 @@
 /**
- * Human-pass manager (CAPTCHA_PROTECT) — espejo estructural de ticket.js.
+ * Human-pass manager (CAPTCHA_PROTECT) — structural mirror of ticket.js.
  *
- * Flujo: el solver invisible (services/captcha.js) produce un token Cap de un
- * solo uso → se canjea en POST /captcha/verify/ → el backend devuelve un JWT
- * corto ("pase humano", ligado a la mask) que las ESCRITURAS llevan en el
- * header `x-human-pass`. Cacheado en memoria y renovado antes de expirar;
- * al expirar en el server (403 CAPTCHA_FAILED) apiFetch invalida y reintenta.
+ * Flow: the invisible solver (services/captcha.js) produces a single-use Cap
+ * token → it is exchanged at POST /captcha/verify/ → the backend returns a
+ * short JWT ("human pass", bound to the mask) that WRITES carry in the
+ * `x-human-pass` header. Cached in memory and renewed before it expires; when
+ * the server expires it (403 CAPTCHA_FAILED) apiFetch invalidates and retries.
  *
- * Sin recursión: usa dispatchRequest (bajo nivel), no apiFetch — igual que
- * ticket.js y transport.js.
+ * No recursion: uses dispatchRequest (low level), not apiFetch — same as
+ * ticket.js and transport.js.
  */
 
 import { isCaptchaEnabled } from "./config";
@@ -18,8 +18,8 @@ import { getClientAssertion } from "./ticket";
 import { shouldUseGateway } from "./transportMode";
 import { solveCaptcha } from "../services/captcha";
 
-// Renovar un poco antes del expires_in real para no gastar un intento en un
-// pase que muere en vuelo.
+// Renew a little before the real expires_in so we don't spend an attempt on a
+// pass that dies in flight.
 const REFRESH_BEFORE_MS = 30 * 1000;
 const FALLBACK_TTL_MS = 600 * 1000;
 
@@ -30,13 +30,14 @@ let inFlight = null;
 async function fetchPass() {
   const token = await solveCaptcha();
 
-  // El endpoint exige client-assertion (SINGLE_REQUEST_PROTECT); si no hay
-  // ticket la petición sale sin él y el backend la rechaza — como apiFetch.
+  // The endpoint requires the client-assertion (SINGLE_REQUEST_PROTECT); with
+  // no ticket the request goes out without it and the backend rejects it —
+  // same as apiFetch.
   let assertion = "";
   try {
     assertion = await getClientAssertion();
   } catch (err) {
-    /* sin ticket */
+    /* no ticket */
   }
 
   const res = await dispatchRequest({
@@ -46,8 +47,8 @@ async function fetchPass() {
     assertion,
     gateway: shouldUseGateway(),
   });
-  // E_HP1 = el canje del captcha respondió no-OK (status adjunto);
-  // E_HP2 = respuesta OK pero sin pase en el cuerpo. Códigos opacos.
+  // E_HP1 = the captcha exchange responded non-OK (status attached);
+  // E_HP2 = OK response but no pass in the body. Opaque codes.
   if (!res.ok) throw new Error(`E_HP1:${res.status}`);
   const data = await parseResponseBody(res);
   if (!data || !data.pass) throw new Error("E_HP2");
@@ -61,9 +62,9 @@ async function fetchPass() {
 }
 
 /**
- * Devuelve un pase humano válido (cacheado o recién canjeado), o null si el
- * captcha está apagado según /config/. Dedup: llamadas concurrentes comparten
- * la MISMA promesa (un solo PoW aunque disparen varias escrituras a la vez).
+ * Returns a valid human pass (cached or freshly exchanged), or null when the
+ * captcha is off per /config/. Dedup: concurrent callers share the SAME
+ * promise (a single PoW even if several writes fire at once).
  */
 export async function getHumanPass() {
   if (!isCaptchaEnabled()) return null;
@@ -77,16 +78,16 @@ export async function getHumanPass() {
   return inFlight;
 }
 
-/** Invalida el pase cacheado (p.ej. tras un 403 CAPTCHA_FAILED). */
+/** Invalidates the cached pass (e.g. after a 403 CAPTCHA_FAILED). */
 export function invalidateHumanPass() {
   cachedPass = null;
   expiresAt = 0;
 }
 
 /**
- * Pre-calienta el pase en segundo plano (fire-and-forget): se dispara al
- * abrir un composer/modal para que la escritura posterior salga sin esperar
- * el PoW. Inocuo si el captcha está apagado o el pase ya está fresco.
+ * Pre-warms the pass in the background (fire-and-forget): fired when a
+ * composer/modal opens so the later write goes out without waiting for the
+ * PoW. Harmless if the captcha is off or the pass is already fresh.
  */
 export function warmHumanPass() {
   getHumanPass().catch(() => {});

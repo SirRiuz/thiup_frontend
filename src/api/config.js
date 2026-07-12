@@ -1,12 +1,12 @@
 /**
- * Config del servidor (GET /config/) — singleton a nivel de módulo, mismo
- * patrón que transportMode/ticket: el transporte de bajo nivel lo escribe
- * durante el bootstrap y el resto del código lo LEE sin volver a la red.
+ * Server config (GET /config/) — module-level singleton, same pattern as
+ * transportMode/ticket: the low-level transport writes it during bootstrap
+ * and the rest of the code READS it without hitting the network again.
  *
- * Claves relevantes hoy:
- *   - captcha_protect  → el backend exige el pase humano en las escrituras.
- *   - captcha_endpoint → endpoint público del servidor Cap para el widget
- *                        (data-cap-api-endpoint). null cuando está apagado.
+ * Keys used today:
+ *   - captcha_protect  → the backend requires the human pass on writes.
+ *   - captcha_endpoint → public Cap server endpoint for the widget
+ *                        (data-cap-api-endpoint). null when disabled.
  */
 
 let serverConfig = null;
@@ -19,7 +19,7 @@ export function getServerConfig() {
   return serverConfig;
 }
 
-/** Captcha activo = flag encendido Y endpoint utilizable. */
+/** Captcha is active = flag on AND a usable endpoint. */
 export function isCaptchaEnabled() {
   return Boolean(serverConfig?.captcha_protect && serverConfig?.captcha_endpoint);
 }
