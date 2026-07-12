@@ -12,6 +12,7 @@ import {
 } from "../../utils/geoPermission";
 import MediaScanList from "../media/MediaScanList";
 import useMediaComposer from "../../hooks/useMediaComposer";
+import { warmHumanPass } from "../../api/humanPass";
 import { renderTextWithHashtags } from "./homeHelpers";
 import { normalizePastedText } from "../../utils/normalizeText";
 import { HASHTAG_RE } from "../../utils/hashtags";
@@ -111,9 +112,13 @@ function HomeCompose({ currentUserMask, isLoading = false }) {
   const atLimit = charCount >= MAX_CHARS;
   const isDisabled = isLoading || isSubmitting;
 
-  // Opening the composer focuses the textarea (typing can start immediately).
+  // Opening the composer focuses the textarea (typing can start immediately)
+  // and pre-warms the captcha human pass in the background, so the PoW is
+  // already solved by the time the user hits Post (no perceived latency).
   useEffect(() => {
-    if (expanded) textareaRef.current?.focus();
+    if (!expanded) return;
+    textareaRef.current?.focus();
+    warmHumanPass();
   }, [expanded]);
 
   // Outside click while the draft is EMPTY (no text, no media, not posting)

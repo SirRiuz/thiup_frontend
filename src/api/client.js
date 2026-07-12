@@ -20,6 +20,7 @@
 
 import { parseResponseBody } from "./decode";
 import { dispatchRequest, DispatchEncryptError } from "./dispatch";
+import { getHumanPass, invalidateHumanPass } from "./humanPass";
 import { getClientAssertion, refreshTicket } from "./ticket";
 import { ensureTransportMode } from "./transport";
 import { shouldUseGateway } from "./transportMode";
@@ -32,9 +33,24 @@ import { BASE_URL } from "../settings";
 const API_BASE_URL = BASE_URL;
 
 // Refresh-and-retry: máximo 3 INTENTOS por petición (original + 2 retries).
-// Solo el 403 (ticket expirado) dispara refresh+retry; otros errores se
-// propagan tal cual. Contador LOCAL por petición (nunca compartido).
+// Solo el 403 dispara refresh+retry — ticket expirado o, en escrituras,
+// pase humano expirado (code CAPTCHA_FAILED); otros errores se propagan tal
+// cual. Contador LOCAL por petición (nunca compartido).
 const MAX_ATTEMPTS = 3;
+
+// Escrituras que exigen el pase humano (CAPTCHA_PROTECT): espejo EXACTO de
+// las acciones decoradas con @human_validator en el backend. Los POST de
+// solo lectura (/threads/foryou/, /threads/closeyou/) NO están aquí.
+const HUMAN_PASS_PATHS = new Set([
+  "/threads/",
+  "/reactions/",
+  "/reports/",
+  "/thread-files/presign/",
+  "/thread-files/confirm/",
+]);
+
+const needsHumanPass = (method, path) =>
+  method === "POST" && HUMAN_PASS_PATHS.has(path);
 
 export class APIError extends Error {
   constructor(message, status, payload) {
@@ -87,6 +103,22 @@ export async function apiFetch(url, options = {}) {
       /* sin ticket: la petición sale sin assertion y el backend la rechaza */
     }
 
+    // Pase humano (solo escrituras protegidas): viaja como header REAL de la
+    // petición exterior, igual que client-assertion. Si no se pudo obtener
+    // (Cap caído, solver falló), la petición sale SIN pase y el backend
+    // responde su 403/503 tipado — el error visible es el del servidor.
+    let extraHeaders = options.headers;
+    if (needsHumanPass(method, path)) {
+      try {
+        const pass = await getHumanPass();
+        if (pass) {
+          extraHeaders = { ...(options.headers || {}), "x-human-pass": pass };
+        }
+      } catch (err) {
+        /* sin pase: el backend decide */
+      }
+    }
+
     let response;
     try {
       // Punto ÚNICO de salida. Re-arma el sobre del gateway en CADA intento
@@ -99,7 +131,7 @@ export async function apiFetch(url, options = {}) {
         assertion,
         gateway: shouldUseGateway(),
         signal: options.signal,
-        extraHeaders: options.headers,
+        extraHeaders,
       });
     } catch (err) {
       // Política "cifrado o nada": si no se pudo cifrar/derivar el sobre, la
@@ -125,20 +157,40 @@ export async function apiFetch(url, options = {}) {
       return parseResponseBody(response);
     }
 
-    // 403 = ticket expirado: si quedan intentos, refrescar (single-flight) y
-    // reintentar. Otros errores (400/404/5xx) NO se reintentan.
+    // 403: si quedan intentos, se distingue POR EL CÓDIGO del cuerpo qué
+    // credencial expiró — CAPTCHA_FAILED → renovar el pase humano (resolver
+    // otro PoW); cualquier otro 403 → refrescar el ticket (comportamiento de
+    // siempre). Otros errores (400/404/5xx) NO se reintentan.
     if (response.status === 403 && attempt < MAX_ATTEMPTS) {
+      let body403 = null;
       try {
-        await refreshTicket();
-        continue; // reintentar con el token fresco
+        body403 = await parseResponseBody(response);
       } catch (err) {
-        /* el refresh falló: caemos a propagar el 403 original abajo */
+        /* cuerpo ilegible: se trata como 403 de ticket */
       }
+      try {
+        if (body403 && body403.code === "CAPTCHA_FAILED") {
+          invalidateHumanPass();
+          await getHumanPass();
+        } else {
+          await refreshTicket();
+        }
+        continue; // reintentar con la credencial fresca
+      } catch (err) {
+        /* la renovación falló: propagar el 403 original abajo */
+      }
+      throw new APIError(
+        `API error 403: ${response.statusText}`,
+        403,
+        body403
+      );
     }
 
     // Sin reintento (o agotados): propagar con el MISMO shape de hoy.
     const data = await parseResponseBody(response);
-    if (response.status >= 500) {
+    // El 503 CAPTCHA_UNAVAILABLE (servidor Cap caído) NO es una caída del
+    // backend: se propaga al call site sin disparar el aviso global.
+    if (response.status >= 500 && data?.code !== "CAPTCHA_UNAVAILABLE") {
       window.dispatchEvent(new Event(SERVER_ERROR_EVENT));
     }
     throw new APIError(

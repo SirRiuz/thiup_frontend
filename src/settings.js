@@ -34,3 +34,7 @@ export const GATEWAY_SEED =
 // REACT_APP_DEBUG=true | false in .env — default: false (safe for production).
 export const DEBUG =
   (process.env.REACT_APP_DEBUG || "false").trim().toLowerCase() === "true";
+
+// Base path where CRA serves the public/ dir (empty at the root). Used to
+// reference the self-hosted captcha solver assets (public/vendor/) — no CDN.
+export const PUBLIC_PATH = process.env.PUBLIC_URL || "";

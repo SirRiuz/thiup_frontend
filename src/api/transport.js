@@ -1,3 +1,4 @@
+import { setServerConfig } from "./config";
 import { parseResponseBody } from "./decode";
 import { dispatchRequest } from "./dispatch";
 import { invalidateTicket } from "./ticket";
@@ -37,7 +38,10 @@ async function probeMode() {
 
   if (res.ok) {
     // Debe descifrar bien para confirmar el modo cifrado (si falla → ambiguo).
-    await parseResponseBody(res);
+    // El cuerpo ES la config del servidor: se captura en el singleton para
+    // que el resto del código lea los flags (p.ej. captcha) sin otra petición.
+    const config = await parseResponseBody(res);
+    setServerConfig(config);
     return "encrypted";
   }
 
@@ -52,6 +56,19 @@ async function probeMode() {
       /* cuerpo no-JSON / cifrado → ambiguo */
     }
     if (body && body.code === "GATEWAY_DISABLED") {
+      // Modo plano: la config no llegó por el gateway — se pide directa para
+      // capturar los flags igualmente. Best-effort: si falla, el singleton
+      // queda null y el captcha se comporta como apagado en el FE.
+      try {
+        const direct = await dispatchRequest({
+          method: "GET",
+          path: "/config/",
+          gateway: false,
+        });
+        if (direct.ok) setServerConfig(await parseResponseBody(direct));
+      } catch (e) {
+        /* sin config directa: flags no disponibles */
+      }
       return "normal";
     }
   }

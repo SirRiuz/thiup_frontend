@@ -3,8 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@cap.js/wasm": "^0.0.7",
+    "@cap.js/widget": "^0.1.56",
     "crypto-js": "^4.2.0",
     "i18next": "^23.16.8",
+    "pako": "^2.1.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-i18next": "^13.5.0",
@@ -12,11 +15,14 @@
     "react-scripts": "5.0.1"
   },
   "scripts": {
+    "postinstall": "node scripts/copy-captcha-assets.js",
+    "prestart": "node scripts/copy-captcha-assets.js",
+    "prebuild": "node scripts/copy-captcha-assets.js",
     "start": "BROWSER=none react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "build:secure": "node scripts/build-secure.js"
+    "build:secure": "node scripts/copy-captcha-assets.js && node scripts/build-secure.js"
   },
   "eslintConfig": {
     "extends": [
