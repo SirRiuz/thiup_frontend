@@ -6,6 +6,7 @@ import "./i18n";
 import silenceResizeObserverError from "./utils/silenceResizeObserverError";
 import stripWafParams from "./utils/stripWafParams";
 import initAntiSnoop from "./utils/antiSnoop";
+import { initHumanBlock } from "./utils/humanBlock";
 
 // Swallow ONLY the benign "ResizeObserver loop ..." browser warning so it stops
 // tripping CRA's error overlay. All other errors still surface. Registered
@@ -29,3 +30,9 @@ root.render(
 // No-op with DEBUG=true so development keeps DevTools available. onLockdown
 // unmounts React first so it removes its portals cleanly before the wipe.
 initAntiSnoop({ onLockdown: () => root.unmount() });
+
+// Human-verification wall: when the invisible captcha can't prove the visitor
+// is human (persistent CAPTCHA_FAILED), the API layer wipes the DOM and shows
+// an on-brand notice. Register the same teardown so React unmounts cleanly
+// before the wipe.
+initHumanBlock({ onLockdown: () => root.unmount() });

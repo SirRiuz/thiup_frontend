@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useScrollLock } from "../../utils/scrollLock";
 import { useToast } from "../../contexts/ToastContext";
 import { createReport } from "../../api/reportApi";
+import { warmHumanPass } from "../../api/humanPass";
 import styles from "../../styles/components/post/ReportModal.module.css";
 import cx from "../../utils/cx";
 
@@ -91,6 +92,9 @@ function ReportModal({ post, onClose }) {
     // Reset on (re)mount — StrictMode runs cleanup then setup again in dev, so
     // this must be set here (not only at useRef init) or the flag stays false.
     mountedRef.current = true;
+    // Pre-warm the captcha human pass: by the time the user picks a category
+    // and sends the report, the PoW is already solved.
+    warmHumanPass();
     previousFocusRef.current =
       typeof document !== "undefined" ? document.activeElement : null;
     dialogRef.current?.focus();

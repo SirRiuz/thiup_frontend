@@ -4,6 +4,7 @@ import MaskAvatar from "../MaskAvatar";
 import PostReplyContext from "./PostReplyContext";
 import MediaScanList from "../media/MediaScanList";
 import useMediaComposer from "../../hooks/useMediaComposer";
+import { warmHumanPass } from "../../api/humanPass";
 import { ACCEPT_ATTR } from "../../services/media/allowedFormats";
 import { renderTextWithHashtags } from "../home/homeHelpers";
 import { normalizePastedText } from "../../utils/normalizeText";
@@ -40,6 +41,12 @@ function PostCommentBox({
   // Shared media flow (scan + compress + auto-upload + confirm). The reply box
   // and the thread composer use the same hook.
   const media = useMediaComposer();
+
+  // Pre-warm the captcha human pass while the user is on the thread screen:
+  // replies AND reactions here go out without waiting for the PoW.
+  useEffect(() => {
+    warmHumanPass();
+  }, []);
 
   // Virtual keyboard (mobile): with the textarea focused, the `resize` event
   // of window.visualViewport detects the APPEARANCE of the keyboard (the

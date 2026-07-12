@@ -553,3 +553,8 @@ rejected smooth-S/loop variant.
 10. **Ship the full set of states** (loading/skeleton, empty, error/retry) for any new feed/screen.
 11. **Keep this doc updated** when the design system changes, and prefer fixing the flagged
     inconsistencies over copying them.
+12. **ENGLISH ONLY in code.** Every comment, docstring, JSDoc and identifier is written in
+    English — no exceptions. When you touch a file with legacy Spanish comments, migrate those
+    lines to English (don't mass-rewrite untouched files). **Single exception:** Spanish i18n
+    translation values (`es.json`) and Spanish user content are **data**, not code — never
+    "translate" or rewrite them (see rules 4–5 and Content & tone).

@@ -362,6 +362,12 @@
     "body": "Thiup oculta su contenido mientras las herramientas de desarrollo están abiertas — es parte de cómo protegemos a una comunidad anónima. Sin resentimientos.",
     "hint": "Cierra las herramientas de desarrollo y recarga para continuar."
   },
+  "humanBlocked": {
+    "title": "Confirmemos que eres humano",
+    "body": "No pudimos verificar esta sesión como una persona real. Thiup protege su contenido con una comprobación humana rápida para mantener a una comunidad anónima libre de bots.",
+    "tryAgain": "Intentar de nuevo",
+    "hint": "Recarga la página para volver a hacer la comprobación. Si sigue fallando, desactiva la automatización o las extensiones que bloquean scripts."
+  },
   "networkError": {
     "title": "Sin conexión",
     "body": "Parece que te quedaste sin internet. Revisa tu conexión wifi o de datos e inténtalo de nuevo.",
