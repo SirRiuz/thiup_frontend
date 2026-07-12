@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import styles from "../../styles/components/post/PostReplySkeleton.module.css";
+import cx from "../../utils/cx";
 
 /**
  * Loading placeholder that mirrors the visual shape of PostReply.
@@ -14,29 +15,29 @@ function PostReplySkeleton({ variant = "medium" }) {
   return (
     <div className={styles.skeleton} aria-busy="true" aria-label={t("common.loadingReply")}>
       <div className={styles.header}>
-        <div className={`${styles.bar} ${styles.identicon}`} />
-        <div className={`${styles.bar} ${styles.maskId}`} />
-        <div className={`${styles.bar} ${styles.timestamp}`} />
+        <div className={cx(styles.bar, styles.identicon)} />
+        <div className={cx(styles.bar, styles.maskId)} />
+        <div className={cx(styles.bar, styles.timestamp)} />
       </div>
       <div className={styles.body}>
         {variant === "short" && (
           <>
-            <div className={`${styles.bar} ${styles.line100}`} />
-            <div className={`${styles.bar} ${styles.line62}`} />
+            <div className={cx(styles.bar, styles.line100)} />
+            <div className={cx(styles.bar, styles.line62)} />
           </>
         )}
         {variant === "medium" && (
           <>
-            <div className={`${styles.bar} ${styles.line100}`} />
-            <div className={`${styles.bar} ${styles.line88}`} />
-            <div className={`${styles.bar} ${styles.line62}`} />
+            <div className={cx(styles.bar, styles.line100)} />
+            <div className={cx(styles.bar, styles.line88)} />
+            <div className={cx(styles.bar, styles.line62)} />
           </>
         )}
         {variant === "long" && (
           <>
-            <div className={`${styles.bar} ${styles.line94}`} />
-            <div className={`${styles.bar} ${styles.line100}`} />
-            <div className={`${styles.bar} ${styles.line48}`} />
+            <div className={cx(styles.bar, styles.line94)} />
+            <div className={cx(styles.bar, styles.line100)} />
+            <div className={cx(styles.bar, styles.line48)} />
           </>
         )}
       </div>

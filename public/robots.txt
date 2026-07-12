@@ -9,8 +9,49 @@ Disallow: /home
 Disallow: /search
 Disallow: /notifications
 Disallow: /me
+Disallow: /m
+Disallow: /anon
 Disallow: /p
 Disallow: /post
 Disallow: /my-threads
+
+# AI / LLM crawlers: fully blocked on this host. Anonymous user content must
+# never be ingested, quoted or used for training. The brand site (thiup.com)
+# welcomes these bots and serves https://thiup.com/llms.txt for them.
+User-agent: GPTBot
+Disallow: /
+
+User-agent: OAI-SearchBot
+Disallow: /
+
+User-agent: ChatGPT-User
+Disallow: /
+
+User-agent: ClaudeBot
+Disallow: /
+
+User-agent: Claude-User
+Disallow: /
+
+User-agent: PerplexityBot
+Disallow: /
+
+User-agent: Perplexity-User
+Disallow: /
+
+User-agent: Google-Extended
+Disallow: /
+
+User-agent: Applebot-Extended
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: Bytespider
+Disallow: /
+
+User-agent: meta-externalagent
+Disallow: /
 
 Sitemap: https://app.thiup.com/sitemap.xml

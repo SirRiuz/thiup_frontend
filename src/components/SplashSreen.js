@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useScrollLock } from "../utils/scrollLock";
 import BrandLogo from "./BrandLogo";
 import styles from "../styles/components/SplashScreen.module.css";
+import cx from "../utils/cx";
 
 // Fast: the app is an SPA — it's "ready" as soon as React mounts (each
 // screen loads its data with skeletons). Only a SHORT minimum is kept so the
@@ -44,7 +45,7 @@ export default function SplashScreen({ onFinish }) {
 
   return (
     <div
-      className={`${styles.curtain} ${isLeaving ? styles.curtainLeaving : ""}`}
+      className={cx(styles.curtain, isLeaving ? styles.curtainLeaving : "")}
       role="status"
       aria-label={t("splash.loading")}
     >

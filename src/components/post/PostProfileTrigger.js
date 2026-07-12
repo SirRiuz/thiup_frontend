@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import PostProfileHoverCard from "./PostProfileHoverCard";
+import { useCurrentUser } from "../../contexts/CurrentUserContext";
 import styles from "../../styles/components/post/PostProfileTrigger.module.css";
 
 const SHOW_DELAY_MS = 300;
@@ -19,6 +21,28 @@ function PostProfileTrigger({ mask, children, className }) {
   const [isVisible, setIsVisible] = useState(false);
   const showTimerRef = useRef(null);
   const hideTimerRef = useRef(null);
+  const navigate = useNavigate();
+  const { currentUserMask } = useCurrentUser();
+
+  // Click on the avatar/mask → the anonymous profile (your own mask goes to
+  // /me, the private version). stopPropagation: the trigger lives inside
+  // clickable rows (feed card nav zone) that must not also fire.
+  const handleClick = (e) => {
+    if (!mask?.id) return;
+    e.stopPropagation();
+    e.preventDefault();
+    navigate(
+      currentUserMask?.id && mask.id === currentUserMask.id
+        ? "/me"
+        : `/m/${mask.id}`
+    );
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      handleClick(e);
+    }
+  };
 
   useEffect(() => {
     return () => {
@@ -77,6 +101,10 @@ function PostProfileTrigger({ mask, children, className }) {
   return (
     <span
       className={wrapperClassName}
+      role="link"
+      tabIndex={0}
+      onClick={handleClick}
+      onKeyDown={handleKeyDown}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >

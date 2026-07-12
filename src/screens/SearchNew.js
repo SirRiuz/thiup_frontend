@@ -15,8 +15,18 @@ import SearchUserCard from "../components/search/SearchUserCard";
 import { useSearch } from "../hooks/useSearch";
 import { useTagSuggestions } from "../hooks/useTagSuggestions";
 import useMobileSurfacePage from "../hooks/useMobileSurfacePage";
+import useFlushBottom from "../hooks/useFlushBottom";
 import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
 import usePageTitle from "../hooks/usePageTitle";
+import cx from "../utils/cx";
+import {
+  playTileVideoOnHover,
+  stopTileVideoOnLeave,
+} from "../components/media/mediaTileHoverPlay";
+import {
+  isTileMediaLoaded,
+  markTileMediaLoaded,
+} from "../services/media/tileMediaMemory";
 import styles from "../styles/screens/SearchNew.module.css";
 import { sanitizeQuery, MAX_QUERY_LENGTH } from "../utils/searchQuery";
 
@@ -34,6 +44,24 @@ const TAB_I18N = {
 };
 // The two tabs whose results are posts (rendered with HomeFeedCard).
 const POST_TABS = new Set(["top", "latest"]);
+
+// Explore topics — a CURATED starter cloud for the landing (tags are DATA,
+// not UI copy: they stay as written in every locale). Static for now; when
+// the backend ships topic aggregation this becomes its payload.
+const EXPLORE_TOPICS = [
+  "privacidad",
+  "tecnologia",
+  "salud",
+  "musica",
+  "viajes",
+  "comida",
+  "deportes",
+  "cine",
+  "libros",
+  "ciencia",
+  "gaming",
+  "arte",
+];
 
 function SearchNew() {
   const { t } = useTranslation();
@@ -154,6 +182,20 @@ function SearchNew() {
     [results]
   );
 
+  // Same shared scale for the landing's trending sparklines (their real
+  // series arrive with the suggest payload): a peak of 4 reads 4× a peak
+  // of 1 across the whole list.
+  const trendingActivityMax = useMemo(
+    () =>
+      Math.max(
+        ...trending.flatMap((t) =>
+          Array.isArray(t.activity) ? t.activity : []
+        ),
+        1
+      ),
+    [trending]
+  );
+
   // A hashtag is just a normal search: navigate to /search?q=#tag (default tab)
   // and land on THESE same tabs — no special tag mode.
   const searchHashtag = (tagName) => {
@@ -216,8 +258,8 @@ function SearchNew() {
   const handlePostClick = (post) =>
     navigate(`/p/${post.uid}`, { state: { seedThread: post } });
   const handleUserCardClick = (maskId) => {
-    // Placeholder: user profile screen not built yet.
-    console.log("view user profile:", maskId);
+    // The anonymous public profile (People results carry the public id).
+    navigate(`/m/${maskId}`);
   };
 
   // Differentiated loading. THE RULE: skeletons ONLY for the very first load
@@ -249,6 +291,18 @@ function SearchNew() {
     !error &&
     results.length > 0;
 
+  // Flush-into-the-corners only when the mosaic REALLY reaches the card's
+  // bottom: the surface is min-height stretched, so a short last page ends
+  // mid-card — rounding those tiles read broken.
+  const surfaceRef = useRef(null);
+  const mediaGridRef = useRef(null);
+  const mediaGridFlush = useFlushBottom(
+    mediaGridRef,
+    surfaceRef,
+    activeTab === "media" && showResults && !hasMore,
+    results.length
+  );
+
   return (
     <div className={styles.page} ref={pageRef}>
       {/* Threads' search masthead: 60px solid bar, centered "Search" title
@@ -263,16 +317,16 @@ function SearchNew() {
       {!isMobile && (
         <div className={styles.cornerMask} aria-hidden="true">
           <div className={styles.cornerMaskEdge} />
-          <div className={`${styles.cornerCap} ${styles.cornerCapLeft}`}>
+          <div className={cx(styles.cornerCap, styles.cornerCapLeft)}>
             <div className={styles.cornerCapBox} />
           </div>
-          <div className={`${styles.cornerCap} ${styles.cornerCapRight}`}>
+          <div className={cx(styles.cornerCap, styles.cornerCapRight)}>
             <div className={styles.cornerCapBox} />
           </div>
         </div>
       )}
       <main className={styles.main}>
-        <div className={styles.surface}>
+        <div className={styles.surface} ref={surfaceRef}>
             {/* Threads' in-card search box — magnifier + input in a rounded
                 recessed field, ONE responsive field at every breakpoint.
                 Typing updates the results LIVE (the debounced commit above). */}
@@ -357,9 +411,7 @@ function SearchNew() {
             {showResults && (
               <>
                 <section
-                  className={`${styles.results} ${
-                    isReloading ? styles.resultsReloading : ""
-                  }`}
+                  className={cx(styles.results, isReloading ? styles.resultsReloading : "")}
                 >
                   {POST_TABS.has(loadedTab) &&
                     results.map((post, idx) => (
@@ -397,14 +449,18 @@ function SearchNew() {
                       dominant color paints the tile while the file arrives
                       (no white flash); NSFW tiles stay blurred in the grid. */}
                   {loadedTab === "media" && (
-                    <div className={styles.mediaGrid}>
+                    /* mediaGridEnd (last page only): the mosaic runs FLUSH
+                       into the card's rounded bottom corners — while more
+                       pages exist the sentinel/spinner need the room. */
+                    <div
+                      ref={mediaGridRef}
+                      className={cx(styles.mediaGrid, mediaGridFlush ? styles.mediaGridEnd : "")}
+                    >
                       {results.map((m) => (
                         <button
                           key={m.id}
                           type="button"
-                          className={`${styles.mediaTile} ${
-                            m.isNsfw ? styles.mediaTileNsfw : ""
-                          }`}
+                          className={cx(styles.mediaTile, m.isNsfw ? styles.mediaTileNsfw : "")}
                           style={
                             m.dominantColor
                               ? {
@@ -414,8 +470,19 @@ function SearchNew() {
                                 }
                               : undefined
                           }
-                          onClick={() => setMediaPreview(m)}
-                          aria-label={t("search.mediaPreview.label")}
+                          /* Straight to the thread (seeded — same behavior
+                             as the profile grids); the URL keeps ?tab=media
+                             and the results are cached, so BACK restores
+                             this exact tab + scroll. The SearchMediaPreview
+                             modal stays available but unused for now. */
+                          onClick={() =>
+                            m.thread
+                              ? handlePostClick(m.thread)
+                              : setMediaPreview(m)
+                          }
+                          onMouseEnter={playTileVideoOnHover}
+                          onMouseLeave={stopTileVideoOnLeave}
+                          aria-label={t("myThreads.mediaTileLabel")}
                         >
                           {m.type === "video" ? (
                             <video
@@ -424,14 +491,19 @@ function SearchNew() {
                               preload="metadata"
                               muted
                               playsInline
+                              loop
                             />
                           ) : (
                             <img
                               className={styles.mediaTileMedia}
                               src={m.url}
                               alt=""
-                              loading="lazy"
-                              decoding="async"
+                              /* No-blink restore — see the profile grids. */
+                              loading={
+                                isTileMediaLoaded(m.url) ? "eager" : "lazy"
+                              }
+                              decoding="sync"
+                              onLoad={() => markTileMediaLoaded(m.url)}
                             />
                           )}
                           {/* ONE type mark per tile (IG's grid rule), top-
@@ -523,27 +595,27 @@ function SearchNew() {
                   {t("search.trendingTitle")}
                 </h2>
                 <section
-                  className={`${styles.results} ${styles.trendSkeleton}`}
+                  className={cx(styles.results, styles.trendSkeleton)}
                   aria-hidden="true"
                 >
                   {Array.from({ length: 5 }, (_, i) => (
                     <div key={i} className={styles.trendSkeletonRow}>
                       <span
-                        className={`${styles.skeletonBar} ${styles.trendSkeletonRank}`}
+                        className={cx(styles.skeletonBar, styles.trendSkeletonRank)}
                       />
                       <span
-                        className={`${styles.skeletonBar} ${styles.trendSkeletonTile}`}
+                        className={cx(styles.skeletonBar, styles.trendSkeletonTile)}
                       />
                       <span className={styles.trendSkeletonText}>
                         <span
-                          className={`${styles.skeletonBar} ${styles.trendSkeletonName}`}
+                          className={cx(styles.skeletonBar, styles.trendSkeletonName)}
                         />
                         <span
-                          className={`${styles.skeletonBar} ${styles.trendSkeletonMeta}`}
+                          className={cx(styles.skeletonBar, styles.trendSkeletonMeta)}
                         />
                       </span>
                       <span
-                        className={`${styles.skeletonBar} ${styles.trendSkeletonArrow}`}
+                        className={cx(styles.skeletonBar, styles.trendSkeletonArrow)}
                       />
                     </div>
                   ))}
@@ -563,13 +635,46 @@ function SearchNew() {
                   {trending.map((tg, i) => (
                     <SearchTagCard
                       key={tg.name}
-                      tag={{ name: tg.name, postsCount: tg.count ?? 0 }}
+                      tag={{
+                        name: tg.name,
+                        postsCount: tg.count ?? 0,
+                        // REAL posts/day series from the suggest payload —
+                        // drives the row's sparkline.
+                        activity: tg.activity,
+                      }}
                       variant="suggestion"
                       rank={i + 1}
+                      activityMax={trendingActivityMax}
                       onClick={() => searchHashtag(tg.name)}
                     />
                   ))}
                 </section>
+              </>
+            )}
+
+            {/* Explore topics — the curated chip cloud: a second door into
+                the app for landings where the trends alone read flat.
+                Tapping a topic runs that hashtag search. */}
+            {mode === "none" && !showTrendingSkeleton && (
+              <>
+                <h2 className={styles.trendingTitle}>
+                  {t("search.topicsTitle")}
+                </h2>
+                <div className={styles.topicChips}>
+                  {EXPLORE_TOPICS.map((topic) => (
+                    <button
+                      key={topic}
+                      type="button"
+                      className={styles.topicChip}
+                      onClick={() => searchHashtag(topic)}
+                    >
+                      <span className={styles.topicChipHash} aria-hidden="true">
+                        #
+                      </span>
+                      {topic}
+                    </button>
+                  ))}
+                </div>
               </>
             )}
         </div>

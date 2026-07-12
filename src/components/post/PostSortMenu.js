@@ -7,6 +7,7 @@ import {
 } from "react";
 import { useTranslation } from "react-i18next";
 import styles from "../../styles/components/post/PostSortMenu.module.css";
+import cx from "../../utils/cx";
 
 // Minimum gap between the menu and the viewport edges (mobile overflow fix).
 const VIEWPORT_MARGIN = 8;
@@ -177,9 +178,7 @@ function PostSortMenu({ value, onChange, isLoading = false }) {
                 type="button"
                 role="menuitemradio"
                 aria-checked={isActive}
-                className={`${styles.option} ${
-                  isActive ? styles.optionActive : ""
-                }`}
+                className={cx(styles.option, isActive ? styles.optionActive : "")}
                 onClick={() => select(option)}
               >
                 <span className={styles.optionText}>
@@ -187,9 +186,7 @@ function PostSortMenu({ value, onChange, isLoading = false }) {
                   <span className={styles.optionDesc}>{t(option.descKey)}</span>
                 </span>
                 <span
-                  className={`${styles.check} ${
-                    isActive ? styles.checkVisible : ""
-                  }`}
+                  className={cx(styles.check, isActive ? styles.checkVisible : "")}
                   aria-hidden="true"
                 >
                   <Check />

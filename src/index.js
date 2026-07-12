@@ -5,6 +5,7 @@ import App from "./App";
 import "./i18n";
 import silenceResizeObserverError from "./utils/silenceResizeObserverError";
 import stripWafParams from "./utils/stripWafParams";
+import initAntiSnoop from "./utils/antiSnoop";
 
 // Swallow ONLY the benign "ResizeObserver loop ..." browser warning so it stops
 // tripping CRA's error overlay. All other errors still surface. Registered
@@ -22,3 +23,9 @@ root.render(
     <App />
   </React.StrictMode>
 );
+
+// Casual anti-prying guard: with REACT_APP_DEBUG=false it wipes the DOM and
+// shows a calm on-brand notice when the browser DevTools are detected open.
+// No-op with DEBUG=true so development keeps DevTools available. onLockdown
+// unmounts React first so it removes its portals cleanly before the wipe.
+initAntiSnoop({ onLockdown: () => root.unmount() });

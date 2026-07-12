@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import PostReplySkeleton from "./PostReplySkeleton";
 import styles from "../../styles/components/post/PostInitialSkeleton.module.css";
+import cx from "../../utils/cx";
 
 /**
  * Skeleton for the Post page during the initial loading.
@@ -13,28 +14,28 @@ function PostInitialSkeleton() {
     <div className={styles.wrapper} aria-busy="true" aria-label={t("common.loadingThread")}>
       <div className={styles.opCard}>
         <div className={styles.opHeader}>
-          <div className={`${styles.bar} ${styles.opIdenticon}`}></div>
-          <div className={`${styles.bar} ${styles.opMaskId}`}></div>
-          <div className={`${styles.bar} ${styles.opTime}`}></div>
+          <div className={cx(styles.bar, styles.opIdenticon)}></div>
+          <div className={cx(styles.bar, styles.opMaskId)}></div>
+          <div className={cx(styles.bar, styles.opTime)}></div>
         </div>
         <div className={styles.opBody}>
-          <div className={`${styles.bar} ${styles.opBodyLine} ${styles.line100}`}></div>
-          <div className={`${styles.bar} ${styles.opBodyLine} ${styles.line95}`}></div>
-          <div className={`${styles.bar} ${styles.opBodyLine} ${styles.line75}`}></div>
-          <div className={`${styles.bar} ${styles.opBodyLine} ${styles.line60}`}></div>
+          <div className={cx(styles.bar, styles.opBodyLine, styles.line100)}></div>
+          <div className={cx(styles.bar, styles.opBodyLine, styles.line95)}></div>
+          <div className={cx(styles.bar, styles.opBodyLine, styles.line75)}></div>
+          <div className={cx(styles.bar, styles.opBodyLine, styles.line60)}></div>
         </div>
         <div className={styles.opReactionBar}>
-          <div className={`${styles.bar} ${styles.opReactionPill}`}></div>
-          <div className={`${styles.bar} ${styles.opReactionPill}`}></div>
-          <div className={`${styles.bar} ${styles.opReactionPill}`}></div>
+          <div className={cx(styles.bar, styles.opReactionPill)}></div>
+          <div className={cx(styles.bar, styles.opReactionPill)}></div>
+          <div className={cx(styles.bar, styles.opReactionPill)}></div>
         </div>
       </div>
       <div className={styles.opDivider}></div>
       <div className={styles.sortRow}>
-        <div className={`${styles.bar} ${styles.sortLabel}`}></div>
-        <div className={`${styles.bar} ${styles.sortTab}`}></div>
-        <div className={`${styles.bar} ${styles.sortTab}`}></div>
-        <div className={`${styles.bar} ${styles.sortTab}`}></div>
+        <div className={cx(styles.bar, styles.sortLabel)}></div>
+        <div className={cx(styles.bar, styles.sortTab)}></div>
+        <div className={cx(styles.bar, styles.sortTab)}></div>
+        <div className={cx(styles.bar, styles.sortTab)}></div>
       </div>
       <div className={styles.repliesList}>
         <PostReplySkeleton variant="medium" />

@@ -7,6 +7,7 @@ import {
 } from "react";
 import { useTranslation } from "react-i18next";
 import MediaViewer from "./MediaViewer";
+import cx from "../../utils/cx";
 import {
   getAudioOwner,
   setAudioOwner,
@@ -135,9 +136,7 @@ function ImageMedia({ item, revealed, onNaturalSize, eager }) {
       decoding="async"
       draggable={false}
       onLoad={handleLoad}
-      className={`${styles.img} ${loaded ? styles.loaded : ""} ${
-        revealed ? "" : styles.blurred
-      }`}
+      className={cx(styles.img, loaded ? styles.loaded : "", revealed ? "" : styles.blurred)}
     />
   );
 }
@@ -332,9 +331,7 @@ function VideoMedia({ item, revealed, onNaturalSize, eager }) {
         // still waits for play() (autoplay-on-visible). The fragment is
         // client-side, so it never breaks a presigned (query-string) URL.
         src={src ? `${src}#t=0.1` : undefined}
-        className={`${styles.img} ${loaded ? styles.loaded : ""} ${
-          revealed ? "" : styles.blurred
-        }`}
+        className={cx(styles.img, loaded ? styles.loaded : "", revealed ? "" : styles.blurred)}
         muted
         loop
         playsInline
@@ -415,7 +412,7 @@ function MediaFrame({
     <div
       ref={frameRef}
       data-frame=""
-      className={`${styles.frame} ${className}`}
+      className={cx(styles.frame, className)}
       style={style}
       {...frameProps}
     >
@@ -436,11 +433,12 @@ function MediaFrame({
             setRevealed(true);
           }}
         >
-          {/* IG/Threads-style centered notice over the blur: glyph in a
-              dark-glass disc + title + tap hint. */}
+          {/* IG-style centered notice over the blur: glyph in a hairline-
+              OUTLINED ring (their light anatomy — no heavy disc), title, and
+              the tap hint as an explicit dark-glass action pill. */}
           <span className={styles.revealContent} aria-hidden="true">
             <span className={styles.revealIcon}>
-              <EyeOffIcon />
+              <EyeOffIcon size={20} />
             </span>
             <span className={styles.revealTitle}>
               {t("media.sensitiveTitle")}
@@ -775,7 +773,7 @@ function Carousel({ images, onOpen }) {
     // drag surface — clickable ancestors (feed card row navigation) skip it.
     <div
       ref={ref}
-      className={`${styles.carousel} ${pano ? styles.panorama : ""}`}
+      className={cx(styles.carousel, pano ? styles.panorama : "")}
       data-media-zone=""
     >
       <div ref={innerRef} className={styles.track}>

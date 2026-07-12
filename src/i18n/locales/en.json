@@ -68,7 +68,8 @@
     "thread": "Thread",
     "notFound": "Page not found",
     "serverError": "Server error",
-    "networkError": "No connection"
+    "networkError": "No connection",
+    "anonProfile": "Profile"
   },
   "splash": {
     "loading": "Loading"
@@ -164,6 +165,7 @@
       "viewThread": "View thread"
     },
     "trendingTitle": "Trending",
+    "topicsTitle": "Explore topics",
     "label": "Search",
     "tabTop": "Top",
     "tabLatest": "Latest",
@@ -317,7 +319,13 @@
     "posts": "Posts",
     "replies": "Replies",
     "joined": "Joined {{date}}",
-    "unknown": "Unknown"
+    "unknown": "Unknown",
+    "emptyTitle": "No threads yet",
+    "emptyBody": "This mask hasn't started any conversations.",
+    "notFound": "Profile not found",
+    "mediaEmptyTitle": "No media yet",
+    "mediaEmptyBody": "Photos and videos from this mask's threads will show up here.",
+    "avatarLabel": "Profile picture"
   },
   "myThreads": {
     "title": "My threads",
@@ -330,9 +338,12 @@
     "statThreads": "Threads",
     "statReactions": "Reactions",
     "statReplies": "Replies",
-    "privacyNote": "Only you can see this",
-    "threadCount_one": "{{count}} thread",
-    "threadCount_other": "{{count}} threads"
+    "tabThreads": "Threads",
+    "tabMedia": "Media",
+    "joined": "Joined {{date}}",
+    "mediaTileLabel": "Open thread",
+    "mediaEmptyTitle": "No media yet",
+    "mediaEmptyBody": "Photos and videos from your threads will show up here."
   },
   "notFound": {
     "code": "404",
@@ -346,6 +357,11 @@
     "tryAgain": "Try again",
     "code": "Error 503 · service unavailable"
   },
+  "antiSnoop": {
+    "title": "Let's keep this space private",
+    "body": "Thiup hides its content while developer tools are open — it's part of how we protect an anonymous community. No hard feelings.",
+    "hint": "Close developer tools and reload to continue."
+  },
   "networkError": {
     "title": "No connection",
     "body": "Looks like you're offline. Check your wifi or mobile data and try again.",
@@ -355,8 +371,7 @@
   },
   "feedError": {
     "title": "Couldn't reach the server",
-    "subtitle": "Check your connection and try again",
-    "cloudAria": "Cloud connection lost"
+    "subtitle": "Check your connection and try again"
   },
   "retryBanner": {
     "connectionAria": "Connection lost",

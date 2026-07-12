@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { SUPPORTED_LANGUAGES, setLanguage } from "../../i18n";
 import { useScrollLock } from "../../utils/scrollLock";
 import styles from "../../styles/components/nav/LanguageModal.module.css";
+import cx from "../../utils/cx";
 
 /**
  * UI language selection modal. Warm aesthetic (same palette as the rail:
@@ -122,36 +123,40 @@ function LanguageModal({ onClose }) {
               <button
                 key={lang}
                 type="button"
-                className={`${styles.option} ${
-                  isActive ? styles.optionActive : ""
-                }`}
-                aria-pressed={isActive}
+                role="menuitemradio"
+                aria-checked={isActive}
+                className={cx(styles.option, "springPress", isActive ? styles.optionActive : "")}
                 ref={isActive ? activeOptionRef : null}
                 onClick={() => choose(lang)}
               >
                 <span>{t(LANGUAGE_LABEL_KEYS[lang])}</span>
-                {isActive && (
-                  <svg
-                    className={styles.check}
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.4"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden="true"
-                  >
-                    <path d="M20 6 9 17l-5-5" />
-                  </svg>
-                )}
+                {/* Canonical select pattern: the terracotta CHECK is the
+                    selection signal (not an accent fill), kept in layout via
+                    visibility so rows never shift. */}
+                <svg
+                  className={cx(styles.check, isActive ? "" : styles.checkHidden)}
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M20 6 9 17l-5-5" />
+                </svg>
               </button>
             );
           })}
         </div>
 
-        <button type="button" className={styles.closeButton} onClick={onClose}>
+        <button
+          type="button"
+          className={cx(styles.closeButton, "springPress")}
+          onClick={onClose}
+        >
           {t("language.close")}
         </button>
       </div>

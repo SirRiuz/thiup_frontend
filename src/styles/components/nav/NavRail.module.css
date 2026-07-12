@@ -36,6 +36,43 @@
   }
 }
 
+/* Threads' exact logo slot (their sidebar mark): a 34×34 logo with 15px of
+   block padding, LINKED home. Hover grows the mark to scale(1.07) and a
+   press dips it to 0.98 — their transform 0.2s ease-in-out, on the svg so
+   the hit area never moves. */
+.railLogo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 15px 0;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.railLogo svg {
+  transition: transform 0.2s ease-in-out;
+}
+
+.railLogo:hover svg {
+  transform: scale(1.07);
+}
+
+.railLogo:active svg {
+  transform: scale(0.98);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .railLogo svg {
+    transition: none;
+  }
+
+  .railLogo:hover svg,
+  .railLogo:active svg {
+    transform: none;
+  }
+}
+
 .items {
   display: flex;
   flex-direction: column;
@@ -147,29 +184,38 @@
   color: #a85432;
 }
 
-/* CSS tooltip (desktop, icon-only needs a visible accessible label) */
+/* CSS tooltip (desktop, icon-only needs a visible accessible label) — the
+   dark-pill voice (the toast palette: ink + #f7f5f0), radius 8, a soft
+   popover shadow, and a 4px slide-in from the rail. */
 .tooltip {
   position: absolute;
-  left: calc(100% + 10px);
+  left: calc(100% + 12px);
   top: 50%;
-  transform: translateY(-50%);
+  transform: translateY(-50%) translateX(-4px);
   background: #1a1a1a;
-  color: #fdfcf8;
-  padding: 4px 9px;
-  border-radius: 6px;
-  font-size: 11px;
+  color: #f7f5f0;
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 12px;
   font-weight: 500;
+  line-height: 1.4;
   white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(26, 26, 26, 0.22);
   pointer-events: none;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 120ms ease, visibility 120ms ease;
+  transition: opacity 140ms ease, transform 140ms ease, visibility 140ms ease;
   z-index: 50;
 }
 
+/* HOVER-INTENT delay: the tooltip appears only after the cursor RESTS on an
+   item (~450ms) — sweeping down the rail no longer flashes a parade of
+   pills. Hiding stays immediate (the base rule has no delay). */
 .item:hover .tooltip {
   opacity: 1;
   visibility: visible;
+  transform: translateY(-50%) translateX(0);
+  transition-delay: 450ms;
 }
 
 /* Tooltip SUPPRESSED after the click (until the next mouseenter): the
@@ -180,27 +226,30 @@
   visibility: hidden;
 }
 
-/* ===== ☰ menu placeholder (anchored popover, no libraries) ===== */
+/* ===== ☰ menu — anchors only: the PANEL itself is the shared MenuSurface
+   (one menu surface app-wide; see components/menu/MenuSurface). NavRail owns
+   just the anchor position per variant and the animated close. ===== */
 
 .menuWrapper {
   position: relative;
 }
 
-.menu {
+/* Rail variant (side): opens to the RIGHT of the ☰, bottom-aligned. */
+.menuSide {
   position: absolute;
   left: calc(100% + 12px);
   bottom: 0;
-  min-width: 150px;
-  background: #fdfcf8;
-  border: 1px solid #e5e0d3;
-  border-radius: 14px;
-  padding: 6px;
-  box-shadow: 0 8px 24px rgba(26, 26, 26, 0.08);
-  z-index: 60;
-  /* Threads-style opening: fade + scale + slight translate "emerging"
-     from the ☰ button (origin bottom-left: the button sits there). */
   transform-origin: bottom left;
-  animation: menuIn 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Rail variant at the rail's bottom: opens UPWARD, anchored LEFT (the button
+   hugs the viewport's left edge — a right-anchored menu would fall off). */
+.menuUp {
+  position: absolute;
+  left: 0;
+  right: auto;
+  bottom: calc(100% + 12px);
+  transform-origin: bottom left;
 }
 
 /* Animated close: the class is applied BEFORE unmounting; the JS unmounts
@@ -209,60 +258,27 @@
   animation: menuOut 140ms ease-in forwards;
 }
 
-@keyframes menuIn {
-  from {
-    opacity: 0;
-    transform: scale(0.96) translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
 @keyframes menuOut {
   from {
     opacity: 1;
-    transform: none;
+    transform: scale(1);
   }
   to {
     opacity: 0;
-    transform: scale(0.96) translateY(4px);
+    transform: scale(0.9);
   }
 }
 
-/* Rail ☰ (bottom of the fixed side nav): the popover opens UPWARD and to the
-   RIGHT (the button hugs the viewport's left edge, so a right-anchored menu
-   would fall offscreen). */
-.menuUp {
-  left: 0;
-  right: auto;
-  bottom: calc(100% + 12px);
-  transform-origin: bottom left;
-}
-
-.menuItem {
-  display: block;
-  width: 100%;
-  text-align: left;
-  padding: 9px 12px;
-  border: 0;
-  border-radius: 9px;
-  background: transparent;
-  font-family: inherit;
-  font-size: 13px;
-  color: #1a1a1a;
-  cursor: pointer;
-  transition: background 120ms ease;
-}
-
-.menuItem:hover {
-  background: #f0ece3;
+@media (prefers-reduced-motion: reduce) {
+  .menuClosing {
+    animation: none;
+  }
 }
 
 /* Header variant: the popover opens DOWNWARD, anchored to the left edge of the
    ☰ button (which sits at the top-left of the mobile app bar). */
 .menuDown {
+  position: absolute;
   left: 0;
   right: auto;
   top: calc(100% + 8px);
@@ -296,10 +312,34 @@
   /* Transition comes from the global .springPressIcon class (single source). */
 }
 
+/* Threads' exact mobile-header logo slot: 32×32 box, glyph-filled, a LINK
+   home (their anatomy) with the logo's soft press. */
 .appBarBrand {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.appBarBrand svg {
+  transition: transform 0.2s ease-in-out;
+}
+
+.appBarBrand:active svg {
+  transform: scale(0.98);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .appBarBrand svg {
+    transition: none;
+  }
+
+  .appBarBrand:active svg {
+    transform: none;
+  }
 }
 
 /* ===== Mobile: bottom bar ===== */
@@ -443,12 +483,10 @@
 @media (prefers-reduced-motion: reduce) {
   .item,
   .appBarButton,
-  .tooltip,
-  .menuItem {
+  .tooltip {
     transition: none;
   }
 
-  .menu,
   .menuClosing {
     animation: none;
   }

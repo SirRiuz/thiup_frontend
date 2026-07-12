@@ -5,6 +5,7 @@ import { useScrollLock } from "../../utils/scrollLock";
 import { useToast } from "../../contexts/ToastContext";
 import { createReport } from "../../api/reportApi";
 import styles from "../../styles/components/post/ReportModal.module.css";
+import cx from "../../utils/cx";
 
 /**
  * Report flow for a thread. Responsive (centered modal on desktop, bottom sheet
@@ -238,11 +239,7 @@ function ReportModal({ post, onClose }) {
                       <button
                         key={cat.key}
                         type="button"
-                        className={`${styles.option} ${
-                          cat.critical ? styles.optionCritical : ""
-                        } ${isPending ? styles.optionActive : ""} ${
-                          isDimmed ? styles.optionDimmed : ""
-                        }`}
+                        className={cx(styles.option, cat.critical ? styles.optionCritical : "", isPending ? styles.optionActive : "", isDimmed ? styles.optionDimmed : "")}
                         onClick={() => onCategory(cat)}
                         disabled={submitting}
                         aria-busy={isPending}

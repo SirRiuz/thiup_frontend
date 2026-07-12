@@ -11,6 +11,7 @@ import NotFound from "./screens/NotFound";
 import HomeNew from "./screens/HomeNew";
 import SearchNew from "./screens/SearchNew";
 import MyThreads from "./screens/MyThreads";
+import AnonProfile from "./screens/AnonProfile";
 import Notifications from "./screens/Notifications";
 import ScrollToTop from "./components/ScrollToTop";
 import SplashScreen from "./components/SplashSreen";
@@ -35,6 +36,13 @@ import "./styles/index.css";
 function LegacyPostRedirect() {
   const { id } = useParams();
   return <Navigate to={`/p/${id}`} replace />;
+}
+
+// /anon/:maskId was the profile's first URL — /m/:id is the canonical one
+// (the /p/:id convention: p = post, m = mask). Kept so shared links survive.
+function LegacyAnonRedirect() {
+  const { maskId } = useParams();
+  return <Navigate to={`/m/${maskId}`} replace />;
 }
 
 export default function App() {
@@ -85,6 +93,15 @@ export default function App() {
                         <Route path="/search" element={<SearchNew />} />
                         <Route path="/notifications" element={<Notifications />} />
                         <Route path="/me" element={<MyThreads />} />
+                        {/* Anonymous PUBLIC profile — same anatomy as /me,
+                            public data only (own mask redirects to /me).
+                            /m/:id mirrors /p/:id (p = post, m = mask). */}
+                        <Route path="/m/:maskId" element={<AnonProfile />} />
+                        {/* Legacy: the profile's first URL. */}
+                        <Route
+                          path="/anon/:maskId"
+                          element={<LegacyAnonRedirect />}
+                        />
                         {/* The thread view also lives inside the shell:
                           rail visible (no active item — the route doesn't match
                           any) and bottom bar on mobile. The

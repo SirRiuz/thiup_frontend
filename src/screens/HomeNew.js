@@ -17,6 +17,7 @@ import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
 import usePageTitle from "../hooks/usePageTitle";
 import useMobileSurfacePage from "../hooks/useMobileSurfacePage";
 import styles from "../styles/screens/HomeNew.module.css";
+import cx from "../utils/cx";
 
 function HomeNew() {
   const composeRef = useRef(null);
@@ -241,10 +242,10 @@ function HomeNew() {
             Post.js) — here it pins flush under the 60px masthead. */}
         <div className={styles.cornerMask} aria-hidden="true">
           <div className={styles.cornerMaskEdge} />
-          <div className={`${styles.cornerCap} ${styles.cornerCapLeft}`}>
+          <div className={cx(styles.cornerCap, styles.cornerCapLeft)}>
             <div className={styles.cornerCapBox} />
           </div>
-          <div className={`${styles.cornerCap} ${styles.cornerCapRight}`}>
+          <div className={cx(styles.cornerCap, styles.cornerCapRight)}>
             <div className={styles.cornerCapBox} />
           </div>
         </div>
@@ -309,9 +310,7 @@ function HomeNew() {
 
           {!showCloseYouGate && !isInitialLoad && !error && posts.length > 0 && (
             <div
-              className={`${styles.feedItems} ${
-                isReloading ? styles.feedItemsReloading : ""
-              } ${isEntering ? styles.feedItemsEntering : ""}`}
+              className={cx(styles.feedItems, isReloading ? styles.feedItemsReloading : "", isEntering ? styles.feedItemsEntering : "")}
             >
               {posts.map((post, idx) => (
                 <HomeFeedCard

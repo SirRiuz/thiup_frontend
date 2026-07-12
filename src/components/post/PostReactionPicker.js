@@ -2,12 +2,14 @@ import { useEffect, useLayoutEffect, useRef, useState, useCallback } from "react
 import { useTranslation } from "react-i18next";
 import ReactionEmoji from "./ReactionEmoji";
 import styles from "../../styles/components/post/PostReactionPicker.module.css";
+import cx from "../../utils/cx";
 
-// Single source of truth for the reaction set (order = display order in the bar).
-// `id`/`label` are the STABLE internal ids — they match the backend catalog
-// `name`, which is how the reaction is resolved/posted. `emoji` is presentation
-// (changing one here never touches the DB); `labelKey` is the translated tooltip.
-const REACTIONS = [
+// Single source of truth for the reaction set (order = display order in the bar,
+// and the canonical TIE-BREAK order for ReactionStack's top-3). `id`/`label`
+// are the STABLE internal ids — they match the backend catalog `name`, which is
+// how the reaction is resolved/posted. `emoji` is presentation (changing one
+// here never touches the DB); `labelKey` is the translated tooltip.
+export const REACTIONS = [
   { id: "love", emoji: "❤️", label: "love", labelKey: "reactions.love" },
   { id: "laugh", emoji: "😂", label: "laugh", labelKey: "reactions.laugh" },
   { id: "wow", emoji: "😮", label: "wow", labelKey: "reactions.wow" },
@@ -182,9 +184,7 @@ function PostReactionPicker({
             <button
               key={r.id}
               type="button"
-              className={`${styles.option} ${
-                currentReactionEmoji === r.emoji ? styles.optionActive : ""
-              }`}
+              className={cx(styles.option, currentReactionEmoji === r.emoji ? styles.optionActive : "")}
               onClick={() => handleSelect(r)}
               role="menuitem"
               aria-label={t(r.labelKey)}

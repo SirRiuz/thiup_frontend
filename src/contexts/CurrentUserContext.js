@@ -46,6 +46,8 @@ export function CurrentUserProvider({ children }) {
         setCurrentUserMask({
           id: hash.slice(0, 6), // same convention as the posts mapper
           fullHash: hash,
+          // Registration date (ISO) — the profile's "date joined" line.
+          joinedAt: data?.joined || "",
           // Reader's region (backend's GeoIP) — For You uses it
           // for the regional boost (?region=).
           countryCode: data?.country_code || "",

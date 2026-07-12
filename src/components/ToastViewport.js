@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import styles from "../styles/components/ToastViewport.module.css";
+import cx from "../utils/cx";
 
 const CheckIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -86,9 +87,7 @@ function Toast({ toast, onDismiss }) {
 
   return (
     <div
-      className={`${styles.toast} ${styles[toast.type] || styles.info} ${
-        leaving ? styles.leaving : ""
-      }`}
+      className={cx(styles.toast, styles[toast.type] || styles.info, leaving ? styles.leaving : "")}
       // SR announcement: assertive for errors, polite otherwise. aria-busy while
       // loading. Never steals focus or blocks interaction.
       role={isError ? "alert" : "status"}

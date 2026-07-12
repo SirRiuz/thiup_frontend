@@ -42,26 +42,30 @@
 }
 
 .title {
+  /* The hero greeting — system title weight (600; 500 read washed next to
+     the current profile/masthead titles). */
   margin: 0 0 8px;
-  font-size: 20px;
-  font-weight: 500;
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.3;
   color: #1a1a1a;
 }
 
 .mission {
-  margin: 0 auto 22px;
+  margin: 0 auto 24px;
   max-width: 320px;
   font-size: 14px;
   line-height: 1.55;
-  color: #666666;
+  color: #6b6b6b;
 }
 
+/* Section eyebrow — the quiet-meta voice (the old #a39d8e was an orphan). */
 .rulesHeader {
   margin: 0 0 12px;
   font-size: 12px;
   font-weight: 500;
   letter-spacing: 0.02em;
-  color: #a39d8e;
+  color: #9b9591;
   text-align: left;
 }
 
@@ -81,20 +85,31 @@
   gap: 12px;
 }
 
+/* Warm icon TILE (the report-categories / empty-state glyph language):
+   34px square, warm tint, terracotta glyph — the bare floating icons read
+   dated next to the rest of the app. */
 .ruleIcon {
-  flex-shrink: 0;
-  margin-top: 1px;
-  color: #b8845f;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: #f3e3d3;
+  color: #a85432;
 }
 
 .ruleText {
-  font-size: 13.5px;
+  font-size: 13px;
   line-height: 1.5;
-  color: #666666;
+  color: #6b6b6b;
+  /* Optically center the two-line text against the 34px tile. */
+  margin-top: 1px;
 }
 
 .ruleLead {
-  font-weight: 500;
+  font-weight: 600;
   color: #1a1a1a;
 }
 
@@ -109,7 +124,8 @@
   font-weight: 600;
   color: #fdfcf8;
   cursor: pointer;
-  transition: opacity 130ms ease;
+  /* Transition (hover opacity + the soft press transform) comes from the
+     global .springPress class — single source. */
 }
 
 .button:hover {

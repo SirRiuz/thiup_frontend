@@ -1,4 +1,5 @@
 import styles from "../styles/components/BrandLogo.module.css";
+import cx from "../utils/cx";
 
 /**
  * Thiup brand icon — "thread + dot": a serpentine thread that winds back and
@@ -16,15 +17,25 @@ import styles from "../styles/components/BrandLogo.module.css";
  *
  * Decorative by default (aria-hidden): every current usage sits next to its
  * own accessible label (splash aria-label, modal title, rail aria-label).
+ *
+ * `fit="glyph"` (plain variant only): tightens the viewBox to the DRAWN
+ * mark's bounds instead of the 68-unit master box — the master keeps ~45%
+ * internal air (it's sized for the squircle tile), so at small boxes the
+ * visible mark shrank far below its neighbors. With the tight window the
+ * mark fills the box like Threads' sidebar glyph does.
  */
-function BrandLogo({ size = 64, variant = "tile", className = "" }) {
+function BrandLogo({ size = 64, variant = "tile", fit = "box", className = "" }) {
   const accent = variant === "plain" ? "#a85432" : "#f7f5f0";
+  // Glyph bounds (path + strokes + dot): x ≈ 21–49, y ≈ 14.5–53.3 → a 44-unit
+  // square window centered on the mark (only valid without the tile rect).
+  const viewBox =
+    variant === "plain" && fit === "glyph" ? "13 12 44 44" : "0 0 68 68";
   return (
     <svg
-      className={`${styles.logo} ${className}`}
+      className={cx(styles.logo, className)}
       width={size}
       height={size}
-      viewBox="0 0 68 68"
+      viewBox={viewBox}
       role="img"
       aria-hidden="true"
       focusable="false"

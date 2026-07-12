@@ -4,8 +4,10 @@ import { useTranslation } from "react-i18next";
 import LanguageModal from "./LanguageModal";
 import WelcomeModal from "../WelcomeModal";
 import BrandLogo from "../BrandLogo";
+import MenuSurface, { menuStyles } from "../menu/MenuSurface";
 import { useKeyboardOpen } from "../../hooks/useKeyboardOpen";
 import styles from "../../styles/components/nav/NavRail.module.css";
+import cx from "../../utils/cx";
 
 /**
  * Floating navigation rail (Threads style): capsule on the left on desktop,
@@ -244,11 +246,11 @@ function MenuButton({ menuUp = false, variant = "rail" }) {
       </button>
 
       {open && (
-        <div
-          className={`${styles.menu} ${
-            isHeader ? styles.menuDown : menuUp ? styles.menuUp : ""
-          } ${closing ? styles.menuClosing : ""}`}
-          role="menu"
+        /* THE shared menu panel (MenuSurface — same surface/rows as the
+           thread options menu); NavRail only adds the anchor position and
+           its animated close. */
+        <MenuSurface
+          className={cx(isHeader ? styles.menuDown : menuUp ? styles.menuUp : styles.menuSide, closing ? styles.menuClosing : "")}
           onAnimationEnd={() => {
             // Only the end of the EXIT animation unmounts (the entry one
             // also fires animationend).
@@ -262,7 +264,7 @@ function MenuButton({ menuUp = false, variant = "rail" }) {
           <button
             type="button"
             role="menuitem"
-            className={styles.menuItem}
+            className={menuStyles.item}
             onClick={() => {
               closeMenu();
               setLanguageOpen(true);
@@ -274,7 +276,7 @@ function MenuButton({ menuUp = false, variant = "rail" }) {
           <button
             type="button"
             role="menuitem"
-            className={styles.menuItem}
+            className={menuStyles.item}
             onClick={() => {
               closeMenu();
               setWelcomeOpen(true);
@@ -282,7 +284,7 @@ function MenuButton({ menuUp = false, variant = "rail" }) {
           >
             {t("nav.about")}
           </button>
-        </div>
+        </MenuSurface>
       )}
 
       {languageOpen && (
@@ -355,9 +357,7 @@ function NavRail() {
         <Link
           key={item.to}
           to={target}
-          className={`${styles.item} springPressIcon ${
-            isActive ? styles.itemActive : ""
-          } ${tipOffItem === item.to ? styles.tipOff : ""}`}
+          className={cx(styles.item, "springPressIcon", isActive ? styles.itemActive : "", tipOffItem === item.to ? styles.tipOff : "")}
           aria-label={label}
           aria-current={isActive ? "page" : undefined}
           onClick={(e) => {
@@ -389,8 +389,19 @@ function NavRail() {
           bottom. No dividers (Threads' sidebar has none). */}
       <nav className={styles.rail} aria-label={t("nav.primary")}>
         {/* Brand icon (thread + dot) — plain variant (no terracotta tile):
-            subtle, so it doesn't compete with the nav icons / active blob. */}
-        <BrandLogo size={44} variant="plain" />
+            subtle, so it doesn't compete with the nav icons / active blob.
+            Threads' exact logo slot: a 34×34 mark that's a LINK home, with
+            their hover grow (scale 1.07) / press (0.98) animation. */}
+        <button
+          type="button"
+          className={styles.railLogo}
+          onClick={() => navigate("/home")}
+          aria-label={t("nav.home")}
+        >
+          {/* fit="glyph": the drawn mark fills the 34px slot (the master's
+              68-box carries tile air that shrank it next to Threads'). */}
+          <BrandLogo size={34} variant="plain" fit="glyph" />
+        </button>
         <div className={styles.items}>
           {/* Threads' sidebar order: Home / Search / CREATE / ♥ / Profile. */}
           {renderItems(NAV_ITEMS.slice(0, 2), true)}
@@ -399,7 +410,7 @@ function NavRail() {
               will open the composer once that flow exists. */}
           <button
             type="button"
-            className={`${styles.item} ${styles.createItem} springPressIcon`}
+            className={cx(styles.item, styles.createItem, "springPressIcon")}
             aria-label={t("nav.create")}
           >
             <span className={styles.createPlate} aria-hidden="true" />
@@ -430,16 +441,22 @@ function NavRail() {
         <header className={styles.appBar}>
           {/* ☰ reuses the SAME menu (Languages / About) as the rail. */}
           <MenuButton variant="header" />
-          {/* Brand mark, centered (plain thread + dot, no background). A touch
-              larger than the side icons so it reads as the header's focal
-              point (Threads-style), with ~8px of air in the 52px bar. */}
-          <span className={styles.appBarBrand} aria-hidden="true">
-            <BrandLogo size={36} variant="plain" />
-          </span>
+          {/* Brand mark, centered — Threads' exact mobile-header logo slot:
+              a 32×32 box the drawn glyph FILLS (fit="glyph"; the master
+              68-box's air shrank the visible mark to ~20px), tappable home
+              like theirs. */}
+          <button
+            type="button"
+            className={styles.appBarBrand}
+            onClick={() => navigate("/home")}
+            aria-label={t("nav.home")}
+          >
+            <BrandLogo size={32} variant="plain" fit="glyph" />
+          </button>
           {/* Magnifier → /search (returns to the last search view if any). */}
           <Link
             to={searchTarget}
-            className={`${styles.appBarButton} springPressIcon`}
+            className={cx(styles.appBarButton, "springPressIcon")}
             aria-label={t("nav.search")}
           >
             {SEARCH_ICON}
@@ -449,9 +466,7 @@ function NavRail() {
 
       {/* Mobile: fixed bottom bar — Home + My threads only (icon-only). */}
       <nav
-        className={`${styles.bottomBar} ${
-          keyboardOpen ? styles.bottomBarHidden : ""
-        }`}
+        className={cx(styles.bottomBar, keyboardOpen ? styles.bottomBarHidden : "")}
         aria-label={t("nav.primary")}
       >
         {renderItems(BOTTOM_NAV_ITEMS)}
