@@ -362,6 +362,12 @@
     "body": "Thiup hides its content while developer tools are open — it's part of how we protect an anonymous community. No hard feelings.",
     "hint": "Close developer tools and reload to continue."
   },
+  "humanBlocked": {
+    "title": "Let's make sure you're human",
+    "body": "We couldn't verify this session as a real person. Thiup gates its content behind a quick human check to keep an anonymous community free of bots.",
+    "tryAgain": "Try again",
+    "hint": "Reload the page to run the check again. If it keeps failing, disable automation or extensions that block scripts."
+  },
   "networkError": {
     "title": "No connection",
     "body": "Looks like you're offline. Check your wifi or mobile data and try again.",

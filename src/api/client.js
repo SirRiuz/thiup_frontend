@@ -21,6 +21,7 @@
 import { parseResponseBody } from "./decode";
 import { dispatchRequest, DispatchEncryptError } from "./dispatch";
 import { getHumanPass, invalidateHumanPass } from "./humanPass";
+import { blockAsBot } from "../utils/humanBlock";
 import { getClientAssertion, refreshTicket } from "./ticket";
 import { ensureTransportMode } from "./transport";
 import { shouldUseGateway } from "./transportMode";
@@ -179,6 +180,9 @@ export async function apiFetch(url, options = {}) {
       } catch (err) {
         /* la renovación falló: propagar el 403 original abajo */
       }
+      // Solving a fresh PoW still failed to yield a usable pass → we can't
+      // prove this session is human. Wipe the app behind the wall.
+      if (body403 && body403.code === "CAPTCHA_FAILED") blockAsBot();
       throw new APIError(
         `API error 403: ${response.statusText}`,
         403,
@@ -188,6 +192,9 @@ export async function apiFetch(url, options = {}) {
 
     // Sin reintento (o agotados): propagar con el MISMO shape de hoy.
     const data = await parseResponseBody(response);
+    // Retries exhausted and the backend STILL rejects the human pass: the
+    // session could not be verified as human → anti-scraping wall.
+    if (response.status === 403 && data?.code === "CAPTCHA_FAILED") blockAsBot();
     // El 503 CAPTCHA_UNAVAILABLE (servidor Cap caído) NO es una caída del
     // backend: se propaga al call site sin disparar el aviso global.
     if (response.status >= 500 && data?.code !== "CAPTCHA_UNAVAILABLE") {
