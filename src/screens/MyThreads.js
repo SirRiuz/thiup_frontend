@@ -1,6 +1,8 @@
 import { useRef } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import BrandLogo from "../components/BrandLogo";
+import { MenuButton } from "../components/nav/NavRail";
 import HomeFeedCard from "../components/home/HomeFeedCard";
 import HomeFilterBar from "../components/home/HomeFilterBar";
 import HomeFeedCardSkeleton from "../components/home/HomeFeedCardSkeleton";
@@ -13,6 +15,7 @@ import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
 import usePageTitle from "../hooks/usePageTitle";
 import useMobileSurfacePage from "../hooks/useMobileSurfacePage";
 import useFlushBottom from "../hooks/useFlushBottom";
+import { useIsMobile } from "../hooks/useIsMobile";
 import cx from "../utils/cx";
 import {
   playTileVideoOnHover,
@@ -25,7 +28,8 @@ import {
 import styles from "../styles/screens/MyThreads.module.css";
 
 /**
- * /me — the threads created by the AUTHENTICATED user ("My threads").
+ * /profile — the threads created by the AUTHENTICATED user ("My threads";
+ * legacy /me redirects here).
  *
  * The scope is 100% server-side (GET /threads/mine/ filters by request.mask):
  * this screen can never list other users' threads. It reuses the SAME feed
@@ -34,12 +38,24 @@ import styles from "../styles/screens/MyThreads.module.css";
  */
 function MyThreads() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const isMobile = useIsMobile();
   const { t } = useTranslation();
   const pageRef = useRef(null);
   usePageTitle("pageTitle.myThreads", { noindex: true });
   // Mobile: the canonical full-bleed #fdfcf8 sheet (same as /home, /search
   // and /p/:id) — html/body/AppShell painted to match, no warm overscroll strip.
   useMobileSurfacePage(pageRef);
+
+  // Back — the thread app bar's exact logic: normal history back; a direct
+  // entry (no in-app history) falls back to /home.
+  const handleBack = () => {
+    if (location.key !== "default") {
+      navigate(-1);
+    } else {
+      navigate("/home", { replace: true });
+    }
+  };
 
   const {
     posts,
@@ -120,12 +136,64 @@ function MyThreads() {
   return (
     <div className={styles.page} ref={pageRef}>
       <main className={styles.main}>
-        {/* Desktop masthead — the canonical 60px column header (home/search
-            language); mobile keeps the fixed NavRail app bar. */}
-        <header className={styles.desktopHeader}>
-          <span className={styles.desktopHeaderTitle}>
-            {t("pageTitle.myThreads")}
-          </span>
+        {/* The profile app bar — /m/:maskId's exact anatomy and entrance
+            choreography (back slides in, "Profile" settles one beat later),
+            shared via this stylesheet. Only the back glyph splits: desktop =
+            Threads' floating circle, mobile = the plain 20px arrow. */}
+        <header className={styles.profileAppBar}>
+          <div className={styles.profileAppBarInner}>
+            {isMobile ? (
+              /* Mobile: /profile is a TOP-LEVEL tab (it lives on the bottom
+                 bar) — no Back. The bar mirrors home's NavRail header
+                 exactly: ☰ left, centered brand, balance spacer. */
+              <span className={styles.profileAppBarMenuStart}>
+                <MenuButton variant="header" />
+              </span>
+            ) : (
+              <button
+                type="button"
+                className={styles.profileBackButton}
+                onClick={handleBack}
+                aria-label={t("common.back")}
+              >
+                {/* Threads' floating-circle back glyph (desktop only). */}
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 12 12"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M1 6h10M1 6l4-4M1 6l4 4"
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="1.5"
+                  />
+                </svg>
+              </button>
+            )}
+            {isMobile ? (
+              /* Mobile: the header carries the centered BRAND, not a title —
+                 the NavRail app bar's exact 32px logo slot/press, a button
+                 home (same as the thread view's mobile bar). */
+              <button
+                type="button"
+                className={styles.profileAppBarBrand}
+                onClick={() => navigate("/home")}
+                aria-label={t("nav.home")}
+              >
+                <BrandLogo size={32} variant="plain" fit="glyph" />
+              </button>
+            ) : (
+              /* Same "Profile" title as the public twin (/m/:maskId). */
+              <span className={styles.profileAppBarTitle}>
+                {t("pageTitle.anonProfile")}
+              </span>
+            )}
+            <span aria-hidden="true" />
+          </div>
         </header>
         {/* Sticky corner mask (desktop): pins the surface card's rounded top
             under the masthead — same anatomy as home/search/thread. */}

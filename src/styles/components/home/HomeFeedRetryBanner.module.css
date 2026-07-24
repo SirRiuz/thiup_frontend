@@ -39,7 +39,7 @@
   color: #1a1a1a;
   font-weight: 600;
   border-radius: 4px;
-  transition: background 120ms ease;
+  transition: background 0.2s ease;
   flex-shrink: 0;
 }
 

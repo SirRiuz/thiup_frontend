@@ -59,15 +59,16 @@ function HomeFeedCard({
   };
 
   // Card-level click: ignore anything self-handled — media frames (they open
-  // the viewer), the carousel track (drag surface, data-media-zone), real
-  // controls (options, reveal, sound…), and the navZone (its own handler
-  // already navigated; without this guard the bubbled click would navigate
-  // twice). The blank space BESIDE a narrow single image is none of these, so
-  // it navigates.
+  // the viewer), real controls (options, reveal, sound…), and the navZone
+  // (its own handler already navigated; without this guard the bubbled click
+  // would navigate twice). The blank space BESIDE a narrow single image AND
+  // the empty track space after a short carousel are none of these, so they
+  // navigate (Threads' pressable row: only the media itself opts out — the
+  // carousel swallows its own drag-end/panorama clicks before they get here).
   const handleCardClick = (e) => {
     if (
       e.target.closest(
-        "[data-frame], [data-media-zone], [data-hover-card], button, a, [role='link'], [role='button']"
+        "[data-frame], [data-hover-card], button, a, [role='link'], [role='button']"
       )
     ) {
       return;

@@ -11,6 +11,15 @@
   cursor: pointer;
 }
 
+/* The pointer must read on EVERYTHING inside the trigger (identicon svg +
+   mask id text) — an explicit rule so no child (e.g. the svg's inline style
+   or a text default) can ever fall back to the arrow/I-beam. The floating
+   hover card is excluded: its content keeps its own cursors. */
+.trigger > :not(.cardContainer),
+.trigger > :not(.cardContainer) * {
+  cursor: pointer;
+}
+
 .cardContainer {
   position: absolute;
   top: calc(100% + 8px);

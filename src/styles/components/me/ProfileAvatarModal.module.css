@@ -44,7 +44,7 @@
   backdrop-filter: blur(6px);
   color: #f7f5f0;
   cursor: pointer;
-  transition: background 120ms ease;
+  transition: background 0.2s ease;
 }
 
 .closeButton:hover {

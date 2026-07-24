@@ -127,25 +127,13 @@ function HomeNew() {
   const closeYouSyncing = urlTab === "closeyou" && feedTab !== "closeyou";
   const gateStatus = closeYouSyncing ? "locating" : closeYouStatus;
 
-  // The compose box (and its Post button) must be inert during EVERY busy
-  // window, not just `isLoading`. Three independent windows caused the Post
-  // button to flash active for seconds:
-  //   - isLoading: a feed fetch is in flight (initial / tab reload / radius).
-  //   - urlTab !== feedTab: a tab change is syncing URL → context (BOTH
-  //     directions; the effect that calls selectFeedTab runs after paint).
-  //   - gateStatus === "locating": entering Close You acquires GPS (a couple
-  //     seconds) while the fetch effect early-returns with isLoading=false —
-  //     the window where the button used to stay enabled.
-  const composeBusy =
-    isLoading || urlTab !== feedTab || gateStatus === "locating";
-
   // The Close You gate replaces the feed area while there are no
   // cells (checking / prompt / denied...) — the feed never mounts without
   // the reader's opt-in.
   const showCloseYouGate =
     urlTab === "closeyou" &&
     (closeYouSyncing ||
-      ["prompt", "locating", "denied", "error", "unsupported"].includes(
+      ["prompt", "locating", "denied", "error", "unavailable", "unsupported"].includes(
         closeYouStatus
       ));
 
@@ -253,13 +241,9 @@ function HomeNew() {
             tabs + feed on desktop; full-bleed sheet on mobile. */}
         <div className={styles.surface}>
         <div ref={composeRef}>
-          {/* Compose is disabled during ANY busy window (see composeBusy):
-              feed load, tab sync (both directions) and Close You GPS locating —
-              so the Post button never flashes active mid-transition. */}
-          <HomeCompose
-            currentUserMask={currentUserMask}
-            isLoading={composeBusy}
-          />
+          {/* The row only OPENS the global ComposeModal now (posting happens
+              there), so it no longer needs the composeBusy gating. */}
+          <HomeCompose currentUserMask={currentUserMask} />
         </div>
         <HomeFilterBar
           value={TAB_LABELS[urlTab]}

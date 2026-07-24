@@ -113,13 +113,27 @@ function AnonProfileHeader({ maskId }) {
           ))}
         </p>
       ) : (
+        /* Skeleton with the LOADED line's exact anatomy — three value·label
+           bars with the real dot separators, so nothing shifts on load. */
         <p className={styles.statsLine} aria-hidden="true">
-          <span className={styles.statsSkeleton} />
+          <span className={`${styles.statSkeletonBar} ${styles.statSkeletonSm}`} />
+          <span className={styles.statDot}> · </span>
+          <span className={`${styles.statSkeletonBar} ${styles.statSkeletonMd}`} />
+          <span className={styles.statDot}> · </span>
+          <span className={`${styles.statSkeletonBar} ${styles.statSkeletonLg}`} />
         </p>
       )}
 
       {avatarOpen && (
         <ProfileAvatarModal seed={maskId} onClose={() => setAvatarOpen(false)} />
+      )}
+
+      {/* The joined whisper reserves its line while loading (it used to pop
+          in with the data and push the tabs down). */}
+      {isLoading && !joinedLabel && (
+        <p className={styles.joinedLineSkeleton} aria-hidden="true">
+          <span className={styles.joinedSkeleton} />
+        </p>
       )}
 
       {joinedLabel && (

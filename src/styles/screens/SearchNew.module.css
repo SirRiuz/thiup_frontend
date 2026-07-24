@@ -121,6 +121,9 @@
   z-index: 5;
   max-width: 640px;
   margin: 0 auto;
+  /* Decorative overlay — its caps float over the card's top edge and must
+     never steal hover/click from the content scrolling under them. */
+  pointer-events: none;
 }
 
 .cornerMaskEdge {
@@ -211,7 +214,7 @@
   font-weight: 500;
   color: #1a1a1a;
   cursor: pointer;
-  transition: background 120ms ease, border-color 120ms ease,
+  transition: background 0.2s ease, border-color 0.2s ease,
     transform 0.15s ease;
 }
 
@@ -233,7 +236,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .topicChip {
-    transition: background 120ms ease, border-color 120ms ease;
+    transition: background 0.2s ease, border-color 0.2s ease;
   }
 
   .topicChip:active {
@@ -406,7 +409,7 @@
   /* Threads' media-cell press (same trio as ThreadMedia frames): soft
      scale(0.98) at 0.2s plain ease — held while the button is down (:active
      persists through movement), eased back on release. */
-  transition: background 120ms ease, transform 0.2s ease;
+  transition: background 0.2s ease, transform 0.2s ease;
 }
 
 .mediaTile:active {
@@ -415,7 +418,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .mediaTile {
-    transition: background 120ms ease;
+    transition: background 0.2s ease;
   }
 
   .mediaTile:active {
@@ -426,6 +429,37 @@
 /* Soft checker: every other tile a half-step lighter — texture without noise. */
 .mediaTile:nth-child(even) {
   background: #f3efe6;
+}
+
+/* Media outline (ThreadMedia's hairline tone), COLLAPSED at the seams: each
+   tile paints only its RIGHT + BOTTOM edge, so every interior seam carries
+   ONE 0.5px line (a full per-tile ring doubled up across the 2px gap and
+   read thick) and near-white media never fuses with the cream gaps. The
+   perimeter draws nothing — the grid is full-bleed, already bounded by the
+   surrounding hairlines/card edges: last COLUMN (3n) drops the right edge,
+   last ROW (nth-last -n+3 on the 3-col mosaic — also correct on a ragged
+   last row: tiles with nothing below are perimeter for their column) drops
+   the bottom one. pointer-events off; as ::after it paints over the image
+   edge, like the feed frames. */
+.mediaTile::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  box-shadow: inset -0.5px 0 0 rgba(0, 0, 0, 0.15),
+    inset 0 -0.5px 0 rgba(0, 0, 0, 0.15);
+  pointer-events: none;
+}
+
+.mediaTile:nth-child(3n)::after {
+  box-shadow: inset 0 -0.5px 0 rgba(0, 0, 0, 0.15);
+}
+
+.mediaTile:nth-last-child(-n + 3)::after {
+  box-shadow: inset -0.5px 0 0 rgba(0, 0, 0, 0.15);
+}
+
+.mediaTile:nth-child(3n):nth-last-child(-n + 3)::after {
+  box-shadow: none;
 }
 
 @media (hover: hover) {
@@ -512,32 +546,17 @@
     background: #fdfcf8;
   }
 
-  /* White FROSTED masthead on mobile — the EXACT thread app bar recipe
-     (Post .appBar): borderless translucent bar floating over the sheet,
-     content blurring through as it scrolls under. FIXED (not sticky) so
-     iOS's elastic overscroll can't drag it with the content during the
-     rubber-band; anchored to the visible top (top: var(--kb-top)). */
+  /* The "Search" masthead is DESKTOP-ONLY: on mobile the NavRail app bar
+     (☰ + centered logo — home's exact header) renders on /search too and
+     replaces it. */
   .appBar {
-    position: fixed;
-    left: 0;
-    right: 0;
-    background: rgba(253, 252, 248, 0.88);
-    -webkit-backdrop-filter: blur(28px) saturate(180%);
-    backdrop-filter: blur(28px) saturate(180%);
-  }
-
-  @supports not (
-    (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))
-  ) {
-    .appBar {
-      background: #fdfcf8;
-    }
+    display: none;
   }
 
   .main {
-    /* The masthead is FIXED on mobile (see above), so it no longer reserves
-       flow space — offset the content by its height (60px); the search box
-       brings its own 20px of air below it. */
+    /* The NavRail mobile app bar is FIXED (60px), so it reserves no flow
+       space — offset the content by its height; the search box brings its
+       own 20px of air below it. */
     padding: 60px 0 60px;
   }
 

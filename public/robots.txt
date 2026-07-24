@@ -8,6 +8,7 @@ Allow: /$
 Disallow: /home
 Disallow: /search
 Disallow: /notifications
+Disallow: /profile
 Disallow: /me
 Disallow: /m
 Disallow: /anon

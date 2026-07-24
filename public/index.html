@@ -157,25 +157,32 @@
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
     <script>
-      (function () {
-        try {
-          var key = "__REACT_DEVTOOLS_GLOBAL_HOOK__";
-          Object.defineProperty(window, key, {
-            value: {
-              isDisabled: true,
-              supportsFiber: true,
-              inject: function () {},
-              onCommitFiberRoot: function () {},
-              onCommitFiberUnmount: function () {},
-            },
-            configurable: false,
-            writable: false,
-          });
-        } catch (e) {}
-      })();
-      document.addEventListener("contextmenu", (e) => {
-        e.preventDefault();
-      });
+      // PRODUCTION-ONLY hardening (%NODE_ENV% is interpolated at build time).
+      // In development the DevTools-hook shim disabled Fast Refresh (the
+      // "Something has shimmed the React DevTools global hook" warning) and
+      // the context-menu block got in the way of inspecting — both are
+      // anti-snoop measures for the deployed app only.
+      if ("%NODE_ENV%" === "production") {
+        (function () {
+          try {
+            var key = "__REACT_DEVTOOLS_GLOBAL_HOOK__";
+            Object.defineProperty(window, key, {
+              value: {
+                isDisabled: true,
+                supportsFiber: true,
+                inject: function () {},
+                onCommitFiberRoot: function () {},
+                onCommitFiberUnmount: function () {},
+              },
+              configurable: false,
+              writable: false,
+            });
+          } catch (e) {}
+        })();
+        document.addEventListener("contextmenu", function (e) {
+          e.preventDefault();
+        });
+      }
     </script>
   </body>
 </html>

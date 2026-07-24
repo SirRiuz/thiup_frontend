@@ -1,17 +1,21 @@
-/* MediaScanList — attached-media rows for a composer (shared by the thread
- * composer and the reply box). */
+/* MediaScanList — the attached-media STRIP for a composer (shared by the
+ * thread composer and the reply box): compact tiles on one horizontal,
+ * x-scrolling row (hidden scrollbar — the app's internal-scroll pattern), so
+ * many files never grow the composer vertically. */
 
-.list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+.wrapper {
   margin-bottom: 12px;
 }
 
-.progress {
-  margin: 0 0 2px;
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  font-size: 11px;
-  color: #6b6b6b;
-  font-variant-numeric: tabular-nums;
+.strip {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  /* Breathing room for the tiles' entrance pop (scale > 1 never clips). */
+  padding: 2px;
+  scrollbar-width: none;
+}
+
+.strip::-webkit-scrollbar {
+  display: none;
 }

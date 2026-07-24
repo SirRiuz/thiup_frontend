@@ -120,9 +120,17 @@
     "placeholder": "What's new?",
     "post": "Post",
     "posting": "Posting",
+    "cancel": "Cancel",
+    "discard": "Discard",
+    "discardThreadTitle": "Discard thread?",
+    "discardReplyTitle": "Discard reply?",
+    "mediaLabel": "Media",
+    "areaLabel": "Area",
     "locationDefault": "Share your approximate area when posting (for Close You) — never your exact location",
     "locationActive": "Sharing your approximate area (~5 km, blurred) — click to turn off",
     "locationBlocked": "Location is blocked — enable it in your browser settings",
+    "providerDownTitle": "Location is down right now",
+    "providerDownBody": "Your device's location service couldn't get a fix — it's not Thiup. Try again in a moment.",
     "cannotShareTitle": "Can't share your area",
     "cannotShareBody": "We couldn't get your location — try again.",
     "blockedTitle": "Location is blocked",
@@ -131,6 +139,7 @@
     "postedWithoutAreaTitle": "Posted without your area",
     "postedWithoutAreaDenied": "Location is blocked — enable it in your browser settings.",
     "postedWithoutAreaTimeout": "We couldn't get your location in time.",
+    "postedWithoutAreaProviderDown": "Your device's location service didn't respond, so it went out without an area.",
     "postedWithoutAreaUnsupported": "Your browser doesn't support location.",
     "privacyNoteLead": "Location blurred into a",
     "privacyNoteChip": "~5 km area",
@@ -140,6 +149,8 @@
   "closeYou": {
     "findingTitle": "Finding your area…",
     "findingBody": "Computing your approximate cell (~5 km) — your coordinates never leave this device",
+    "unavailableTitle": "Location is down right now",
+    "unavailableBody": "Your device's location service couldn't get a fix — it's not Thiup. Try again in a moment.",
     "errorTitle": "We couldn't load your area",
     "errorBody": "Something went wrong getting your location. You can try again.",
     "blocked": {
@@ -190,9 +201,8 @@
     "loadMoreReplies": "Load more replies",
     "sort": "Sort",
     "sortTop": "Top",
-    "sortTopDesc": "Most relevant first",
     "sortRecent": "Recent",
-    "sortRecentDesc": "Newest first",
+    "viewActivity": "View activity",
     "replyingTo": "Replying to",
     "cancelReplyingTo": "Cancel replying to",
     "couldNotLoad": "This thread could not be loaded.",
@@ -206,8 +216,10 @@
     "videoTooLarge": "Videos can't exceed 512 MB",
     "fileUnsupported": "{{name}} is not a supported file type",
     "formatRejected": "Only PNG, JPG, MP4 or MOV are supported. Skipped: {{names}}",
+    "contentRejected": "The file content doesn't match its type. Skipped: {{names}}",
     "maxFiles": "Only {{max}} files allowed",
-    "attachMedia": "Attach image or video"
+    "attachMedia": "Attach image or video",
+    "expandComposer": "Expand composer"
   },
   "scan": {
     "queued": "Queued…",
@@ -394,5 +406,15 @@
     "rateLimit": "You're posting too fast — wait a moment",
     "server": "Something went wrong on our side — try again in a moment",
     "generic": "Something went wrong — try again"
+  },
+  "rateLimit": {
+    "postTitle": "Too many posts in a row",
+    "postWait": "You can post again in {{seconds}} s",
+    "postSoon": "Wait a few seconds and try again",
+    "postReady": "You can post again now",
+    "replyTitle": "Too many replies in a row",
+    "replyWait": "You can reply again in {{seconds}} s",
+    "replySoon": "Wait a few seconds and try again",
+    "replyReady": "You can reply again now"
   }
 }

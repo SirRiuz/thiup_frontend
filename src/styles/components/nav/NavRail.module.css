@@ -119,19 +119,21 @@
   color: #a85432;
 }
 
-/* === Create (+) — Threads' exact plated sidebar button ===
-   Their anatomy: the same 60×50 item box, but with an ALWAYS-VISIBLE rounded
-   plate behind the glyph (radius 10, inset 6px top/bottom → 60×38, bg
-   rgba(0,0,0,0.035) = their --barcelona-navigation-item-hover-background,
-   light theme) and the + in their --barcelona-secondary-icon (#999999) —
-   darker than the idle nav icons. Hover deepens the plate, not the item. */
-.rail .createItem {
+/* === Create (+) — Threads' exact plated button (rail AND bottom bar) ===
+   Their anatomy: the item box with an ALWAYS-VISIBLE rounded plate behind
+   the glyph (radius 10, inset 6px top/bottom, bg rgba(0,0,0,0.035) = their
+   --barcelona-navigation-item-hover-background, light theme) and the + in
+   their --barcelona-secondary-icon (#999999) — darker than the idle nav
+   icons. Hover/press deepen the plate, not the item. */
+.rail .createItem,
+.bottomBar .createItem {
   border: 0;
   cursor: pointer;
   color: #999999;
 }
 
-.rail .createItem:hover {
+.rail .createItem:hover,
+.bottomBar .createItem:hover {
   background: transparent;
   color: #999999;
 }
@@ -144,7 +146,8 @@
   transition: background 0.2s ease-out;
 }
 
-.rail .createItem:hover .createPlate {
+.rail .createItem:hover .createPlate,
+.bottomBar .createItem:hover .createPlate {
   background: rgba(0, 0, 0, 0.06);
 }
 
@@ -358,9 +361,9 @@
      sticky, same treatment as the thread view's app bar): iOS's elastic
      overscroll drags sticky bars with the content during the rubber-band —
      fixed stays anchored to the viewport. It no longer offsets the content in
-     flow, so /home and /me compensate with 60px of mobile top padding. It
-     follows the keyboard via --kb-top (set by useKeyboardOpen), like the
-     thread bar. */
+     flow, so /home (the only screen showing it — the profile now carries its
+     own app bar) compensates with 60px of mobile top padding. It follows the
+     keyboard via --kb-top (set by useKeyboardOpen), like the thread bar. */
   .appBar {
     display: grid;
     grid-template-columns: 1fr auto 1fr;
@@ -370,15 +373,27 @@
     right: 0;
     top: var(--kb-top, 0px);
     z-index: 41;
-    /* 60px tall like Threads. The 36px logo keeps ~12px of air top/bottom. */
+    /* 60px tall — Threads' exact --barcelona-mobile-header-height. */
     height: 60px;
     padding: 0 8px;
-    /* SOLID WHITE bar — the app's white (#fdfcf8, never #FFFFFF), matching the
-       view-thread bar's white tone. Opaque on purpose: over the feed's images
-       a translucent recipe read too transparent. BORDERLESS (Threads-style):
-       it fuses seamlessly with the mobile #fdfcf8 sheet below — no hairline. */
-    background: #fdfcf8;
+    /* Threads' EXACT header recipe: translucent white @ 0.85 (their
+       --barcelona-header-background, warm-adjusted to the app's #fdfcf8 —
+       never #FFFFFF) + their blur(28.5px). BORDERLESS: it fuses with the
+       mobile #fdfcf8 sheet below — no hairline. */
+    background: rgba(253, 252, 248, 0.85);
+    -webkit-backdrop-filter: blur(28.5px);
+    backdrop-filter: blur(28.5px);
     font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  /* Fallback: solid where backdrop-filter is unsupported — translucent
+     without blur would sit illegible over the feed's images. */
+  @supports not (
+    (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))
+  ) {
+    .appBar {
+      background: #fdfcf8;
+    }
   }
 
   .appBar > :first-child {
@@ -390,27 +405,28 @@
   }
 
   .bottomBar {
-    display: flex;
+    /* Threads' EXACT mobile nav geometry: five 20% grid cells on a 50px bar
+       (their --barcelona-small-screen-nav-height-short), the blur extending
+       into the safe-area inset (height = 50 + inset under border-box). */
+    display: grid;
+    grid-template-columns: repeat(5, 20%);
     position: fixed;
     left: 0;
     right: 0;
     bottom: 0;
     z-index: 40;
-    justify-content: space-around;
-    align-items: center;
-    padding: 6px 12px calc(6px + env(safe-area-inset-bottom));
-    /* Same frosted glass as the header / view-thread app bar. The padding keeps
-       the blur extending into the safe-area inset (no odd opaque strip). */
-    background: rgba(253, 252, 248, 0.88);
-    -webkit-backdrop-filter: blur(28px) saturate(180%);
-    backdrop-filter: blur(28px) saturate(180%);
+    height: calc(50px + env(safe-area-inset-bottom, 0px));
+    padding: 0 0 env(safe-area-inset-bottom, 0px);
+    /* Threads' exact header/nav frosted recipe — same as the top app bar. */
+    background: rgba(253, 252, 248, 0.85);
+    -webkit-backdrop-filter: blur(28.5px);
+    backdrop-filter: blur(28.5px);
     font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Helvetica, Arial, sans-serif;
     transition: transform 0.2s ease;
   }
 
   /* Fallback: solid white bg where backdrop-filter is unsupported (old Android),
-     so the bar never sits translucent-without-blur over content (illegible).
-     (The app bar is solid #f7f5f0 now — only the bottom bar stays frosted.) */
+     so the bar never sits translucent-without-blur over content (illegible). */
   @supports not (
     (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))
   ) {
@@ -419,9 +435,23 @@
     }
   }
 
-  /* Bottom bar items idle = grey (shared nav idle with the app bar buttons). */
+  /* Bottom bar items = Threads' exact cell anatomy: each item FILLS its 20%
+     grid cell minus a 4px margin (their inset hover/active plate — ~42px
+     tall, radius 8, nearly cell-wide), icon 24px centered. Idle = grey
+     (shared nav idle with the app bar buttons). */
   .bottomBar .item {
+    width: auto;
+    height: auto;
+    margin: 4px;
+    border-radius: 8px;
     color: #a3a3a3;
+  }
+
+  /* Create's always-visible plate fills the same inset box (the item's 4px
+     margin already carves Threads' plate geometry out of the cell). */
+  .bottomBar .createPlate {
+    inset: 0;
+    border-radius: 8px;
   }
 
   /* Shared interaction for ALL mobile nav icons (☰, search, Home, My threads):
@@ -453,15 +483,15 @@
     color: #a85432;
   }
 
-  /* Heavier, Threads-like stroke for the mobile nav icons (☰, search, Home, My
-     threads). Set via CSS — it overrides each SVG's stroke-width="1.8" attribute
-     — so the shared NAV_ITEMS glyphs stay 1.8 on the DESKTOP rail (untouched) and
-     only thicken on mobile. Centralized here = one knob. Excludes the brand logo
-     (it lives in .appBarBrand, not .appBarButton). Round caps/joins are kept (SVG
-     attributes), so the thicker stroke stays smooth, not blocky. */
-  .appBarButton svg,
-  .bottomBar .item svg {
-    stroke-width: 2.3px;
+  /* Create keeps Threads' plate language on tap too — the generic item pill
+     above must not swallow it (declared after, same specificity). */
+  .bottomBar .createItem:active {
+    background: transparent;
+    color: #999999;
+  }
+
+  .bottomBar .createItem:active .createPlate {
+    background: rgba(0, 0, 0, 0.06);
   }
 
   /* Keyboard open (iOS): slide the bar off-screen so it doesn't ride up on top

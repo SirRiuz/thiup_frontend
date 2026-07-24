@@ -32,12 +32,12 @@ import { useTranslation } from "react-i18next";
  * El share (OG/Twitter) sigue siendo la tarjeta de marca estática y estas
  * rutas siguen `noindex` (no se filtra a buscadores).
  *
- * NOINDEX por ruta: las pantallas privadas (/post, /search, /me) pasan
- * `{ noindex: true }` → se inyecta <meta name="robots" content="noindex,
- * nofollow"> mientras están montadas y se RETIRA al salir (la home vuelve a
- * ser indexable). Esto es defensa-en-profundidad sobre robots.txt: cubre a los
- * crawlers que SÍ ejecutan JS (p. ej. Googlebot). Los crawlers sin JS solo ven
- * el index.html estático de marca, y robots.txt ya les prohíbe estas rutas.
+ * NOINDEX per route: the private screens (/post, /search, /profile) pass
+ * `{ noindex: true }` → a <meta name="robots" content="noindex, nofollow">
+ * is injected while they are mounted and REMOVED on leave (the home becomes
+ * indexable again). This is defense-in-depth over robots.txt: it covers the
+ * crawlers that DO run JS (e.g. Googlebot). No-JS crawlers only see the
+ * static brand index.html, and robots.txt already forbids these routes.
  */
 
 const BRAND = "Thiup";

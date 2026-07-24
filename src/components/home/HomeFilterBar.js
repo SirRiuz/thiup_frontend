@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import { formatCompactNumber } from "../../utils/formatNumber";
 import styles from "../../styles/components/home/HomeFilterBar.module.css";
 import cx from "../../utils/cx";
@@ -50,6 +50,36 @@ function HomeFilterBar({
     });
   }, [value]);
 
+  // Sliding indicator: ONE ink bar positioned under the active tab via
+  // transform/width, so switching tabs GLIDES it to the new cell. The bar is
+  // placed with IMPERATIVE style writes (no React state): a state-driven
+  // version re-rendered on every measurement and hit "maximum update depth"
+  // when a profile remounted with cached data — writing to the node directly
+  // makes a feedback loop impossible by construction. offsetLeft/offsetWidth
+  // are content coordinates, so the bar travels with the scrolled row.
+  const indicatorRef = useRef(null);
+  const placeIndicator = useCallback(() => {
+    const tab = activeRef.current;
+    const node = indicatorRef.current;
+    if (!tab || !node) return;
+    node.style.width = `${tab.offsetWidth}px`;
+    node.style.transform = `translateX(${tab.offsetLeft}px)`;
+  }, []);
+  // After EVERY render — any commit can move the cells (labels re-translate,
+  // counts appear, the active tab grows its spinner). Runs before paint, so
+  // the first frame is already in place (and mount never animates: the node
+  // has never been painted when the first styles land).
+  useLayoutEffect(placeIndicator);
+  // Container resizes (viewport, rail collapse) move the cells without a
+  // React render — reposition through the same imperative path.
+  useEffect(() => {
+    if (!barRef.current) return;
+    if (typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(placeIndicator);
+    ro.observe(barRef.current);
+    return () => ro.disconnect();
+  }, [placeIndicator]);
+
   const handleClick = (option) => {
     if (isLoading) return;
     if (option === value) return;
@@ -79,19 +109,27 @@ function HomeFilterBar({
             className={cx(styles.tab, isActive ? styles.tabActive : "", isDisabled ? styles.tabDisabled : "")}
             onClick={() => handleClick(option)}
           >
-            <span>{labelOf(option)}</span>
+            <span className={styles.label}>
+              {labelOf(option)}
+              {/* The spinner hangs OFF the label (absolute, out of flow):
+                  appearing/disappearing must never nudge the centered text
+                  (the old inline spinner shifted it ~8px each way). */}
+              {isLoading && isActive && (
+                <span className={styles.tabSpinner} aria-hidden="true" />
+              )}
+            </span>
             {/* Abbreviated display (11509 → 11.5k). */}
             {hasBadge && (
               <span className={styles.count}>
                 {formatCompactNumber(count)}
               </span>
             )}
-            {isLoading && isActive && (
-              <span className={styles.tabSpinner} aria-hidden="true" />
-            )}
           </button>
         );
       })}
+      {/* Always mounted; sized/positioned imperatively (see placeIndicator).
+          Starts at width 0 (CSS) → invisible until the first placement. */}
+      <span ref={indicatorRef} className={styles.indicator} aria-hidden="true" />
     </div>
   );
 }

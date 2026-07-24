@@ -254,8 +254,15 @@ export function FeedProvider({ children }) {
         // settings instructions; NEVER retried). Any other error reaches
         // here only after exhausting retries + fallback → "error" state
         // with retry.
+        // Distinguish the DEVICE's location service being down
+        // (POSITION_UNAVAILABLE, e.g. CoreLocation's kCLErrorLocationUnknown)
+        // from our generic failure — the gate tells the user it's not Thiup.
         setCloseYouStatus(
-          geoError && geoError.code === 1 ? "denied" : "error"
+          geoError && geoError.code === 1
+            ? "denied"
+            : geoError && geoError.code === 2
+            ? "unavailable"
+            : "error"
         );
       }
     );

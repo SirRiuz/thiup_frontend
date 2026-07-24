@@ -116,14 +116,22 @@ function CloseYouGate({ status, onEnable, onRetry, onBack }) {
     );
   }
 
-  if (status === "error") {
+  if (status === "error" || status === "unavailable") {
+    // "unavailable" = the DEVICE's location service is down (POSITION_
+    // UNAVAILABLE, e.g. CoreLocation's kCLErrorLocationUnknown): honest copy
+    // so the user knows it's temporary and not Thiup. Same retry.
+    const down = status === "unavailable";
     return (
       <div className={styles.gate}>
         <span className={styles.iconWrap}>
           <LocationIcon />
         </span>
-        <p className={styles.title}>{t("closeYou.errorTitle")}</p>
-        <p className={styles.body}>{t("closeYou.errorBody")}</p>
+        <p className={styles.title}>
+          {t(down ? "closeYou.unavailableTitle" : "closeYou.errorTitle")}
+        </p>
+        <p className={styles.body}>
+          {t(down ? "closeYou.unavailableBody" : "closeYou.errorBody")}
+        </p>
         <div className={styles.actions}>
           <button
             type="button"

@@ -1,92 +1,184 @@
-/* PostScanResult — one file row in the client-side NSFW analysis list.
- * Thumbnail + name + status/verdict + remove, on a warm surface. */
+/* PostScanResult — one attached file as a compact media TILE (IG/Threads
+ * composer standard): the thumbnail IS the row, states live as overlays.
+ * No filename in the UI (kept as the tile's tooltip). The strip that lays
+ * the tiles out lives in MediaScanList. */
 
-.row {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  padding: 8px;
-  background: #fdfcf8;
-  border: 1px solid #e8e5dd;
-  border-radius: 8px;
+.tile {
   position: relative;
-  overflow: hidden;
-  box-sizing: border-box;
-}
-
-.main {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-}
-
-.rowError {
-  border-color: rgba(197, 48, 48, 0.2);
-  background: rgba(197, 48, 48, 0.04);
-}
-
-.thumbnail {
-  width: 44px;
-  height: 44px;
-  border-radius: 6px;
-  background: #f0ece3;
   flex: none;
+  width: 84px;
+  height: 84px;
+  border-radius: 12px;
+  background: #f0ece3;
+  border: 1px solid #e5e0d3;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
+  /* The tile POPS in when the file is added (the send disc's entrance). */
+  transform-origin: center;
+  animation: tileIn 0.18s cubic-bezier(0.17, 0.84, 0.44, 1);
 }
 
-.thumbnailImage {
+@keyframes tileIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.tileError {
+  border-color: rgba(197, 48, 48, 0.35);
+}
+
+.tileImage {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
 }
 
-.info {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  min-width: 0;
-  flex: 1;
-}
-
-.name {
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  font-size: 11px;
-  color: #1a1a1a;
-  font-weight: 600;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.status {
+/* Kind glyph when there is no thumbnail (e.g. a video still processing). */
+.tileKind {
   display: inline-flex;
+}
+
+/* === Busy (compressing / queued): dim + centered spinner === */
+
+.busyOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  color: #6b6b6b;
-  line-height: 1.4;
+  justify-content: center;
+  background: rgba(26, 26, 26, 0.3);
 }
 
-.statusError {
-  color: #c53030;
+.busySpinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(253, 252, 248, 0.35);
+  border-top-color: #fdfcf8;
+  border-radius: 50%;
+  animation: scanSpin 700ms linear infinite;
 }
 
-.size {
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  color: #9b9591;
-  font-variant-numeric: tabular-nums;
+/* === Error: danger scrim; when retryable the whole overlay is a button === */
+
+.errorOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(197, 48, 48, 0.3);
+  border: 0;
+  padding: 0;
+  cursor: default;
 }
 
-.detail {
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  font-size: 10px;
-  color: #9b9591;
-  font-variant-numeric: tabular-nums;
+button.errorOverlay {
+  cursor: pointer;
+}
+
+.errorDisc {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(26, 26, 26, 0.55);
+  color: #fdfcf8;
+  transition: transform 0.15s ease;
+}
+
+@media (hover: hover) {
+  button.errorOverlay:hover .errorDisc {
+    transform: scale(1.1);
+  }
+}
+
+/* === Remove — scrim disc riding the top-right corner === */
+
+.removeButton {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: 0;
+  border-radius: 50%;
+  padding: 0;
+  background: rgba(26, 26, 26, 0.55);
+  color: #fdfcf8;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.removeButton:hover {
+  background: rgba(26, 26, 26, 0.75);
+}
+
+.removeButton:active {
+  transform: scale(0.9);
+}
+
+/* === Compression details toggle (ⓘ) — bottom-right, quiet === */
+
+.infoButton {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: 0;
+  border-radius: 50%;
+  padding: 0;
+  background: rgba(26, 26, 26, 0.55);
+  color: #fdfcf8;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.infoButton:hover,
+.infoButtonActive {
+  background: rgba(26, 26, 26, 0.75);
+}
+
+/* === Upload progress along the bottom edge === */
+
+.progressBar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  background: #a85432;
+  transition: width 120ms linear;
+  border-radius: 0 2px 2px 0;
+}
+
+/* Screen-reader-only live status (the tile shows the state visually). */
+.srStatus {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .spinner {
@@ -105,29 +197,41 @@
   }
 }
 
+.statusError {
+  color: #c53030;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .spinner {
+  .spinner,
+  .busySpinner {
     animation-duration: 1400ms;
+  }
+
+  .tile {
+    animation: none;
+  }
+
+  .removeButton:active {
+    transform: none;
+  }
+
+  button.errorOverlay:hover .errorDisc {
+    transform: none;
   }
 }
 
-/* === Details panel (toggled by the ⓘ button) === */
+/* === Details panel (below the strip, one open at a time) === */
 
 .details {
   display: flex;
   flex-direction: column;
   gap: 10px;
   margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid #ebe7dd;
+  padding: 10px 12px;
+  background: #fdfcf8;
+  border: 1px solid #e8e5dd;
+  border-radius: 12px;
   animation: scanDetailsIn 140ms ease-out;
-}
-
-.verdictRow {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 10px;
 }
 
 @keyframes scanDetailsIn {
@@ -147,113 +251,12 @@
   }
 }
 
-/* === Info (ⓘ) button — tinted by verdict as a quiet at-a-glance cue === */
-
-.infoButton {
-  background: transparent;
-  border: 0;
-  padding: 5px;
-  cursor: pointer;
-  flex: none;
-  border-radius: 4px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 120ms ease;
-}
-
-.infoButton:hover,
-.infoButtonActive {
-  background: #f0ece3;
-}
-
-.info_safe {
-  color: #9b9591;
-}
-
-.info_review {
-  color: #a85432;
-}
-
-.info_block {
-  color: #c53030;
-}
-
-/* === Verdict badge === */
-
-.badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  flex: none;
-  padding: 4px 8px;
-  border-radius: 999px;
-  border: 1px solid transparent;
-  font-size: 11px;
-  font-weight: 600;
-}
-
-.badgeLabel {
-  white-space: nowrap;
-}
-
-.badgeScore {
-  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  font-weight: 500;
-  font-variant-numeric: tabular-nums;
-  opacity: 0.85;
-}
-
-/* Safe — neutral (no green; the design system reserves green out of the palette). */
-.badge_safe {
-  background: #f0ece3;
-  border-color: #e5e0d3;
-  color: #6b6b6b;
-}
-
-/* Review — warm tint. */
-.badge_review {
-  background: #f3e3d3;
-  border-color: #d8b89a;
-  color: #a85432;
-}
-
-/* Block — danger. */
-.badge_block {
-  background: rgba(197, 48, 48, 0.08);
-  border-color: rgba(197, 48, 48, 0.2);
-  color: #c53030;
-}
-
-/* === Remove === */
-
-.removeButton {
-  background: transparent;
-  border: 0;
-  padding: 5px;
-  cursor: pointer;
-  color: #6b6b6b;
-  flex: none;
-  border-radius: 4px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 120ms ease, color 120ms ease;
-}
-
-.removeButton:hover {
-  background: #f0ece3;
-  color: #1a1a1a;
-}
-
 /* === Compression before/after comparison === */
 
 .compress {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding-top: 8px;
-  border-top: 1px solid #ebe7dd;
 }
 
 .compressHead {
@@ -363,34 +366,4 @@
   gap: 6px;
   font-size: 11px;
   color: #6b6b6b;
-}
-
-/* Retry (shown when an upload fails) */
-.retryButton {
-  flex: none;
-  background: transparent;
-  border: 1px solid #e5e0d3;
-  border-radius: 999px;
-  padding: 4px 10px;
-  font-size: 11px;
-  font-weight: 600;
-  color: #a85432;
-  cursor: pointer;
-  transition: background 120ms ease;
-}
-
-.retryButton:hover {
-  background: #f3e3d3;
-}
-
-/* === Video frame progress === */
-
-.progressBar {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  height: 2px;
-  background: #a85432;
-  transition: width 120ms linear;
-  border-radius: 0 1px 1px 0;
 }

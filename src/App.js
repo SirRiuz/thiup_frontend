@@ -4,6 +4,7 @@ import {
   Routes,
   Route,
   Navigate,
+  useLocation,
   useParams,
 } from "react-router-dom";
 import Post from "./screens/Post";
@@ -18,6 +19,7 @@ import SplashScreen from "./components/SplashSreen";
 import WelcomeModal, { hasSeenWelcome } from "./components/WelcomeModal";
 import AppShell from "./components/nav/AppShell";
 import { FeedProvider } from "./contexts/FeedContext";
+import { ComposeProvider } from "./contexts/ComposeContext";
 import { CurrentUserProvider } from "./contexts/CurrentUserContext";
 import { ThreadCacheProvider } from "./contexts/ThreadCacheContext";
 import { SearchCacheProvider } from "./contexts/SearchCacheContext";
@@ -43,6 +45,15 @@ function LegacyPostRedirect() {
 function LegacyAnonRedirect() {
   const { maskId } = useParams();
   return <Navigate to={`/m/${maskId}`} replace />;
+}
+
+// /me was the private profile's first URL — /profile is the canonical one.
+// The search is preserved so /me?tab=media lands on the right tab.
+function LegacyMeRedirect() {
+  const location = useLocation();
+  return (
+    <Navigate to={{ pathname: "/profile", search: location.search }} replace />
+  );
 }
 
 export default function App() {
@@ -79,6 +90,11 @@ export default function App() {
               <FeedProvider>
                 <ThreadCacheProvider>
                   <SearchCacheProvider>
+                    {/* Global composer: one modal, opened from the home
+                        compose row and the nav "+" on every screen. Inside
+                        the router (it navigates on post) and the feed/user
+                        providers (it posts through them). */}
+                    <ComposeProvider>
                     <ScrollToTop />
                     <Routes>
                       <Route
@@ -92,9 +108,11 @@ export default function App() {
                         <Route path="/home" element={<HomeNew />} />
                         <Route path="/search" element={<SearchNew />} />
                         <Route path="/notifications" element={<Notifications />} />
-                        <Route path="/me" element={<MyThreads />} />
-                        {/* Anonymous PUBLIC profile — same anatomy as /me,
-                            public data only (own mask redirects to /me).
+                        <Route path="/profile" element={<MyThreads />} />
+                        {/* Legacy: the private profile's old URL. */}
+                        <Route path="/me" element={<LegacyMeRedirect />} />
+                        {/* Anonymous PUBLIC profile — same anatomy as /profile,
+                            public data only (own mask redirects to /profile).
                             /m/:id mirrors /p/:id (p = post, m = mask). */}
                         <Route path="/m/:maskId" element={<AnonProfile />} />
                         {/* Legacy: the profile's first URL. */}
@@ -121,10 +139,11 @@ export default function App() {
                       {/* Old My threads route: links/bookmarks don't break. */}
                       <Route
                         path="/my-threads"
-                        element={<Navigate to="/me" replace />}
+                        element={<Navigate to="/profile" replace />}
                       />
                       <Route path="*" element={<NotFound />} />
                     </Routes>
+                    </ComposeProvider>
                   </SearchCacheProvider>
                 </ThreadCacheProvider>
               </FeedProvider>

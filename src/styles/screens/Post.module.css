@@ -138,10 +138,19 @@
   }
 }
 
+/* Mobile base = Threads' exact mobile-header Back: a 52×52 circular target
+   (their xdd8jsf/xvni27 box, radius 1000) holding the 23px glyph, pressed
+   with their soft transform scale (transition-property: transform, plain
+   ease — no bounce). Threads anchors the circle at 2px from the SCREEN edge
+   (their absolute inset-inline-start: 2px) — the negative margin cancels the
+   bar's 12px padding down to that 2px, so the arrow sits ~16px from the
+   edge like theirs instead of floating 10px further in. Desktop overrides
+   to the floating circle below. */
 .backButton {
   flex: none;
-  width: 32px;
-  height: 32px;
+  width: 52px;
+  height: 52px;
+  margin-inline-start: -10px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -150,8 +159,12 @@
   border-radius: 50%;
   cursor: pointer;
   color: #1a1a1a;
-  transition: background 200ms ease;
+  transition: transform 0.2s ease, background 200ms ease;
   animation: barSlideIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+.backButton:active {
+  transform: scale(0.9);
 }
 
 .backButton:hover {
@@ -167,6 +180,30 @@
   line-height: 1.2;
   min-width: 0;
   animation: barRiseIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) 70ms backwards;
+}
+
+/* Mobile brand slot — replaces the title block (Threads' thread header
+   carries the centered logo, not a title). Same anatomy as the NavRail app
+   bar brand (32px glyph, button → /home, soft svg press), riding the title's
+   entrance beat. */
+.appBarBrand {
+  justify-self: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  animation: barRiseIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) 70ms backwards;
+}
+
+.appBarBrand svg {
+  transition: transform 0.2s ease-in-out;
+}
+
+.appBarBrand:active svg {
+  transform: scale(0.98);
 }
 
 /* The back button hugs the grid's left edge at every breakpoint. */
@@ -186,6 +223,7 @@
   .backButton {
     width: 24px;
     height: 24px;
+    margin-inline-start: 0;
     background: #fdfcf8;
     border: 0.5px solid #e5e0d3;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
@@ -222,8 +260,17 @@
 
   .backButton,
   .titleBlock,
+  .appBarBrand,
   .subtitle {
     animation: none;
+  }
+
+  .appBarBrand svg {
+    transition: none;
+  }
+
+  .appBarBrand:active svg {
+    transform: none;
   }
 }
 
@@ -411,7 +458,7 @@
   font-size: 13px;
   font-weight: 400;
   color: #424242;
-  transition: background 120ms ease, color 120ms ease;
+  transition: background 0.2s ease, color 0.2s ease;
 }
 
 @media (hover: hover) {
@@ -495,7 +542,7 @@
   letter-spacing: 0.04em;
   color: #1a1a1a;
   cursor: pointer;
-  transition: background 120ms ease, border-color 120ms ease;
+  transition: background 0.2s ease, border-color 0.2s ease;
 }
 
 .retryButton:hover {
@@ -532,6 +579,9 @@
   top: 60px;
   height: 0;
   z-index: 5;
+  /* Decorative overlay — its caps float over the card's top edge and must
+     never steal hover/click from the content scrolling under them. */
+  pointer-events: none;
 }
 
 .cornerMaskEdge {
