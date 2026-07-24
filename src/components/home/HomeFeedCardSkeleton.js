@@ -6,8 +6,7 @@ import cx from "../../utils/cx";
  * Skeleton placeholder that replicates the structure of HomeFeedCard.
  *
  * Props:
- *   variant: 'short' | 'medium' | 'long' — controls the body lines and the
- *            presence of the trending badge (only in 'medium').
+ *   variant: 'short' | 'medium' | 'long' — controls the body lines.
  */
 function HomeFeedCardSkeleton({ variant = "medium" }) {
   const { t } = useTranslation();
@@ -17,12 +16,11 @@ function HomeFeedCardSkeleton({ variant = "medium" }) {
       <div className={styles.grid}>
       <div className={cx(styles.bar, styles.identicon)}></div>
       <div className={styles.content}>
+      {/* Header mirrors the loaded card's TWO indicators (mask @id +
+          timestamp) — never the trending badge (most rows don't have it). */}
       <div className={styles.header}>
         <div className={cx(styles.bar, styles.maskId)}></div>
         <div className={cx(styles.bar, styles.timestamp)}></div>
-        {variant === "medium" && (
-          <div className={cx(styles.bar, styles.trendingBadge)}></div>
-        )}
       </div>
       <div className={styles.body}>
         {variant === "short" && (

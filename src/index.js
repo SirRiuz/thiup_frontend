@@ -6,12 +6,18 @@ import "./i18n";
 import silenceResizeObserverError from "./utils/silenceResizeObserverError";
 import stripWafParams from "./utils/stripWafParams";
 import initAntiSnoop from "./utils/antiSnoop";
+import initDomTamperGuard from "./utils/domTamperGuard";
 import { initHumanBlock } from "./utils/humanBlock";
 
 // Swallow ONLY the benign "ResizeObserver loop ..." browser warning so it stops
 // tripping CRA's error overlay. All other errors still surface. Registered
 // before render so it precedes the dev overlay's own error listener.
 silenceResizeObserverError();
+
+// Fail-soft removeChild/insertBefore: extensions/translators/simulators that
+// tamper with React-managed DOM no longer crash the whole tree (the
+// "NotFoundError: removeChild" seen inside device simulators).
+initDomTamperGuard();
 
 // Scrub Cloudflare WAF challenge tokens (?__cf_chl_f_tk=...) that the challenge
 // redirect sometimes leaves in the URL — BEFORE the router mounts, so the clean

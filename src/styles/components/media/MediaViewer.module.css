@@ -4,7 +4,9 @@
 .viewer {
   position: fixed;
   inset: 0;
-  z-index: 100;
+  /* Above EVERY layer, dialogs included (1100) — media can be opened from
+     inside the compose/reply modals and the lightbox must cover them. */
+  z-index: 1200;
   display: flex;
   align-items: center;
   justify-content: center;

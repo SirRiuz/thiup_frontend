@@ -21,6 +21,7 @@ import {
   buildProcessedMetadata,
 } from "../services/imageCompression/imageCompressor";
 import { isAllowedFile, isVideoFile } from "../services/media/allowedFormats";
+import { matchesDeclaredType } from "../services/media/fileSignature";
 
 export const MAX_FILES = 10;
 
@@ -189,17 +190,21 @@ export default function useMediaComposer() {
     }
   }, [media.items, compression.results, compressionByFile, startUpload, dimsTick]);
 
-  // Validate the selection (size / type / count) and start processing accepted
-  // files. Returns { error: { key, params } | null } so the caller translates it.
+  // Validate the selection (size / type / count / real content) and start
+  // processing accepted files. Async: after the cheap name/size checks, the
+  // first bytes of each candidate are read to verify the ACTUAL signature
+  // (magic bytes) matches the claimed format — a .txt renamed to .png is
+  // rejected here instead of producing a broken upload. Returns
+  // { error: { key, params } | null } so the caller translates it.
   const addFiles = useCallback(
-    (fileList) => {
+    async (fileList) => {
       const files = Array.from(fileList || []);
       if (files.length === 0) return { error: null };
       const availableSlots = MAX_FILES - media.items.length;
       if (availableSlots <= 0) {
         return { error: { key: "post.maxFiles", params: { max: MAX_FILES } } };
       }
-      const accepted = [];
+      const candidates = [];
       const rejectedNames = []; // wrong format → skipped, with a clear notice
       let sizeError = null;
       files.slice(0, availableSlots).forEach((file) => {
@@ -213,15 +218,28 @@ export default function useMediaComposer() {
           if (!sizeError) sizeError = { key: tooLargeKey, params: {} };
           return;
         }
-        accepted.push(file);
+        candidates.push(file);
+      });
+      // Content check (magic bytes) — ~16 bytes per file, effectively instant.
+      const verdicts = await Promise.all(candidates.map(matchesDeclaredType));
+      const accepted = [];
+      const mismatchedNames = []; // extension says image/video, content doesn't
+      candidates.forEach((file, i) => {
+        if (verdicts[i]) accepted.push(file);
+        else mismatchedNames.push(file.name || "?");
       });
       // Surface the format rejection first (the confusing case, e.g. HEIC),
-      // then size, then the count cap.
+      // then the content mismatch, then size, then the count cap.
       let error = null;
       if (rejectedNames.length > 0) {
         error = {
           key: "post.formatRejected",
           params: { names: rejectedNames.join(", ") },
+        };
+      } else if (mismatchedNames.length > 0) {
+        error = {
+          key: "post.contentRejected",
+          params: { names: mismatchedNames.join(", ") },
         };
       } else if (sizeError) {
         error = sizeError;

@@ -12,14 +12,22 @@
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 12px 0;
-  /* The tray sits right under the tabs: overlap its top hairline with the
-     tabs' baseline so they read as ONE line, not a doubled 2px rule. */
-  margin-top: -1px;
+  /* Asymmetric padding: extra air ABOVE the ruler — the thumb's warm halo
+     reaches ~2.5px above the track box, and at the old even 12px it hovered
+     ~9px under the tabs' baseline/ink indicator, reading glued to it. 18px
+     keeps a clear quiet band under the black line; the bottom stays 12px
+     (the distance labels carry their own line-height air). */
+  padding: 18px 0 12px;
+  /* NO negative overlap and NO own top hairline (see ::before): the tray's
+     top edge IS the tab row's baseline. The old -1px + border-top painted
+     OVER the tabs' bottom pixel — exactly where the sliding ink indicator
+     lives, so it vanished whenever Close You was active. */
 }
 
-/* The recessed tray: page-tone band, full-bleed to the card edges, edged by
-   hairlines top and bottom. Children lift above it via position: relative. */
+/* The recessed tray: page-tone band, full-bleed to the card edges. The TOP
+   edge is drawn by the tab row above (its baseline hairline + the active
+   indicator gliding over it); the tray only closes itself at the bottom.
+   Children lift above it via position: relative. */
 .bar::before {
   content: "";
   position: absolute;
@@ -28,7 +36,6 @@
   left: calc(-1 * var(--layout-pad-x, 0px));
   right: calc(-1 * var(--layout-pad-x, 0px));
   background: #f7f5f0;
-  border-top: 1px solid #ebe7dd;
   border-bottom: 1px solid #ebe7dd;
 }
 
@@ -211,7 +218,7 @@
   font-weight: 500;
   color: #6b6b6b;
   font-variant-numeric: tabular-nums;
-  transition: color 120ms ease, background 120ms ease;
+  transition: color 0.2s ease, background 0.2s ease;
 }
 
 /* Invisible hit extender: the WHOLE column around a stop is tappable — up

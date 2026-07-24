@@ -94,7 +94,7 @@ Pure `#FFFFFF` is **FORBIDDEN** — use `#fdfcf8` for elevated/white-feeling sur
 - **Family:** `Inter` (self-hosted variable woff2, weights 100–900, `font-display: swap`).
   Stack: `"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, …`.
 - **Monospace** (technical chips only): `ui-monospace, "SF Mono", Menlo, Consolas, monospace`.
-  Kept for stat counters, trending/momentum badges and the `/me` hash pill — it signals
+  Kept for stat counters, trending/momentum badges and the `/profile` hash pill — it signals
   "machine/pseudonymous data". **Mask `@id` + timestamp rows are Inter EVERYWHERE** (thread view
   AND feed cards, reconciled) and use **Threads' exact identity-row spec**: the name is the SAME
   SIZE as the body (`clamp(14px, 13.1px + 0.25vw, 15px)` — Threads is 15px for name, time AND
@@ -190,13 +190,13 @@ Pure `#FFFFFF` is **FORBIDDEN** — use `#fdfcf8` for elevated/white-feeling sur
     `replace` — the URL stays the single source of truth for tabs/cache/deep links), then the
     tabs+results (query mode) or the trending suggestion rows (landing). On mobile the surface
     dissolves into the canonical `#fdfcf8` full-bleed sheet (`useMobileSurfacePage`, same as
-    /home and /p/:id) and the masthead becomes the thread app bar's EXACT frosted fixed bar
-    (borderless `rgba(253,252,248,0.88)` + blur, `top: var(--kb-top)`, content offset 60px).
+    /home and /p/:id) and the masthead is HIDDEN — the NavRail mobile app bar (☰ + centered
+    logo, home's exact header) renders on /search too and replaces it (content offset 60px).
   **HARD RULE:** `--layout-pad-x` MUST always equal the real side padding of its container, at
   **every breakpoint** — if you change the padding (incl. inside a media query), change
   `--layout-pad-x` to match, or the carousel over/under-shoots the column edge (last item cut off /
   first item misaligned). The carousel **gap is `6px`** (`--barcelona-carousel-gap`, in `ThreadMedia`).
-- **Elevated surface screens (`/p/:id`, `/home`, `/search`, `/me` and `/m/:maskId`) — the
+- **Elevated surface screens (`/p/:id`, `/home`, `/search`, `/profile` and `/m/:maskId`) — the
   canonical screen pattern:** the
   content lives inside one `.surface` card (`#fdfcf8`, border `#e5e0d3`, radius `24px` —
   Threads' exact column corners — **no shadow**, current Threads keeps only the hairline
@@ -215,13 +215,28 @@ Pure `#FFFFFF` is **FORBIDDEN** — use `#fdfcf8` for elevated/white-feeling sur
     **60px desktop masthead** (`.desktopHeader` — Threads' column header: sticky `top: 0`, opaque
     `#f7f5f0`, centered feed title `15px/600`; desktop-only, mobile keeps the NavRail app bar), so
     the mask pins at `top: 60px`. See `Post.module.css` / `HomeNew.module.css` (`.cornerMask*`).
-    **The thread app bar is ONE anatomy at every breakpoint (Threads' new post header):** grid
-    `1fr · minmax(auto,65%) · 1fr` (gap 16) with the title block truly CENTERED and NO options
-    menu in the bar — the three-dots (incl. the sort submenu) lives on the parent thread's
-    header row (`Post .opHeader`, like a reply's), mobile included. Only the back button splits:
+    **The thread app bar (Threads' new post header):** grid
+    `1fr · minmax(auto,65%) · 1fr` (gap 16) with the middle column truly CENTERED — desktop = the
+    title block ("Thread" + N replies); mobile = the centered 32px BRAND logo instead (Threads'
+    thread header carries the logo, not a title — same slot/press as the NavRail app bar brand, a
+    button → /home, riding the title's entrance beat) — and NO options menu in the bar — the three-dots lives on the parent thread's
+    header row (`Post .opHeader`, like a reply's), mobile included. **Sorting lives in the
+    replies bar (`PostRepliesBar`)** — Threads' exact bar between the OP's full-bleed divider and
+    the replies (rendered only when there ARE replies; it doubles as the post-sort scroll
+    anchor): LEFT = the `PostSortMenu` trigger (Threads' filled 16px sort glyph + label `14/600`
+    + their 12px chevron, secondary `#9b9591`, hover `#f0ece3` wash + `#6b6b6b`, 36px tall,
+    `margin-inline-start: -8px` aligns the icon with the content edge); RIGHT = "View activity"
+    (same anatomy mirrored, label `14/400`, Threads' left-chevron path rotated 180° — a visual
+    PLACEHOLDER like the nav Create +, no behavior until the backend ships an activity feed).
+    Only the back button splits:
     desktop = Threads' floating circular button (24px `#fdfcf8` circle, 0.5px `#e5e0d3` hairline,
     shadow `0 2px 8px rgba(0,0,0,0.08)`, their exact 12×12 arrow glyph, hover `scale(1.1)`);
-    mobile keeps the plain 20px arrow (via `useIsMobile`).
+    mobile = Threads' exact mobile-header Back (via `useIsMobile`): 23×23 glyph (their
+    line/polyline coords verbatim, stroke 2, round caps) in a 52×52 circular target anchored at
+    Threads' 2px screen-edge offset (`margin-inline-start: -10px` cancels the bar's 12px padding
+    — the arrow sits ~16px from the edge, not 26), pressed with their soft `scale(0.9)`
+    (`transition: transform 0.2s ease`). Same spec on the profile bars
+    (`MyThreads .profileBackButton`).
   - **Mobile (≤700px):** the card goes **full-bleed** (border/radius/shadow removed, `.main` side
     padding 0) and the whole screen becomes one `#fdfcf8` sheet: the page AND `<html>`/`<body>`/the
     AppShell wrapper are painted `#fdfcf8` via the shared **`useMobileSurfacePage(pageRef)`** hook
@@ -247,30 +262,38 @@ Pure `#FFFFFF` is **FORBIDDEN** — use `#fdfcf8` for elevated/white-feeling sur
     app's terracotta active is a brand moment, kept at every breakpoint).
     Items in Threads' order: Home / Search / **Create (+) — Threads' exact plated button
     (always-visible plate `rgba(0,0,0,0.035)` radius 10, inset 6px vertical, + glyph `#999999` =
-    their `--barcelona-secondary-icon`; PLACEHOLDER, no functionality until the composer flow
-    exists — desktop rail only)** / **Notifications (their exact heart glyph — desktop-only via
-    `desktopOnly`, excluded from the mobile bars; routes to `/notifications`, a noindex
-    placeholder empty-state screen until the backend ships an activity feed)** / My threads. **Desktop glyphs are Threads' EXACT sidebar icons** (24×24
-    FILLED paths lifted verbatim: Home / Search / Profile, plus their asymmetric "More" — rounded
-    bars 21px + 14px × 2.5px, rx 1.25) via each item's `railIcon`; the mobile bars keep the
-    original 22px stroke set (`icon`) — an exception to the app-wide outline icon style, scoped to
-    the desktop rail.
+    their `--barcelona-secondary-icon`; opens the global `ComposeModal` — rendered on the desktop
+    rail AND the mobile bottom bar)** / **Notifications (their exact heart glyph; routes to `/notifications`, a noindex
+    placeholder empty-state screen until the backend ships an activity feed)** / My threads. **Nav glyphs are Threads' EXACT icons** (24×24
+    FILLED paths lifted verbatim: Home / Search / Notifications / Profile, plus their asymmetric "More" — rounded
+    bars 21px + 14px × 2.5px, rx 1.25) via each item's `railIcon` — ONE set shared by the desktop
+    rail and the mobile bottom bar (an exception to the app-wide outline icon style, scoped to the
+    nav; the mobile ☰ keeps its stroke glyph).
   - **Mobile (`≤700px`) top app bar** — `height: 60px`, **FIXED** (`top: var(--kb-top)` — same
-    anti-rubber-band treatment as the thread app bar; /home and /me compensate with 60px of mobile
-    top padding), **SOLID WHITE `#fdfcf8`** (the view-thread bar's white tone, opaque — NOT
-    frosted: over the feed's images the translucent recipe read too transparent; it fuses with the
-    mobile `#fdfcf8` sheet, BORDERLESS — no hairline, the bar and the sheet read as one), grid
-    `[☰] · [logo centered] · [search]`. The **☰ reuses the SAME NavRail menu**
+    anti-rubber-band treatment as the thread app bar; /home compensates with 60px of mobile
+    top padding), **Threads' EXACT frosted header** (`rgba(253,252,248,0.85)` — their
+    `--barcelona-header-background` @ 0.85, warm-adjusted — + their `blur(28.5px)`; solid `#fdfcf8`
+    fallback without backdrop-filter; it fuses with the mobile `#fdfcf8` sheet, BORDERLESS — no
+    hairline), grid
+    `[☰] · [logo centered] · [balance span]` — no magnifier: Search lives in the bottom bar now,
+    like Threads' mobile header. The **☰ reuses the SAME NavRail menu**
     (Languages / About — the `MenuButton` with `variant="header"`); the logo is Threads' EXACT
     mobile-header slot — a **32×32 box the glyph FILLS** (`BrandLogo size={32} variant="plain"
     fit="glyph"`; at the old `size 36` the master viewBox's air shrank the visible mark to ~20px),
-    a **button → `/home`** like theirs (press `scale(0.98)` on the svg, 0.2s ease-in-out);
-    the magnifier links to `/search`. The header renders **only on
-    `/home` and `/me`** (Search and the thread view keep their own top bars → no double headers).
-    The asymmetric ☰ glyph: two rounded lines, the bottom one shorter (see Iconography).
-  - **Mobile bottom bar** — fixed, frosted glass, **two icon-only items: Home + My threads** (Search
-    moved to the app-bar magnifier; the ☰ moved to the app bar). Idle/active states per Interaction
-    patterns. Hidden while the keyboard is open (`useKeyboardOpen`); honors `safe-area-inset-bottom`.
+    a **button → `/home`** like theirs (press `scale(0.98)` on the svg, 0.2s ease-in-out).
+    The header renders **on
+    `/home` AND `/search`** (on mobile it REPLACES search's masthead, which is desktop-only; the
+    thread view and the profile keep their own back bars → no double headers).
+    The ☰ is Threads' EXACT header "More" glyph: two EQUAL filled rounded bars (24×24, 2.5 tall,
+    rx 1.25 — see Iconography).
+  - **Mobile bottom bar** — fixed, **Threads' EXACT mobile nav**: five `20%` grid cells on a
+    **50px** bar (their `--barcelona-small-screen-nav-height-short`), each item filling its cell
+    minus a 4px margin (their inset plate: ~42px tall, radius 8, nearly cell-wide — hover wash,
+    active blob and Create's plate all live on that box), icons 24px (`railIcon`, same as the
+    desktop rail), frosted with the header recipe (`rgba(253,252,248,0.85)` + `blur(28.5px)`).
+    Order: Home / Search / Create (+) / Notifications / Profile. Idle/active states per
+    Interaction patterns (the terracotta active blob stays — brand moment). Hidden while the
+    keyboard is open (`useKeyboardOpen`); honors `safe-area-inset-bottom`.
 - **AppShell** mobile `padding-bottom: 64px` keeps the bottom bar clear; the FIXED app bar does NOT
   offset the top — each screen that shows it adds the 60px itself (home and me: mobile
   `padding-top: 60px`).
@@ -281,19 +304,22 @@ Reference component: **`HomeFeedCard`** — the thread cell that defines the fee
 
 | Component | File(s) | Notes |
 |---|---|---|
-| Thread card | `home/HomeFeedCard` | **Threads feed-row grid**: avatar (36px circle, hairline ring `#e5e0d3`) in a left gutter (`36px + 12px gap` = Threads' 48px threadline lane); username row + body + media + stats stacked in the content column (same anatomy as `PostReply`). `padding: 12px 0` (the screen container provides the 24px feed inset), **no hover wash**. Threads-exact rhythm: avatar cell `padding-top: 4px`, username row `line-height: 21px` + body 3px below, stats row `margin-top: 6px`. Media bleeds asymmetrically like replies (start cancels the lane + container padding; end just the container padding). Divider = full-bleed `::after` (1px `#ebe7dd`, `left/right: calc(-1 * var(--layout-pad-x))`; hidden on the last card). No "End of feed" marker. Header: mask `@id` Inter body-sized `clamp(14→15px)/600` (`#1a1a1a`) + timestamp same size `400` (`#9b9591`, `min-width: 24px` centered), gap 6 — Threads' exact identity row, same as the thread view (see Typography). Trending badge: uppercase mono, `#c53030` on `rgba(197,48,48,0.08)`. |
+| Thread card | `home/HomeFeedCard` | **Threads feed-row grid**: avatar (36px circle; the hairline ring comes from `MaskAvatar` itself) in a left gutter (`36px + 12px gap` = Threads' 48px threadline lane); username row + body + media + stats stacked in the content column (same anatomy as `PostReply`). `padding: 12px 0` (the screen container provides the 24px feed inset), **no hover wash**. Threads-exact rhythm: avatar cell `padding-top: 4px`, username row `line-height: 21px` + body 3px below, stats row `margin-top: 6px`. Media bleeds asymmetrically like replies (start cancels the lane + container padding; end just the container padding). Divider = full-bleed `::after` (1px `#ebe7dd`, `left/right: calc(-1 * var(--layout-pad-x))`; hidden on the last card). No "End of feed" marker. Header: mask `@id` Inter body-sized `clamp(14→15px)/600` (`#1a1a1a`) + timestamp same size `400` (`#9b9591`, `min-width: 24px` centered), gap 6 — Threads' exact identity row, same as the thread view (see Typography). Trending badge: uppercase mono, `#c53030` on `rgba(197,48,48,0.08)`. |
 | Primary button | `WelcomeModal .button`, etc. | `background:#1a1a1a; color:#fdfcf8; border-radius:12px; font-weight:600; padding:13px 14px`. Hover = `opacity` transition. **Dark fill, cream text — never white text-on-white.** |
 | Chips / tags | `search/SearchTagCard`, compose tags | Rounded (`3–8px`), warm tint `#f3e3d3` bg or subtle border; small mono/`11px` text. |
-| Inputs | `HomeCompose`, `SearchNew .searchBox` | Surface `#fdfcf8`, border `#e5e0d3`, focus ring `inset 0 0 0 2px #c5a572`. **`HomeCompose` is two-state (Threads' exact compose row):** at rest a quiet strip — avatar 36 · "What's new?" prompt (`15/400 #9b9591`, 8px margins + 4px lead) · bordered Post button (36px tall, radius 10, `1px rgba(0,0,0,0.15)`, `15/600 #1a1a1a`) — `padding: 16px 0` + full-bleed bottom hairline; click expands the full inline composer IN PLACE (transparent/borderless — integrated into the surface, no card-in-card), collapsing back on outside click only while the draft is empty. |
-| Tabs | `HomeFilterBar` (home + search) | **Threads' exact tab anatomy, warm-monochrome:** full-width EQUAL cells (`flex: 1 0 0` + `min-width: max-content` — equal while they fit; when a locale's labels overflow (ES search tabs) the row **scrolls on x** with a hidden scrollbar instead of crushing the cells, and the active tab auto-centers into view), 48px tall, centered `15px/600` labels (Inter, sentence case via i18n), baseline hairline `#ebe7dd` under the whole row (full-bleed via `-var(--layout-pad-x)` margins; it lives on each tab, so it travels with the scroll), inactive `#9b9591`, **active = `#1a1a1a` text + 1px `#1a1a1a` underline** over the baseline (`::after` at `bottom: -1px`), pressed = `opacity 0.6`. No eyebrow label, no mono, no accent color, NO count badges (with five equal search cells they threw the centered labels off — labels sit clean, Threads-style). |
-| Floating menu panel | `menu/MenuSurface` | **THE app's menu surface (Threads' exact dropdown), single source:** 240px, radius 16, 8px padding, 0.5px `#e5e0d3` outline + their triple shadow (`0 0 80px .25 / 1px 1px 2px .05 / 0 8px 16px .06`), opening pop `scale(0)→1` 0.15s. Rows via its exported `menuStyles` (`item` 15/600 ink radius 8, hover `rgba(0,0,0,0.04)`, press `scale(0.98)`; `itemIcon` charcoal, `itemIconRight`, `itemDanger` `#ff3040`, full-bleed `divider`). Consumers: `PostOptionsMenu` (desktop panel) and the NavRail ☰ (which adds only anchor classes + its animated close). Never re-implement a floating menu panel. |
-| Dropdown / select menu | `post/PostSortMenu` | Trigger (44px touch target) + floating menu of options (name + description + check). The canonical anchored-dropdown pattern — reuse it. See Dropdown menu. |
-| Modals | `WelcomeModal`, `nav/LanguageModal` | Portal to body, surface `#fdfcf8`, border `#e5e0d3`, radius `18px`, backdrop `rgba(31,26,20,0.42)` + blur, shadow `0 18px 50px rgba(26,26,26,0.18)`. Focus trap + Escape + `aria-modal`. |
+| Inputs | `HomeCompose`, `SearchNew .searchBox`, `PostCommentBox` | Surface `#fdfcf8`, border `#e5e0d3`, focus ring `inset 0 0 0 2px #c5a572`. **`PostCommentBox` (thread reply) is Threads' exact composer:** the pill = radius 24, `0.5px #e5e0d3` border, TRANSPARENT fill, `padding: 6px` (their `--x-paddingInline: 6px` — the send disc sits 6px off the pill edge), gap 12, avatar 36, input `15px/1.4` + 7px block padding. Toolbar icons are Threads' BARE 20px glyphs (no 36px boxes, no hover wash): `#999999`, hover `scale(1.1)` / press `scale(0.97)` at `transform 0.15s`, spaced by the toolbar's 12px column-gap; the icon cluster sits **8px** from the send disc (their `padding-inline-end: 8px` → a -4px margin on the disc nets it). Toolbar order (Threads-exact): EMPTY = attach · expand; with content = expand · send. On mobile it's a fixed band GLUED to the bottom nav — Threads' formula `bottom: calc(50px + safe-inset)` (a CONSTANT, never derived from the visual viewport), band `#fdfcf8` + `0.5px rgba(0,0,0,0.15)` top hairline + 8px padding; only the real docked-keyboard state (`useKeyboardOpen`, with 120/60px open/close HYSTERESIS + rAF-coalesced var writes — the iPad floating keyboard flickered a single threshold) switches it to `bottom: var(--kb-inset-bottom)`. Its submit is **Threads' EXACT send button** (decoded from their CSS): a 36×36 ink disc (radius 50%, `#1a1a1a`/`#fdfcf8`) holding their 12-viewBox arrow at 14px rotated 90° (points UP), replacing the old labeled "Reply" — it POPS in when content appears with their exact entrance `opacity 0 + scale(0) → 1`, `0.18s cubic-bezier(0.17, 0.84, 0.44, 1)`, origin center (none under reduced-motion; spinner centers over the hidden icon while posting). Its toolbar carries Threads' exact **"Expand composer"** glyph (20px filled diagonal arrows) which opens **`PostReplyExpandModal`** — Threads' reply dialog: canonical modal chrome (mobile = full-screen sheet), header `Cancel · "Reply" · spacer`, the PARENT being replied to (avatar + mask/time + 4-line-clamped text + its media via the REAL `ThreadMedia` — carousel/video/NSFW blur, bleed vars zeroed so it stays text-aligned; `replyingTo` carries `media` for reply targets; the `MediaViewer` lightbox sits at z-index 1200, above dialogs — threadline trunk descending 2px `#e5e0d3` with breathing gaps into your row), your row (avatar + @id + the SAME draft: text/media state stays in `PostCommentBox`, the dialog is just another view — expanding/collapsing never loses anything), footer = labeled Media button + tags/over-limit counters + primary dark Reply. **`HomeCompose` is Threads' exact compose row and ONLY an entry point now, DESKTOP-ONLY (hidden ≤700px — the mobile sheet leads with tabs + feed; on mobile creation lives behind the bottom bar's +):** a quiet strip — avatar 36 · "What's new?" prompt (`15/400 #9b9591`, 8px margins + 4px lead) · bordered Post button (36px tall, radius 10, `1px rgba(0,0,0,0.15)`, `15/600 #1a1a1a`) — `padding: 16px 0` + full-bleed bottom hairline; clicking anything on it opens the global **`ComposeModal`** (see Modals), where the actual composing happens. |
+| Tabs | `HomeFilterBar` (home + search) | **Threads' exact tab anatomy, warm-monochrome:** full-width EQUAL cells (`flex: 1 0 0` + `min-width: max-content` — equal while they fit; when a locale's labels overflow (ES search tabs) the row **scrolls on x** with a hidden scrollbar instead of crushing the cells, and the active tab auto-centers into view), 48px tall, centered `15px/600` labels (Inter, sentence case via i18n), baseline hairline `#ebe7dd` under the whole row (full-bleed via `-var(--layout-pad-x)` margins; it lives on each tab, so it travels with the scroll), inactive `#9b9591`, **active = `#1a1a1a` text + 1px `#1a1a1a` underline** over the baseline — the underline is ONE measured bar that **SLIDES between cells** on tab change (`transform`/`width`, `0.3s cubic-bezier(0.16,1,0.3,1)` expo-out, none under reduced-motion; measured per render + ResizeObserver, first paint never animates), pressed = `opacity 0.6`. (`CloseYouRadiusBar` sits BELOW the row without overlap — its tray draws no top hairline of its own; the tabs' baseline is the shared edge, so the indicator stays visible on close-you.) The loading spinner hangs OFF the label (absolute at `left: calc(100% + 6px)` of the `.label` anchor, 150ms fade-in) so appearing/disappearing never nudges the centered text. No eyebrow label, no mono, no accent color, NO count badges (with five equal search cells they threw the centered labels off — labels sit clean, Threads-style). |
+| Floating menu panel | `menu/MenuSurface` | **THE app's menu surface (Threads' exact dropdown), single source:** 240px, radius 16, 8px padding, 0.5px `#e5e0d3` outline + their triple shadow (`0 0 80px .25 / 1px 1px 2px .05 / 0 8px 16px .06`), opening pop `scale(0)→1` 0.15s. Rows via its exported `menuStyles` (`item` 15/600 ink radius 8, hover `rgba(0,0,0,0.04)`, press `scale(0.98)`; `itemIcon` charcoal, `itemIconRight`, `itemDanger` `#ff3040`, full-bleed `divider`). Consumers: `PostOptionsMenu` (desktop panel), the NavRail ☰ (which adds only anchor classes + its animated close) and `PostSortMenu` (anchored under its trigger, radio rows + Threads' check). Never re-implement a floating menu panel. |
+| Dropdown / select menu | `post/PostSortMenu` | Threads' exact bar trigger (16px sort glyph + label + 12px chevron, `#9b9591`) + floating menu of options (name + description + check). The canonical anchored-dropdown pattern — reuse the MENU shape. Lives in `PostRepliesBar` (with the "View activity" placeholder) under the thread OP. See Dropdown menu. |
+| Attached-media strip | `media/MediaScanList` + `post/PostScanResult` | **The composer's file previews (IG/Threads standard): compact TILES on ONE x-scrolling row** (hidden scrollbar) — many files never grow the composer vertically. Tile = 84×84, radius 12, hairline `#e5e0d3`, thumbnail cover, **NO filename** (it survives as the tile's `title` tooltip); entrance pop `scale(0.9)→1` 0.18s. States as overlays: busy = `rgba(26,26,26,0.3)` scrim + cream spinner; uploading = 3px terracotta bottom progress bar; upload error = danger scrim `rgba(197,48,48,0.3)` where the overlay IS the retry button (scrim disc + refresh glyph); compress error = same scrim + alert glyph. Remove = 20px scrim disc top-right; compression details = ⓘ scrim disc bottom-right toggling the before/after panel BELOW the strip (one file at a time, `aria-controls`); a visually-hidden `role=status` live region narrates each tile's state. |
+| Modals | `WelcomeModal`, `nav/LanguageModal`, `compose/ComposeModal` | Portal to body, surface `#fdfcf8`, border `#e5e0d3`, radius `18px`, backdrop `rgba(31,26,20,0.42)` + blur, shadow `0 18px 50px rgba(26,26,26,0.18)`. Focus trap + Escape + `aria-modal`. |
+| Thread composer | `compose/ComposeModal` + `contexts/ComposeContext` | **THE create flow (Threads/Substack-style dialog), one global instance:** opened by home's compose row AND the nav "+" (every screen, both breakpoints — this is how MOBILE creates). 600px card, vertically CENTERED (mobile ≤700px = full-screen sheet; NO mobile autofocus — Threads' behavior, the keyboard only opens when the user taps the field); the body scrolls inside with a HIDDEN scrollbar (the app's internal-scroll pattern — no reflow when it appears) and pasting long text jumps the scroll INSTANTLY to the end (no smooth animation — it read dizzy); header `Cancel · "New thread" · spacer` (52px, hairline below); body = thread-row anatomy (avatar 36 + mask @id 15/600, borderless 15px textarea with the hashtag-highlight overlay, media previews, location/error notices); footer toolbar = **LABELED options** (icon 20px + `13/500` label: "Media", "Area" — labels exist because icon-only controls went unnoticed; area active = `#f3e3d3` + terracotta, blocked = dimmed; the area SMART-DEFAULTS to ON when the browser permission is already granted and the user has never chosen — one-time, never triggers a dialog, and the user's own toggle persists and wins from then on) left · mono char count + primary dark Post (36px, radius 12, `15/600`, centered spinner while posting) right. Mounted permanently by `ComposeProvider` (renders null closed). **Closing with a non-empty draft asks first** (Threads' behavior): Escape/backdrop/Cancel funnel into `requestClose` → the shared **`DiscardDialog`** (`compose/DiscardDialog` — Threads' exact confirm: 280px card radius 16, centered `16/700` title, STACKED full-width 48px hairline-split actions, Discard in `#ff3040` 600 / Cancel 400 ink; Escape/backdrop = keep editing, initial focus on Cancel) — "Discard thread?" clears text+media and closes, Cancel keeps editing. Same dialog on the reply expand modal ("Discard reply?"). The dialogs cap at `max-height: 100%` of the padded backdrop (NEVER `calc(100dvh - fixed)`: the up-to-96px top padding pushed the footer off-viewport on long drafts) and scroll the BODY inside — the footer/Post button never leaves the screen. Posting reuses the feed flow (publishing→posted toast morph, "View" action, top-scroll + highlight only on /home; location failures surface as an info toast since the modal closes). |
 | Reaction picker / pill | `post/PostReactionPicker`, `post/PostReactionPill` | Popover radius `28px`; see Reactions. |
-| Mask avatar | `MaskAvatar` | Identicon for the pseudonymous mask; procedural SVG from a seed (the mask hash) — same seed → same avatar, no network, no uploads; CIRCLE (radius 50%), never a real photo. **The mask IS the brand mark retold: a thread + its dot**, in FOUR seed-picked archetypes (normalized 36-unit box, rounded strokes): single coil (arc 130–260°, dot in the opening), double coil (two concentric arcs, offset mouths), the logo's own SERPENTINE (scaled master path, rotated in 45° steps), and orbit (tight off-center coil, dot orbiting opposite) — plus per-seed start angle, sweep, coil radius and dot size (2.7–3.6). All on a **curated warm duotone pair** (10 pre-checked bg·thread combos — terracotta/cream, tint/terracotta, umber/wheat, rare ink/sand… no independent bg/fg roll, no off-palette greens/blues). **Avatar size is `36px` everywhere content rows exist** (feed, search rows, thread OP AND replies at every depth — Threads' single avatar size); `56px` only in the profile hover card. **Activity dot (`online`)**: Threads-exact — green `rgb(94,231,71)` (their `--barcelona-green-dot`), **10px content-box** dot (at 36px; scales `size·10/36`, min 8) + **2px outward ring** (total 14px), anchored `bottom:-1px; right:-2px` so the ring overflows the avatar curve like Threads. Ring color = the surface BEHIND the avatar: default `#fdfcf8` (cards — incl. the search results surface); `ringColor` prop for other grounds. |
+| Mask avatar | `MaskAvatar` | Identicon for the pseudonymous mask; procedural SVG from a seed (the mask hash) — same seed → same avatar, no network, no uploads; CIRCLE (radius 50%), never a real photo. **Hairline ring (Threads' exact profile-pic outline), built into the component** at every size: `outline: 0.5px solid rgba(0,0,0,0.15)` + `outline-offset: -0.5px` (their light `--lines-primary`; drawn INWARD over the avatar's edge — no box growth, translucent so it contrasts on any surface). Never add a second ring in consumers. **The mask IS the brand mark retold: a thread + its dot**, in FOUR seed-picked archetypes (normalized 36-unit box, rounded strokes): single coil (arc 130–260°, dot in the opening), double coil (two concentric arcs, offset mouths), the logo's own SERPENTINE (scaled master path, rotated in 45° steps), and orbit (tight off-center coil, dot orbiting opposite) — plus per-seed start angle, sweep, coil radius and dot size (2.7–3.6). All on a **curated warm duotone pair** (10 pre-checked bg·thread combos — terracotta/cream, tint/terracotta, umber/wheat, rare ink/sand… no independent bg/fg roll, no off-palette greens/blues). **Avatar size is `36px` everywhere content rows exist** (feed, search rows, thread OP AND replies at every depth — Threads' single avatar size); `56px` only in the profile hover card. **Activity dot (`online`)**: Threads-exact — green `rgb(94,231,71)` (their `--barcelona-green-dot`), **10px content-box** dot (at 36px; scales `size·10/36`, min 8) + **2px outward ring** (total 14px), anchored `bottom:-1px; right:-2px` so the ring overflows the avatar curve like Threads. Ring color = the surface BEHIND the avatar: default `#fdfcf8` (cards — incl. the search results surface); `ringColor` prop for other grounds. |
 | Toasts | `contexts/ToastContext` + `ToastViewport` | Dark pill `#1a1a1a` / text `#f7f5f0`, **min-height `53px`**, **dynamic width** (`max-width: min(360px, calc(100vw-32px))`, wraps past it), radius `12px`, bottom-floating portal. `showToast({type,message,duration,action,icon})→id`; `type:"loading"` = persistent spinner; `icon:"none"` (copy confirms) / `icon:"check"` not needed (success check is **white `#f7f5f0`**, never green). `showToast.update(id,…)` morphs a toast in place (same node → no jump) for **"Publishing… → Thread posted"** sequences; `.dismiss(id)`. `action` renders a trailing link (e.g. "View"). aria-live polite / assertive(error) / busy(loading). |
-| Identity tags | `home/HomeFeedCard` (`is_mine`), `post/PostReply` (`is_op`), `me/MeProfileHeader` (You) | Derived from backend **booleans** `is_mine`/`is_op` (anonymity — no author id leaves the server; `is_op` is local to the thread). "Your thread" (feed/search) and the thread-author "· Author" reply meta share ONE pattern: Threads-style **quiet meta** — a `·` divider + Inter timestamp-identical text (body-sized `400 #9b9591`) after the timestamp. No pill, no badge (the old warm pill shouted next to the whisper-quiet identity row). The `/me` "You" badge is the warmer pill (`10px/700`, radius `20px`). |
-| /me profile header | `me/MeProfileHeader` | **Threads' exact profile anatomy, FLAT on the surface** (no card-in-card; /me is the fourth canonical surface screen) — the BASE for anonymous profiles (everything but the "You" pill generalizes to other users' masks): name block left ("Anonymous" `24px/600/1.4`, their `--system-24` h1, + the "You" warm pill `10px/700` radius 20 — /me only) with the **mask hash as the @handle line** — the WHOLE mono pill is the copy button (`#f7f5f0`/`#ebe7dd`/`#8b6f47`, hover `#f0ece3`, copy→toast) · **identicon right, Threads' 84px desktop / 64px mobile**, hairline `#e5e0d3` ring. Below: the stats as ONE quiet meta line ("**12** threads · **40** reactions · **5** replies" — `15px`, labels `#9b9591`, VALUES `600 #6b6b6b`, `·` in `#c4bfb1`; their followers-line language) + the "Joined April 2020" whisper (calendar glyph + `13px #9b9591`; from `/me`'s `joined` = the mask's create_at, month+year via `Intl.DateTimeFormat` in the UI language). No privacy note. **Profile tabs (Threads' strip): Threads · Media** (`HomeFilterBar`) — Media = the search grid verbatim (3-col 2px mosaic, one tile per thread = first file, carousel/Reel marks, NSFW blur), derived CLIENT-SIDE from the loaded threads (the pagination sentinel renders on the THREADS tab only — on the short media grid it stayed in view and chain-loaded every page), tile → `/p/:id` seeded. **`PostProfileHoverCard` mirrors this anatomy in miniature** (name 17/600 + mono hash pill left · 56px identicon right, quiet stats line, joined whisper — popover spec: radius 16, `0 8px 24px` shadow). **`/m/:maskId` is the PUBLIC twin (legacy `/anon/:maskId` redirects)** (`AnonProfileHeader`, same stylesheet): no You pill, public stats pair (posts · replies from `/users/<id>/`, which accepts the 6-hex public id), thread list via the search author filter (`@<id>`); clicking any avatar/mask (`PostProfileTrigger`, now a role=link) opens it — your own mask routes to /me. |
+| Identity tags | `home/HomeFeedCard` (`is_mine`), `post/PostReply` (`is_op`), `me/MeProfileHeader` (You) | Derived from backend **booleans** `is_mine`/`is_op` (anonymity — no author id leaves the server; `is_op` is local to the thread). "Your thread" (feed/search) and the thread-author "· Author" reply meta share ONE pattern: Threads-style **quiet meta** — a `·` divider + Inter timestamp-identical text (body-sized `400 #9b9591`) after the timestamp. No pill, no badge (the old warm pill shouted next to the whisper-quiet identity row). The `/profile` "You" badge is the warmer pill (`10px/700`, radius `20px`). |
+| /profile profile header | `me/MeProfileHeader` | **Threads' exact profile anatomy, FLAT on the surface** (no card-in-card; /profile — legacy /me redirects — is the fourth canonical surface screen; it plays the SAME profile app bar as /m/:maskId: desktop = back + centered "Profile" title with the entrance choreography; on MOBILE /profile mirrors home's NavRail header EXACTLY — the ☰ (`MenuButton variant="header"`) in the LEFT slot (NO Back: /profile is a top-level bottom-bar tab, not a drill-in) + centered 32px brand button → /home (`MyThreads .profileAppBarBrand`, STATIC: no entrance beat) + balance spacer; only /m/:maskId (a real drill-in) keeps the mobile Back, its right slot a plain spacer — no ☰ on drill-ins) — the BASE for anonymous profiles (everything but the "You" pill generalizes to other users' masks): name block left ("Anonymous" `24px/600/1.4`, their `--system-24` h1, + the "You" warm pill `10px/700` radius 20 — /profile only) with the **mask hash as the @handle line** — the WHOLE mono pill is the copy button (`#f7f5f0`/`#ebe7dd`/`#8b6f47`, hover `#f0ece3`, copy→toast) · **identicon right, Threads' 84px desktop / 64px mobile** (hairline ring from `MaskAvatar`). Below: the stats as ONE quiet meta line ("**12** threads · **40** reactions · **5** replies" — `15px`, labels `#9b9591`, VALUES `600 #6b6b6b`, `·` in `#c4bfb1`; their followers-line language) + the "Joined April 2020" whisper (calendar glyph + `13px #9b9591`; from `/me`'s `joined` = the mask's create_at, month+year via `Intl.DateTimeFormat` in the UI language). No privacy note. **Profile tabs (Threads' strip): Threads · Media** (`HomeFilterBar`) — Media = the search grid verbatim (3-col 2px mosaic, one tile per thread = first file, carousel/Reel marks, NSFW blur, and COLLAPSED hairline seams in ThreadMedia's tone — each tile's ::after paints only its right+bottom `0.5px rgba(0,0,0,0.15)` edge, suppressed on the last column/row, so every interior seam carries ONE line, the perimeter none, and near-white media never fuses with the cream gaps; same rules on BOTH grids), derived CLIENT-SIDE from the loaded threads (the pagination sentinel renders on the THREADS tab only — on the short media grid it stayed in view and chain-loaded every page), tile → `/p/:id` seeded. **`PostProfileHoverCard` mirrors this anatomy in miniature** (name 17/600 + mono hash pill left · 56px identicon right, quiet stats line, joined whisper — popover spec: radius 16, `0 8px 24px` shadow). **`/m/:maskId` is the PUBLIC twin (legacy `/anon/:maskId` redirects)** (`AnonProfileHeader`, same stylesheet): no You pill, public stats pair (posts · replies from `/users/<id>/`, which accepts the 6-hex public id), thread list via the search author filter (`@<id>`); clicking any avatar/mask (`PostProfileTrigger`, now a role=link) opens it — your own mask routes to /profile (a click on a mask whose profile is ALREADY open no-ops — no same-place remount/replayed entrance). |
+| Rate-limit notice | `RateLimitNotice` + `utils/rateLimit` | **THE single 429 surface** (thread composer, inline reply box, expanded reply dialog) — a throttled write is a WAIT, not a failure, so it NEVER wears the danger palette: warm notice (`rgba(168,84,50,0.05)` on `1px #dcc0ad`, radius 12) with the composer's tactful note anatomy — a 40px `#fdfcf8` dial holding the outline **hourglass** (`#a85432`, 16px) ringed by the remaining wait (2.5px arc, track `#f3e3d3` / progress `#a85432`, drains via `stroke-dashoffset`) + title `12.5px/550 #a85432` and detail `12.5px #6b6b6b` (tabular-nums). Props: the 429 `error` itself (never a duration), `variant="post"|"reply"` picks the copy, `compact` tightens it for the docked mobile reply bar, `onDismiss` adds the ×, `onExpire` fires after the "you can post again now" beat. The wait comes from the backend ONLY (`getRetryAfterSeconds`: `Retry-After` header → payload `retry_after`/`wait` → the throttle sentence's number); with none the ring is dropped and the copy loses the countdown — **never invent a duration**. **The wait belongs to the ERROR, not to the mount:** `getRateLimitWait(err)` memoizes an absolute deadline per error object (WeakMap, no mutation) and the notice ticks off THAT, so collapsing/expanding the composer resumes both the seconds and the ring instead of refilling it (the arc drains continuously — `stroke-dashoffset` over `1s linear`, one second per counter step). Real errors keep their red banner. While the reply dialog is open the box's notice would strand behind the backdrop, so the DIALOG renders it (slot above the toolbar) and the inline one stands down. |
 | Error screens | `screens/ServerError`, `screens/NetworkError` | Classified centrally (`ServerHealthContext`): a 5xx (HTTP response) → **server-down** screen; a request that failed **without a response** / `navigator.onLine===false` → **no-connection** screen (wifi-off icon, no HTTP code). Auto-recovers on the browser `online` event; manual retry re-checks `/health/`. Same warm layout for both. |
 | States | `*EmptyState`, `*ErrorState`, `*Skeleton`, `*Spinner`, `*RetryBanner` | Every feed/screen ships loading (skeleton), empty, and error/retry variants — reuse them, don't reinvent. |
 
@@ -321,20 +347,20 @@ change `label` strings casually — they are data (changing the set means a back
 Reference: **`post/PostSortMenu`** — the canonical warm dropdown. Reuse this shape for any
 select-style menu instead of inventing a new one.
 
-- **Trigger** — transparent button, `min-height: 44px` (mobile touch target), padding `9px 14px`,
-  radius `10px`, gap `7px`. Inline SVG glyph + active label (`14px / 500`, `#1a1a1a`) + a chevron
-  (`#a3a3a3`). Hover wash `#f0ece3` (neutral — never the terracotta tint). While the result is
-  loading the chevron is swapped for a small spinning ring (`#c5a572` border, transparent top).
-- **Menu** — surface `#fdfcf8`, border `#e5e0d3`, radius `8px`, padding `6px`, shadow
-  `0 6px 24px rgba(26,26,26,0.08)`, `min-width: 224px`, `max-width: min(260px, calc(100vw - 16px))`.
-  Anchored under the trigger and **opens to the right** (`left` base). Entry animation: fade +
-  `scale(0.96→1)` + `translateY(-4px→0)`, `140ms ease-out`, `transform-origin: top left`; removed
-  under `prefers-reduced-motion`.
-- **Option** — full-width button, padding `11px 12px`, radius `8px`, transparent border. Two lines:
-  name (`14px / 600`, `#1a1a1a`) + description (`11.5px`, `#6b6b6b`), with a trailing check
-  (terracotta `#a85432`) kept in layout via `visibility` so rows never shift. Hover wash `#f7f5f0`.
-  **Selected** = neutral fill `#f0ece3` + border `#e5e0d3` — the check is the selection signal, not
-  an accent fill.
+- **Trigger** — transparent button, 36px tall, padding `6px 8px`, radius `10px`, gap `6px`.
+  Threads' exact anatomy: filled 16px glyph + active label (`14px / 600`) + their filled 12px
+  chevron, everything in the secondary `#9b9591` (`currentColor`). Hover = `#f0ece3` wash +
+  `#6b6b6b` (neutral — never the terracotta tint). While the result is loading the chevron is
+  swapped for a small spinning ring (`#c5a572` border, transparent top).
+- **Menu** — the panel IS `MenuSurface` (no bespoke surface): 240px, radius 16, 8px padding,
+  0.5px `#e5e0d3` outline + triple shadow, `scale(0)→1` pop. The consumer only anchors it
+  (`.wrapper .menu`: absolute under the trigger, `left` base + inline shiftX so it never leaves
+  the viewport, `transform-origin: top left` so the pop grows out of the LEFT-edge trigger).
+- **Option** — a plain `menuStyles.item` row (Threads' sort menu: 15/600 ink, radius 8, hover
+  `rgba(0,0,0,0.04)`, press `scale(0.98)`), name ONLY — no description line — plus Threads' exact
+  filled 16px "Checkmark: selected" riding the right edge (`itemIcon itemIconRight`, charcoal),
+  kept in layout via `visibility` so rows never shift. **The check is the ONLY selection signal**
+  (no fill on the selected row, like Threads).
 - **Viewport fit (mobile)** — the component measures its own width and nudges the menu left via an
   inline `left` offset so it never overflows on small screens (8px margin). Same approach as
   `PostReactionPicker`; measured in `useLayoutEffect` (no flash) and recomputed on resize.
@@ -346,6 +372,17 @@ select-style menu instead of inventing a new one.
 
 ## Interaction patterns
 
+### Hover washes — Threads' soft fade (app-wide standard)
+
+A hover wash NEVER pops in: the background (and any paired color/border shift) FADES in **and
+out** with **`0.2s ease`**, declared on the control's BASE state (Threads' soft hover). This is
+the single timing for every wash in the app — the global `.springPress*` utilities carry it, and
+every CSS-module wash was normalized to it (the old 100–160ms mix read as "instantly appears").
+Faster beats stay only where they're press feedback, not hover: `transform 0.1–0.2s` (soft press,
+below) and MenuSurface's row press. Deliberate slow cases (MediaViewer backdrop 320ms, the radius
+slider fill 0.32s) are exempt. When adding any new `:hover { background: … }`, put
+`transition: background 0.2s ease` (plus `color`/`border-color` if they change) on the base class.
+
 ### Press feedback — Threads-exact soft press
 
 Threads-EXACT press: on press the control scales down SOFTLY and eases back on release — **no
@@ -355,12 +392,12 @@ replaced). **Centralized** as two global utility classes in `src/styles/index.cs
 CSS Module) — never re-implement it per component:
 
 ```css
-.springPress     { transition: transform 0.15s ease, background .14s ease, color .14s ease, opacity .14s ease; }  /* text buttons */
-.springPressIcon { transition: transform 0.2s ease,  background .14s ease, color .14s ease, opacity .14s ease; }  /* icon-only controls */
+.springPress     { transition: transform 0.15s ease, background .2s ease, color .2s ease, opacity .2s ease; }  /* text buttons */
+.springPressIcon { transition: transform 0.2s ease,  background .2s ease, color .2s ease, opacity .2s ease; }  /* icon-only controls */
 .springPress:not(:disabled):active     { transform: scale(0.96); }
 .springPressIcon:not(:disabled):active { transform: scale(0.9); }   /* Threads' action-icon pair */
 @media (prefers-reduced-motion: reduce) {
-  .springPress, .springPressIcon { transition: background .14s ease, color .14s ease, opacity .14s ease; }
+  .springPress, .springPressIcon { transition: background .2s ease, color .2s ease, opacity .2s ease; }
   .springPress:active, .springPressIcon:active { transform: none; }
 }
 ```
@@ -385,14 +422,15 @@ CSS Module) — never re-implement it per component:
 
 Shared, centralized in `NavRail.module.css`: idle **`#a3a3a3`**; hover (`@media (hover:hover)`)
 and tap (`:active`) → **`#1a1a1a` icon + `#f0ece3` pill**; the bottom-bar **active route** keeps
-its own warm blob **`#f3e3d3` fill + `#a85432` icon** (declared last so it wins over hover). Icon
-stroke is bumped to **`2.3px`** on mobile (Threads-like weight) via a CSS override scoped to
-`.appBarButton svg` / `.bottomBar .item svg` — the shared `NAV_ITEMS` glyphs stay `1.8` on desktop.
+its own warm blob **`#f3e3d3` fill + `#a85432` icon** (declared last so it wins over hover). All mobile
+nav glyphs (bottom bar `railIcon` set + the app bar's ☰ "More") are Threads' filled 24px paths —
+no stroke-width overrides remain.
 
 ### Frosted glass bars
 
-The mobile bottom bar, the view-thread mobile app bar and the search mobile masthead share one
-recipe (the NavRail top app bar is SOLID `#fdfcf8` — see NavRail above):
+The NavRail bars (top app bar AND bottom bar) use Threads' exact header recipe —
+`rgba(253,252,248,0.85)` + `blur(28.5px)`, see NavRail above. The view-thread mobile app bar
+shares this older variant:
 frosted glass + `-webkit-backdrop-filter`/`backdrop-filter: blur(28px) saturate(180%)`
 (Threads-strength; the high `0.88` alpha keeps the background barely perceptible, frosted not
 transparent), hairline border `#ebe7dd`. **Frosted glass is a MOBILE-ONLY treatment** (`≤700px`),
@@ -418,16 +456,26 @@ cubic-bezier(0.16, 1, 0.3, 1)` (expo-out — decelerates, never bounces) with
 subtitle ("N replies") carries its own quiet `0.3s` rise so it announces itself whenever the data
 lands (instant from cache, later from network). Removed under `prefers-reduced-motion`. Keyframes
 live per stylesheet (`Post.module.css` `barSlideIn/barPopIn/barRiseIn`, `MyThreads.module.css`
-`profileBar*` for the profile bar). Top-level screens (home/search/me) do NOT play it — arriving
+`profileBar*` for the profile bar, played by BOTH /profile and /m/:maskId). Top-level screens (home/search) do NOT play it — arriving
 somewhere is the signal, switching tabs is not.
 
-### New-thread highlight
+### New-thread / new-reply highlight
 
-The just-created thread's feed card briefly highlights then fades to normal so the user spots
-it at the top: `@keyframes` 0–65% warm `#f3e3d3` + inset ring `#d8b89a`, 100% transparent, `3600ms
-ease-out forwards`. Animates **only background-color + box-shadow** (the "border" is an inset
-shadow) → no layout shift. `FeedContext` clears the `newPostId` mark after the fade (so it never
-re-triggers on scroll/re-render); reduced-motion shows a static highlight that simply clears.
+ONE highlight language for both the just-created feed card (`HomeFeedCard .cardNew`, 3600ms) and
+the just-posted reply (`PostReply .highlighted`, 3s): the **brand terracotta** — background
+`rgba(168,84,50,0.1)` (the Brand wash token) + a **1px contour ring** `rgba(168,84,50,0.5)` —
+which actually contrasts on the cream (the old `#f3e3d3`/`#d8b89a` pair read too faint. The
+optional `.newBadge` chip, off by default, still uses the old warm-chip palette). The animation
+opens with a soft **inward ripple**: a thick inner glow (`inset 0 0 0 26px @ 0.14`) that
+COLLAPSES into the contour ring over the first ~16–18% (box-shadow spread interpolates
+numerically), `cubic-bezier(0.16,1,0.3,1)` expo-out — then holds and fades to transparent.
+Painted on a **full-bleed `::before` overlay** (`inset: 0 calc(-1 * var(--layout-pad-x))`,
+`z-index: -1` + `isolation: isolate` on the row) so the contour wraps the WHOLE row edge to
+edge — the row boxes carry no side padding (the container does) and nested replies indent via
+their own `padding-left`, so this holds at every depth. Still **only background-color +
+box-shadow** → no layout shift. `FeedContext` clears the `newPostId` mark after the fade (so it
+never re-triggers on scroll/re-render); reduced-motion shows a static wash+ring that simply
+clears.
 
 ### Loading buttons (no resize)
 
@@ -447,9 +495,9 @@ animation doesn't fight the centering). `aria-busy` + an `aria-label` announce t
 - **Sizing:** render at `20–22px` in nav/menus. Color via `currentColor` (inherits text color).
 - **Mobile nav weight:** nav glyphs are bumped to `2.3px` on mobile via a CSS override (see
   Interaction patterns → Nav icon states) for a heavier, Threads-like presence; desktop stays `1.8`.
-- **Mobile hamburger (☰):** an **asymmetric** mark — two rounded lines, the bottom one shorter
-  (`M4 8 h16` / `M4 16 h10`-ish in the `0 0 24 24` viewBox) — lighter than the desktop rail's
-  3-bar glyph. The desktop ☰ keeps the 3 equal bars.
+- **Mobile hamburger (☰):** Threads' EXACT header "More" glyph — two EQUAL filled rounded bars
+  (24×24, bars 2.5 tall, rx 1.25, lifted verbatim). The desktop rail ☰ keeps Threads' asymmetric
+  sidebar "More" (rounded bars 21px + 14px).
 - Use icons with an accessible label (`aria-label` on the control, or adjacent text); decorative
   icons get `aria-hidden="true"`.
 
@@ -526,7 +574,7 @@ rejected smooth-S/loop variant.
   brand card, so nothing leaks to crawlers or link previews.
 - The OG/share image is the **static brand card** for the whole app — never per-thread.
 - `/p/:id` (canonical short thread URL; legacy `/post/:id` redirects to it), `/search`,
-  `/notifications`, `/me`, `/m/:maskId` (legacy `/anon/:maskId` redirects to it) are `noindex` (via `usePageTitle(key, { noindex: true })`) and
+  `/notifications`, `/profile` (legacy `/me` redirects to it), `/m/:maskId` (legacy `/anon/:maskId` redirects to it) are `noindex` (via `usePageTitle(key, { noindex: true })`) and
   blocked in `robots.txt`. Only `/` is indexable.
 
 ## DESIGN RULES for AI agents

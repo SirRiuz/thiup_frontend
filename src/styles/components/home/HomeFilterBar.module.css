@@ -1,12 +1,14 @@
 /* === Threads' exact tab anatomy, on the warm palette ===
    Full-width EQUAL cells (flex 1 1 0), 48px tall, centered 15/600 labels, a
    1px baseline hairline under the whole row, and the ACTIVE tab painted with
-   ink text + a 1px ink underline sitting exactly over the baseline (their
-   bottom: -1px bar). No eyebrow label, no mono, no accent — Threads' tabs are
-   monochrome; ours speak the app's ink/muted tokens. */
+   ink text + the 1px ink underline (a single measured bar that SLIDES between
+   cells — see .indicator). No eyebrow label, no mono, no accent — Threads'
+   tabs are monochrome; ours speak the app's ink/muted tokens. */
 
 .bar {
   display: flex;
+  /* Containing block for the sliding indicator (animated variant). */
+  position: relative;
   /* Full-bleed within the surface: the baseline hairline reaches the card
      edges, like the compose row's and the feed dividers. */
   margin: 0 calc(-1 * var(--layout-pad-x, 0px));
@@ -60,14 +62,30 @@
   color: #1a1a1a;
 }
 
-/* Active underline over the baseline hairline (Threads' bottom: -1px bar). */
-.tabActive::after {
-  content: "";
+/* === Sliding active underline ===
+   ONE measured ink bar (there is no per-tab static underline): it sits over
+   the baseline hairline (bottom 1px of the 48px row) and GLIDES to the newly
+   selected cell, its width adapting in flight. Positioned with
+   transform/width in content coordinates, so it travels with the scrolled
+   row on overflowing locales. Expo-out (the app-bar entrance bezier):
+   decelerates into place, never bounces. */
+.indicator {
   position: absolute;
   left: 0;
-  right: 0;
-  bottom: -1px;
-  border-bottom: 1px solid #1a1a1a;
+  bottom: 0;
+  /* Invisible until the first imperative placement sets the real width. */
+  width: 0;
+  height: 1px;
+  background: #1a1a1a;
+  pointer-events: none;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .indicator {
+    transition: none;
+  }
 }
 
 /* === Tab disabled during loading (or count at 0 in tabs with counts) === */
@@ -88,16 +106,33 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* === Mini spinner shown next to the active tab during loading === */
+/* Anchor for the out-of-flow spinner. */
+.label {
+  position: relative;
+}
+
+/* === Mini spinner next to the active tab during loading ===
+   OUT OF FLOW (absolute off the label's right edge): appearing/disappearing
+   must never move the centered label — the inline version shifted the text
+   ~8px each way, a visible jolt on every load. Fades in so it announces
+   itself quietly; top is offset arithmetically (the transform slot belongs
+   to the spin). */
 .tabSpinner {
+  position: absolute;
+  left: calc(100% + 6px);
+  top: calc(50% - 4.5px);
   width: 9px;
   height: 9px;
   border: 1.2px solid rgba(26, 26, 26, 0.18);
   border-top-color: #1a1a1a;
   border-radius: 50%;
-  animation: tabSpinnerSpin 700ms linear infinite;
-  display: inline-block;
-  flex-shrink: 0;
+  animation: tabSpinnerIn 150ms ease,
+    tabSpinnerSpin 700ms linear infinite;
+}
+
+@keyframes tabSpinnerIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes tabSpinnerSpin {

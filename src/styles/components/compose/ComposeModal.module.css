@@ -1,0 +1,682 @@
+/* ComposeModal — the thread composer dialog (Threads/Substack-style).
+   Canonical modal chrome: #fdfcf8 surface, #e5e0d3 border, radius 18,
+   rgba(31,26,20,0.42)+blur backdrop, 0 18px 50px shadow. On mobile (≤700px)
+   the card becomes a full-screen sheet. */
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  /* Vertically CENTERED (Threads' dialog position) at every content size. */
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  background: rgba(31, 26, 20, 0.42);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  animation: backdropIn 180ms ease-out;
+}
+
+@keyframes backdropIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal {
+  display: flex;
+  flex-direction: column;
+  width: 600px;
+  max-width: 100%;
+  /* 100% of the PADDED backdrop (its flex box already subtracts the top/bottom
+     padding) — the old calc(100dvh - 48px) ignored the up-to-96px top padding,
+     so a long draft pushed the footer past the viewport (cut-off Post button).
+     Threads caps the dialog and scrolls the body inside; so do we. */
+  max-height: 100%;
+  background: #fdfcf8;
+  border: 1px solid #e5e0d3;
+  border-radius: 18px;
+  box-shadow: 0 18px 50px rgba(26, 26, 26, 0.18);
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    system-ui, Roboto, Helvetica, Arial, sans-serif;
+  animation: modalIn 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* === Header: Cancel · centered title · balance spacer === */
+
+.header {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  height: 52px;
+  padding: 0 16px;
+  border-bottom: 1px solid #ebe7dd;
+  flex: none;
+}
+
+.cancelButton {
+  justify-self: start;
+  padding: 6px 8px;
+  margin-inline-start: -8px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 400;
+  color: #1a1a1a;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.cancelButton:hover {
+  background: #f0ece3;
+}
+
+.cancelButton:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a1a1a;
+  text-align: center;
+}
+
+.headerSpacer {
+  justify-self: end;
+}
+
+/* === Body: identity row + textarea (thread-row anatomy) === */
+
+.body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  /* Never chain the body's scroll into the page behind the dialog (the iOS
+     escape hatch even with the body pinned). */
+  overscroll-behavior: contain;
+  padding: 16px;
+  /* Hidden scrollbar (same pattern as the reply dialog — no reflow when the
+     content starts scrolling; wheel/touch/keys still scroll). */
+  scrollbar-width: none;
+}
+
+.body::-webkit-scrollbar {
+  display: none;
+}
+
+.identityRow {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  column-gap: 12px;
+  align-items: start;
+}
+
+.avatarSlot {
+  display: inline-flex;
+  padding-top: 2px;
+}
+
+/* Ghost circle while /me/ loads (same slot, no jump). */
+.avatarGhost {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #f0ece3;
+  display: inline-block;
+}
+
+.contentCol {
+  min-width: 0;
+}
+
+.identityLine {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  line-height: 21px;
+}
+
+/* The mask @id — Threads' identity-row spec (same as a feed card's header). */
+.maskId {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1a1a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tagsDetected {
+  margin-left: auto;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 10px;
+  color: #9b9591;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+/* === Textarea with synchronized hashtag-highlight overlay === */
+
+.textareaWrapper {
+  position: relative;
+  width: 100%;
+}
+
+/* CRITICAL: the overlay must match the textarea pixel-perfect. Any difference
+   in font metrics/padding/wrapping misaligns the words. */
+.highlightLayer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow: hidden;
+  font-family: inherit;
+  font-size: 15px;
+  line-height: 1.55;
+  color: #1a1a1a;
+  padding: 2px 0 10px;
+  margin: 0;
+  border: 0;
+  box-sizing: border-box;
+  min-height: 96px;
+}
+
+/* No font-weight here — weight 600 would misalign the caret of the invisible
+   textarea (weight 400). */
+.highlightHashtag {
+  color: #1a1a1a;
+  background: rgba(26, 26, 26, 0.06);
+  border-radius: 2px;
+}
+
+.input {
+  width: 100%;
+  background: transparent;
+  border: 0;
+  outline: none;
+  resize: none;
+  font-family: inherit;
+  font-size: 15px;
+  line-height: 1.55;
+  color: transparent;
+  caret-color: #1a1a1a;
+  padding: 2px 0 10px;
+  min-height: 96px;
+  /* No max-height: the field grows with the content and the dialog BODY is
+     the only scroller (an inner scrollbox read clipped). */
+  overflow-y: hidden;
+  box-sizing: border-box;
+  transition: height 150ms ease;
+  position: relative;
+  z-index: 1;
+  display: block;
+}
+
+.input::placeholder {
+  color: #9b9591;
+}
+
+/* Selection visible even though the text color is transparent. */
+.input::selection {
+  background: rgba(26, 26, 26, 0.15);
+  color: transparent;
+}
+
+.input::-moz-selection {
+  background: rgba(26, 26, 26, 0.15);
+  color: transparent;
+}
+
+/* Visually-hidden file input (triggered by the Media button). */
+.hiddenFileInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* === Footer toolbar: labeled options left, count + Post right === */
+
+.footer {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 16px;
+  border-top: 1px solid #ebe7dd;
+  flex: none;
+}
+
+/* Icon + LABEL buttons (Substack's footer anatomy): the label is what makes
+   the media/area options discoverable — the old icon-only 14px controls went
+   unnoticed by users. */
+.toolButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #6b6b6b;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.toolButton:hover {
+  background: #f0ece3;
+  color: #1a1a1a;
+}
+
+.toolButton:disabled {
+  opacity: 0.4;
+  cursor: default;
+  pointer-events: none;
+}
+
+.toolLabel {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* Area toggle ON — the app's warm active language (nav blob palette). */
+.toolButtonActive,
+.toolButtonActive:hover {
+  color: #a85432;
+  background: #f3e3d3;
+}
+
+/* Permission blocked: dimmed, doesn't promise what it can't deliver (the
+   click shows the transient blocked notice). */
+.toolButtonBlocked,
+.toolButtonBlocked:hover {
+  color: #a3a3a3;
+  background: transparent;
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.footerSpacer {
+  flex: 1;
+}
+
+/* Negative countdown once past the limit (Threads-style, same as the reply
+   box) — no counter at all while under it. */
+.overLimit {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 11px;
+  color: #c53030;
+  font-variant-numeric: tabular-nums;
+  margin-right: 8px;
+}
+
+/* Primary Post — the canonical dark button (Inter 15/600, cream text). */
+.postButton {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 12px;
+  background: #1a1a1a;
+  color: #fdfcf8;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.postButton:hover {
+  opacity: 0.9;
+}
+
+.postButton:disabled {
+  opacity: 0.4;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* Centered spinner over the (hidden) label — no resize while posting. */
+.postLabelHidden {
+  visibility: hidden;
+}
+
+.spinner {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid rgba(253, 252, 248, 0.35);
+  border-top-color: #fdfcf8;
+  border-radius: 50%;
+  animation: composeModalSpin 700ms linear infinite;
+}
+
+@keyframes composeModalSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* === Location notices (ported from the old inline composer) === */
+
+.privacyNote {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  /* Full width of the dialog body (the content-column inset read as cut
+     off) — the note is a quiet banner under the whole draft. */
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  background: rgba(184, 132, 95, 0.04);
+  border: 1px dashed #d5cfc0;
+  border-radius: 12px;
+}
+
+.privacyMap {
+  flex-shrink: 0;
+  background: #fdfcf8;
+  border: 1px solid #ebe7dd;
+  border-radius: 6px;
+}
+
+.privacyText {
+  min-width: 0;
+}
+
+.privacyLine {
+  margin: 0 0 3px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #6b6b6b;
+}
+
+.privacyChip {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: #f3e3d3;
+  color: #a85432;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.privacyGuarantee {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 550;
+  color: #1a1a1a;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .privacyNote {
+    animation: composePrivacyIn 200ms ease-out;
+  }
+
+  /* The blob SETTLES once, then BREATHES very gently forever — the area is
+     alive but never a fixed point (amplitude kept whisper-low on purpose). */
+  .privacyZone {
+    animation: composeZoneSettle 900ms ease-out 1,
+      composeZoneBreathe 4s ease-in-out 900ms infinite alternate;
+  }
+}
+
+@keyframes composePrivacyIn {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes composeZoneSettle {
+  0% {
+    opacity: 0.25;
+  }
+  55% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 0.65;
+  }
+}
+
+@keyframes composeZoneBreathe {
+  from {
+    opacity: 0.65;
+  }
+  to {
+    opacity: 0.5;
+  }
+}
+
+.privacyZone {
+  opacity: 0.65;
+}
+
+.noteWarning {
+  background: rgba(168, 84, 50, 0.05);
+  border-color: #dcc0ad;
+}
+
+.noteWarning .privacyMap {
+  border-color: #e8d5c4;
+}
+
+.warningPrimary {
+  margin: 0 0 3px;
+  font-size: 12.5px;
+  font-weight: 550;
+  color: #a85432;
+}
+
+.privacyClose {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: flex-start;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  margin-left: auto;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #a3a3a3;
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.privacyClose:hover {
+  color: #6b6b6b;
+  background: rgba(26, 26, 26, 0.05);
+}
+
+/* Rate limit (429): the shared warm notice replaces the red banner in the
+   same slot — this only places it in the body's rhythm. */
+.rateLimitNotice {
+  margin: 12px 0 0;
+}
+
+/* === Error banner === */
+
+.errorBanner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0 0;
+  padding: 11px 14px;
+  background: rgba(197, 48, 48, 0.06);
+  border: 1px solid rgba(197, 48, 48, 0.15);
+  border-radius: 8px;
+  animation: composeErrorIn 220ms ease-out;
+}
+
+.errorIcon {
+  color: #c53030;
+  opacity: 0.75;
+  flex-shrink: 0;
+}
+
+.errorMessage {
+  flex: 1;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: #c53030;
+}
+
+.errorDismiss {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #c53030;
+  opacity: 0.5;
+  border-radius: 4px;
+  transition: opacity 0.2s ease, background 0.2s ease;
+  flex-shrink: 0;
+}
+
+.errorDismiss:hover {
+  opacity: 1;
+  background: rgba(197, 48, 48, 0.1);
+}
+
+@keyframes composeErrorIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* === Mobile (≤700px): full-screen sheet === */
+
+@media (max-width: 700px) {
+  .backdrop {
+    padding: 0;
+    /* The sheet is opaque — skip the expensive blur under it. */
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  /* Tall phone sheet: the notes ANCHOR to the bottom of the body (just above
+     the toolbar), like they visually sit on desktop where the dialog hugs its
+     content — mid-sheet floating notes read broken. */
+  .body {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .privacyNote,
+  .errorBanner,
+  .rateLimitNotice {
+    margin-top: auto;
+  }
+
+  /* When a note is already anchoring, anything after it stacks normally. */
+  .privacyNote ~ .errorBanner,
+  .privacyNote ~ .rateLimitNotice {
+    margin-top: 12px;
+  }
+
+  /* Small screens: the 20px icons read too light against the 13px labels —
+     rebalance the pair (bigger glyph, slightly smaller label). */
+  .toolButton svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .toolLabel {
+    font-size: 12px;
+  }
+
+  .modal {
+    width: 100%;
+    height: 100dvh;
+    max-height: none;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    animation: sheetIn 260ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes sheetIn {
+    from {
+      opacity: 0;
+      transform: translateY(24px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .header {
+    height: 56px;
+  }
+
+  .footer {
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .backdrop,
+  .modal,
+  .errorBanner,
+  .privacyNote,
+  .privacyZone,
+  .spinner {
+    animation: none;
+  }
+}

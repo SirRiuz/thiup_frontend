@@ -1,8 +1,12 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { useKeyboardOpen } from "../../hooks/useKeyboardOpen";
 import MaskAvatar from "../MaskAvatar";
 import PostReplyContext from "./PostReplyContext";
+import PostReplyExpandModal from "./PostReplyExpandModal";
 import MediaScanList from "../media/MediaScanList";
+import RateLimitNotice from "../RateLimitNotice";
+import { isRateLimitError } from "../../utils/rateLimit";
 import useMediaComposer from "../../hooks/useMediaComposer";
 import { warmHumanPass } from "../../api/humanPass";
 import { ACCEPT_ATTR } from "../../services/media/allowedFormats";
@@ -25,9 +29,29 @@ function PostCommentBox({
   submitError = null,
 }) {
   const { t } = useTranslation();
+  // Keyboard STATE drives the mobile docking (see .wrapper / .wrapperKbOpen):
+  // at rest the composer is glued to the bottom nav; only while the docked
+  // keyboard is really open does it switch to riding --kb-inset-bottom. The
+  // old max() of both values listened to the visual-viewport vars even when
+  // the keyboard wasn't open, so iOS pans/rubber-bands (and the iPad floating
+  // keyboard hovering around the threshold) made the bar jump.
+  const keyboardOpen = useKeyboardOpen();
   const [text, setText] = useState("");
   const [errorMessage, setErrorMessage] = useState(null);
+  // A throttled reply (429) is a WAIT, not a failure: it gets the warm
+  // RateLimitNotice with its countdown instead of the red banner. The error
+  // itself is owned by the parent (createReplyError), so retiring the notice
+  // when the countdown ends is tracked here by REFERENCE — a later 429 is a
+  // new error object and shows again.
+  const [expiredRateLimit, setExpiredRateLimit] = useState(null);
   const [isInputFocused, setIsInputFocused] = useState(false);
+  // Expanded composer (Threads' reply dialog): another VIEW of this same
+  // draft — text/media live here, so expanding/collapsing never loses them.
+  const [expanded, setExpanded] = useState(false);
+  // Threads' background behavior: while the dialog is open the inline box
+  // stays VISIBLE showing the draft frozen AS IT WAS on expand — it must not
+  // be seen "typing itself" behind the backdrop. Synced back on close.
+  const [frozenText, setFrozenText] = useState("");
   // True for the WHOLE submit (create + media confirmation), so the loading
   // state doesn't end before the confirmation finishes (matches the main thread).
   const [isFinalizing, setIsFinalizing] = useState(false);
@@ -124,6 +148,9 @@ function PostCommentBox({
   // Anything to post (text or attached media). Drives the attach↔Reply swap.
   const hasContent = text.trim().length > 0 || media.count > 0;
 
+  const rateLimited = isRateLimitError(submitError);
+  const showRateLimit = rateLimited && submitError !== expiredRateLimit;
+
   // Submit is gated while media is still being analyzed / compressed / uploaded
   // (media.pending) and while over the char limit.
   const isSubmittable =
@@ -144,7 +171,10 @@ function PostCommentBox({
     return () => clearTimeout(timer);
   }, [replyingTo]);
 
-  // Autoresize of the textarea + sync of the overlay height
+  // Autoresize of the textarea + sync of the overlay height. Re-measures on
+  // expand/collapse too: while the dialog is open the box displays the FROZEN
+  // snapshot, and collapsing switches it back to the (possibly longer) live
+  // draft.
   useEffect(() => {
     const ta = textareaRef.current;
     if (!ta) return;
@@ -157,7 +187,7 @@ function PostCommentBox({
     if (overlayRef.current) {
       overlayRef.current.style.height = `${newHeight}px`;
     }
-  }, [text]);
+  }, [text, expanded]);
 
   // Auto-dismiss of the error banner
   useEffect(() => {
@@ -199,10 +229,12 @@ function PostCommentBox({
     });
   };
 
-  // Validate + start processing the picked files; show the first error (if any).
-  const handleFileChange = (e) => {
-    const { error } = media.addFiles(e.target.files);
-    e.target.value = "";
+  // Validate + start processing the picked files; show the first error (if
+  // any). Async: addFiles sniffs each file's magic bytes before accepting it.
+  const handleFileChange = async (e) => {
+    const input = e.target;
+    const { error } = await media.addFiles(input.files);
+    input.value = "";
     if (error) setErrorMessage(t(error.key, error.params));
   };
 
@@ -234,6 +266,7 @@ function PostCommentBox({
       setText("");
       media.clear();
       setErrorMessage(null);
+      setExpanded(false);
       if (onCancelReply) onCancelReply();
     } catch (err) {
       // The error banner is rendered by submitError (controlled by the
@@ -246,10 +279,26 @@ function PostCommentBox({
   };
 
   return (
-    <div className={styles.wrapper} ref={boxRef}>
+    <div
+      className={cx(styles.wrapper, keyboardOpen ? styles.wrapperKbOpen : "")}
+      ref={boxRef}
+    >
       <PostReplyContext target={replyingTo} onCancel={onCancelReply} />
 
-      {submitError && (
+      {/* While the expanded dialog is open the inline notice would sit BEHIND
+          its backdrop (invisible, and announced twice) — the dialog renders
+          its own copy instead. */}
+      {showRateLimit && !expanded && (
+        <RateLimitNotice
+          variant="reply"
+          compact
+          error={submitError}
+          onExpire={() => setExpiredRateLimit(submitError)}
+          className={styles.rateLimitNotice}
+        />
+      )}
+
+      {submitError && !rateLimited && (
         <div className={styles.errorBanner} role="alert">
           <svg
             width="14"
@@ -336,8 +385,11 @@ function PostCommentBox({
             className={styles.highlightLayer}
             aria-hidden="true"
           >
-            {renderTextWithHashtags(text, styles.highlightHashtag)}
-            {text === "" && <span>&#8203;</span>}
+            {renderTextWithHashtags(
+              expanded ? frozenText : text,
+              styles.highlightHashtag
+            )}
+            {(expanded ? frozenText : text) === "" && <span>&#8203;</span>}
           </div>
           <textarea
             ref={textareaRef}
@@ -349,7 +401,7 @@ function PostCommentBox({
                 ? t("post.commentPlaceholderUser")
                 : t("post.commentPlaceholderDefault")
             }
-            value={text}
+            value={expanded ? frozenText : text}
             onChange={handleTextChange}
             onPaste={handlePaste}
             onScroll={handleScroll}
@@ -371,28 +423,10 @@ function PostCommentBox({
               counting DOWN into the negative (e.g. "-394"). */}
           {overLimit && <span className={styles.overLimit}>{remaining}</span>}
 
-          {/* Bottom-right slot: attach when empty, Reply once there's content
-              (Threads-style swap in the same place). */}
-          {hasContent ? (
-            <button
-              type="button"
-              className={cx(styles.submitButton, "springPress")}
-              onClick={handleSubmit}
-              disabled={!isSubmittable}
-              aria-busy={submitting || undefined}
-              aria-label={submitting ? t("post.replying") : undefined}
-            >
-              {/* Label always renders "Reply" to keep the button's exact width;
-                  while submitting it's hidden (box kept) and a spinner is
-                  centered over it — no resize. */}
-              <span className={submitting ? styles.submitLabelHidden : undefined}>
-                {t("post.reply")}
-              </span>
-              {submitting && (
-                <span className={styles.spinner} aria-hidden="true" />
-              )}
-            </button>
-          ) : (
+          {/* Threads' exact toolbar order: EMPTY = attach · expand; with
+              content = expand · send (attach steps aside, expand slides to
+              the first slot and the send disc pops in last). */}
+          {!hasContent && (
             <button
               type="button"
               className={styles.attachButton}
@@ -419,9 +453,108 @@ function PostCommentBox({
               </svg>
             </button>
           )}
+
+          {/* Expand composer (Threads' exact glyph): grows the box into the
+              full reply dialog with the parent preview. Always available. */}
+          <button
+            type="button"
+            className={styles.attachButton}
+            onClick={() => {
+              // Freeze what the inline box shows while the dialog is open
+              // (Threads' background behavior — see frozenText).
+              setFrozenText(text);
+              setExpanded(true);
+            }}
+            disabled={submitting}
+            aria-label={t("post.expandComposer")}
+            title={t("post.expandComposer")}
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path d="M21 2C21.0563 2 21.1113 2.00571 21.165 2.01465C21.1751 2.01633 21.1853 2.01754 21.1953 2.01953C21.2105 2.02254 21.2253 2.02659 21.2402 2.03027C21.2562 2.0342 21.2723 2.03727 21.2881 2.04199C21.3382 2.05705 21.3861 2.07723 21.4326 2.09961C21.4466 2.10635 21.4609 2.11269 21.4746 2.12012C21.6203 2.19887 21.7441 2.31255 21.835 2.4502C21.8597 2.48768 21.8812 2.52662 21.9004 2.56641C21.9222 2.61159 21.9412 2.65838 21.9561 2.70703C21.9623 2.72732 21.9668 2.74799 21.9717 2.76855C21.9893 2.84294 22 2.92022 22 3V11C22 11.5523 21.5523 12 21 12C20.4477 12 20 11.5523 20 11V5.41406L5.41406 20H11C11.5523 20 12 20.4477 12 21C12 21.5523 11.5523 22 11 22H3C2.94333 22 2.88808 21.9934 2.83398 21.9844C2.82358 21.9826 2.81309 21.9816 2.80273 21.9795C2.79123 21.9772 2.77991 21.9744 2.76855 21.9717C2.74799 21.9668 2.72732 21.9623 2.70703 21.9561C2.65838 21.9412 2.61159 21.9222 2.56641 21.9004C2.52662 21.8812 2.48768 21.8597 2.4502 21.835C2.31255 21.7441 2.19887 21.6203 2.12012 21.4746C2.11269 21.4609 2.10635 21.4466 2.09961 21.4326C2.0778 21.3873 2.05783 21.3408 2.04297 21.292C2.0303 21.2503 2.02176 21.2077 2.01465 21.165C2.00571 21.1113 2 21.0563 2 21V13C2 12.4477 2.44772 12 3 12C3.55228 12 4 12.4477 4 13V18.5859L18.5859 4H13C12.4477 4 12 3.55228 12 3C12 2.44772 12.4477 2 13 2H21Z" />
+            </svg>
+          </button>
+
+          {/* The send disc pops in LAST once there's content. */}
+          {hasContent && (
+            <button
+              type="button"
+              className={styles.submitButton}
+              onClick={handleSubmit}
+              disabled={!isSubmittable}
+              aria-busy={submitting || undefined}
+              aria-label={submitting ? t("post.replying") : t("post.reply")}
+            >
+              {/* Threads' EXACT send glyph: their 12-viewBox arrow at 14px,
+                  rotated 90° (points up). Hidden (box kept) while submitting,
+                  with the spinner centered over it — no resize. */}
+              <span
+                className={cx(
+                  styles.submitIcon,
+                  submitting ? styles.submitLabelHidden : ""
+                )}
+                aria-hidden="true"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 12 12"
+                  fill="none"
+                  aria-hidden="true"
+                  focusable="false"
+                >
+                  <path
+                    d="M1 6h10M1 6l4-4M1 6l4 4"
+                    stroke="currentColor"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="1.5"
+                  />
+                </svg>
+              </span>
+              {submitting && (
+                <span className={styles.spinner} aria-hidden="true" />
+              )}
+            </button>
+          )}
         </div>
         </div>
       </div>
+
+      {/* The expanded reply dialog — same draft, richer view (parent
+          preview + threadline). Closing keeps everything. */}
+      <PostReplyExpandModal
+        open={expanded}
+        onClose={() => setExpanded(false)}
+        onDiscard={() => {
+          // Confirmed discard from the dialog: the draft lives HERE, so the
+          // box clears everything (inline view included) and collapses.
+          setText("");
+          media.clear();
+          setErrorMessage(null);
+          setExpanded(false);
+        }}
+        thread={thread}
+        replyingTo={replyingTo}
+        currentUserMask={currentUserMask}
+        text={text}
+        onTextChange={setText}
+        media={media}
+        rateLimitError={showRateLimit ? submitError : null}
+        onRateLimitExpire={() => setExpiredRateLimit(submitError)}
+        onAttach={handleAttachClick}
+        onSubmit={handleSubmit}
+        submitting={submitting}
+        isSubmittable={isSubmittable}
+        remaining={remaining}
+        overLimit={overLimit}
+        tagsDetected={tagsDetected}
+      />
     </div>
   );
 }

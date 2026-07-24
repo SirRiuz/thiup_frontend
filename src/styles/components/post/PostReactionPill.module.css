@@ -7,7 +7,7 @@
   border-radius: 14px;
   line-height: 1;
   cursor: pointer;
-  transition: background 120ms ease, border-color 120ms ease, transform 80ms ease;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 80ms ease;
 }
 
 .pill:active {

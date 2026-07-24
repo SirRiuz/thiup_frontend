@@ -4,7 +4,7 @@ import { fetchSearchNext } from "../api/searchApi";
 import { mapBackendPostToFrontend } from "../api/mappers/postMapper";
 
 /**
- * State management for /me (My threads): the threads created by the
+ * State management for /profile (My threads): the threads created by the
  * AUTHENTICATED user (server-side scope via request.mask — the hook doesn't
  * handle any user identifier).
  *

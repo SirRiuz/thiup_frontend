@@ -11,6 +11,18 @@ const ONLINE_RING = "#fdfcf8";
 const DOT_REF_AVATAR = 36;
 const DOT_REF_SIZE = 10;
 
+// Threads' exact avatar hairline (their profile-picture `outline: 0.5px solid
+// var(--lines-primary)` + `outline-offset: -0.5px`, light theme
+// rgba(0,0,0,0.15)): a translucent inward ring drawn OVER the avatar's edge,
+// so it contrasts on any surface without growing the box.
+const AVATAR_STYLE = {
+  borderRadius: "50%",
+  display: "block",
+  flex: "none",
+  outline: "0.5px solid rgba(0, 0, 0, 0.15)",
+  outlineOffset: "-0.5px",
+};
+
 // === The mask's visual language: a COILED THREAD + ITS DOT ===
 // Every mask is the brand mark retold: one bold rounded thread (an arc, each
 // mask coiled differently) and the dot that starts it, resting in the coil's
@@ -188,7 +200,7 @@ function MaskAvatar({
         viewBox={`0 0 ${VB} ${VB}`}
         className={className}
         aria-hidden="true"
-        style={{ borderRadius: "50%", display: "block", flex: "none" }}
+        style={AVATAR_STYLE}
       >
         <rect width={VB} height={VB} fill="#ebe7dd" />
       </svg>
@@ -205,7 +217,7 @@ function MaskAvatar({
       xmlns="http://www.w3.org/2000/svg"
       className={className}
       aria-hidden="true"
-      style={{ borderRadius: "50%", display: "block", flex: "none" }}
+      style={AVATAR_STYLE}
     >
       <rect width={VB} height={VB} fill={bg} />
       <g

@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams, useLocation, Navigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import BrandLogo from "../components/BrandLogo";
 import MaskAvatar from "../components/MaskAvatar";
 import PostCommentBox from "../components/post/PostCommentBox";
 import PostLoadMoreButton from "../components/post/PostLoadMoreButton";
 import PostOptionsMenu from "../components/post/PostOptionsMenu";
 import PostProfileTrigger from "../components/post/PostProfileTrigger";
 import PostReactionPicker from "../components/post/PostReactionPicker";
+import PostRepliesBar from "../components/post/PostRepliesBar";
 import ReactionStack from "../components/post/ReactionStack";
 import PostInitialSkeleton from "../components/post/PostInitialSkeleton";
 import PostReply from "../components/post/PostReply";
@@ -279,8 +281,10 @@ function Post() {
       <header className={styles.appBar}>
         <div className={styles.appBarInner}>
           {/* Back button. Desktop = Threads' exact floating circle (24px
-              elevated, hairline + soft shadow, their 12×12 arrow); mobile
-              keeps the previous plain arrow untouched. */}
+              elevated, hairline + soft shadow, their 12×12 arrow); mobile =
+              Threads' exact mobile-header Back (23×23 glyph, stroke 2, their
+              line/polyline coords verbatim, in a 52px circular target with
+              their press scale — see .backButton). */}
           <button
             type="button"
             className={styles.backButton}
@@ -289,17 +293,17 @@ function Post() {
           >
             {isMobile ? (
               <svg
-                width="20"
-                height="20"
+                width="23"
+                height="23"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
-                strokeWidth="1.5"
+                strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               >
-                <line x1="19" y1="12" x2="5" y2="12" />
-                <polyline points="12 19 5 12 12 5" />
+                <line x1="2.909" y1="12.004" x2="22.001" y2="12.004" />
+                <polyline points="9.276 4.726 2.001 12.004 9.276 19.274" />
               </svg>
             ) : (
               <svg
@@ -319,34 +323,48 @@ function Post() {
               </svg>
             )}
           </button>
-          <div className={styles.titleBlock}>
-            {post ? (
-              <>
+          {isMobile ? (
+            /* Mobile: Threads' thread header carries the centered BRAND, not
+               a title — the same 32px logo slot/press as the NavRail app bar,
+               a button home. */
+            <button
+              type="button"
+              className={styles.appBarBrand}
+              onClick={() => navigate("/home")}
+              aria-label={t("nav.home")}
+            >
+              <BrandLogo size={32} variant="plain" fit="glyph" />
+            </button>
+          ) : (
+            <div className={styles.titleBlock}>
+              {post ? (
+                <>
+                  <span className={styles.title}>{t("post.threadTitle")}</span>
+                  {repliesLabel && (
+                    <span className={styles.subtitle}>{repliesLabel}</span>
+                  )}
+                </>
+              ) : isLoading ? (
+                // While loading, BOTH lines are skeletons — reserving the
+                // subtitle row so the real "N replies" doesn't pop in and
+                // shift the title block (no jump).
+                <>
+                  <span
+                    className={cx(styles.titleSkeleton, styles.skeletonBar)}
+                    aria-hidden="true"
+                  />
+                  <span
+                    className={cx(styles.subtitleSkeleton, styles.skeletonBar)}
+                    aria-hidden="true"
+                  />
+                </>
+              ) : (
+                // Error / not-found: static title, no skeleton (it would
+                // never resolve), no subtitle.
                 <span className={styles.title}>{t("post.threadTitle")}</span>
-                {repliesLabel && (
-                  <span className={styles.subtitle}>{repliesLabel}</span>
-                )}
-              </>
-            ) : isLoading ? (
-              // While loading, BOTH lines are skeletons — reserving the
-              // subtitle row so the real "N replies" doesn't pop in and shift
-              // the title block (no jump).
-              <>
-                <span
-                  className={cx(styles.titleSkeleton, styles.skeletonBar)}
-                  aria-hidden="true"
-                />
-                <span
-                  className={cx(styles.subtitleSkeleton, styles.skeletonBar)}
-                  aria-hidden="true"
-                />
-              </>
-            ) : (
-              // Error / not-found: static title, no skeleton (it would never
-              // resolve), no subtitle.
-              <span className={styles.title}>{t("post.threadTitle")}</span>
-            )}
-          </div>
+              )}
+            </div>
+          )}
           {/* The thread options live on the parent thread's header row
               (Threads' anatomy) at EVERY breakpoint — an empty span balances
               the grid's right column so the title stays truly centered. */}
@@ -429,14 +447,10 @@ function Post() {
             {post.time}
           </span>
           {/* Thread options on the parent thread's header row (Threads' new
-              anatomy) — every breakpoint; the app bar carries no menu. */}
+              anatomy) — every breakpoint; the app bar carries no menu. Sorting
+              is NOT here anymore: it lives in the replies bar below the OP. */}
           <span className={styles.opHeaderSpacer} />
-          <PostOptionsMenu
-            post={post}
-            variant="inline"
-            sortValue={sortBy}
-            onSortChange={selectSort}
-          />
+          <PostOptionsMenu post={post} variant="inline" />
         </div>
 
         {/* The opened thread's head shows its FULL text — no "show more"
@@ -472,9 +486,13 @@ function Post() {
             onClick={() =>
               handleReplyClick({
                 maskId: post.mask.id,
+                // Full mask (incl. fullHash) so the expand dialog's profile
+                // hover card can fetch the real stats.
+                mask: post.mask,
                 type: "op",
                 sourceId: post.id,
                 text: post.text,
+                media: post.media,
               })
             }
           >
@@ -496,10 +514,17 @@ function Post() {
         </div>
       </section>
 
-      {/* Sorting moved into the app-bar options menu (Threads-style). This is
-          just the scroll anchor / spacing between the OP and the replies. */}
+      {/* Threads' bar between the OP and the replies: sort (Top / Recent) +
+          the "View activity" placeholder. Doubles as the scroll anchor after
+          a sort change. Only rendered when there is something to sort. */}
       {hasReplies ? (
-        <div ref={repliesSectionRef} aria-hidden="true" />
+        <div ref={repliesSectionRef}>
+          <PostRepliesBar
+            sortValue={sortBy}
+            onSortChange={selectSort}
+            isLoading={isReloadingReplies}
+          />
+        </div>
       ) : (
         <div className={styles.noRepliesGap} aria-hidden="true" />
       )}
@@ -568,9 +593,11 @@ function Post() {
                 onReplyClick={() =>
                   handleReplyClick({
                     maskId: reply.mask.id,
+                    mask: reply.mask,
                     type: "reply",
                     sourceId: reply.id,
                     text: reply.text,
+                    media: reply.media,
                   })
                 }
               />

@@ -1,0 +1,97 @@
+/* DiscardDialog — Threads' exact discard confirm: compact centered card,
+   title + stacked full-width hairline-split actions (Discard in the danger
+   red, Cancel below). Sits ABOVE the composer dialogs (they are z 1100). */
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1150;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(31, 26, 20, 0.42);
+  animation: discardBackdropIn 150ms ease-out;
+}
+
+@keyframes discardBackdropIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.dialog {
+  width: 280px;
+  max-width: 100%;
+  background: #fdfcf8;
+  border: 0;
+  outline: 0.5px solid #e5e0d3;
+  border-radius: 16px;
+  box-shadow: 0 18px 50px rgba(26, 26, 26, 0.18);
+  overflow: hidden;
+  text-align: center;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    system-ui, Roboto, Helvetica, Arial, sans-serif;
+  animation: discardDialogIn 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes discardDialogIn {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.title {
+  margin: 0;
+  padding: 24px 24px 20px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+/* Stacked full-width rows split by hairlines (Threads' dialog anatomy). */
+.discardButton,
+.keepButton {
+  display: block;
+  width: 100%;
+  height: 48px;
+  padding: 0;
+  border: 0;
+  border-top: 1px solid #ebe7dd;
+  background: transparent;
+  font-family: inherit;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.discardButton:hover,
+.keepButton:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+/* Destructive — Threads' exact error red (the menu rows' token). */
+.discardButton {
+  color: #ff3040;
+  font-weight: 600;
+}
+
+.keepButton {
+  color: #1a1a1a;
+  font-weight: 400;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .backdrop,
+  .dialog {
+    animation: none;
+  }
+}

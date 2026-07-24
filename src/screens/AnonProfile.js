@@ -17,6 +17,7 @@ import AnonProfileHeader from "../components/me/AnonProfileHeader";
 import { useAnonThreads } from "../hooks/useAnonThreads";
 import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
 import { useCurrentUser } from "../contexts/CurrentUserContext";
+import BrandLogo from "../components/BrandLogo";
 import usePageTitle from "../hooks/usePageTitle";
 import useMobileSurfacePage from "../hooks/useMobileSurfacePage";
 import useFlushBottom from "../hooks/useFlushBottom";
@@ -36,10 +37,11 @@ const MASK_ID_RE = /^[0-9a-f]{6}$/;
 
 /**
  * /m/:maskId — an anonymous user's PUBLIC profile (m = mask, mirroring /p/:id; legacy /anon/:maskId redirects here): the same canonical
- * surface screen and Threads profile anatomy as /me (it reuses that screen's
- * stylesheet verbatim), fed by public data only — /users/<id>/ (joined +
- * posts/replies counts) and the search's author filter for the thread list.
- * Viewing your OWN mask redirects to /me (the richer, private version).
+ * surface screen and Threads profile anatomy as /profile (it reuses that
+ * screen's stylesheet verbatim), fed by public data only — /users/<id>/
+ * (joined + posts/replies counts) and the search's author filter for the
+ * thread list. Viewing your OWN mask redirects to /profile (the richer,
+ * private version).
  */
 function AnonProfile() {
   const navigate = useNavigate();
@@ -64,11 +66,11 @@ function AnonProfile() {
     }
   };
 
-  // Your own mask → /me (the private version, with reactions + You badge).
+  // Your own mask → /profile (the private version, with reactions + You badge).
   const { currentUserMask } = useCurrentUser();
   useEffect(() => {
     if (maskId && currentUserMask?.id && maskId === currentUserMask.id) {
-      navigate("/me", { replace: true });
+      navigate("/profile", { replace: true });
     }
   }, [maskId, currentUserMask, navigate]);
 
@@ -152,18 +154,19 @@ function AnonProfile() {
           aria-label={t("common.back")}
         >
           {isMobile ? (
+            // Threads' exact mobile-header Back glyph (23px, stroke 2).
             <svg
-              width="20"
-              height="20"
+              width="23"
+              height="23"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
-              strokeWidth="1.5"
+              strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
             >
-              <line x1="19" y1="12" x2="5" y2="12" />
-              <polyline points="12 19 5 12 12 5" />
+              <line x1="2.909" y1="12.004" x2="22.001" y2="12.004" />
+              <polyline points="9.276 4.726 2.001 12.004 9.276 19.274" />
             </svg>
           ) : (
             <svg
@@ -183,9 +186,24 @@ function AnonProfile() {
             </svg>
           )}
         </button>
-        <span className={styles.profileAppBarTitle}>
-          {t("pageTitle.anonProfile")}
-        </span>
+        {isMobile ? (
+          /* Mobile: centered 32px brand slot instead of the title — same
+             anatomy as /profile and the thread view's mobile app bar. */
+          <button
+            type="button"
+            className={styles.profileAppBarBrand}
+            onClick={() => navigate("/home")}
+            aria-label={t("nav.home")}
+          >
+            <BrandLogo size={32} variant="plain" fit="glyph" />
+          </button>
+        ) : (
+          <span className={styles.profileAppBarTitle}>
+            {t("pageTitle.anonProfile")}
+          </span>
+        )}
+        {/* Balance spacer — no ☰ here: /m/:maskId is a drill-in (Back on the
+            left), and the app menu already lives on the top-level screens. */}
         <span aria-hidden="true" />
       </div>
     </header>

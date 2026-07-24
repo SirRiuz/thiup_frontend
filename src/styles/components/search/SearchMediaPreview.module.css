@@ -178,7 +178,7 @@
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 130ms ease;
+  transition: background 0.2s ease;
 }
 
 .revealButton:hover {
@@ -208,7 +208,7 @@
   backdrop-filter: blur(6px);
   color: #f7f5f0;
   cursor: pointer;
-  transition: background 120ms ease;
+  transition: background 0.2s ease;
 }
 
 .navArrow:hover {
@@ -241,7 +241,7 @@
   height: 6px;
   border-radius: 50%;
   background: rgba(247, 245, 240, 0.4);
-  transition: background 160ms ease;
+  transition: background 0.2s ease;
 }
 
 .dotActive {
@@ -391,7 +391,7 @@
   background: transparent;
   color: #6b6b6b;
   cursor: pointer;
-  transition: background 120ms ease, color 120ms ease;
+  transition: background 0.2s ease, color 0.2s ease;
 }
 
 .closeButton:hover {

@@ -120,9 +120,17 @@
     "placeholder": "¿Qué hay de nuevo?",
     "post": "Publicar",
     "posting": "Publicando",
+    "cancel": "Cancelar",
+    "discard": "Descartar",
+    "discardThreadTitle": "¿Descartar hilo?",
+    "discardReplyTitle": "¿Descartar respuesta?",
+    "mediaLabel": "Multimedia",
+    "areaLabel": "Zona",
     "locationDefault": "Comparte tu zona aproximada al publicar (para Cerca de ti) — nunca tu ubicación exacta",
     "locationActive": "Compartiendo tu zona aproximada (~5 km, difuminada) — haz clic para desactivar",
     "locationBlocked": "La ubicación está bloqueada — actívala en los ajustes de tu navegador",
+    "providerDownTitle": "La ubicación no responde ahora mismo",
+    "providerDownBody": "El servicio de ubicación de tu dispositivo no pudo obtener tu posición — no es cosa de Thiup. Inténtalo de nuevo en un momento.",
     "cannotShareTitle": "No se pudo compartir tu zona",
     "cannotShareBody": "No pudimos obtener tu ubicación — inténtalo de nuevo.",
     "blockedTitle": "La ubicación está bloqueada",
@@ -131,6 +139,7 @@
     "postedWithoutAreaTitle": "Publicado sin tu zona",
     "postedWithoutAreaDenied": "La ubicación está bloqueada — actívala en los ajustes de tu navegador.",
     "postedWithoutAreaTimeout": "No pudimos obtener tu ubicación a tiempo.",
+    "postedWithoutAreaProviderDown": "El servicio de ubicación de tu dispositivo no respondió, así que se publicó sin zona.",
     "postedWithoutAreaUnsupported": "Tu navegador no admite la ubicación.",
     "privacyNoteLead": "Zona aproximada de",
     "privacyNoteChip": "~5 km",
@@ -140,6 +149,8 @@
   "closeYou": {
     "findingTitle": "Buscando tu zona…",
     "findingBody": "Calculando tu celda aproximada (~5 km) — tus coordenadas nunca salen de este dispositivo",
+    "unavailableTitle": "La ubicación no responde ahora mismo",
+    "unavailableBody": "El servicio de ubicación de tu dispositivo no pudo obtener tu posición — no es cosa de Thiup. Inténtalo de nuevo en un momento.",
     "errorTitle": "No pudimos cargar tu zona",
     "errorBody": "Algo salió mal al obtener tu ubicación. Puedes intentarlo de nuevo.",
     "blocked": {
@@ -190,9 +201,8 @@
     "loadMoreReplies": "Cargar más respuestas",
     "sort": "Ordenar",
     "sortTop": "Destacados",
-    "sortTopDesc": "Lo más relevante primero",
     "sortRecent": "Recientes",
-    "sortRecentDesc": "Lo más nuevo primero",
+    "viewActivity": "Ver actividad",
     "replyingTo": "Respondiendo a",
     "cancelReplyingTo": "Cancelar respuesta a",
     "couldNotLoad": "No se pudo cargar este hilo.",
@@ -206,8 +216,10 @@
     "videoTooLarge": "Los videos no pueden superar 512 MB",
     "fileUnsupported": "{{name}} no es un tipo de archivo compatible",
     "formatRejected": "Solo se admiten PNG, JPG, MP4 o MOV. Se omitió: {{names}}",
+    "contentRejected": "El contenido del archivo no coincide con su tipo. Se omitió: {{names}}",
     "maxFiles": "Solo se permiten {{max}} archivos",
-    "attachMedia": "Adjuntar imagen o video"
+    "attachMedia": "Adjuntar imagen o video",
+    "expandComposer": "Expandir editor"
   },
   "scan": {
     "queued": "En cola…",
@@ -394,5 +406,15 @@
     "rateLimit": "Estás publicando demasiado rápido — espera un momento",
     "server": "Algo salió mal de nuestro lado — inténtalo de nuevo en un momento",
     "generic": "Algo salió mal — inténtalo de nuevo"
+  },
+  "rateLimit": {
+    "postTitle": "Demasiadas publicaciones seguidas",
+    "postWait": "Puedes publicar de nuevo en {{seconds}} s",
+    "postSoon": "Espera unos segundos e inténtalo de nuevo",
+    "postReady": "Ya puedes publicar de nuevo",
+    "replyTitle": "Demasiadas respuestas seguidas",
+    "replyWait": "Puedes responder de nuevo en {{seconds}} s",
+    "replySoon": "Espera unos segundos e inténtalo de nuevo",
+    "replyReady": "Ya puedes responder de nuevo"
   }
 }

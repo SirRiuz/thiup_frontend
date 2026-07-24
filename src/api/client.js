@@ -202,10 +202,21 @@ export async function apiFetch(url, options = {}) {
     if (response.status >= 500 && data?.code !== "CAPTCHA_UNAVAILABLE") {
       window.dispatchEvent(new Event(SERVER_ERROR_EVENT));
     }
-    throw new APIError(
+    const error = new APIError(
       `API error ${response.status}: ${response.statusText}`,
       response.status,
       data
     );
+    // 429: the wait travels in Retry-After (the throttle sets it). The UI's
+    // rate-limit notice counts it down; when the header isn't readable (not
+    // exposed through the gateway) utils/rateLimit falls back to the payload,
+    // so this stays a best-effort hint — never required.
+    if (response.status === 429) {
+      const retryAfter = Number(response.headers.get("retry-after"));
+      if (Number.isFinite(retryAfter) && retryAfter > 0) {
+        error.retryAfter = retryAfter;
+      }
+    }
+    throw error;
   }
 }

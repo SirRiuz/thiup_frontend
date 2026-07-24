@@ -182,13 +182,13 @@ a,
  * reduced-motion.
  */
 .springPress {
-  transition: transform 0.15s ease, background 0.14s ease, color 0.14s ease,
-    opacity 0.14s ease;
+  transition: transform 0.15s ease, background 0.2s ease, color 0.2s ease,
+    opacity 0.2s ease;
 }
 
 .springPressIcon {
-  transition: transform 0.2s ease, background 0.14s ease, color 0.14s ease,
-    opacity 0.14s ease;
+  transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease,
+    opacity 0.2s ease;
 }
 
 .springPress:not(:disabled):active {
@@ -202,7 +202,7 @@ a,
 @media (prefers-reduced-motion: reduce) {
   .springPress,
   .springPressIcon {
-    transition: background 0.14s ease, color 0.14s ease, opacity 0.14s ease;
+    transition: background 0.2s ease, color 0.2s ease, opacity 0.2s ease;
   }
   .springPress:active,
   .springPressIcon:active {

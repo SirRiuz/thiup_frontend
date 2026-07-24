@@ -16,7 +16,7 @@
   color: #9b9591;
   cursor: pointer;
   line-height: 1;
-  transition: border-color 120ms ease, color 120ms ease, background 120ms ease;
+  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
 }
 
 .trigger:hover {
@@ -54,6 +54,9 @@
   font-size: 13px;
   font-weight: 400;
   color: #424242;
+  /* The wash FADES in/out (Threads' soft hover) — it was the one action
+     button whose hover popped in with no transition. */
+  transition: background 0.2s ease, color 0.2s ease;
 }
 
 @media (hover: hover) {
@@ -178,7 +181,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: transform 120ms ease, background 120ms ease;
+  transition: transform 0.2s ease, background 0.2s ease;
 }
 
 .option:hover {

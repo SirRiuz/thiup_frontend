@@ -5,6 +5,7 @@ import LanguageModal from "./LanguageModal";
 import WelcomeModal from "../WelcomeModal";
 import BrandLogo from "../BrandLogo";
 import MenuSurface, { menuStyles } from "../menu/MenuSurface";
+import { useCompose } from "../../contexts/ComposeContext";
 import { useKeyboardOpen } from "../../hooks/useKeyboardOpen";
 import styles from "../../styles/components/nav/NavRail.module.css";
 import cx from "../../utils/cx";
@@ -24,19 +25,14 @@ import cx from "../../utils/cx";
  *    to see the placement.
  */
 
-// Each item carries TWO glyphs: `icon` = the original stroke set (MOBILE bars,
-// untouched) and `railIcon` = Threads' EXACT desktop sidebar icon (24×24,
-// filled paths lifted verbatim from their markup — Home / Search / Profile).
+// One glyph per item: `railIcon` = Threads' EXACT nav icon (24×24, filled
+// paths lifted verbatim from their markup — Home / Search / Notifications /
+// Profile), shared by the desktop sidebar AND the mobile bottom bar (Threads
+// uses the same set on both).
 const NAV_ITEMS = [
   {
     to: "/home",
     labelKey: "nav.home",
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M3 10.5 12 3l9 7.5" />
-        <path d="M5 9.5V21h5v-6h4v6h5V9.5" />
-      </svg>
-    ),
     railIcon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path
@@ -51,12 +47,6 @@ const NAV_ITEMS = [
   {
     to: "/search",
     labelKey: "nav.search",
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-        <circle cx="11" cy="11" r="7.5" />
-        <line x1="21" y1="21" x2="16.4" y2="16.4" />
-      </svg>
-    ),
     railIcon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path
@@ -70,16 +60,10 @@ const NAV_ITEMS = [
   },
   {
     // Threads' Notifications slot (the heart), in their exact order: right
-    // after Search, before the profile item. DESKTOP-ONLY for now (excluded
-    // from the mobile bars below).
+    // after Search (+ the Create button rendered between them), before the
+    // profile item.
     to: "/notifications",
     labelKey: "nav.notifications",
-    desktopOnly: true,
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-      </svg>
-    ),
     railIcon: (
       // Threads' EXACT Notifications heart (24×24 filled path, verbatim).
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -91,16 +75,8 @@ const NAV_ITEMS = [
     ),
   },
   {
-    to: "/me",
+    to: "/profile",
     labelKey: "nav.myThreads",
-    icon: (
-      // Stack of layers — "my threads" as an own collection.
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 3.5 20.5 8 12 12.5 3.5 8 12 3.5Z" />
-        <path d="M3.5 12.5 12 17l8.5-4.5" />
-        <path d="M3.5 17 12 21.5 20.5 17" />
-      </svg>
-    ),
     railIcon: (
       // Threads' Profile glyph — their sidebar equivalent of the own-space tab.
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -119,15 +95,10 @@ const NAV_ITEMS = [
   },
 ];
 
-// Mobile bottom bar shows only Home + My threads (icon-only, no labels). Search
-// lives in the mobile header (magnifier), the ☰ menu also lives there, and
-// Notifications is desktop-only for now — so the bottom bar stays to two
-// primary destinations, Threads-style.
-const BOTTOM_NAV_ITEMS = NAV_ITEMS.filter(
-  (item) => item.to !== "/search" && !item.desktopOnly
-);
-// Reused magnifier glyph for the mobile header search button.
-const SEARCH_ICON = NAV_ITEMS.find((item) => item.to === "/search").icon;
+// The mobile bottom bar mirrors Threads' five-slot bar exactly: Home /
+// Search / Create (+) / Notifications / Profile — the SAME items and glyphs
+// as the desktop rail (Search left the top app bar's magnifier for the bar,
+// like Threads; their mobile header carries only the logo + our ☰ menu).
 
 // Last FULL URL visited for each rail screen (at module level: survives
 // unmount). The item navigates to it instead of to the bare route → it
@@ -227,12 +198,17 @@ function MenuButton({ menuUp = false, variant = "rail" }) {
         onMouseEnter={() => setTipOff(false)}
       >
         {isHeader ? (
-          // Mobile header: refined ASYMMETRIC mark (Threads-style) — two thin
-          // rounded bars, the bottom one shorter. Lighter than the rail's
-          // 3-bar glyph; matches the search icon's 1.8 stroke + round caps.
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
-            <line x1="4" y1="8" x2="20" y2="8" />
-            <line x1="4" y1="16" x2="14" y2="16" />
+          // Mobile header: Threads' EXACT header "More" glyph (24×24, lifted
+          // verbatim) — two EQUAL filled rounded bars (2.5 tall, rx 1.25).
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path
+              fill="currentColor"
+              d="M19.25 16C19.9404 16 20.5 16.5596 20.5 17.25C20.5 17.9404 19.9404 18.5 19.25 18.5H4.25C3.55964 18.5 3 17.9404 3 17.25C3 16.5596 3.55964 16 4.25 16H19.25Z"
+            />
+            <path
+              fill="currentColor"
+              d="M19.25 6C19.9404 6 20.5 6.55964 20.5 7.25C20.5 7.94036 19.9404 8.5 19.25 8.5H4.25C3.55964 8.5 3 7.94036 3 7.25C3 6.55964 3.55964 6 4.25 6H19.25Z"
+            />
           </svg>
         ) : (
           // Desktop rail: Threads' EXACT "More" glyph — two rounded bars
@@ -302,6 +278,7 @@ function NavRail() {
   const { t } = useTranslation();
   const { pathname, search } = useLocation();
   const navigate = useNavigate();
+  const { openCompose } = useCompose();
   // On iOS the keyboard pushes a fixed bottom bar up on top of itself; hide it
   // while typing (it isn't usable then) and bring it back when the keyboard closes.
   const keyboardOpen = useKeyboardOpen();
@@ -332,17 +309,16 @@ function NavRail() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [navigate]);
 
-  // The mobile header (☰ + logo + search) only appears on the feed-like screens
-  // that have NO top bar of their own. Search and the thread view keep their own
-  // contextual bars (the "Search" masthead / back bar), so we don't stack a
-  // second one.
+  // The mobile header (☰ + centered logo) appears on the top-level feed-like
+  // screens: home AND search (search's own "Search" masthead is desktop-only —
+  // on mobile this bar replaces it). The thread view and the profile keep
+  // their own contextual back bars, so we don't stack a second one there.
   const showMobileHeader =
-    pathname.startsWith("/home") || pathname.startsWith("/me");
-  const searchTarget = lastUrlByItem.get("/search") || "/search";
+    pathname.startsWith("/home") || pathname.startsWith("/search");
 
   // useRailIcons: the desktop sidebar renders Threads' exact 24px glyphs
   // (railIcon); the mobile bottom bar keeps the original stroke set (icon).
-  const renderItems = (items, useRailIcons = false) =>
+  const renderItems = (items) =>
     items.map((item) => {
       const isActive = pathname.startsWith(item.to);
       // Inactive → return to the last view of that screen (or the base
@@ -376,11 +352,40 @@ function NavRail() {
             setTipOffItem((v) => (v === item.to ? null : v))
           }
         >
-          {useRailIcons ? item.railIcon : item.icon}
+          {item.railIcon}
           <span className={styles.tooltip}>{label}</span>
         </Link>
       );
     });
+
+  // Create (+) — Threads' exact plated button (always-visible rounded plate +
+  // their + glyph), rendered between Search and Notifications on BOTH the
+  // desktop rail and the mobile bottom bar (their five-slot order).
+  // Opens the global ComposeModal (same dialog as home's compose row).
+  const createButton = (
+    <button
+      type="button"
+      className={cx(styles.item, styles.createItem, "springPressIcon")}
+      aria-label={t("nav.create")}
+      onClick={openCompose}
+    >
+      <span className={styles.createPlate} aria-hidden="true" />
+      <svg
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        aria-hidden="true"
+        className={styles.createGlyph}
+      >
+        <path
+          fill="currentColor"
+          d="M13.25 3.00001C13.25 2.30965 12.6904 1.75001 12 1.75001C11.3096 1.75001 10.75 2.30965 10.75 3.00001V10.75H3C2.30964 10.75 1.75 11.3097 1.75 12C1.75 12.6904 2.30964 13.25 3 13.25H10.75V21C10.75 21.6904 11.3096 22.25 12 22.25C12.6904 22.25 13.25 21.6904 13.25 21V13.25H21C21.6904 13.25 22.25 12.6904 22.25 12C22.25 11.3097 21.6904 10.75 21 10.75H13.25V3.00001Z"
+        />
+      </svg>
+      <span className={styles.tooltip}>{t("nav.create")}</span>
+    </button>
+  );
 
   return (
     <>
@@ -404,38 +409,16 @@ function NavRail() {
         </button>
         <div className={styles.items}>
           {/* Threads' sidebar order: Home / Search / CREATE / ♥ / Profile. */}
-          {renderItems(NAV_ITEMS.slice(0, 2), true)}
-          {/* Create (+) — Threads' exact plated button (always-visible rounded
-              plate + their + glyph). PLACEHOLDER: no functionality yet — it
-              will open the composer once that flow exists. */}
-          <button
-            type="button"
-            className={cx(styles.item, styles.createItem, "springPressIcon")}
-            aria-label={t("nav.create")}
-          >
-            <span className={styles.createPlate} aria-hidden="true" />
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              aria-hidden="true"
-              className={styles.createGlyph}
-            >
-              <path
-                fill="currentColor"
-                d="M13.25 3.00001C13.25 2.30965 12.6904 1.75001 12 1.75001C11.3096 1.75001 10.75 2.30965 10.75 3.00001V10.75H3C2.30964 10.75 1.75 11.3097 1.75 12C1.75 12.6904 2.30964 13.25 3 13.25H10.75V21C10.75 21.6904 11.3096 22.25 12 22.25C12.6904 22.25 13.25 21.6904 13.25 21V13.25H21C21.6904 13.25 22.25 12.6904 22.25 12C22.25 11.3097 21.6904 10.75 21 10.75H13.25V3.00001Z"
-              />
-            </svg>
-            <span className={styles.tooltip}>{t("nav.create")}</span>
-          </button>
-          {renderItems(NAV_ITEMS.slice(2), true)}
+          {renderItems(NAV_ITEMS.slice(0, 2))}
+          {createButton}
+          {renderItems(NAV_ITEMS.slice(2))}
         </div>
         <MenuButton menuUp={true} />
       </nav>
 
-      {/* Mobile: top app bar — [☰] · [logo] · [search]. Sticky, so it offsets
-          the content naturally (no manual padding). Only on the feed screens
+      {/* Mobile: top app bar — [☰] · [logo] · [balance]. Threads' mobile
+          header carries no search (it lives in the bottom bar now); the empty
+          end cell keeps the logo grid-centered. Only on the feed screens
           (see showMobileHeader); CSS also hides it on desktop. */}
       {showMobileHeader && (
         <header className={styles.appBar}>
@@ -453,26 +436,28 @@ function NavRail() {
           >
             <BrandLogo size={32} variant="plain" fit="glyph" />
           </button>
-          {/* Magnifier → /search (returns to the last search view if any). */}
-          <Link
-            to={searchTarget}
-            className={cx(styles.appBarButton, "springPressIcon")}
-            aria-label={t("nav.search")}
-          >
-            {SEARCH_ICON}
-          </Link>
+          <span aria-hidden="true" />
         </header>
       )}
 
-      {/* Mobile: fixed bottom bar — Home + My threads only (icon-only). */}
+      {/* Mobile: fixed bottom bar — Threads' five-slot bar (Home / Search /
+          Create / Notifications / Profile), icon-only, same glyphs as the
+          desktop rail. */}
       <nav
         className={cx(styles.bottomBar, keyboardOpen ? styles.bottomBarHidden : "")}
         aria-label={t("nav.primary")}
       >
-        {renderItems(BOTTOM_NAV_ITEMS)}
+        {renderItems(NAV_ITEMS.slice(0, 2))}
+        {createButton}
+        {renderItems(NAV_ITEMS.slice(2))}
       </nav>
     </>
   );
 }
+
+// The ☰ menu button is reused OUTSIDE the NavRail too (the profile app bars
+// render it in their right slot on mobile) — same button, same MenuSurface
+// panel, same Languages/About options and modals, zero duplication.
+export { MenuButton };
 
 export default NavRail;

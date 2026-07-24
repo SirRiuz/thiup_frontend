@@ -20,22 +20,57 @@
 }
 
 /* Temporary highlight of the newly created reply: ring + warm background that
- * fade out on their own (~2.5s visible + ~0.5s fade). inset box-shadow (not
- * border) so it doesn't shift the layout or threading. */
+ * fade out on their own (~2.5s visible + ~0.5s fade). Painted on a FULL-BLEED
+ * overlay (inset box-shadow, not border → no layout shift): the row has no
+ * side padding of its own (the surface carries --layout-pad-x) and children
+ * indent via their own padding-left, so the overlay wraps the WHOLE thread
+ * row edge to edge at EVERY depth — painting the row itself left cream
+ * stripes at the card edges. */
 .highlighted {
-  border-radius: 8px;
+  /* New stacking context so the overlay's z-index: -1 sits above the card's
+     background but below the row content and threadlines. */
+  isolation: isolate;
+}
+
+.highlighted::before {
+  content: "";
+  position: absolute;
+  inset: 0 calc(-1 * var(--layout-pad-x, 0px));
+  z-index: -1;
+  pointer-events: none;
   animation: replyHighlightFade 3s ease forwards;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  /* No fade: a static highlight that disappears when the JS clears the mark. */
+  .highlighted::before {
+    animation: none;
+    background-color: rgba(168, 84, 50, 0.1);
+    box-shadow: inset 0 0 0 1px rgba(168, 84, 50, 0.5);
+  }
+}
+
+/* Same recipe as the feed card's cardHighlight (ONE highlight language):
+   terracotta brand wash + 1px contour ring, opening with a soft inward
+   ripple (thick inner glow collapsing into the ring, expo-out), then hold
+   and fade. Background + box-shadow only — no layout shift. */
 @keyframes replyHighlightFade {
-  0%,
+  0% {
+    background-color: rgba(168, 84, 50, 0.1);
+    box-shadow: inset 0 0 0 1px rgba(168, 84, 50, 0.5),
+      inset 0 0 0 26px rgba(168, 84, 50, 0.14);
+    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  18%,
   83% {
-    background-color: #f5ead5;
-    box-shadow: inset 0 0 0 2px #c5a572;
+    background-color: rgba(168, 84, 50, 0.1);
+    box-shadow: inset 0 0 0 1px rgba(168, 84, 50, 0.5),
+      inset 0 0 0 1px rgba(168, 84, 50, 0);
   }
   100% {
     background-color: transparent;
-    box-shadow: inset 0 0 0 2px transparent;
+    box-shadow: inset 0 0 0 1px rgba(168, 84, 50, 0),
+      inset 0 0 0 1px rgba(168, 84, 50, 0);
   }
 }
 
@@ -265,7 +300,7 @@
   font-size: 13px;
   font-weight: 400;
   color: #424242;
-  transition: background 120ms ease, color 120ms ease;
+  transition: background 0.2s ease, color 0.2s ease;
 }
 
 @media (hover: hover) {

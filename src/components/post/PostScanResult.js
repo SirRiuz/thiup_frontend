@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import styles from "../../styles/components/post/PostScanResult.module.css";
 import cx from "../../utils/cx";
@@ -30,7 +29,7 @@ function VideoIcon() {
 
 function InfoIcon() {
   return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <circle cx="12" cy="12" r="9" />
       <path d="M12 11v5" />
       <path d="M12 7.5h.01" />
@@ -40,9 +39,27 @@ function InfoIcon() {
 
 function CloseIcon() {
   return (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
       <line x1="18" y1="6" x2="6" y2="18" />
       <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+  );
+}
+
+function RetryIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3 12a9 9 0 1 0 2.64-6.36L3 8" />
+      <path d="M3 3v5h5" />
+    </svg>
+  );
+}
+
+function AlertIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+      <path d="M12 7v6" />
+      <path d="M12 17h.01" />
     </svg>
   );
 }
@@ -123,19 +140,46 @@ function CompressionView({ compression, t }) {
 }
 
 /**
- * One row in the attached-media list: thumbnail + name + status, plus (for
- * images, once compressed) an info button (ⓘ) that toggles the before/after
- * compression comparison. There is NO client-side NSFW classification — the
- * state line tracks only compression (images) → upload.
+ * The compression before/after panel, rendered by MediaScanList BELOW the
+ * tile strip (one open at a time) so the strip's height never changes.
+ */
+export function PostScanDetails({ compression }) {
+  const { t } = useTranslation();
+  return (
+    <div className={styles.details}>
+      <CompressionView compression={compression} t={t} />
+    </div>
+  );
+}
+
+/**
+ * One attached file as a compact media TILE (IG/Threads composer standard):
+ * the THUMBNAIL is the row — no filename (they're noise; the name survives as
+ * the tile's tooltip). State lives as overlays on the tile:
+ *   - compressing / queued  → dim + centered spinner
+ *   - uploading             → bottom progress bar
+ *   - upload error          → danger scrim, the tile becomes a RETRY button
+ *   - compress error        → danger scrim + alert glyph
+ *   - ready (image)         → tiny ⓘ disc toggling the compression details
+ * Remove is the scrim × disc riding the top-right corner. A visually-hidden
+ * live region narrates the state for screen readers.
  *
  * Props:
  *   - item:        a useMediaItems item ({ id, name, size, kind, thumbnail })
- *   - compression: the matching useImageCompression result (or undefined) for this file
+ *   - compression: the matching useImageCompression result (or undefined)
  *   - upload:      the matching useMediaUploads item (or undefined)
+ *   - detailsOpen / onToggleDetails: the strip-level details panel state
  */
-function PostScanResult({ item, compression, upload, onRetry, onRemove }) {
+function PostScanResult({
+  item,
+  compression,
+  upload,
+  onRetry,
+  onRemove,
+  detailsOpen = false,
+  onToggleDetails,
+}) {
   const { t } = useTranslation();
-  const [expanded, setExpanded] = useState(false);
   const { id, name, size, kind, thumbnail } = item;
 
   const isImage = kind === "image";
@@ -148,7 +192,6 @@ function PostScanResult({ item, compression, upload, onRetry, onRemove }) {
   let secondary;
   let showSpinner = false;
   let showRetry = false;
-  let lineError = false;
   let uploadPercent = null; // 0..100 while uploading, else null
 
   if (
@@ -159,7 +202,6 @@ function PostScanResult({ item, compression, upload, onRetry, onRemove }) {
     showSpinner = true;
   } else if (isImage && compStatus === "error") {
     secondary = t("scan.compressError");
-    lineError = true;
   } else if (!upload || upStatus === "queued") {
     // Waiting its turn in the sequential upload queue.
     secondary = t("scan.queued");
@@ -171,7 +213,6 @@ function PostScanResult({ item, compression, upload, onRetry, onRemove }) {
     secondary = t("scan.uploaded");
   } else if (upStatus === "error") {
     secondary = t("scan.uploadError");
-    lineError = true;
     showRetry = true;
   } else {
     // Settled non-image state (e.g. just-finished video) → show its size.
@@ -180,75 +221,77 @@ function PostScanResult({ item, compression, upload, onRetry, onRemove }) {
 
   // Details (compression comparison) available once an image is compressed.
   const canShowDetails = isImage && compStatus === "done" && !!compression.report;
-  const rowHasError = compStatus === "error" || upStatus === "error";
+  const hasError = compStatus === "error" || upStatus === "error";
 
   return (
-    <div className={cx(styles.row, rowHasError ? styles.rowError : "")}>
-      <div className={styles.main}>
-        <div className={styles.thumbnail}>
-          {thumbnail ? (
-            <img src={thumbnail} alt="" className={styles.thumbnailImage} />
-          ) : kind === "video" ? (
-            <VideoIcon />
-          ) : (
-            <PhotoIcon />
-          )}
-        </div>
-
-        <div className={styles.info}>
-          <span className={styles.name} title={name}>
-            {name}
-          </span>
-          <span
-            className={cx(styles.status, lineError ? styles.statusError : "")}
-            role="status"
-            aria-live="polite"
-          >
-            {showSpinner && <span className={styles.spinner} aria-hidden="true" />}
-            {secondary}
-          </span>
-        </div>
-
-        {showRetry && (
-          <button
-            type="button"
-            className={styles.retryButton}
-            onClick={onRetry}
-          >
-            {t("scan.retry")}
-          </button>
-        )}
-
-        {canShowDetails && (
-          <button
-            type="button"
-            className={cx(styles.infoButton, expanded ? styles.infoButtonActive : "")}
-            onClick={() => setExpanded((v) => !v)}
-            aria-expanded={expanded}
-            aria-controls={detailsId}
-            aria-label={t("scan.details")}
-            title={t("scan.details")}
-          >
-            <InfoIcon />
-          </button>
-        )}
-
-        <button
-          type="button"
-          className={styles.removeButton}
-          onClick={onRemove}
-          aria-label={t("scan.remove")}
-        >
-          <CloseIcon />
-        </button>
-      </div>
-
-      {canShowDetails && expanded && (
-        <div id={detailsId} className={styles.details}>
-          <CompressionView compression={compression} t={t} />
-        </div>
+    <div
+      className={cx(styles.tile, hasError ? styles.tileError : "")}
+      title={name}
+    >
+      {thumbnail ? (
+        <img src={thumbnail} alt="" className={styles.tileImage} />
+      ) : (
+        <span className={styles.tileKind} aria-hidden="true">
+          {kind === "video" ? <VideoIcon /> : <PhotoIcon />}
+        </span>
       )}
 
+      {/* Busy: dim the tile and center a spinner. */}
+      {showSpinner && (
+        <span className={styles.busyOverlay} aria-hidden="true">
+          <span className={styles.busySpinner} />
+        </span>
+      )}
+
+      {/* Error: danger scrim; retryable → the overlay IS the retry button. */}
+      {hasError &&
+        (showRetry ? (
+          <button
+            type="button"
+            className={styles.errorOverlay}
+            onClick={onRetry}
+            aria-label={t("scan.retry")}
+            title={t("scan.retry")}
+          >
+            <span className={styles.errorDisc}>
+              <RetryIcon />
+            </span>
+          </button>
+        ) : (
+          <span className={styles.errorOverlay} aria-hidden="true">
+            <span className={styles.errorDisc}>
+              <AlertIcon />
+            </span>
+          </span>
+        ))}
+
+      {/* Remove — scrim disc riding the top-right corner (media standard). */}
+      <button
+        type="button"
+        className={styles.removeButton}
+        onClick={onRemove}
+        aria-label={t("scan.remove")}
+        title={t("scan.remove")}
+      >
+        <CloseIcon />
+      </button>
+
+      {/* Compression details toggle — quiet ⓘ disc, bottom-right. */}
+      {canShowDetails && (
+        <button
+          type="button"
+          className={cx(styles.infoButton, detailsOpen ? styles.infoButtonActive : "")}
+          onClick={onToggleDetails}
+          aria-expanded={detailsOpen}
+          aria-controls={detailsId}
+          aria-label={t("scan.details")}
+          title={t("scan.details")}
+        >
+          <InfoIcon />
+        </button>
+      )}
+
+      {/* Upload progress along the tile's bottom edge. */}
       {uploadPercent != null && (
         <div
           className={styles.progressBar}
@@ -259,6 +302,11 @@ function PostScanResult({ item, compression, upload, onRetry, onRemove }) {
           aria-valuemax={100}
         />
       )}
+
+      {/* State narration for screen readers (the tile shows it visually). */}
+      <span className={styles.srStatus} role="status" aria-live="polite">
+        {secondary}
+      </span>
     </div>
   );
 }

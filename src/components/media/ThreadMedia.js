@@ -621,6 +621,13 @@ function Carousel({ images, onOpen }) {
     moved: false,
     raf: 0,
     pressedEl: null,
+    // Set when a clean tap on a FRAME already acted (opened the viewer /
+    // separated the panorama): the resulting click must be swallowed. With a
+    // mouse, pointer capture retargets pointerup to the scroller, so the
+    // click's target is the .carousel itself (the down/up common ancestor) —
+    // it no longer matches the card's [data-frame] exclusion and would
+    // bubble into the row navigation.
+    suppressClick: false,
   });
 
   useEffect(() => {
@@ -658,10 +665,11 @@ function Carousel({ images, onOpen }) {
       d.raf = 0;
     };
     const onDown = (e) => {
-      // Reset the drag flag FIRST — before any bail — so a tap on a control
-      // after a previous drag doesn't inherit a stale moved=true (which the
-      // click-suppressor below would treat as a drag and eat the button's click).
+      // Reset the gesture flags FIRST — before any bail — so a tap on a
+      // control after a previous gesture doesn't inherit a stale moved/
+      // suppressClick (which the click-suppressor below would eat).
       d.moved = false;
+      d.suppressClick = false;
       // Let the in-frame controls (sound/play) and the reveal button handle
       // their own taps — don't press, track, or capture (capture would steal the
       // button's click and make it navigate the card).
@@ -704,6 +712,9 @@ function Carousel({ images, onOpen }) {
       if (d.pressedEl) {
         bounceEl(d.pressedEl);
         if (!d.moved) {
+          // The tap acted on media — its click must never reach the row
+          // navigation (see suppressClick above for the mouse retargeting).
+          d.suppressClick = true;
           if (panoRef.current) {
             setPano(false);
           } else {
@@ -743,13 +754,29 @@ function Carousel({ images, onOpen }) {
       }
       onUp(e);
     };
-    // Swallow the click that ends a drag so it doesn't navigate the card.
-    // (A tap that opens the viewer is swallowed by the wrapper's onClickCapture.)
+    // Swallow the clicks that must not reach the clickable card ANCESTOR
+    // (feed-row navigation) — a clean tap on the EMPTY track space is left
+    // alone so it bubbles and navigates (Threads' pressable row).
     // Never eat a click that lands on a control (sound/play) or the reveal button.
     const onClick = (e) => {
-      if (d.moved && !e.target.closest("[data-control],[data-reveal]")) {
+      if (e.target.closest("[data-control],[data-reveal]")) return;
+      // A drag/swipe release is not a tap, and a tap that acted on a frame
+      // (viewer opened / panorama separated) already did its job — never
+      // navigate from either.
+      if (d.moved || d.suppressClick) {
+        d.suppressClick = false;
         e.preventDefault();
         e.stopPropagation();
+        return;
+      }
+      // Panorama mode: a clean tap ANYWHERE separates the strip (Threads) —
+      // including the empty track space, which must not ALSO navigate.
+      // (Frame taps already separated in onUp; panoRef may still read true
+      // here until React re-renders, so the extra setPano(false) is a no-op.)
+      if (panoRef.current) {
+        e.preventDefault();
+        e.stopPropagation();
+        setPano(false);
       }
     };
 
@@ -769,12 +796,14 @@ function Carousel({ images, onOpen }) {
   }, []);
 
   return (
-    // data-media-zone: the whole track (cells AND the gaps/empty end space) is
-    // drag surface — clickable ancestors (feed card row navigation) skip it.
+    // The whole scroller is drag surface, but only the CELLS opt out of the
+    // ancestor row navigation ([data-frame] — like Threads' pressable row):
+    // a clean tap on the empty track space past a short carousel bubbles up
+    // and opens the thread; drag-end and panorama-separate clicks are
+    // swallowed by the capture-phase click handler above.
     <div
       ref={ref}
       className={cx(styles.carousel, pano ? styles.panorama : "")}
-      data-media-zone=""
     >
       <div ref={innerRef} className={styles.track}>
         {images.map((item, i) => (
@@ -844,10 +873,11 @@ function ThreadMedia({ items }) {
 
   return (
     // NOTE: no exclusion attribute on this wrapper — it spans the full column
-    // width, so the blank space beside a narrow single image must still
-    // navigate (feed card whole-row click). The opt-out hooks live on the
-    // actual media surfaces: [data-frame] (single frame + carousel cells) and
-    // [data-media-zone] on the carousel track (its empty track is drag area).
+    // width, so the blank space beside a narrow single image AND the empty
+    // track space after a short carousel must still navigate (feed card
+    // whole-row click, Threads' pressable row). The opt-out hook lives on the
+    // actual media surfaces only: [data-frame] (single frame + carousel
+    // cells); the carousel swallows its own drag-end/panorama clicks.
     <div className={styles.wrapper}>
       {media.length === 1 ? (
         <SingleMedia item={media[0]} onOpen={() => open(0)} />

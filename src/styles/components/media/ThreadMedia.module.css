@@ -134,9 +134,10 @@
   padding: 7px 16px;
   border-radius: 999px;
   background: rgba(26, 26, 26, 0.5);
+  transition: background 0.2s ease;
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
-  transition: background 120ms ease;
+  transition: background 0.2s ease;
 }
 
 @media (hover: hover) {
@@ -175,7 +176,7 @@
   backdrop-filter: blur(6px);
   color: #f7f5f0;
   cursor: pointer;
-  transition: background 120ms ease;
+  transition: background 0.2s ease;
 }
 
 @media (hover: hover) {

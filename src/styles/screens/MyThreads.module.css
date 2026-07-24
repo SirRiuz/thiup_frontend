@@ -1,7 +1,8 @@
-/* MyThreads (/me) — the CANONICAL surface screen (fourth member after /home,
-   /search and /p/:id): 60px desktop masthead + corner mask + ONE elevated
-   card holding the Threads-style profile header, the tab row and the thread
-   list. Mobile dissolves into the full-bleed #fdfcf8 sheet. */
+/* MyThreads (/profile) — the CANONICAL surface screen (fourth member after
+   /home, /search and /p/:id): the animated profile app bar (shared with
+   /m/:maskId) + corner mask + ONE elevated card holding the Threads-style
+   profile header, the tab row and the thread list. Mobile dissolves into
+   the full-bleed #fdfcf8 sheet. */
 
 .page {
   background: #f7f5f0;
@@ -15,28 +16,11 @@
   padding: 0 0 60px;
 }
 
-/* === Desktop masthead (Threads' 60px column header — same as home) === */
-.desktopHeader {
-  position: sticky;
-  top: 0;
-  z-index: 6;
-  height: 60px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #f7f5f0;
-}
-
-.desktopHeaderTitle {
-  font-size: 15px;
-  font-weight: 600;
-  color: #1a1a1a;
-}
-
-/* === /anon app bar — the thread app bar's EXACT anatomy at every
-   breakpoint (grid: back · centered title · balancing span). Desktop: solid
-   page-bg sticky bar + Threads' floating circular back; mobile: the frosted
-   FIXED bar with the plain arrow (only the title differs from /p/:id). */
+/* === Profile app bar (/profile AND /m/:maskId) — the thread app bar's
+   EXACT anatomy at every breakpoint (grid: back · centered title ·
+   balancing span). Desktop: solid page-bg sticky bar + Threads' floating
+   circular back; mobile: the frosted FIXED bar with the plain arrow (only
+   the title differs from /p/:id). */
 .profileAppBar {
   position: sticky;
   top: var(--kb-top, 0px);
@@ -104,11 +88,49 @@
   animation: profileBarRiseIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) 70ms backwards;
 }
 
+/* Mobile: the centered 32px BRAND slot instead of the title (Threads' mobile
+   header carries the logo) — the thread app bar's exact .appBarBrand anatomy
+   (button home, soft logo press). NO entrance animation: this bar mirrors the
+   NavRail app bar (static brand), not the drill-in title choreography. */
+.profileAppBarBrand {
+  justify-self: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.profileAppBarBrand svg {
+  transition: transform 0.2s ease-in-out;
+}
+
+/* Left slot (mobile, /profile): the NavRail ☰ takes the Back button's place
+   — /profile is a top-level tab, so its bar mirrors home's header (☰ left,
+   brand centered), no Back. /m/:maskId (a drill-in) carries only Back +
+   brand + spacer. */
+.profileAppBarMenuStart {
+  justify-self: start;
+  display: inline-flex;
+}
+
+.profileAppBarBrand:active svg {
+  transform: scale(0.98);
+}
+
+/* Mobile base = Threads' exact mobile-header Back (the thread app bar's
+   spec): 52×52 circular target, 23px glyph, their soft press scale, and
+   their edge anchoring — the negative margin cancels the bar's 12px padding
+   down to Threads' 2px screen-edge offset (arrow ~16px from the edge).
+   Desktop overrides to the floating circle below. */
 .profileBackButton {
   justify-self: start;
   flex: none;
-  width: 32px;
-  height: 32px;
+  width: 52px;
+  height: 52px;
+  margin-inline-start: -10px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -117,8 +139,12 @@
   border-radius: 50%;
   cursor: pointer;
   color: #1a1a1a;
-  transition: background 200ms ease;
+  transition: transform 0.2s ease, background 200ms ease;
   animation: profileBarSlideIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+.profileBackButton:active {
+  transform: scale(0.9);
 }
 
 .profileBackButton:hover {
@@ -134,6 +160,7 @@
   .profileBackButton {
     width: 24px;
     height: 24px;
+    margin-inline-start: 0;
     background: #fdfcf8;
     border: 0.5px solid #e5e0d3;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
@@ -166,6 +193,14 @@
   .profileAppBarTitle {
     animation: none;
   }
+
+  .profileAppBarBrand svg {
+    transition: none;
+  }
+
+  .profileAppBarBrand:active svg {
+    transform: none;
+  }
 }
 
 /* === Sticky corner mask (desktop) — same geometry as home/search/thread. */
@@ -174,6 +209,9 @@
   top: 60px;
   height: 0;
   z-index: 5;
+  /* Decorative overlay — its caps float over the card's top edge and must
+     never steal hover/click from the content scrolling under them. */
+  pointer-events: none;
 }
 
 .cornerMaskEdge {
@@ -335,7 +373,7 @@
   padding: 0;
   cursor: pointer;
   /* Threads' media-cell press. */
-  transition: background 120ms ease, transform 0.2s ease;
+  transition: background 0.2s ease, transform 0.2s ease;
 }
 
 .mediaTile:active {
@@ -344,6 +382,37 @@
 
 .mediaTile:nth-child(even) {
   background: #f3efe6;
+}
+
+/* Media outline (ThreadMedia's hairline tone), COLLAPSED at the seams: each
+   tile paints only its RIGHT + BOTTOM edge, so every interior seam carries
+   ONE 0.5px line (a full per-tile ring doubled up across the 2px gap and
+   read thick) and near-white media never fuses with the cream gaps. The
+   perimeter draws nothing — the grid is full-bleed, already bounded by the
+   tab row's hairline (top) and the card edges (sides/bottom): last COLUMN
+   (3n) drops the right edge, last ROW (nth-last -n+3 on the 3-col mosaic —
+   also correct on a ragged last row: tiles with nothing below are perimeter
+   for their column) drops the bottom one. pointer-events off; as ::after it
+   paints over the image edge, like the feed frames. */
+.mediaTile::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  box-shadow: inset -0.5px 0 0 rgba(0, 0, 0, 0.15),
+    inset 0 -0.5px 0 rgba(0, 0, 0, 0.15);
+  pointer-events: none;
+}
+
+.mediaTile:nth-child(3n)::after {
+  box-shadow: inset 0 -0.5px 0 rgba(0, 0, 0, 0.15);
+}
+
+.mediaTile:nth-last-child(-n + 3)::after {
+  box-shadow: inset -0.5px 0 0 rgba(0, 0, 0, 0.15);
+}
+
+.mediaTile:nth-child(3n):nth-last-child(-n + 3)::after {
+  box-shadow: none;
 }
 
 @media (hover: hover) {
@@ -393,7 +462,7 @@
   }
 
   .mediaTile {
-    transition: background 120ms ease;
+    transition: background 0.2s ease;
   }
 
   .mediaTile:active {
@@ -402,7 +471,7 @@
 }
 
 /* === Mobile: the canonical full-bleed sheet (home/search/thread guide) ===
-   The NavRail app bar is FIXED (60px) — offset the content by its height;
+   The profile app bar is FIXED (60px) — offset the content by its height;
    the surface dissolves (no border/radius/min-height) onto the #fdfcf8
    sheet painted by useMobileSurfacePage. --layout-pad-x keeps matching the
    real side padding (the HARD media-bleed rule). */
@@ -415,13 +484,12 @@
     padding: 60px 0 60px;
   }
 
-  .desktopHeader,
   .cornerMask {
     display: none;
   }
 
-  /* /anon's app bar goes white FROSTED and FIXED on mobile — the thread app
-     bar's exact recipe (borderless, anti rubber-band; .main's 60px top
+  /* The profile app bar goes white FROSTED and FIXED on mobile — the thread
+     app bar's exact recipe (borderless, anti rubber-band; .main's 60px top
      padding compensates the lost flow space). */
   .profileAppBar {
     position: fixed;

@@ -73,7 +73,7 @@
   padding: 3px 8px;
   max-width: 260px;
   cursor: pointer;
-  transition: background 120ms ease, border-color 120ms ease;
+  transition: background 0.2s ease, border-color 0.2s ease;
 }
 
 .hashPill:hover {
@@ -171,13 +171,49 @@
   flex: none;
 }
 
-.statsSkeleton {
+/* Skeletons mirror the LOADED lines' exact geometry, so nothing shifts when
+   the data lands: the stats line keeps its three value·label segments with
+   the REAL dot separators, and the joined whisper reserves its own line. Both
+   sit inside the same .statsLine / a matching 13px line box, so the strut
+   (21px / 19.5px) keeps the heights identical to the loaded text. */
+.statSkeletonBar {
   display: inline-block;
-  width: 220px;
-  max-width: 60%;
   height: 13px;
   border-radius: 4px;
   background: #ebe7dd;
+  vertical-align: middle;
+  animation: meStatsPulse 1.4s ease-in-out infinite;
+}
+
+/* Approximate widths of "N posts" / "N reactions" / "N replies". */
+.statSkeletonSm {
+  width: 52px;
+}
+
+.statSkeletonMd {
+  width: 88px;
+}
+
+.statSkeletonLg {
+  width: 64px;
+}
+
+/* Same box as .joinedLine, minus the flex (an inline bar needs the 13px/1.5
+   strut to keep the loaded line's height). */
+.joinedLineSkeleton {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* One bar covering the whole "📅 Joined July 2026" whisper. */
+.joinedSkeleton {
+  display: inline-block;
+  width: 128px;
+  height: 12px;
+  border-radius: 4px;
+  background: #ebe7dd;
+  vertical-align: middle;
   animation: meStatsPulse 1.4s ease-in-out infinite;
 }
 
@@ -194,7 +230,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .statsSkeleton {
+  .statSkeletonBar,
+  .joinedSkeleton {
     animation: none;
   }
 }

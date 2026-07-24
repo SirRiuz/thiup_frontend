@@ -13,31 +13,39 @@
   border-top: 1px solid #ebe7dd;
 }
 
-/* Mobile: the composer detaches from the thread flow and docks as a FIXED bar
-   at the bottom (Threads-style), full-width, sitting just ABOVE the bottom nav.
-   When the keyboard opens the nav hides and --kb-inset-bottom (set by
-   useKeyboardOpen) lifts the composer to ride right above the keyboard. */
+/* Mobile: the composer detaches from the thread flow and docks as a FIXED
+   band GLUED to the bottom nav — Threads' EXACT anatomy (their fixed band:
+   bottom: calc(nav-height-short + safe-inset), bg --background-primary,
+   0.5px --lines-primary top hairline, 8px paddings). The rest offset is a
+   CONSTANT (their trick — never derived from the visual viewport), so page
+   pans/rubber-bands can't move it; only the real docked-keyboard STATE
+   (wrapperKbOpen, from useKeyboardOpen) switches it to ride the keyboard
+   inset while the nav is hidden. */
 @media (max-width: 700px) {
   .wrapper {
     position: fixed;
     left: 0;
     right: 0;
-    /* Above the bottom nav (46px item + 2×6px padding = 58px, + safe area) at
-       rest; above the keyboard when it's open (whichever is larger). */
-    bottom: max(
-      calc(58px + env(safe-area-inset-bottom)),
-      var(--kb-inset-bottom, 0px)
-    );
+    /* Flush on the bottom nav: its exact total height (50px + safe inset). */
+    bottom: calc(50px + env(safe-area-inset-bottom, 0px));
     z-index: 39;
     margin: 0;
-    padding: 10px 12px;
+    padding: 8px;
     background: #fdfcf8;
-    border-top: 1px solid #ebe7dd;
+    border-top: 0.5px solid rgba(0, 0, 0, 0.15);
     /* Promote to its own compositor layer so iOS doesn't drag/jitter this
        bottom-fixed bar with the document during momentum & elastic overscroll
        (the app bar, being top-fixed, stays put without this — bottom-fixed bars
        are the ones prone to it). translateZ(0) is a visual no-op. */
     transform: translateZ(0);
+  }
+
+  /* Docked keyboard open: the nav hides (NavRail) and the composer rides
+     flush above the keyboard. State-gated — while closed (incl. the iPad
+     FLOATING keyboard, which never crosses the open threshold) the composer
+     ignores the jittery visual-viewport vars entirely. */
+  .wrapperKbOpen {
+    bottom: var(--kb-inset-bottom, 0px);
   }
 }
 
@@ -80,14 +88,17 @@
 .composeRow {
   display: flex;
   align-items: flex-start;
-  /* Threads' EXACT composer box (decoded from their markup): padding 6px on
-     every side (their x1yrsyyn/x10b6aqq + --x-paddingInline: 6px), 12px
-     column-gap between avatar · field · toolbar (their xtqikln), radius 24,
-     36px avatar/toolbar row inside. */
+  /* Threads' EXACT composer pill (decoded from their markup): a 0.5px
+     --barcelona-threadline border (warm #e5e0d3), radius 24, padding-block
+     6px + padding-inline 4px (their --x-paddingInline), TRANSPARENT on the
+     band (their pill carries no fill of its own), 12px column-gap between
+     avatar · field · toolbar (their xtqikln), 36px avatar row inside. */
   gap: 12px;
-  background: #f7f5f0;
-  border: 1px solid #e5e0d3;
+  background: transparent;
+  border: 0.5px solid #e5e0d3;
   border-radius: 24px;
+  /* Threads' exact pill padding: 6px block AND inline (their
+     --x-paddingInline: 6px — the send disc sits 6px off the pill edge). */
   padding: 6px;
 }
 
@@ -125,8 +136,7 @@
 }
 
 /* CRITICAL: the overlay must match the textarea pixel-perfect.
- * font-size 14px here (not 15px like in HomeCompose) — the reply uses
- * smaller text than the home compose. */
+ * font-size 15px — Threads' composer body size (same as HomeCompose). */
 .highlightLayer {
   position: absolute;
   top: 0;
@@ -138,7 +148,7 @@
   word-wrap: break-word;
   overflow: hidden;
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Helvetica, Arial, sans-serif;
-  font-size: 14px;
+  font-size: 15px;
   /* Threads' exact composer line-height (their --x-lineHeight: 1.4em). */
   line-height: 1.4;
   color: #1a1a1a;
@@ -165,7 +175,7 @@
   outline: none;
   resize: none;
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Helvetica, Arial, sans-serif;
-  font-size: 14px;
+  font-size: 15px;
   /* Threads' exact composer line-height (their --x-lineHeight: 1.4em). */
   line-height: 1.4;
   color: transparent;
@@ -203,48 +213,63 @@
 /* === Toolbar === */
 
 /* Toolbar to the RIGHT of the input, on the same row (icons/Reply) —
-   Threads' exact 12px gap between toolbar items (their xtqikln). */
+   Threads' exact 12px gap between toolbar items (their xtqikln) and their
+   FIXED 36px row height (xc9qbxq on the icon cluster): the bare 20px glyphs
+   center in it, so the row keeps the same height and vertical position with
+   or without the 36px send disc (without it the icons used to bottom out at
+   the field's flex-end baseline). */
 .toolbar {
   flex: none;
   display: flex;
   align-items: center;
+  height: 36px;
   gap: 12px;
   padding: 0;
 }
 
-/* Plain icon button inside the field (Threads-style — no own border/box).
-   36×36 touch target (their toolbar row height); idle glyph in their
-   --barcelona-secondary-icon (light: #999999); press = their exact
-   scale(0.97) at 0.15s (the xd3so5o/xx6bhzk pair on this very button). */
+/* Icon button inside the field — Threads' EXACT anatomy (decoded from their
+   CSS): a BARE 20px glyph, no 36px box, no hover wash. The glyph itself
+   reacts: hover scale(1.1) (their x1lcra6a), press scale(0.97) (xd3so5o),
+   transition transform 0.15s (xx6bhzk). Idle color = their
+   --barcelona-secondary-icon (#999999), kept on hover (only the scale moves).
+   Spacing comes from the toolbar's 12px column-gap (their xtqikln). */
 .attachButton {
   flex: none;
-  width: 36px;
-  height: 36px;
   background: transparent;
   border: 0;
-  border-radius: 50%;
   padding: 0;
   cursor: pointer;
   color: #999999;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 120ms ease, color 120ms ease, transform 0.15s ease;
+  transition: transform 0.15s ease;
 }
 
+@media (hover: hover) {
+  .attachButton:not(:disabled):hover {
+    transform: scale(1.1);
+  }
+}
+
+/* Declared AFTER the hover grow so the press wins while both apply. */
 .attachButton:not(:disabled):active {
   transform: scale(0.97);
-}
-
-.attachButton:hover {
-  background: #ebe7dd;
-  color: #1a1a1a;
 }
 
 .attachButton:disabled {
   opacity: 0.4;
   cursor: default;
   pointer-events: none;
+}
+
+/* Threads' icon-cluster end padding (their xf159sx: padding-inline-end 8px)
+   applies in the EMPTY state too: when an icon is the toolbar's LAST element
+   (no send disc yet) it keeps 8px off the pill padding — without this the
+   expand glyph hugged the pill edge. With content the disc is last and its
+   own -4px margin nets the same 8px after the 12px gap. */
+.toolbar .attachButton:last-child {
+  margin-inline-end: 8px;
 }
 
 .spacer {
@@ -278,22 +303,68 @@
   color: #1a1a1a;
 }
 
+/* Threads' EXACT send button (decoded from their CSS): a 36×36 ink disc
+   (their --barcelona-primary-button-background/text → our #1a1a1a/#fdfcf8)
+   holding their 12-viewBox arrow at 14px rotated 90° (points UP). It POPS in
+   when content appears — their exact entrance: opacity 0 + scale(0) → 1,
+   0.18s cubic-bezier(0.17, 0.84, 0.44, 1), transform-origin center. */
 .submitButton {
   position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  /* The toolbar's column-gap is 12 (their xtqikln); Threads separates the
+     icon cluster from the disc by 8px (their padding-inline-end: 8px on the
+     cluster) — the -4px nets exactly that. */
+  margin-inline-start: -4px;
   background: #1a1a1a;
   color: #fdfcf8;
   border: 0;
-  border-radius: 999px;
-  padding: 8px 18px;
-  font-size: 13px;
-  font-weight: 600;
-  font-family: inherit;
+  border-radius: 50%;
+  padding: 0;
   cursor: pointer;
-  /* Transition (opacity + the spring transform) comes from the global
-     .springPress class. */
+  transform-origin: center;
+  animation: submitPopIn 0.18s cubic-bezier(0.17, 0.84, 0.44, 1);
+  /* Threads' exact transform beat (their xx6bhzk transition-duration). */
+  transition: transform 0.15s ease;
 }
 
-/* While replying: hide the label (box kept → no resize) and center a spinner. */
+@keyframes submitPopIn {
+  0% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .submitButton,
+  .attachButton {
+    animation: none;
+    transition: none;
+  }
+
+  .submitButton:not(:disabled):hover,
+  .submitButton:not(:disabled):active,
+  .attachButton:not(:disabled):hover,
+  .attachButton:not(:disabled):active {
+    transform: none;
+  }
+}
+
+/* The up-arrow (their 14px icon slot, rotated 90° from the left-arrow). */
+.submitIcon {
+  display: inline-flex;
+  transform: rotate(90deg);
+}
+
+/* While replying: hide the icon (box kept → no resize) and center a spinner. */
 .submitLabelHidden {
   visibility: hidden;
 }
@@ -321,8 +392,16 @@
   }
 }
 
-.submitButton:hover {
-  opacity: 0.85;
+/* Threads' exact disc feedback: hover grows 1.05 (their x14snt5h), press
+   0.97 (xd3so5o) — transform only, no opacity dim. */
+@media (hover: hover) {
+  .submitButton:not(:disabled):hover {
+    transform: scale(1.05);
+  }
+}
+
+.submitButton:not(:disabled):active {
+  transform: scale(0.97);
 }
 
 .submitButton:disabled {
@@ -373,6 +452,12 @@
 
 /* === Error banner === */
 
+/* Rate limit (429): the shared warm notice takes the error banner's slot —
+   this only gives it the same gap to the composer row below. */
+.rateLimitNotice {
+  margin-bottom: 12px;
+}
+
 .errorBanner {
   display: flex;
   align-items: center;
@@ -422,7 +507,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: background 120ms ease, opacity 120ms ease;
+  transition: background 0.2s ease, opacity 0.2s ease;
 }
 
 .errorClose:hover {

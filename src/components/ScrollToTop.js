@@ -22,7 +22,7 @@ import { useLocation, useNavigationType } from "react-router-dom";
  *  - POP (back/forward): restores the saved position of that entry, with
  *    per-frame retries (the final height may arrive late) until landing
  *    EXACTLY or exhausting attempts.
- *  - PUSH back to a RAIL screen (/home, /search, /me): RESTORES the last
+ *  - PUSH back to a RAIL screen (/home, /search, /profile): RESTORES the last
  *    position of that screen instead of going to the top — keyed by FULL URL
  *    (pathname+search): only restores the exact match (returning to
  *    /search?q=x restores; opening /search?q=NEW is a new search → top).
@@ -57,7 +57,7 @@ const lastPosByUrl = new Map();
 
 // Rail screens with state cached outside the component (immediate height on
 // remount): only there is the PUSH restoration reliable.
-const RAIL_RESTORE_PATHS = new Set(["/home", "/search", "/me"]);
+const RAIL_RESTORE_PATHS = new Set(["/home", "/search", "/profile"]);
 
 function ScrollToTop() {
   const location = useLocation();

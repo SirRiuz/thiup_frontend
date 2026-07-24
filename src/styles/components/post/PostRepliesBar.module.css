@@ -1,0 +1,49 @@
+/* PostRepliesBar — Threads' exact bar between the OP and the replies list:
+   sort trigger left, "View activity" right, both in the quiet secondary tone.
+   Sits right under the OP's full-bleed divider; draws no divider of its own. */
+
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  /* Compact Threads rhythm: the 36px controls + a little air on both sides. */
+  padding: 5px 0;
+}
+
+/* "View activity" — quiet text control (Threads': label + 12px chevron). */
+.activity {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 6px 8px;
+  /* The chevron aligns with the content's right edge (padding cancelled). */
+  margin-inline-end: -8px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #9b9591;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.activity:hover {
+  background: #f0ece3;
+  color: #6b6b6b;
+}
+
+.activityChevron {
+  display: inline-flex;
+  color: currentColor;
+  /* Threads rotates their LEFT chevron 180° so it points right. */
+  transform: rotate(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .activity {
+    transition: none;
+  }
+}

@@ -5,7 +5,7 @@
      (--layout-pad-x), exactly like the thread view's .surface. No hover wash
      (Threads' feed rows don't highlight). */
   padding: 12px 0;
-  transition: background 120ms ease;
+  transition: background 0.2s ease;
   /* The whole row navigates (Threads-style; media/controls opt out in JS) —
      pointer everywhere, and no iOS tap flash on the plain click handler. */
   cursor: pointer;
@@ -77,25 +77,53 @@
   display: none;
 }
 
-/* Just-created thread: a brief warm highlight (paper tint #f3e3d3 + a terracotta
-   inset ring #d8b89a) that fades to the normal card so the user can spot it at
-   the top of the feed. Animates ONLY background-color + box-shadow (the ring is
-   an inset shadow, not a real border) → no layout shift, no nudging of other
-   cards. The .cardNew class is removed by FeedContext after the fade (so it
-   never re-triggers on scroll/re-render). */
+/* Just-created thread: a brief brand highlight (terracotta wash + 1px contour
+   ring) that fades to the normal card so the user can spot it at the top of
+   the feed. Animates ONLY background-color + box-shadow (the ring is an inset
+   shadow, not a real border) → no layout shift, no nudging of other cards.
+   The .cardNew class is removed by FeedContext after the fade (so it never
+   re-triggers on scroll/re-render). */
 .cardNew {
+  /* New stacking context so the overlay's z-index: -1 sits above the surface's
+     own background but below every child of the row. */
+  isolation: isolate;
+}
+
+/* The highlight lives on a FULL-BLEED overlay (same trick as the divider):
+   the row box has no side padding anymore (the container carries
+   --layout-pad-x), so painting the row itself left cream stripes at the
+   edges and the ring stopped short of the thread's real contour. */
+.cardNew::before {
+  content: "";
+  position: absolute;
+  inset: 0 calc(-1 * var(--layout-pad-x, 0px));
+  z-index: -1;
+  pointer-events: none;
   animation: cardHighlight 3600ms ease-out forwards;
 }
 
+/* Ignition → hold → fade. The brand terracotta (wash + 1px ring) contrasts
+   against the cream far better than the old #f3e3d3/#d8b89a pair, and the
+   opening beat is a soft inward ripple: a thick inner glow that COLLAPSES
+   into the contour ring (box-shadow spread animates numerically), expo-out.
+   Still background + box-shadow only — zero layout shift. */
 @keyframes cardHighlight {
-  0%,
+  0% {
+    background-color: rgba(168, 84, 50, 0.1);
+    box-shadow: inset 0 0 0 1px rgba(168, 84, 50, 0.5),
+      inset 0 0 0 26px rgba(168, 84, 50, 0.14);
+    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  16%,
   65% {
-    background-color: #f3e3d3;
-    box-shadow: inset 0 0 0 1px #d8b89a;
+    background-color: rgba(168, 84, 50, 0.1);
+    box-shadow: inset 0 0 0 1px rgba(168, 84, 50, 0.5),
+      inset 0 0 0 1px rgba(168, 84, 50, 0);
   }
   100% {
     background-color: transparent;
-    box-shadow: inset 0 0 0 1px transparent;
+    box-shadow: inset 0 0 0 1px rgba(168, 84, 50, 0),
+      inset 0 0 0 1px rgba(168, 84, 50, 0);
   }
 }
 
@@ -128,12 +156,12 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  /* No fade: a simple static highlight that disappears (with the card's own
-     120ms background transition) when the mark clears — no harsh flicker. */
-  .cardNew {
+  /* No fade: a simple static highlight that disappears when the mark clears
+     — no harsh flicker. */
+  .cardNew::before {
     animation: none;
-    background-color: #f3e3d3;
-    box-shadow: inset 0 0 0 1px #d8b89a;
+    background-color: rgba(168, 84, 50, 0.1);
+    box-shadow: inset 0 0 0 1px rgba(168, 84, 50, 0.5);
   }
   .newBadge {
     animation: none;

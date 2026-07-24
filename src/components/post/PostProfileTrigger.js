@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import PostProfileHoverCard from "./PostProfileHoverCard";
 import { useCurrentUser } from "../../contexts/CurrentUserContext";
 import styles from "../../styles/components/post/PostProfileTrigger.module.css";
@@ -22,20 +22,25 @@ function PostProfileTrigger({ mask, children, className }) {
   const showTimerRef = useRef(null);
   const hideTimerRef = useRef(null);
   const navigate = useNavigate();
+  const location = useLocation();
   const { currentUserMask } = useCurrentUser();
 
   // Click on the avatar/mask → the anonymous profile (your own mask goes to
-  // /me, the private version). stopPropagation: the trigger lives inside
+  // /profile, the private version). stopPropagation: the trigger lives inside
   // clickable rows (feed card nav zone) that must not also fire.
   const handleClick = (e) => {
     if (!mask?.id) return;
     e.stopPropagation();
     e.preventDefault();
-    navigate(
+    const target =
       currentUserMask?.id && mask.id === currentUserMask.id
-        ? "/me"
-        : `/m/${mask.id}`
-    );
+        ? "/profile"
+        : `/m/${mask.id}`;
+    // Already on that profile (your own rows on /profile, or the author's on
+    // /m/:id): navigating again would remount the screen and replay its
+    // entrance — a same-place click does nothing.
+    if (location.pathname === target) return;
+    navigate(target);
   };
 
   const handleKeyDown = (e) => {
