@@ -66,14 +66,24 @@ export function mapBackendRepliesToFrontend(results) {
 /**
  * Maps the complete response of GET /threads/<id>/responses/.
  *
- * @param {{ head: object, results: object[], next: string|null, count: number }} data
+ * `parents` (comment permalink): when the head is a reply, the backend sends
+ * its ancestor chain — root thread FIRST, immediate parent LAST — so the UI
+ * can render the Threads-style continuity above the head. Mapped with the
+ * same card mapper and carried INSIDE the thread object (`ancestors`) so the
+ * chain flows through the cache/seed plumbing with zero extra state.
+ *
+ * @param {{ head: object, parents?: object[], results: object[], next: string|null, count: number }} data
  * @returns {{ thread: object|null, replies: object[], next: string|null, count: number }}
  */
 export function mapBackendThreadToFrontend(data) {
   const head = data.head ? mapBackendPostToFrontend(data.head) : null;
   return {
     thread: head
-      ? { ...head, replyCount: data.count ?? head.repliesCount ?? 0 }
+      ? {
+          ...head,
+          replyCount: data.count ?? head.repliesCount ?? 0,
+          ancestors: (data.parents || []).map((p) => mapBackendPostToFrontend(p)),
+        }
       : null,
     replies: mapBackendRepliesToFrontend(data.results),
     next: data.next || null,

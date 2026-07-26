@@ -15,8 +15,10 @@
   left: -16px;
   right: -16px;
   bottom: 0;
-  height: 1px;
-  background: #ebe7dd;
+  /* Threads' exact divider weight (0.5px --lines-primary — one hairline
+     language with the feed/OP dividers). */
+  height: 0.5px;
+  background: rgba(0, 0, 0, 0.15);
 }
 
 /* Temporary highlight of the newly created reply: ring + warm background that
@@ -164,11 +166,11 @@
 }
 
 .maskId {
-  /* Threads-exact identity row: the username is the SAME SIZE as the body
-     (their name and body are both 15px system — hierarchy comes from weight
-     and color only, never from size). Same fluid clamp as .body so they stay
-     equal at every viewport. 600 / near-black, one line. */
-  font-size: clamp(14px, 13.1px + 0.25vw, 15px);
+/* Identity row at a FIXED 14px (Threads renders 15px SYSTEM font; Inter's
+     larger x-height reads bigger at equal size, so 14px Inter is the visual
+     match — the body keeps its own clamp). Hierarchy from weight/color. */
+  /* 600 / near-black, one line. */
+  font-size: 14px;
   color: #1a1a1a;
   font-weight: 600;
   white-space: nowrap;
@@ -178,22 +180,21 @@
 }
 
 /* OP tag (Threads-style "· Author"): the reply author is the thread's Original
-   Poster. Quiet meta — EXACTLY the timestamp's type (same size as the name,
-   400, light #9b9591 ≈ Threads' light-theme --text-secondary #999); only the
-   weight/color drop marks it as meta. */
+   Poster. Quiet meta — EXACTLY the timestamp's type (14px, 400, #a3a3a3);
+   only the weight/color drop marks it as meta. */
 .authorTag {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: clamp(14px, 13.1px + 0.25vw, 15px);
-  color: #9b9591;
+  font-size: 14px;
+  color: #a3a3a3;
   font-weight: 400;
   white-space: nowrap;
 }
 
 .authorDivider {
-  color: #9b9591;
-  font-size: clamp(14px, 13.1px + 0.25vw, 15px);
+  color: #a3a3a3;
+  font-size: 14px;
   line-height: 1;
 }
 
@@ -203,13 +204,12 @@
 }
 
 .timestamp {
-  /* Threads-exact <time>: same size as the name, 400, light secondary
-     (#9b9591 ≈ their light-theme #999 — NOT the darker #6b6b6b, which
-     competed with the name). Their time sits centered in a min 24px box,
-     which is what gives short stamps ("1m", "4d") their even rhythm. */
-  font-size: clamp(14px, 13.1px + 0.25vw, 15px);
+  /* Threads-exact <time>: 14px like the name, 400, muted #a3a3a3. Their
+     time sits centered in a min 24px box, which is what gives short stamps
+     ("1m", "4d") their even rhythm. */
+  font-size: 14px;
   font-weight: 400;
-  color: #9b9591;
+  color: #a3a3a3;
   display: inline-block;
   min-width: 24px;
   text-align: center;
@@ -231,9 +231,11 @@
 
 .body {
   color: #1a1a1a;
-  /* Fluid body type — identical to the OP body (Threads-style): scales 14px →
-     15px by viewport, unitless 1.4 line-height (their 140%). */
-  font-size: clamp(14px, 13.1px + 0.25vw, 15px);
+  /* Body at a FIXED 14px — the Inter-compensated match for Threads' measured
+     15px SYSTEM font (Inter's larger x-height reads bigger at equal size).
+     Unitless 1.4 line-height (their 140%). SAME size as replies (Threads
+     doesn't size-distinguish OP from replies). */
+  font-size: 14px;
   line-height: 1.4;
   letter-spacing: -0.01em;
   /* Threads-exact rhythm: 3px below the header row, -2px bottom (their

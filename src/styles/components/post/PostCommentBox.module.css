@@ -10,7 +10,9 @@
    * the side padding restores the content inset. */
   margin: 0 calc(-1 * var(--layout-pad-x, 12px));
   padding: 16px var(--layout-pad-x, 12px) 0;
-  border-top: 1px solid #ebe7dd;
+  /* Threads' exact divider weight (0.5px --lines-primary) — same hairline as
+     the mobile band's top edge and the reply dividers above. */
+  border-top: 0.5px solid rgba(0, 0, 0, 0.15);
 }
 
 /* Mobile: the composer detaches from the thread flow and docks as a FIXED

@@ -2,7 +2,8 @@
 
 .skeleton {
   padding: 18px 0;
-  border-bottom: 1px solid #ebe7dd;
+  /* Mirrors the real reply divider (0.5px --lines-primary). */
+  border-bottom: 0.5px solid rgba(0, 0, 0, 0.15);
 }
 
 .header {

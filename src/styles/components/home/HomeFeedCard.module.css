@@ -49,15 +49,18 @@
 /* Divider between cards — full-bleed: the ::after cancels the container's side
    padding (--layout-pad-x) so the line spans edge-to-edge (to the surface edge
    on home, the column edge on search/me), exactly like the thread view's reply
-   dividers. A plain border-bottom would stop at the 16px inset (a "cut" line). */
+   dividers. A plain border-bottom would stop at the 16px inset (a "cut" line).
+   Weight/tone are Threads' EXACT feed divider (measured on threads.com:
+   border 0.5px solid --lines-primary rgba(0,0,0,0.15)) — the old 1px #ebe7dd
+   read twice as heavy and made the feed feel more spaced than theirs. */
 .card::after {
   content: "";
   position: absolute;
   left: calc(-1 * var(--layout-pad-x, 16px));
   right: calc(-1 * var(--layout-pad-x, 16px));
   bottom: 0;
-  height: 1px;
-  background: #ebe7dd;
+  height: 0.5px;
+  background: rgba(0, 0, 0, 0.15);
 }
 
 /* Only the text/identity zone navigates to the thread (the card is NOT a button
@@ -75,6 +78,119 @@
 
 .cardLast::after {
   display: none;
+}
+
+/* === Conversation preview (X-style two-story card) ===
+   The root's best direct reply under the main row, threadline-connected.
+   .rootSection wraps the root grid so the trunk anchors on ITS box. */
+.rootSection {
+  position: relative;
+}
+
+/* Threadline trunk (PostAncestor's exact spec, re-anchored): 2px #e5e0d3
+   centered on the 36px gutter lane (18 - 1), floating segment with 4px
+   breathing gaps at BOTH avatars. Top = 4px below the root avatar (4px cell
+   offset + 36px avatar + 4px gap = 44 — the card's 12px padding lives on
+   .card, OUTSIDE this box). Bottom overshoots the section by 12px: the
+   preview avatar sits 16px below (12px block margin + 4px cell offset), so
+   the trunk stops 4px short of it. */
+.previewTrunk {
+  position: absolute;
+  left: 17px;
+  top: 44px;
+  bottom: -12px;
+  width: 2px;
+  border-radius: 2px;
+  background: #e5e0d3;
+}
+
+/* The preview row: same 36px gutter + 12px gap lane as the root grid. */
+.replyPreview {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  column-gap: 12px;
+  align-items: start;
+  margin-top: 12px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.previewAvatarCell {
+  display: flex;
+  justify-content: center;
+  /* Threads' avatar-cell offset — same as the root grid. */
+  padding-top: 4px;
+}
+
+.previewContent {
+  min-width: 0;
+  /* Media bleed, reply-style asymmetric contract (same as PostReply
+     .contentCell): START cancels the avatar gutter (36) + grid gap (12) +
+     the container padding so the track reaches the sheet edge; END cancels
+     only the container padding. */
+  --media-bleed-x: calc(48px + var(--layout-pad-x, 0px));
+  --media-bleed-end: var(--layout-pad-x, 0px);
+}
+
+/* The preview header hosts its own INLINE three-dots (PostAncestor's
+   anatomy) — drop the root header's 38px right reserve (that room is for
+   the CARD's absolutely-positioned menu, which this row doesn't overlap).
+   Compound selector: .header is declared LATER in this file, so a lone
+   .previewHeader (equal specificity) loses the cascade and the 38px stays
+   — which pushed the preview's dots ~40px left of the root's. */
+.header.previewHeader {
+  padding-right: 0;
+}
+
+/* Column-aligns the preview's dots with the root's: the CARD menu is
+   absolute at right -8px (glyph center = edge - 10px); the inline trigger's
+   own -6px margin leaves its center at edge - 12px — 2px short. */
+.previewMenu {
+  margin-right: -2px;
+}
+
+/* Pushes the preview's three-dots to the row's right edge. */
+.previewSpacer {
+  flex: 1;
+}
+
+/* Keyboard-accessible navigable zone (the preview body). */
+.previewNavZone {
+  cursor: pointer;
+}
+
+.previewNavZone:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px #c5a572;
+  border-radius: 6px;
+}
+
+/* Reply text, clamped to 3 lines (a preview, not the full reply — the click
+   opens its permalink). Same fluid body type as the root. */
+.previewBody {
+  color: #1a1a1a;
+  font-size: 14px;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+  margin: 3px 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* "· Author" quiet meta (the OP continuing their thread) — timestamp-identical
+   type, PostReply's exact spec. */
+.previewAuthorTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #a3a3a3;
+  font-weight: 400;
+  white-space: nowrap;
 }
 
 /* Just-created thread: a brief brand highlight (terracotta wash + 1px contour
@@ -174,21 +290,21 @@
    of extra air on each side beyond the header's 6px gap. */
 .badgeDivider {
   /* Same tone/size as the replies' "· Author" divider (the new meta scale). */
-  color: #9b9591;
-  font-size: clamp(14px, 13.1px + 0.25vw, 15px);
+  color: #a3a3a3;
+  font-size: 14px;
   line-height: 1;
 }
 
 .mineBadge {
   /* Threads-style quiet meta — EXACTLY the replies' "· Author" spec
-     (PostReply .authorTag): timestamp-identical type (body-sized, 400, light
-     #9b9591) after the dot divider. The old warm pill shouted next to the new
+     (PostReply .authorTag): timestamp-identical type (14px, 400, #a3a3a3)
+     after the dot divider. The old warm pill shouted next to the
      whisper-quiet identity row. */
   flex: none;
   font-family: inherit;
-  font-size: clamp(14px, 13.1px + 0.25vw, 15px);
+  font-size: 14px;
   font-weight: 400;
-  color: #9b9591;
+  color: #a3a3a3;
   white-space: nowrap;
 }
 
@@ -206,13 +322,12 @@
 }
 
 .maskId {
-  /* Same typography as the thread view's header (Post .opMaskId / PostReply
-     .maskId): Threads-exact — the name is the SAME SIZE as the body (15px in
-     Threads; hierarchy comes from weight/color only, never size). Same fluid
-     clamp as .body so they stay equal at every viewport. One uniform username
-     row across the app. */
+  /* Identity row at a FIXED 14px (Threads renders 15px SYSTEM font; Inter's
+     larger x-height reads bigger at equal size, so 14px Inter is the visual
+     match — the body keeps its own clamp). Hierarchy from weight/color. */
+  /* One uniform username row across the app (Post .opMaskId / PostReply .maskId). */
   font-family: inherit;
-  font-size: clamp(14px, 13.1px + 0.25vw, 15px);
+  font-size: 14px;
   color: #1a1a1a;
   font-weight: 600;
   white-space: nowrap;
@@ -235,9 +350,9 @@
      secondary (#9b9591 ≈ Threads' light-theme #999 — the old darker #6b6b6b
      competed with the name), centered in a min 24px box (their time element:
      even rhythm for short stamps like "1m" / "4d"). */
-  font-size: clamp(14px, 13.1px + 0.25vw, 15px);
+  font-size: 14px;
   font-weight: 400;
-  color: #9b9591;
+  color: #a3a3a3;
   white-space: nowrap;
   display: inline-block;
   min-width: 24px;
@@ -267,11 +382,11 @@
 
 .body {
   color: #1a1a1a;
-  /* Fluid body type — identical to the thread view (OP + replies), Threads-
-     style: scales 14px → 15px by viewport with a unitless 1.4 line-height, so
-     the feed text matches the thread everywhere. Keeps the subtle negative
-     tracking that brings Inter closer to the Chirp/Threads look. */
-  font-size: clamp(14px, 13.1px + 0.25vw, 15px);
+  /* Body at a FIXED 14px — the Inter-compensated match for Threads' measured
+     15px SYSTEM font (Inter's larger x-height reads bigger at equal size).
+     Unitless 1.4 line-height (their 140%). SAME size as replies (Threads
+     doesn't size-distinguish OP from replies). */
+  font-size: 14px;
   line-height: 1.4;
   letter-spacing: -0.01em;
   /* No own bottom margin (Threads): the gap below comes from the media

@@ -59,6 +59,18 @@ const lastPosByUrl = new Map();
 // remount): only there is the PUSH restoration reliable.
 const RAIL_RESTORE_PATHS = new Set(["/home", "/search", "/profile"]);
 
+/**
+ * Whether this history entry has a scroll position the manager will restore
+ * on POP. Screens with their own landing anchor (the comment permalink's
+ * focused-reply dock) use it to decide: no saved position → fresh arrival,
+ * reload or cold deep link → anchor; saved position → real back/forward →
+ * stand down and let the restoration win. Positions live in memory only, so
+ * a reload reports false — exactly right (there is nothing to restore).
+ */
+export function hasSavedScrollPosition(key) {
+  return positions.has(key);
+}
+
 function ScrollToTop() {
   const location = useLocation();
   const navigationType = useNavigationType();

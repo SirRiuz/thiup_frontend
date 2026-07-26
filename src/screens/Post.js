@@ -1,21 +1,29 @@
-import { useEffect, useRef, useState } from "react";
-import { useNavigate, useParams, useLocation, Navigate } from "react-router-dom";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+  useNavigate,
+  useParams,
+  useLocation,
+  Navigate,
+} from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import BrandLogo from "../components/BrandLogo";
 import MaskAvatar from "../components/MaskAvatar";
 import PostCommentBox from "../components/post/PostCommentBox";
-import PostLoadMoreButton from "../components/post/PostLoadMoreButton";
 import PostOptionsMenu from "../components/post/PostOptionsMenu";
 import PostProfileTrigger from "../components/post/PostProfileTrigger";
 import PostReactionPicker from "../components/post/PostReactionPicker";
 import PostRepliesBar from "../components/post/PostRepliesBar";
 import ReactionStack from "../components/post/ReactionStack";
+import PostAncestor from "../components/post/PostAncestor";
 import PostInitialSkeleton from "../components/post/PostInitialSkeleton";
 import PostReply from "../components/post/PostReply";
 import PostReplySkeleton from "../components/post/PostReplySkeleton";
 import ThreadMedia from "../components/media/ThreadMedia";
 import PostThreadNotFound from "../components/post/PostThreadNotFound";
+import HomeFeedRetryBanner from "../components/home/HomeFeedRetryBanner";
+import { hasSavedScrollPosition } from "../components/ScrollToTop";
 import { useThread } from "../hooks/useThread";
+import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
 import usePageTitle from "../hooks/usePageTitle";
 import useMobileSurfacePage from "../hooks/useMobileSurfacePage";
 import { useIsMobile } from "../hooks/useIsMobile";
@@ -65,6 +73,7 @@ function Post() {
     replies,
     isLoading,
     isLoadingMore,
+    loadMoreError,
     isReloadingReplies,
     isCreatingReply,
     createReplyError,
@@ -95,6 +104,8 @@ function Post() {
   const [highlightedReplyId, setHighlightedReplyId] = useState(null);
   const commentBoxRef = useRef(null);
   const repliesSectionRef = useRef(null);
+  const opSectionRef = useRef(null);
+  const ancestorChainRef = useRef(null);
   const pageRef = useRef(null);
 
   // Auto-scroll to the very top of the document after a successful sort change
@@ -166,6 +177,18 @@ function Post() {
   // here we only render its state. Aliases for JSX readability.
   const post = thread;
   const displayReplies = replies;
+  // Comment permalink (Threads' thread continuity): when the head is a reply,
+  // the backend sends its ancestor chain — root thread FIRST. Rendered above
+  // the OP section, threadline-connected. Empty for root threads and while a
+  // seeded/loading head hasn't resolved yet (the chain pops in with the fetch).
+  const ancestors = post?.ancestors || [];
+  // Stable STRUCTURE flag for the chain effects: the seed→fetch transition
+  // replaces the `post` OBJECT (new identity, same structure) — effects
+  // keyed on `post` were cleaned up right then (killing the scroll-anchoring
+  // observer mid-flight, feed clicks only; deep links set post once and
+  // never hit this) while the entry gate blocked their re-run. Keying on
+  // the boolean keeps them alive across the swap.
+  const hasAncestorChain = ancestors.length > 0;
 
   // Total replies from the backend (DRF count, already mapped to thread.replyCount).
   // Empty while loading; plural-aware once the thread is resolved.
@@ -195,6 +218,149 @@ function Post() {
     const clean = String(tag).replace(/^#/, "");
     navigate(`/search?q=${encodeURIComponent(`#${clean}`)}`);
   };
+
+  // Ancestor row click → that node's OWN permalink (Threads' continuity: every
+  // node of the chain is a link to its page). Seeded like a feed-card
+  // navigation — INCLUDING the part of the chain we already know (everything
+  // above the clicked node), so the target page paints chain-complete on its
+  // first frame and anchors pre-paint; the fetch only reconciles below.
+  const handleOpenAncestor = (ancestor, index) => {
+    navigate(`/p/${ancestor.id}`, {
+      state: {
+        seedThread: { ...ancestor, ancestors: ancestors.slice(0, index) },
+      },
+    });
+  };
+
+  // === Comment-permalink landing anchor (Threads' behavior) ===============
+  // A permalink with an ancestor chain must land FOCUSED on the clicked
+  // reply, not on the root: the chain renders ABOVE the head, so without
+  // this the fetch shoves the head below the fold (scroll stays at 0 from
+  // the navigation) and the user reads the wrong post.
+  //
+  // WHEN: whenever this history entry has NO saved scroll position in the
+  // scroll manager — one rule that covers every fresh arrival: a PUSH from a
+  // preview/ancestor click, a cold deep link, a RELOAD (the entry keeps its
+  // location.key but the in-memory positions are gone — nothing to restore,
+  // so anchor), and re-entering the same permalink. Real back/forward HAS a
+  // saved position → stand down and let the manager restore it exactly.
+  //
+  // HOW: pin the head section just under the 60px app bar. First pass runs
+  // pre-paint (layout effect, after ScrollToTop's scroll-to-0 — it mounts
+  // earlier in the tree), then RE-ASSERTS per frame for ~0.5s: late layout
+  // (the initial-load scroll lock releasing, ancestor media resolving)
+  // otherwise drifts the head after the single early scroll — the same
+  // per-frame retry technique as the manager's own restoreTo. Any real user
+  // scroll input aborts immediately (never fight the user).
+  // GUARANTEED scroll room — deterministic and present on EVERY visit type
+  // (push, back/forward AND reload), not just when the anchor fires: the
+  // surface stretches to `100vh - 60px + head offset`, i.e. exactly one full
+  // column BELOW the head plus the chain above it, so the head can always
+  // dock under the bar AND any position the scroll manager saved on a
+  // previous visit stays reachable after remount (the old post-anchor grow
+  // was cleaned up on exit, which stranded POP restores mid-way — and it
+  // measured transient layouts, skeletons included, causing the grow-then-
+  // shrink jump). Function of the CHAIN's height only (ResizeObserver tracks
+  // ancestor media resolving) — never of the replies below.
+  useLayoutEffect(() => {
+    const op = opSectionRef.current;
+    const chain = ancestorChainRef.current;
+    if (!hasAncestorChain || !op || !chain) return undefined;
+    const surface = op.parentElement; // .opSection is a direct child of .surface
+    if (!surface) return undefined;
+    const apply = () => {
+      surface.style.minHeight = `calc(100vh - 60px + ${op.offsetTop}px)`;
+    };
+    apply();
+    // Observe the CHAIN wrapper, never the surface: the surface's box is
+    // stretched to this very min-height, so its size does not change when
+    // the chain grows (ancestor media resolving) and a surface observer
+    // never fires. Re-applying the same value causes no resize loop.
+    const observer = new ResizeObserver(apply);
+    observer.observe(chain);
+    return () => {
+      observer.disconnect();
+      surface.style.minHeight = "";
+    };
+  }, [hasAncestorChain]);
+
+  useLayoutEffect(() => {
+    if (!hasAncestorChain) return undefined;
+    // Real back/forward: the manager restores the exact saved position.
+    // (No "once per entry" ref gate here: StrictMode double-invokes mount
+    // effects — the first cleanup disconnected the pinning observer and a
+    // ref gate blocked the second run from re-registering it, which is why
+    // seeded feed clicks drifted while deep links held. Re-running the
+    // whole effect is idempotent: it can only fire pre-paint at the chain's
+    // first render for this entry, never after a user scroll.)
+    if (hasSavedScrollPosition(location.key)) return undefined;
+    const op = opSectionRef.current;
+    if (!op) return undefined;
+
+    // The scroll-room effect above (declared FIRST → already ran in this
+    // commit) guarantees the target is reachable — the anchor only scrolls.
+    // Landing = the head section's top edge at the bar's bottom: the parent
+    // content is FULLY hidden above the fold and only the threadline stub in
+    // the chained section's 16px top padding peeks — the "there is thread
+    // above, scroll up" indicator.
+    let aborted = false;
+    const anchor = () => {
+      if (aborted) return;
+      // +1px bias: sub-pixel layout rounding could leave a hairline of the
+      // parent peeking above the bar — land one pixel deeper so the parent
+      // is ALWAYS fully hidden (the trunk stub in the chained padding stays
+      // the only "there is thread above" indicator).
+      window.scrollTo(
+        0,
+        Math.max(0, op.getBoundingClientRect().top + window.scrollY - 60 + 1)
+      );
+    };
+
+    anchor();
+
+    // MANUAL SCROLL ANCHORING: content ABOVE the head keeps settling after
+    // the landing (ancestor media resolving, font swap) and every growth
+    // shifted the head down, exposing the parent's tail — a fixed-length
+    // retry loop always lost that race. Instead, compensate: whenever the
+    // CHAIN's height changes, re-anchor so the head stays visually pinned.
+    // The observed box MUST be the chain wrapper: the surface's box is
+    // min-height-stretched (scroll room), so it does not resize when the
+    // chain grows and a surface observer never fires — the exact bug that
+    // kept exposing the parent's tail on production media without stored
+    // dimensions. Active until the FIRST user scroll gesture — from then on
+    // the page belongs to the user.
+    const observer = new ResizeObserver(anchor);
+    const chain = ancestorChainRef.current;
+    if (chain) observer.observe(chain);
+
+    // One extra assert right after first paint (belt: the pre-paint scroll
+    // can clamp if the room's min-height landed in this same commit).
+    const rafId = requestAnimationFrame(anchor);
+
+    const stop = () => {
+      aborted = true;
+      observer.disconnect();
+    };
+    window.addEventListener("wheel", stop, { passive: true });
+    window.addEventListener("touchstart", stop, { passive: true });
+
+    return () => {
+      stop();
+      cancelAnimationFrame(rafId);
+      window.removeEventListener("wheel", stop);
+      window.removeEventListener("touchstart", stop);
+    };
+  }, [hasAncestorChain, location.key]);
+
+  // Infinite scroll for the replies (same engine as the feeds): a sentinel
+  // after the list prefetches the next page one screen ahead. Stands down
+  // while ANY fetch is in flight and after a pagination failure (the retry
+  // banner takes over — no self-re-firing loop on persistent errors).
+  const repliesSentinelRef = useInfiniteScroll({
+    onLoadMore: loadMore,
+    hasMore,
+    isLoading: isLoading || isLoadingMore || isReloadingReplies || !!loadMoreError,
+  });
 
   const handleReplyClick = (target) => {
     setReplyingTo(target);
@@ -428,8 +594,32 @@ function Post() {
         <>
       {/* Elevated surface: lifts the thread off the page bg so it isn't flat. */}
       <div className={styles.surface}>
+      {/* Ancestor chain (comment permalink): root → … → immediate parent,
+          each row navigable to its own /p/:id, threadline-connected down to
+          the focused head below. Nothing renders for a root thread. The
+          wrapper is the CHAIN's own resize target: the surface's box is
+          min-height-stretched (scroll room), so observing IT never fires
+          when the chain grows — this box's height IS the chain's. */}
+      {ancestors.length > 0 && (
+        <div ref={ancestorChainRef}>
+          {ancestors.map((ancestor, i) => (
+            <PostAncestor
+              key={ancestor.id}
+              post={ancestor}
+              isRoot={i === 0}
+              onOpen={() => handleOpenAncestor(ancestor, i)}
+              onHashtagClick={handleHashtagClick}
+            />
+          ))}
+        </div>
+      )}
       <section
-        className={cx(styles.opSection, hasReplies ? styles.opSectionDivided : "")}
+        ref={opSectionRef}
+        className={cx(
+          styles.opSection,
+          hasReplies ? styles.opSectionDivided : "",
+          ancestors.length > 0 ? styles.opSectionChained : ""
+        )}
       >
         <div className={styles.opHeader}>
           {/* One line (Threads-style), same pattern as replies: avatar + mask
@@ -625,7 +815,24 @@ function Post() {
         )}
       </section>
 
-      {hasMore && !isLoadingMore && <PostLoadMoreButton onClick={loadMore} />}
+      {/* Invisible pagination sentinel (replaces the old "Load more replies"
+          button): kept mounted through pagination (the hook's isLoading gate
+          guards re-fires) so consecutive pages chain seamlessly; unmounted on
+          failure — the retry banner below is the only affordance then. */}
+      {hasMore && !isLoading && !loadMoreError && (
+        <div
+          ref={repliesSentinelRef}
+          className={styles.sentinel}
+          aria-hidden="true"
+        />
+      )}
+      {loadMoreError && (
+        <HomeFeedRetryBanner
+          error={loadMoreError}
+          onRetry={loadMore}
+          isRetrying={isLoadingMore}
+        />
+      )}
 
       {/* Composer lives INSIDE the elevated card (Threads-style), separated from
           the replies by its own top divider. .composerDock pins it to the

@@ -17,6 +17,7 @@ const SHOW_NEW_BADGE = false;
 function HomeFeedCard({
   post,
   onClick,
+  onReplyClick,
   onHashtagClick,
   isLast,
   isNew,
@@ -36,6 +37,7 @@ function HomeFeedCard({
     viewsCount,
     reactions = [],
     media,
+    topReply,
   } = post;
 
   const renderOptions = {
@@ -76,6 +78,48 @@ function HomeFeedCard({
     onClick?.(e);
   };
 
+  // Conversation preview (X-style): the preview block navigates to the
+  // REPLY's own permalink (which opens with its ancestor chain). Same
+  // guard pattern as the card: media frames, the options menu, the profile
+  // triggers and the keyboard navZone keep their own behavior.
+  //
+  // The seed carries the STRUCTURE this card already knows — the reply as
+  // head + the root as its ancestor chain (a preview reply is always
+  // depth 1) — so the permalink paints chain-complete on its FIRST frame
+  // and anchors pre-paint: nothing pops in above the head later (the fetch
+  // only reconciles and fills the reply's own replies BELOW the fold).
+  // Reloads/deep links have no seed and keep the normal fetch-first flow.
+  const openPreviewReply = () => {
+    if (!onReplyClick || !topReply) return;
+    const { topReply: _omit, ...rootCard } = post;
+    onReplyClick({ ...topReply, ancestors: [rootCard] });
+  };
+
+  const handlePreviewClick = (e) => {
+    e.stopPropagation(); // never bubble into the root card's navigation
+    if (
+      e.target.closest(
+        "[data-frame], [data-hover-card], button, a, [role='link'], [role='button']"
+      )
+    ) {
+      return;
+    }
+    openPreviewReply();
+  };
+
+  const handlePreviewNavClick = (e) => {
+    e.stopPropagation();
+    openPreviewReply();
+  };
+
+  const handlePreviewKeyDown = (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      e.stopPropagation();
+      openPreviewReply();
+    }
+  };
+
   return (
     <article
       className={cx(styles.card, isLast ? styles.cardLast : "", isNew ? styles.cardNew : "")}
@@ -93,7 +137,11 @@ function HomeFeedCard({
 
       {/* Threads feed-row layout (their 48px threadline lane): avatar in a left
           gutter; username + body + media + stats stacked in the content column
-          — same two-column grid as PostReply. */}
+          — same two-column grid as PostReply. Wrapped in .rootSection so the
+          conversation preview's trunk can anchor on ITS box (top = below the
+          root avatar, bottom overshoots into the preview's avatar). */}
+      <div className={styles.rootSection}>
+      {topReply && <div className={styles.previewTrunk} aria-hidden="true" />}
       <div className={styles.grid}>
         <div className={styles.avatarCell}>
           <PostProfileTrigger mask={mask}>
@@ -221,6 +269,105 @@ function HomeFeedCard({
       </footer>
         </div>
       </div>
+      </div>
+
+      {/* Conversation preview (X-style second story): the root's BEST direct
+          reply — attached by the backend only when it EARNED it (self-thread
+          or the reactors gates), so most cards carry none. Threadline-
+          connected to the root avatar; the row opens the reply's own
+          permalink (which renders the full ancestor chain). Header carries
+          the reply's OWN three-dots menu (outside the navZone — PostAncestor's
+          anatomy); body is 3-line clamped; media renders for real (carousel/
+          video/NSFW via ThreadMedia, reply-style bleed). */}
+      {topReply && (
+        <div className={styles.replyPreview} onClick={handlePreviewClick}>
+          <div className={styles.previewAvatarCell}>
+            <PostProfileTrigger mask={topReply.mask}>
+              <MaskAvatar
+                seed={topReply.mask.id}
+                size={36}
+                online={topReply.mask.isOnline}
+              />
+            </PostProfileTrigger>
+          </div>
+          <div className={styles.previewContent}>
+            <header className={cx(styles.header, styles.previewHeader)}>
+              <PostProfileTrigger mask={topReply.mask}>
+                <span className={styles.maskId}>{topReply.mask.id}</span>
+              </PostProfileTrigger>
+              <span className={styles.timestamp}>{topReply.time}</span>
+              {/* The OP continuing their own thread — quiet "· Author" meta
+                  (is_op computed vs the ROOT author, boolean only). */}
+              {topReply.isOp && (
+                <span
+                  className={styles.previewAuthorTag}
+                  aria-label={t("post.opAuthor")}
+                >
+                  <span className={styles.badgeDivider} aria-hidden="true">
+                    ·
+                  </span>
+                  {t("post.author")}
+                </span>
+              )}
+              <span className={styles.previewSpacer} />
+              {/* The reply's own three-dots (View details / Copy link /
+                  Report) — full post shape, every option functional;
+                  .previewMenu column-aligns its glyph with the root's. */}
+              <PostOptionsMenu
+                post={topReply}
+                variant="inline"
+                className={styles.previewMenu}
+              />
+            </header>
+            {/* Keyboard-accessible navigable zone (the body) — the menu and
+                media stay outside it, PostAncestor's exact anatomy. */}
+            <div
+              className={styles.previewNavZone}
+              role="link"
+              tabIndex={0}
+              aria-label={t("home.openThread")}
+              onClick={handlePreviewNavClick}
+              onKeyDown={handlePreviewKeyDown}
+            >
+              <p className={styles.previewBody}>
+                {renderTextWithHashtags(
+                  topReply.text,
+                  styles.hashtag,
+                  onHashtagClick,
+                  renderOptions
+                )}
+              </p>
+            </div>
+            {topReply.media && topReply.media.length > 0 && (
+              <ThreadMedia items={topReply.media} />
+            )}
+            <footer className={styles.stats}>
+              <ReactionStack
+                reactions={topReply.reactions}
+                className={styles.statReactions}
+              />
+              {topReply.repliesCount > 0 && (
+                <span className={styles.statWithIcon}>
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+                  </svg>
+                  {topReply.repliesCount}
+                </span>
+              )}
+            </footer>
+          </div>
+        </div>
+      )}
     </article>
   );
 }

@@ -405,6 +405,9 @@ function MyThreads() {
                   post={post}
                   isLast={idx === posts.length - 1 && !hasMore}
                   onClick={() => handlePostClick(post)}
+                  // Conversation preview → the reply's own permalink (same
+                  // seeded navigation; the reply IS a post shape).
+                  onReplyClick={handlePostClick}
                   onHashtagClick={handleHashtagClick}
                   // Every thread here is the user's own — the "Your thread" tag
                   // would be redundant on this screen.

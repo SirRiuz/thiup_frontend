@@ -26,7 +26,9 @@ import { HASHTAG_RE } from "../../utils/hashtags";
 import styles from "../../styles/components/compose/ComposeModal.module.css";
 
 const MIN_HEIGHT = 96;
-const MAX_CHARS = 1000;
+// Threads' exact limit (500 for posts AND replies — a reply IS a post there
+// too). Mirrored server-side by THREAD_TEXT_MAX_LENGTH; keep both in sync.
+const MAX_CHARS = 500;
 const ERROR_AUTO_DISMISS_MS = 8000;
 
 // The backend may return validation messages (400) that are shown as-is;

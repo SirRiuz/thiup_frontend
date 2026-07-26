@@ -332,6 +332,14 @@
   --media-bleed-x: var(--layout-pad-x, 0px);
 }
 
+/* Comment permalink: with an ancestor chain above, the OP opens with the row
+   rhythm so the last ancestor's trunk (which overshoots its row by 12px)
+   stops exactly 4px above the OP avatar — the same breathing gap as between
+   ancestor rows (their avatar sits at 12px padding + 4px cell offset). */
+.opSectionChained {
+  padding-top: 16px;
+}
+
 /* When there ARE replies, the OP gets the SAME edge-to-edge divider as the
    replies (uniform separators, Threads-style) — bottom padding matches a
    reply's so the line sits at the same rhythm. With no replies there's no
@@ -345,12 +353,14 @@
   position: absolute;
   /* .opSection is a DIRECT child of .surface (inset only by the surface's 16px
      padding) — so -16px reaches the card edge. (Replies also use -16px now that
-     .repliesList adds no extra padding.) Both land on the same line. */
+     .repliesList adds no extra padding.) Both land on the same line.
+     Threads' exact divider weight (0.5px --lines-primary, one tone with the
+     feed dividers). */
   left: -16px;
   right: -16px;
   bottom: 0;
-  height: 1px;
-  background: #ebe7dd;
+  height: 0.5px;
+  background: rgba(0, 0, 0, 0.15);
 }
 
 .opHeader {
@@ -366,10 +376,11 @@
 }
 
 .opMaskId {
-  /* Threads-exact identity row: the name is the SAME SIZE as the body (15px in
-     Threads — hierarchy from weight/color only, never size). Same fluid clamp
-     as .opBody so they stay equal at every viewport. 600 / near-black. */
-  font-size: clamp(14px, 13.1px + 0.25vw, 15px);
+/* Identity row at a FIXED 14px (Threads renders 15px SYSTEM font; Inter's
+     larger x-height reads bigger at equal size, so 14px Inter is the visual
+     match — the body keeps its own clamp). Hierarchy from weight/color. */
+  /* 600 / near-black. */
+  font-size: 14px;
   color: #1a1a1a;
   font-weight: 600;
   white-space: nowrap;
@@ -379,12 +390,11 @@
 }
 
 .opMetaLine {
-  /* Threads-exact <time>: same size as the name, 400, light secondary
-     (#9b9591 ≈ their light-theme #999), centered in a min 24px box like their
-     time element (even rhythm for short stamps). */
-  font-size: clamp(14px, 13.1px + 0.25vw, 15px);
+  /* Threads-exact <time>: 14px like the name, 400, muted #a3a3a3, centered
+     in a min 24px box like their time element (even rhythm for short stamps). */
+  font-size: 14px;
   font-weight: 400;
-  color: #9b9591;
+  color: #a3a3a3;
   display: inline-block;
   min-width: 24px;
   text-align: center;
@@ -392,13 +402,11 @@
 
 .opBody {
   color: #1a1a1a;
-  /* Fluid body type (Threads-style): scales 14px → 15px between a phone and a
-     wide screen instead of a fixed size, so it reads right at every width.
-     Threads' body is system ~15px @ 140%; with Inter's larger x-height this
-     clamp matches it visually. line-height is unitless (1.4) so it scales with
-     the font. SAME size as replies (Threads doesn't size-distinguish OP from
-     replies — position / the 'Replies' separator / the avatar do). */
-  font-size: clamp(14px, 13.1px + 0.25vw, 15px);
+  /* Body at a FIXED 14px — the Inter-compensated match for Threads' measured
+     15px SYSTEM font (Inter's larger x-height reads bigger at equal size).
+     Unitless 1.4 line-height (their 140%). SAME size as replies (Threads
+     doesn't size-distinguish OP from replies). */
+  font-size: 14px;
   line-height: 1.4;
   letter-spacing: -0.01em;
   font-weight: 400;
@@ -551,6 +559,15 @@
 }
 
 /* === No-replies state: clean spacing between the post and the box === */
+/* === Sentinel for the replies' infinite scroll (invisible) — same spec as
+   the feeds' (.sentinel in HomeNew/SearchNew). === */
+.sentinel {
+  height: 1px;
+  width: 100%;
+  visibility: hidden;
+  pointer-events: none;
+}
+
 /* .opSection already contributes 24px of margin-bottom; this gap brings it to ~32px. */
 
 .noRepliesGap {

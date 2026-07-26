@@ -21,8 +21,9 @@
   left: calc(-1 * var(--layout-pad-x, 0px));
   right: calc(-1 * var(--layout-pad-x, 0px));
   bottom: 0;
-  height: 1px;
-  background: #ebe7dd;
+  /* Threads' exact divider weight (one tone with the feed dividers). */
+  height: 0.5px;
+  background: rgba(0, 0, 0, 0.15);
 }
 
 .card:last-child::after {
@@ -49,7 +50,7 @@
   /* Reconciled identity row (Threads-exact, same as feed/thread): Inter, body-
      sized, 600 near-black — the old monospace-in-search divergence is fixed. */
   font-family: inherit;
-  font-size: clamp(14px, 13.1px + 0.25vw, 15px);
+  font-size: 14px;
   color: #1a1a1a;
   font-weight: 600;
   line-height: 21px;
@@ -59,9 +60,9 @@
   /* Meta line at the timestamp tone: same size, 400, light #9b9591 (≈ Threads'
      light-theme secondary #999) — Threads sizes search-row meta at 15px too. */
   font-family: inherit;
-  font-size: clamp(14px, 13.1px + 0.25vw, 15px);
+  font-size: 14px;
   font-weight: 400;
-  color: #9b9591;
+  color: #a3a3a3;
 }
 
 /* Search match — emphasis from weight, no background (same color as the text). */

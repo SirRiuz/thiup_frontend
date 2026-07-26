@@ -11,10 +11,12 @@ import styles from "../../styles/components/post/PostOptionsMenu.module.css";
 import cx from "../../utils/cx";
 
 /**
- * Three-dots options menu for a post card (feed + search). Responsive: an
- * anchored popover on desktop, a bottom sheet on mobile — SAME content, two
- * presentations. Touch-friendly trigger (≥44px). Only "View details" is wired;
- * "Copy link" / "Report" are visible placeholders (no logic yet).
+ * Three-dots options menu for a post card (feed + search) AND for replies in
+ * the thread view. Responsive: an anchored popover on desktop, a bottom sheet
+ * on mobile — SAME content, two presentations. Touch-friendly trigger (≥44px).
+ * "Copy link" copies the node's own permalink `/p/<id>` — for a reply that
+ * URL opens the Threads-style comment permalink (ancestor chain + the reply
+ * as head + its replies).
  */
 
 // Threads' exact "More" glyph (20×20, r=2 dots at cx 4/12/20 — bigger and wider

@@ -420,6 +420,9 @@ function SearchNew() {
                         post={post}
                         isLast={idx === results.length - 1 && !hasMore}
                         onClick={() => handlePostClick(post)}
+                        // Conversation preview → the reply's own permalink
+                        // (same seeded navigation; the reply IS a post shape).
+                        onReplyClick={handlePostClick}
                         onHashtagClick={searchHashtag}
                         highlightQuery={highlightTerm}
                       />

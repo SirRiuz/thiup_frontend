@@ -28,7 +28,10 @@
   border-radius: 24px;
   /* NO box-shadow — current Threads dropped the column's ambient halo and
      keeps only the hairline outline (same as the thread view's .surface). */
-  padding: 12px 24px;
+  /* Threads' exact column rhythm (measured on threads.com): 8px top padding
+     (their column body's padding-top), NO bottom padding (the last row's own
+     12px rests right on the rounded bottom edge), 24px sides. */
+  padding: 8px 24px 0;
   --layout-pad-x: 24px;
 }
 
@@ -147,6 +150,13 @@
     border: 0;
     border-radius: 0;
     box-shadow: none;
+    /* Mobile sheet inset: 16px — Threads' small-screen row padding (their 24px
+       is the DESKTOP column value) and the exact inset of the mobile thread
+       view sheet (Post .surface), so both full-bleed sheets share one edge.
+       HARD RULE: --layout-pad-x mirrors the real padding at this breakpoint —
+       the media bleed and the full-bleed dividers/tabs derive from it. */
+    padding: 8px 16px 0;
+    --layout-pad-x: 16px;
   }
 
   .cornerMask {

@@ -106,5 +106,12 @@ export function mapBackendPostToFrontend(backendPost) {
     isOp: backendPost.is_op ?? false,
     // Thread media (feed + head + replies) — real URLs + sensitive flag.
     media: mapMedia(backendPost.media),
+    // Feed conversation preview (X-style two-story card): the root's BEST
+    // direct reply, attached by the backend ONLY when it earned the slot
+    // (unique-reactors gate — home feeds only). Same card shape, one level
+    // deep (a preview never carries its own preview).
+    topReply: backendPost.top_reply
+      ? mapBackendPostToFrontend(backendPost.top_reply)
+      : null,
   };
 }
