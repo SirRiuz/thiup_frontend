@@ -3,6 +3,7 @@ import {
   useNavigate,
   useParams,
   useLocation,
+  useNavigationType,
   Navigate,
 } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -47,6 +48,10 @@ function Post() {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  // POP arrivals (direct link, reload, back/forward) get the floating
+  // "scroll up to the original thread" pill; preview clicks (PUSH) don't —
+  // the user just CAME from the parent's card. See the pill effect below.
+  const navigationType = useNavigationType();
   // Desktop vs mobile app-bar anatomy: the DESKTOP bar is Threads' new one
   // (circular floating back + centered title, options on the OP header); the
   // MOBILE bar keeps the previous design untouched (plain arrow + right menu).
@@ -106,6 +111,11 @@ function Post() {
   const repliesSectionRef = useRef(null);
   const opSectionRef = useRef(null);
   const ancestorChainRef = useRef(null);
+  const rootPillRef = useRef(null);
+  // Handle to the landing anchor's stop(): the scroll-to-root pill must
+  // disable the pinning compensation BEFORE riding to the top — otherwise
+  // the observer re-anchors mid-ride and the page snaps back to the head.
+  const anchorStopRef = useRef(null);
   const pageRef = useRef(null);
 
   // Auto-scroll to the very top of the document after a successful sort change
@@ -190,6 +200,114 @@ function Post() {
   // the boolean keeps them alive across the swap.
   const hasAncestorChain = ancestors.length > 0;
 
+  // === Floating "scroll up to the original thread" pill (Threads') =========
+  // On COLD arrivals to a comment permalink (direct link / reload / back-
+  // forward — all POP; preview clicks are PUSH and the user just came from
+  // the parent, so no pill) a floating pill announces the hidden chain
+  // above: the ROOT author's avatar + Threads' exact 12px up arrow. Visible
+  // only while the parent is actually above the fold (scrollY tracks it);
+  // clicking smooth-scrolls to the top of the chain and dismisses it.
+  const [rootPillDismissed, setRootPillDismissed] = useState(false);
+  const [parentAboveFold, setParentAboveFold] = useState(false);
+  useEffect(() => {
+    if (!hasAncestorChain) return undefined;
+    const onScroll = () => setParentAboveFold(window.scrollY > 40);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [hasAncestorChain]);
+
+  const showRootPill =
+    hasAncestorChain &&
+    navigationType === "POP" &&
+    parentAboveFold &&
+    !rootPillDismissed;
+
+  // The pill's facepile: every UNIQUE mask in the hidden chain (root first —
+  // it tops the stack), deduped because a self-thread repeats its author.
+  // Up to 3 faces; longer chains show 2 + a "+N" bubble (ReactionStack's
+  // overlap language).
+  const MAX_PILL_FACES = 3;
+  const pillMasks = [];
+  if (showRootPill) {
+    const seen = new Set();
+    for (const ancestor of ancestors) {
+      if (ancestor.mask && !seen.has(ancestor.mask.id)) {
+        seen.add(ancestor.mask.id);
+        pillMasks.push(ancestor.mask);
+      }
+    }
+  }
+  const pillFaces =
+    pillMasks.length > MAX_PILL_FACES
+      ? pillMasks.slice(0, MAX_PILL_FACES - 1)
+      : pillMasks;
+  const pillOverflow = pillMasks.length - pillFaces.length;
+
+  // Pin the pill's LEFT to the surface column's real center (px), re-measured
+  // whenever the body's layout changes (ResizeObserver) or the window
+  // resizes. A bare `left: 50%` centers on the VIEWPORT, whose width changes
+  // when the classic scrollbar appears after load — the pill visibly slid on
+  // its own. Anchored to the column, any reflow moves pill and content
+  // TOGETHER in the same frame (no independent drift). Fully local — the
+  // earlier global stable-gutter attempt regressed the scroll model.
+  useLayoutEffect(() => {
+    if (!showRootPill) return undefined;
+    const pill = rootPillRef.current;
+    const surface = opSectionRef.current?.parentElement;
+    if (!pill || !surface) return undefined;
+    const place = () => {
+      const rect = surface.getBoundingClientRect();
+      pill.style.left = `${rect.left + rect.width / 2}px`;
+    };
+    place();
+    const observer = new ResizeObserver(place);
+    observer.observe(document.body);
+    window.addEventListener("resize", place);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", place);
+    };
+  }, [showRootPill]);
+
+  const handleRootPillClick = () => {
+    // Hand the scroll over: kill the landing anchor's pinning first, or its
+    // observer re-anchors the head mid-ride and the page snaps back.
+    anchorStopRef.current?.();
+    setRootPillDismissed(true);
+    const reduced =
+      typeof window !== "undefined" &&
+      window.matchMedia &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduced) {
+      window.scrollTo(0, 0);
+      return;
+    }
+    // SELF-DRIVEN smooth scroll: Chromium cancels a native
+    // scrollTo({behavior:'smooth'}) when the same interaction's commit
+    // mutates the DOM (dismissing the pill) — the animation died at birth
+    // and the page never moved. Driving it per frame (cubic ease-out,
+    // ~500ms, the app's decelerating motion language) is immune to that;
+    // a user wheel/touch mid-ride hands the scroll back immediately.
+    const startY = window.scrollY;
+    const start = performance.now();
+    const DURATION = 500;
+    let aborted = false;
+    const abort = () => {
+      aborted = true;
+    };
+    window.addEventListener("wheel", abort, { passive: true, once: true });
+    window.addEventListener("touchstart", abort, { passive: true, once: true });
+    const tick = (now) => {
+      if (aborted) return;
+      const progress = Math.min(1, (now - start) / DURATION);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      window.scrollTo(0, Math.round(startY * (1 - eased)));
+      if (progress < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  };
+
   // Total replies from the backend (DRF count, already mapped to thread.replyCount).
   // Empty while loading; plural-aware once the thread is resolved.
   const replyCount = post?.replyCount ?? 0;
@@ -269,7 +387,17 @@ function Post() {
     const surface = op.parentElement; // .opSection is a direct child of .surface
     if (!surface) return undefined;
     const apply = () => {
-      surface.style.minHeight = `calc(100vh - 60px + ${op.offsetTop}px)`;
+      // Offset of the head RELATIVE TO THE SURFACE, measured via rects:
+      // op.offsetTop is relative to the offsetParent, and the surface is NOT
+      // positioned — so offsetTop reached out to a farther ancestor and came
+      // back ~80px too big (app bar + outer flow), overstretching the card
+      // and pushing the bottom-docked composer below the viewport (the
+      // "comment box cut off" bug). With the exact relative offset the
+      // anchored viewport ends flush at the card's bottom edge: head under
+      // the bar at the top, composer fully visible at the bottom.
+      const rel =
+        op.getBoundingClientRect().top - surface.getBoundingClientRect().top;
+      surface.style.minHeight = `calc(100vh - 60px + ${rel}px)`;
     };
     apply();
     // Observe the CHAIN wrapper, never the surface: the surface's box is
@@ -341,11 +469,15 @@ function Post() {
       aborted = true;
       observer.disconnect();
     };
+    // The scroll-to-root pill (an APP-initiated scroll, not a user gesture)
+    // needs to stand the pinning down too.
+    anchorStopRef.current = stop;
     window.addEventListener("wheel", stop, { passive: true });
     window.addEventListener("touchstart", stop, { passive: true });
 
     return () => {
       stop();
+      anchorStopRef.current = null;
       cancelAnimationFrame(rafId);
       window.removeEventListener("wheel", stop);
       window.removeEventListener("touchstart", stop);
@@ -458,9 +590,12 @@ function Post() {
             aria-label={t("common.back")}
           >
             {isMobile ? (
+              // Threads' exact mobile Back size: their own post page renders
+              // this glyph at 20×20 (--x-width/height: 20px; measured from
+              // their markup) — the old 23px read oversized.
               <svg
-                width="23"
-                height="23"
+                width="20"
+                height="20"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -537,6 +672,49 @@ function Post() {
           <span aria-hidden="true" />
         </div>
       </header>
+
+      {/* Floating "scroll up to the original thread" pill (Threads'): root
+          author's avatar + their exact 12px arrow rotated up. Fixed below
+          the app bar, centered; entrance drop; dismissed on click (after the
+          smooth scroll to the chain's top) or when the top comes into view. */}
+      {showRootPill && (
+        <button
+          ref={rootPillRef}
+          type="button"
+          className={styles.rootPill}
+          onClick={handleRootPillClick}
+          aria-label={t("post.scrollToRoot")}
+          title={t("post.scrollToRoot")}
+        >
+          <span className={styles.rootPillFaces} aria-hidden="true">
+            {pillFaces.map((mask, i) => (
+              <span
+                key={mask.id}
+                className={styles.rootPillFace}
+                style={{ zIndex: pillFaces.length - i + 1 }}
+              >
+                <MaskAvatar seed={mask.id} size={24} />
+              </span>
+            ))}
+            {pillOverflow > 0 && (
+              <span className={cx(styles.rootPillFace, styles.rootPillMore)}>
+                +{pillOverflow}
+              </span>
+            )}
+          </span>
+          <span className={styles.rootPillArrow} aria-hidden="true">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <path
+                d="M1 6h10M1 6l4-4M1 6l4 4"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="1.5"
+              />
+            </svg>
+          </span>
+        </button>
+      )}
 
       <main className={styles.main}>
       {/* Threads-style sticky corner mask (desktop only, CSS-hidden on mobile):
