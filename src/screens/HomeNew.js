@@ -194,6 +194,12 @@ function HomeNew() {
     navigate(`/p/${post.uid}`, { state: { seedThread: post } });
   };
 
+  // Conversation preview click → the REPLY's own permalink (it opens with
+  // its ancestor chain — the root renders above it). Seeded like any card.
+  const handleReplyPreviewClick = (reply) => {
+    navigate(`/p/${reply.uid}`, { state: { seedThread: reply } });
+  };
+
   // A hashtag click is a normal search for that hashtag (q=#tag) — lands on
   // /search with the standard tabs, no special tag mode.
   const handleHashtagClick = (tag) => {
@@ -303,6 +309,7 @@ function HomeNew() {
                   isNew={post.uid === newPostId}
                   isLast={idx === posts.length - 1 && !hasMore}
                   onClick={() => handlePostClick(post)}
+                  onReplyClick={handleReplyPreviewClick}
                   onHashtagClick={handleHashtagClick}
                 />
               ))}

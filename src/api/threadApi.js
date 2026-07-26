@@ -5,12 +5,14 @@
  * reimplement the transport or the encryption. Same contract as the legacy
  * thread (src/services/thread.js), but going through apiFetch instead of axios:
  *
- *   GET  /threads/<uid>/responses/  →  { head, results, next, count }
+ *   GET  /threads/<uid>/responses/  →  { head, parents, results, next, count }
  *   POST /threads/                  →  { sub, text, content, media }
  *
  * The backend returns the main post (`head`) and the first page of
  * responses (`results`) in a single call. Sub-responses come
- * nested inside each reply under `responses`.
+ * nested inside each reply under `responses`. The uid can be a REPLY at any
+ * depth (comment permalink): `head` is then that reply and `parents` carries
+ * its ancestor chain (root first) for the Threads-style continuity UI.
  */
 import { apiFetch } from "./client";
 
@@ -21,7 +23,7 @@ const THREADS_ENDPOINT = "/threads/";
  *
  * @param {string} threadId   public uid of the thread (from useParams).
  * @param {object} [options]  { signal } for AbortController.
- * @returns {Promise<{head: object, results: object[], next: string|null, count: number}>}
+ * @returns {Promise<{head: object, parents: object[], results: object[], next: string|null, count: number}>}
  */
 export function getThreadById(threadId, options = {}) {
   // Cache busting: timestamp in the URL so the browser never serves a

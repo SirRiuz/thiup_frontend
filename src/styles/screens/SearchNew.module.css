@@ -103,7 +103,9 @@
   background: #fdfcf8;
   border: 1px solid #e5e0d3;
   border-radius: 24px;
-  padding: 4px 24px 12px;
+  /* Home's column rhythm: NO bottom padding — the last row rests on the
+     rounded bottom edge (the flush-media variants no longer need to eat it). */
+  padding: 4px 24px 0;
   --layout-pad-x: 24px;
   /* Threads' column body: the card ALWAYS reaches the bottom of the viewport
      (their full-height column), never sized by how few rows it holds — a
@@ -264,8 +266,9 @@
   left: 78px;
   right: calc(-1 * var(--layout-pad-x, 0px));
   bottom: 0;
-  height: 1px;
-  background: #ebe7dd;
+  /* Threads' exact divider weight (one tone with the feed dividers). */
+  height: 0.5px;
+  background: rgba(0, 0, 0, 0.15);
 }
 
 .trendSkeletonRow:last-child::after {
@@ -387,12 +390,11 @@
 /* LAST page AND the mosaic really reaches the card's bottom (measured via
    useFlushBottom — the surface is min-height stretched, so a short result
    set ends mid-card and must keep square tiles; rounding them read broken):
-   -12px eats the surface's bottom padding (the warm gap after the last row
-   read broken) and clips the square tiles into the card's 24px bottom
-   corners (IG's grid ending). While more pages exist the sentinel/spinner
-   live below the grid. */
+   clips the square tiles into the card's 24px bottom corners (IG's grid
+   ending). The surface has NO bottom padding anymore (home's rule), so
+   there's nothing left to eat — the grid already sits on the edge. While
+   more pages exist the sentinel/spinner live below the grid. */
 .mediaGridEnd {
-  margin-bottom: -12px;
   overflow: hidden;
   border-radius: 0 0 24px 24px;
 }
@@ -564,7 +566,11 @@
     background: transparent;
     border: 0;
     border-radius: 0;
-    padding: 0 24px 12px;
+    /* Mobile sheet inset: 16px — Threads' small-screen row padding, one shared
+       edge with home and the thread view (HARD RULE: --layout-pad-x mirrors
+       the real padding at this breakpoint). No bottom padding (home's rule). */
+    padding: 0 16px 0;
+    --layout-pad-x: 16px;
     /* Mobile keeps content-sized flow (the surface is dissolved anyway). */
     min-height: 0;
   }

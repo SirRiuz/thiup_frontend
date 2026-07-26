@@ -17,6 +17,8 @@ import styles from "../../styles/components/post/PostCommentBox.module.css";
 import cx from "../../utils/cx";
 
 const MIN_HEIGHT = 24;
+// Threads' exact limit (same 500 as the thread composer). Mirrored
+// server-side by THREAD_TEXT_MAX_LENGTH; keep both in sync.
 const MAX_CHARS = 500;
 
 function PostCommentBox({

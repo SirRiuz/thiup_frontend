@@ -198,7 +198,7 @@
     "react": "React",
     "addReaction": "Add reaction",
     "endOfThread": "End of thread",
-    "loadMoreReplies": "Load more replies",
+    "scrollToRoot": "Scroll up to see the original thread",
     "sort": "Sort",
     "sortTop": "Top",
     "sortRecent": "Recent",

@@ -423,6 +423,9 @@ function AnonProfile() {
                       post={post}
                       isLast={idx === posts.length - 1 && !hasMore}
                       onClick={() => handlePostClick(post)}
+                      // Conversation preview → the reply's own permalink
+                      // (same seeded navigation; the reply IS a post shape).
+                      onReplyClick={handlePostClick}
                       onHashtagClick={handleHashtagClick}
                     />
                   ))}

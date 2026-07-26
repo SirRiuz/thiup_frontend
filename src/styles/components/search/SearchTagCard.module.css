@@ -25,8 +25,9 @@
   left: calc(-1 * var(--layout-pad-x, 0px));
   right: calc(-1 * var(--layout-pad-x, 0px));
   bottom: 0;
-  height: 1px;
-  background: #ebe7dd;
+  /* Threads' exact divider weight (one tone with the feed dividers). */
+  height: 0.5px;
+  background: rgba(0, 0, 0, 0.15);
 }
 
 .card:last-child::after {
@@ -104,7 +105,7 @@
 /* Reconciled identity type: name body-sized 600 ink, one line. */
 .tagName {
   font-family: inherit;
-  font-size: clamp(14px, 13.1px + 0.25vw, 15px);
+  font-size: 14px;
   font-weight: 600;
   color: #1a1a1a;
   line-height: 21px;

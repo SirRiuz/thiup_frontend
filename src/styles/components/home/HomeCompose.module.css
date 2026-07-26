@@ -14,14 +14,16 @@
   padding: 16px 0;
 }
 
+/* Threads' exact hairline under the compose strip (0.5px --lines-primary,
+   same weight as the feed dividers — the 1px #ebe7dd read heavier). */
 .collapsedRow::after {
   content: "";
   position: absolute;
   left: calc(-1 * var(--layout-pad-x, 0px));
   right: calc(-1 * var(--layout-pad-x, 0px));
   bottom: 0;
-  height: 1px;
-  background: #ebe7dd;
+  height: 0.5px;
+  background: rgba(0, 0, 0, 0.15);
 }
 
 .collapsedAvatar {

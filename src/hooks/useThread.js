@@ -53,7 +53,8 @@ function resolveReactionId(clicked, post, catalog) {
  * @param {string} threadId  thread uid (from useParams).
  * @returns {{
  *   thread: object|null, replies: object[],
- *   isLoading: boolean, isLoadingMore: boolean, isCreatingReply: boolean,
+ *   isLoading: boolean, isLoadingMore: boolean, loadMoreError: Error|null,
+ *   isCreatingReply: boolean,
  *   createReplyError: Error|null, hasMore: boolean, error: Error|null,
  *   createReply: Function, loadMore: Function, retry: Function
  * }}
@@ -129,6 +130,11 @@ export function useThread(threadId, seedThread) {
     () => !(initialCache && initialCache.thread)
   );
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  // Pagination failure (infinite scroll): while set, the sentinel stands down
+  // and the UI shows a retry banner instead — without it a failing fetch
+  // would re-trigger on every intersection (hammering loop). Cleared on the
+  // next attempt and on any fresh initial fetch.
+  const [loadMoreError, setLoadMoreError] = useState(null);
   const [isCreatingReply, setIsCreatingReply] = useState(false);
   const [createReplyError, setCreateReplyError] = useState(null);
   const [error, setError] = useState(null);
@@ -252,6 +258,9 @@ export function useThread(threadId, seedThread) {
       setIsLoading(true);
     }
     setError(null);
+    // A fresh page invalidates any stale pagination failure (new thread /
+    // retry / re-sorted list — the old error belongs to the previous list).
+    setLoadMoreError(null);
 
     async function fetchThread() {
       try {
@@ -324,6 +333,7 @@ export function useThread(threadId, seedThread) {
     // pagination) already in flight.
     if (!nextUrlRef.current || isLoadingMore || isLoading) return;
     setIsLoadingMore(true);
+    setLoadMoreError(null);
     try {
       const data = await getThreadReplies(nextUrlRef.current);
       const additions = mapBackendRepliesToFrontend(data.results);
@@ -334,8 +344,10 @@ export function useThread(threadId, seedThread) {
       nextUrlRef.current = data.next || null;
       setHasMore(Boolean(data.next));
     } catch (err) {
-      // Pagination fails silently: the user can retry the click.
-      // The button reappears because hasMore is still true.
+      // Surfaced as a retry banner (infinite scroll): while set, the sentinel
+      // is not rendered, so a persistent failure never re-fires on its own —
+      // the user retries explicitly. hasMore stays true (the page is still there).
+      setLoadMoreError(err);
     } finally {
       setIsLoadingMore(false);
     }
@@ -512,6 +524,7 @@ export function useThread(threadId, seedThread) {
     replies,
     isLoading,
     isLoadingMore,
+    loadMoreError,
     isReloadingReplies,
     isCreatingReply,
     createReplyError,

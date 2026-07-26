@@ -187,6 +187,15 @@
   color: #a85432;
 }
 
+/* Glyph variants per context: the desktop rail shows ONE filled set
+   (.railGlyph — current design, warm blob kept); the mobile bottom bar swaps
+   Threads' idle/active pair instead (.barGlyph*, see the ≤700px block). The
+   bar pair stays hidden everywhere else. */
+.barGlyphIdle,
+.barGlyphActive {
+  display: none;
+}
+
 /* CSS tooltip (desktop, icon-only needs a visible accessible label) — the
    dark-pill voice (the toast palette: ink + #f7f5f0), radius 8, a soft
    popover shadow, and a 4px slide-in from the rail. */
@@ -473,14 +482,44 @@
     }
   }
 
-  /* The active route keeps its OWN terracotta blob (#f3e3d3 + #a85432) —
-     distinct from the hover pill and NOT overridden by it (declared last, equal
-     specificity → wins for the current route even on hover/tap). */
+  /* Glyph swap (Threads' mobile anatomy): the bar renders the idle OUTLINE
+     set; the active route swaps to the SOLID variant. The state lives in the
+     glyph alone — the desktop rail's filled set stays hidden here. */
+  .bottomBar .item .railGlyph {
+    display: none;
+  }
+
+  .bottomBar .item .barGlyphIdle {
+    display: block;
+  }
+
+  .bottomBar .itemActive .barGlyphIdle {
+    display: none;
+  }
+
+  .bottomBar .itemActive .barGlyphActive {
+    display: block;
+  }
+
+  /* The active route: NO persistent blob (Threads' bar never keeps a
+     background — their plate is hover/press feedback at opacity 0 when at
+     rest). The state is the SOLID glyph in the brand terracotta; the press/
+     hover pill below stays as transient feedback with the terracotta held. */
   .bottomBar .itemActive,
   .bottomBar .itemActive:hover,
   .bottomBar .itemActive:active {
-    background: #f3e3d3;
+    background: transparent;
     color: #a85432;
+  }
+
+  .bottomBar .itemActive:active {
+    background: #f0ece3;
+  }
+
+  @media (hover: hover) {
+    .bottomBar .itemActive:hover {
+      background: #f0ece3;
+    }
   }
 
   /* Create keeps Threads' plate language on tap too — the generic item pill

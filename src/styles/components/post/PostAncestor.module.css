@@ -1,0 +1,190 @@
+/* Ancestor row of a comment permalink (Threads-style thread continuity).
+ * Anatomy mirrors a depth-0 reply / feed row: 12px vertical rhythm, NO own
+ * horizontal padding (the surface's 16px --layout-pad-x IS the inset), the
+ * 36px avatar gutter + 12px gap lane, and a threadline trunk descending into
+ * the next node's avatar. No divider — the trunk is the connection. */
+
+.ancestor {
+  position: relative;
+  padding: 12px 0;
+  /* The whole row navigates (Threads' pressable row; media/controls opt out
+     in JS) — pointer everywhere, no iOS tap flash. */
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* First node of the chain: the surface's 20px top padding IS the gap above it
+   — the SAME landing as the OP head on a root permalink, so the page opens
+   symmetric at every entry point. Drop the row's own 12px top padding and
+   cancel the avatar cell's 4px offset (-4px margin) so the avatar's top edge
+   sits at the exact y the OP's does (20px into the card). */
+.first {
+  padding-top: 0;
+  margin-top: -4px;
+}
+
+/* The trunk offset follows the trimmed row: 4px cell offset + 36px avatar +
+   4px breathing gap (the base 56px minus the removed 12px padding). */
+.first .trunk {
+  top: 44px;
+}
+
+/* Threadline trunk (Threads-exact weight): 2px #e5e0d3, centered on the 36px
+ * gutter's lane (18 - 1). Floating segment with breathing gaps at BOTH ends,
+ * like Threads' --x-top offset segments: it is born 4px below this avatar's
+ * bottom edge (12 row padding + 4 cell offset + 36 avatar + 4 gap = 56) and
+ * overshoots the row bottom by 12px so it stops 4px short of the NEXT
+ * avatar's top edge — the next node's avatar always sits 16px below this
+ * row's bottom (ancestor row: 12px padding + 4px cell offset; chained OP
+ * section: its own 16px top padding). Rounded caps on both ends. */
+.trunk {
+  position: absolute;
+  left: 17px;
+  top: 56px;
+  bottom: -12px;
+  width: 2px;
+  border-radius: 2px;
+  background: #e5e0d3;
+}
+
+/* Threads' 48px feed lane: 36px avatar gutter + 12px gap — same two-column
+ * grid as PostReply / HomeFeedCard. */
+.grid {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  column-gap: 12px;
+  align-items: start;
+}
+
+.avatarCell {
+  display: flex;
+  justify-content: center;
+  /* Threads' exact avatar-cell offset (padding-top 4px). */
+  padding-top: 4px;
+}
+
+.contentCell {
+  min-width: 0;
+  /* Media bleed, same asymmetric contract as a top-level reply: START cancels
+     the avatar gutter (36) + grid gap (12) + surface padding (--layout-pad-x)
+     so the track reaches the card edge; END cancels only the surface padding. */
+  --media-bleed-x: calc(48px + var(--layout-pad-x, 0px));
+  --media-bleed-end: var(--layout-pad-x, 0px);
+}
+
+/* Keyboard-accessible navigable zone (identity + body) — HomeFeedCard's spec. */
+.navZone {
+  cursor: pointer;
+}
+
+.navZone:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px #c5a572;
+  border-radius: 6px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  /* Threads' username-row rhythm (21px against the 36px avatar + 4px offset). */
+  line-height: 21px;
+}
+
+/* Pushes the three-dots menu to the row's right edge (PostReply's anatomy). */
+.spacer {
+  flex: 1;
+}
+
+.maskId {
+  /* Threads-exact identity row: name is the SAME SIZE as the body — hierarchy
+     from weight/color only. */
+  font-size: 14px;
+  color: #1a1a1a;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.timestamp {
+  /* Threads-exact <time>: same size, 400, light secondary, centered in a
+     min 24px box (even rhythm for short stamps). */
+  font-size: 14px;
+  font-weight: 400;
+  color: #a3a3a3;
+  display: inline-block;
+  min-width: 24px;
+  text-align: center;
+}
+
+/* "· Author" quiet meta — same spec as PostReply's tag. */
+.authorTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #a3a3a3;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.authorDivider {
+  color: #a3a3a3;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.body {
+  color: #1a1a1a;
+  /* Fixed 14px like the OP/replies (Inter-compensated Threads 15). */
+  font-size: 14px;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+  /* Threads' rhythm: 3px below the header row. */
+  margin: 3px 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+/* Hashtag highlight — identical to the feed / thread view. */
+.hashtag {
+  font-weight: 400;
+  color: #a85432;
+  cursor: pointer;
+}
+
+.hashtag:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Quiet stats footer — HomeFeedCard's exact spec. */
+.stats {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-top: 6px;
+}
+
+.statWithIcon {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: #6b6b6b;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.statWithIcon svg {
+  flex: none;
+}
+
+.statReactions {
+  align-self: center;
+}
