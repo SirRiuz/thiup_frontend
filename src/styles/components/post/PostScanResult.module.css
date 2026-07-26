@@ -42,7 +42,25 @@
   display: block;
 }
 
-/* Kind glyph when there is no thumbnail (e.g. a video still processing). */
+/* Video first-frame preview: purely a picture — never a playable control. */
+.tileVideo {
+  pointer-events: none;
+}
+
+/* Type mark on video tiles, bottom-left (top-right belongs to the remove
+   disc): the grids' Reel/video glyph — cream + soft drop shadow, no disc. */
+.videoMark {
+  position: absolute;
+  left: 5px;
+  bottom: 5px;
+  display: inline-flex;
+  color: #fdfcf8;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35));
+  pointer-events: none;
+}
+
+/* Kind glyph when there is no thumbnail (fallback only — items normally
+   always carry a local blob preview now, videos included). */
 .tileKind {
   display: inline-flex;
 }

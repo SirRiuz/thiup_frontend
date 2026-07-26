@@ -452,66 +452,16 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* === Error banner === */
+/* === Notices (rate limit / error) === */
 
-/* Rate limit (429): the shared warm notice takes the error banner's slot —
+/* Rate limit (429): the shared warm notice takes the notice slot —
    this only gives it the same gap to the composer row below. */
 .rateLimitNotice {
   margin-bottom: 12px;
 }
 
-.errorBanner {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  background: rgba(197, 48, 48, 0.08);
-  border: 1px solid rgba(197, 48, 48, 0.2);
-  border-radius: 6px;
+/* Errors: the surface/anatomy lives in the shared ErrorNotice (the danger
+   sibling of RateLimitNotice) — this only slots it above the composer row. */
+.errorNotice {
   margin-bottom: 12px;
-  animation: errorSlideIn 180ms ease-out;
-}
-
-@keyframes errorSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.errorIcon {
-  flex: none;
-}
-
-.errorText {
-  flex: 1;
-  font-family: inherit;
-  font-size: 11px;
-  color: #c53030;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.errorClose {
-  background: transparent;
-  border: 0;
-  padding: 4px;
-  cursor: pointer;
-  color: #c53030;
-  flex: none;
-  border-radius: 4px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.2s ease, opacity 0.2s ease;
-}
-
-.errorClose:hover {
-  background: rgba(197, 48, 48, 0.12);
 }

@@ -300,8 +300,8 @@
 
 /* === Footer === */
 
-/* Rate-limit slot: pinned between the scrollable body and the toolbar, on the
-   body's 16px inset. */
+/* Notice slot (rate limit / errors): pinned between the scrollable body and
+   the toolbar, on the body's 16px inset. */
 .noticeSlot {
   flex: none;
   padding: 0 16px 12px;

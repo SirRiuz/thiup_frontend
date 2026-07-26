@@ -539,64 +539,12 @@
   margin: 12px 0 0;
 }
 
-/* === Error banner === */
+/* === Error notice === */
 
-.errorBanner {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+/* The surface/anatomy lives in the shared ErrorNotice (the danger sibling of
+   RateLimitNotice) — this only slots it into the body's rhythm. */
+.errorNotice {
   margin: 12px 0 0;
-  padding: 11px 14px;
-  background: rgba(197, 48, 48, 0.06);
-  border: 1px solid rgba(197, 48, 48, 0.15);
-  border-radius: 8px;
-  animation: composeErrorIn 220ms ease-out;
-}
-
-.errorIcon {
-  color: #c53030;
-  opacity: 0.75;
-  flex-shrink: 0;
-}
-
-.errorMessage {
-  flex: 1;
-  font-size: 12.5px;
-  line-height: 1.4;
-  color: #c53030;
-}
-
-.errorDismiss {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  padding: 0;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  color: #c53030;
-  opacity: 0.5;
-  border-radius: 4px;
-  transition: opacity 0.2s ease, background 0.2s ease;
-  flex-shrink: 0;
-}
-
-.errorDismiss:hover {
-  opacity: 1;
-  background: rgba(197, 48, 48, 0.1);
-}
-
-@keyframes composeErrorIn {
-  from {
-    opacity: 0;
-    transform: translateY(-6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 /* === Mobile (≤700px): full-screen sheet === */
@@ -618,13 +566,13 @@
   }
 
   .privacyNote,
-  .errorBanner,
+  .errorNotice,
   .rateLimitNotice {
     margin-top: auto;
   }
 
   /* When a note is already anchoring, anything after it stacks normally. */
-  .privacyNote ~ .errorBanner,
+  .privacyNote ~ .errorNotice,
   .privacyNote ~ .rateLimitNotice {
     margin-top: 12px;
   }
@@ -673,7 +621,6 @@
 @media (prefers-reduced-motion: reduce) {
   .backdrop,
   .modal,
-  .errorBanner,
   .privacyNote,
   .privacyZone,
   .spinner {

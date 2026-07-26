@@ -26,10 +26,14 @@ import { matchesDeclaredType } from "../services/media/fileSignature";
 export const MAX_FILES = 10;
 
 // Per-type size limits (FE gives precise, friendly feedback BEFORE uploading;
-// the backend keeps a general 512 MB hard cap as the real guard).
+// the backend keeps a general 100 MB hard cap as the real guard).
 const IMAGE_MAX_BYTES = 8 * 1024 * 1024; // JPG/PNG/WEBP
 const GIF_MAX_BYTES = 15 * 1024 * 1024; // animated GIF (image/gif)
-const VIDEO_MAX_BYTES = 512 * 1024 * 1024; // video
+// DECIMAL 100 MB on purpose, not 100 MiB (104,857,600): Cloudflare Media
+// Transformations requires sources STRICTLY under 100 MiB, so the round
+// decimal cap keeps a ~4.5 MiB safety margin AND matches the "100 MB" label
+// shown to the user. Keep in sync with the backend's UPLOAD_MAX_BYTES.
+const VIDEO_MAX_BYTES = 100_000_000; // video
 
 // Returns the i18n key for the too-large message by type, or null if it fits.
 // image/gif gets the larger cap; other images the smaller one.

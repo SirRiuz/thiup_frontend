@@ -10,7 +10,8 @@ import { isImageFile, isVideoFile } from "../services/media/allowedFormats";
 let idSeq = 0;
 
 // item: { id, file, name, size, kind: "image" | "video", thumbnail: string|null }
-// (thumbnail is a local blob: URL for images, null for videos.)
+// (thumbnail is a local blob: URL for BOTH kinds — images render it in an
+// <img>; videos paint their first frame from it via a muted <video>.)
 export default function useMediaItems() {
   const [items, setItems] = useState([]);
   const itemsRef = useRef(items);
@@ -30,7 +31,7 @@ export default function useMediaItems() {
         name: file.name,
         size: file.size,
         kind: video ? "video" : "image",
-        thumbnail: image ? URL.createObjectURL(file) : null,
+        thumbnail: URL.createObjectURL(file),
       });
     });
     if (added.length) setItems((prev) => [...prev, ...added]);

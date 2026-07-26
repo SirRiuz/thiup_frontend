@@ -1,6 +1,8 @@
 import {
   useCallback,
+  useContext,
   useEffect,
+  useId,
   useRef,
   useState,
   useSyncExternalStore,
@@ -21,6 +23,7 @@ import {
   removePlaybackCandidate,
   subscribePlayback,
 } from "../../services/media/playbackArbiter";
+import PlaybackScopeContext from "../../contexts/PlaybackScopeContext";
 import styles from "../../styles/components/media/ThreadMedia.module.css";
 
 // Layout sizing. The cap/floor on the aspect-ratio gives the Threads look
@@ -153,16 +156,25 @@ function ImageMedia({ item, revealed, onNaturalSize, eager }) {
 function VideoMedia({ item, revealed, onNaturalSize, eager }) {
   const { t } = useTranslation();
   const videoRef = useRef(null);
+  // Arbitration key: per-INSTANCE, never item.id — the same media can be
+  // mounted twice at once (the thread's inline video AND the reply dialog's
+  // parent preview render the SAME item), and id-keyed ownership made the
+  // pair play/unmute in unison (the double-audio bug).
+  const instanceId = useId();
+  // The playback scope this video renders in (null = the base page; the reply
+  // dialog provides its own) — candidacy is tagged with it so the arbiter can
+  // ignore the page's videos while an overlay is up.
+  const playbackScope = useContext(PlaybackScopeContext);
   const [src, setSrc] = useState(null); // lazy: unset until near viewport
   const [loaded, setLoaded] = useState(false);
   // Audio is GLOBAL: this video is unmuted only while it owns the audio (one at
   // a time across the whole feed). Deriving muted from the store means claiming
   // audio elsewhere mutes this one reactively.
   const audioOwner = useSyncExternalStore(subscribeAudioOwner, getAudioOwner);
-  const muted = audioOwner !== item.id;
+  const muted = audioOwner !== instanceId;
   // Playback is GLOBAL too: only the arbiter's owner plays.
   const playbackOwner = useSyncExternalStore(subscribePlayback, getPlaybackOwner);
-  const isPlaybackOwner = playbackOwner === item.id;
+  const isPlaybackOwner = playbackOwner === instanceId;
   const [needsTap, setNeedsTap] = useState(false); // reduced-motion: manual play
   const visibleRef = useRef(false);
   const reducedRef = useRef(false);
@@ -177,14 +189,14 @@ function VideoMedia({ item, revealed, onNaturalSize, eager }) {
     const el = videoRef.current;
     if (!el || !visibleRef.current || !revealed || !src) return;
     // Only the arbitrated owner may decode/play — everyone else stays paused.
-    if (getPlaybackOwner() !== item.id) return;
+    if (getPlaybackOwner() !== instanceId) return;
     if (reducedRef.current && !startedRef.current) {
       setNeedsTap(true);
       return;
     }
     const p = el.play();
     if (p && typeof p.catch === "function") p.catch(() => {});
-  }, [revealed, src, item.id]);
+  }, [revealed, src, instanceId]);
 
   // React to ownership changes: won → play; lost → pause (poster stays).
   useEffect(() => {
@@ -246,12 +258,12 @@ function VideoMedia({ item, revealed, onNaturalSize, eager }) {
         if (!e) return;
         const ratio = e.isIntersecting ? e.intersectionRatio : 0;
         visibleRef.current = ratio >= 0.5;
-        setPlaybackCandidate(item.id, ratio);
+        setPlaybackCandidate(instanceId, ratio, playbackScope);
         if (!visibleRef.current) {
           el.pause();
           // Leaving the screen releases the audio so nothing plays sound
           // off-screen; it returns muted next time it's visible.
-          clearAudioOwnerIf(item.id);
+          clearAudioOwnerIf(instanceId);
         }
       },
       { threshold: [0, 0.25, 0.5, 0.75, 1] }
@@ -259,9 +271,9 @@ function VideoMedia({ item, revealed, onNaturalSize, eager }) {
     io.observe(el);
     return () => {
       io.disconnect();
-      removePlaybackCandidate(item.id);
+      removePlaybackCandidate(instanceId);
     };
-  }, [tryPlay, item.id]);
+  }, [tryPlay, instanceId, playbackScope]);
 
   // iOS Safari is lazy about decoding: once the src is set, explicitly load() so
   // it fetches metadata + renders the #t=0.1 poster frame (no full download).
@@ -281,12 +293,12 @@ function VideoMedia({ item, revealed, onNaturalSize, eager }) {
     // open/close this instance's render may lag the store for a tick, and a
     // stale closure would make the first click only resync (the "double click"
     // bug). The live value guarantees the first click toggles.
-    if (getAudioOwner() !== item.id) {
+    if (getAudioOwner() !== instanceId) {
       // Claim the audio → every other video mutes reactively. Unmuting is
       // explicit intent to WATCH this one, so it also claims playback (the
       // arbiter pauses whichever video was playing).
-      setAudioOwner(item.id);
-      forcePlaybackOwner(item.id);
+      setAudioOwner(instanceId);
+      forcePlaybackOwner(instanceId);
       const el = videoRef.current;
       if (el && visibleRef.current) {
         const p = el.play();
@@ -302,10 +314,10 @@ function VideoMedia({ item, revealed, onNaturalSize, eager }) {
   // arbiter can promote the next visible video).
   useEffect(
     () => () => {
-      clearAudioOwnerIf(item.id);
-      removePlaybackCandidate(item.id);
+      clearAudioOwnerIf(instanceId);
+      removePlaybackCandidate(instanceId);
     },
-    [item.id]
+    [instanceId]
   );
 
   const manualPlay = (e) => {
@@ -313,7 +325,7 @@ function VideoMedia({ item, revealed, onNaturalSize, eager }) {
     startedRef.current = true;
     setNeedsTap(false);
     // Manual play is explicit intent — claim playback from whoever has it.
-    forcePlaybackOwner(item.id);
+    forcePlaybackOwner(instanceId);
     const el = videoRef.current;
     if (el) {
       const p = el.play();

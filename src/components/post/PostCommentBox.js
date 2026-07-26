@@ -6,6 +6,7 @@ import PostReplyContext from "./PostReplyContext";
 import PostReplyExpandModal from "./PostReplyExpandModal";
 import MediaScanList from "../media/MediaScanList";
 import RateLimitNotice from "../RateLimitNotice";
+import ErrorNotice from "../ErrorNotice";
 import { isRateLimitError } from "../../utils/rateLimit";
 import useMediaComposer from "../../hooks/useMediaComposer";
 import { warmHumanPass } from "../../api/humanPass";
@@ -300,60 +301,26 @@ function PostCommentBox({
         />
       )}
 
-      {submitError && !rateLimited && (
-        <div className={styles.errorBanner} role="alert">
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#c53030"
-            strokeWidth="1.5"
-            className={styles.errorIcon}
-          >
-            <circle cx="12" cy="12" r="10" />
-            <line x1="12" y1="8" x2="12" y2="12" />
-            <line x1="12" y1="16" x2="12.01" y2="16" />
-          </svg>
-          <span className={styles.errorText}>{t("post.replyError")}</span>
-        </div>
+      {/* Error notices follow the same rule as the rate limit above: while
+          the expanded dialog is open they render THERE (its notice slot),
+          never stranded behind the backdrop. */}
+      {submitError && !rateLimited && !expanded && (
+        <ErrorNotice
+          compact
+          className={styles.errorNotice}
+          title={t("post.replyErrorTitle")}
+          detail={t("post.replyErrorDetail")}
+        />
       )}
 
-      {errorMessage && (
-        <div className={styles.errorBanner} role="alert">
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#c53030"
-            strokeWidth="1.5"
-            className={styles.errorIcon}
-          >
-            <circle cx="12" cy="12" r="10" />
-            <line x1="12" y1="8" x2="12" y2="12" />
-            <line x1="12" y1="16" x2="12.01" y2="16" />
-          </svg>
-          <span className={styles.errorText}>{errorMessage}</span>
-          <button
-            type="button"
-            className={styles.errorClose}
-            onClick={() => setErrorMessage(null)}
-            aria-label={t("common.closeError")}
-          >
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
-        </div>
+      {errorMessage && !expanded && (
+        <ErrorNotice
+          compact
+          className={styles.errorNotice}
+          title={t("post.attachErrorTitle")}
+          detail={errorMessage}
+          onDismiss={() => setErrorMessage(null)}
+        />
       )}
 
       <MediaScanList media={media} />
@@ -549,6 +516,9 @@ function PostCommentBox({
         media={media}
         rateLimitError={showRateLimit ? submitError : null}
         onRateLimitExpire={() => setExpiredRateLimit(submitError)}
+        mediaError={errorMessage}
+        onMediaErrorDismiss={() => setErrorMessage(null)}
+        submitFailed={!!submitError && !rateLimited}
         onAttach={handleAttachClick}
         onSubmit={handleSubmit}
         submitting={submitting}
