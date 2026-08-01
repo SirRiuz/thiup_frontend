@@ -56,6 +56,118 @@
   opacity: 1;
 }
 
+/* === POC: poster-first videos (VideoPosterModeContext) === */
+
+/* Static poster filling the frame OVER the in-flow video (which keeps sizing
+   the cell exactly as before) and fading out once the real file paints. It
+   must never intercept input (the sound pill / pano toggle sit above it in
+   paint order but the poster still can't be allowed to eat stray hits), and
+   it must NOT get a z-index — a z-indexed sibling covered the controls. */
+/* The poster is a PERMANENT base layer: always fully opaque, absolutely
+   filling the frame. The video fades in ABOVE it — so every pixel of the
+   transition blends poster↔video and the frame background can never bleed
+   through (fading the poster out instead flashed cream/white whenever the
+   video hadn't composited its first frame yet, and loadeddata fires before
+   the paint). On detach the video just fades back out, re-revealing the
+   poster underneath — same guarantee in reverse. */
+.poster {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  -webkit-user-drag: none;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* Lifts the video ABOVE the absolutely-positioned poster by DOM order alone:
+   positioned, but deliberately NO z-index — an explicit z-index here painted
+   the video over the sound pill / pano toggle (they are positioned siblings
+   with z auto that must keep winning by coming later in the DOM). */
+.overPosterFlow {
+  position: relative;
+}
+
+/* Loading (the rendition is streaming in): the poster gently UNFOCUSES — a
+   soft "warming up" cue instead of a frozen frame. The slight scale hides the
+   blur's soft edges (same trick as .blurred). The delay keeps instant/cached
+   loads from pulsing; leaving the state is instant (base has no transition —
+   the video is fading in above it anyway). */
+.posterLoading {
+  filter: blur(10px);
+  transform: scale(1.04);
+  transition: filter 260ms ease 120ms, transform 260ms ease 120ms;
+}
+
+/* Loading dial: centered frosted disc (the sound pill's dark-glass anatomy)
+   holding the app's cream spinner ring. pointer-events none — purely visual;
+   the controls after it in the DOM keep painting above. It fades in AFTER a
+   beat (250ms) so fast loads never flash it. */
+.videoLoading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.videoLoadingDisc {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(26, 26, 26, 0.45);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  opacity: 0;
+  transform: scale(0.8);
+  animation: videoLoadingIn 0.2s cubic-bezier(0.17, 0.84, 0.44, 1) 0.25s
+    forwards;
+}
+
+.videoLoadingSpinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(253, 252, 248, 0.35);
+  border-top-color: #fdfcf8;
+  border-radius: 50%;
+  animation: videoLoadingSpin 700ms linear infinite;
+}
+
+@keyframes videoLoadingIn {
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes videoLoadingSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* The entrance pop and the blur pulse go; the ring keeps spinning — it IS
+     the information (same rule as the rate-limit countdown). */
+  .videoLoadingDisc {
+    animation-duration: 0.01s;
+    animation-delay: 0.25s;
+  }
+
+  .posterLoading {
+    filter: none;
+    transform: none;
+    transition: none;
+  }
+}
+
 /* Sensitive content: blurred until revealed. The scale hides the soft edges
  * the blur would otherwise leave at the borders. */
 .blurred {

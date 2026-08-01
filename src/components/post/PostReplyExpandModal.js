@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
@@ -6,9 +6,16 @@ import DiscardDialog from "../compose/DiscardDialog";
 import MaskAvatar from "../MaskAvatar";
 import MediaScanList from "../media/MediaScanList";
 import RateLimitNotice from "../RateLimitNotice";
+import ErrorNotice from "../ErrorNotice";
 import PostProfileTrigger from "./PostProfileTrigger";
 import ThreadMedia from "../media/ThreadMedia";
 import { useScrollLock } from "../../utils/scrollLock";
+import { setAudioOwner } from "../../services/media/audioOwner";
+import {
+  setPlaybackScope,
+  releasePlaybackScopeIf,
+} from "../../services/media/playbackArbiter";
+import PlaybackScopeContext from "../../contexts/PlaybackScopeContext";
 import { renderTextWithHashtags } from "../home/homeHelpers";
 import { normalizePastedText } from "../../utils/normalizeText";
 import styles from "../../styles/components/post/PostReplyExpandModal.module.css";
@@ -22,10 +29,16 @@ import cx from "../../utils/cx";
  *
  * Purely another VIEW of PostCommentBox's state: the draft text and media
  * live in the box (one source of truth), so expanding/collapsing never loses
- * anything and the inline box stays in sync. Same reason a throttled reply
- * (rateLimitError) is shown HERE while the dialog is open: the box's own
- * notice would be stranded behind the backdrop.
+ * anything and the inline box stays in sync. Same reason the box's notices —
+ * a throttled reply (rateLimitError), a rejected file (mediaError) or a
+ * failed submit (submitFailed) — are shown HERE while the dialog is open:
+ * the box's own notice would be stranded behind the backdrop.
  */
+// The dialog's playback scope (see playbackArbiter): while it's active only
+// the dialog's own videos are eligible to play — the page's videos behind the
+// backdrop pause reactively, and the parent preview can autoplay normally.
+const REPLY_DIALOG_SCOPE = "__reply_dialog__";
+
 function PostReplyExpandModal({
   open,
   onClose,
@@ -38,6 +51,9 @@ function PostReplyExpandModal({
   media,
   rateLimitError,
   onRateLimitExpire,
+  mediaError,
+  onMediaErrorDismiss,
+  submitFailed,
   onAttach,
   onSubmit,
   submitting,
@@ -58,6 +74,21 @@ function PostReplyExpandModal({
   const [confirmingDiscard, setConfirmingDiscard] = useState(false);
 
   useScrollLock(open);
+
+  // Opening the dialog claims the PLAYBACK SCOPE and silences audio: the
+  // parent preview here renders the SAME media items as the thread behind the
+  // backdrop, and IntersectionObserver can't see occlusion, so both kept
+  // playing — sounding double once unmuted. With the scope active only the
+  // dialog's own videos are eligible: the page's pause reactively, and the
+  // preview autoplays muted like any visible video (its sound pill claims
+  // audio as usual). Closing releases the scope and the arbiter re-promotes
+  // the most visible page video (it resumes muted).
+  useEffect(() => {
+    if (!open) return undefined;
+    setAudioOwner(null);
+    setPlaybackScope(REPLY_DIALOG_SCOPE);
+    return () => releasePlaybackScopeIf(REPLY_DIALOG_SCOPE);
+  }, [open]);
 
   const hasDraft = text.trim().length > 0 || media.count > 0;
 
@@ -120,6 +151,42 @@ function PostReplyExpandModal({
       if (prev && typeof prev.focus === "function") prev.focus();
     };
   }, [open]);
+
+  // Keep YOUR reply row in view. With a tall parent (media) the body opens
+  // with the row below its fold, and every notice (rejected file / failed
+  // submit / rate limit) SHRINKS the scrollable body — the slot lives outside
+  // it — so an unscrolled body clips the row and the notice reads as painted
+  // over the preview (the reported overlap). Pin the body to its end on open
+  // and whenever a notice lands; pre-paint so there is no visible jump.
+  //
+  // The ON-OPEN pin is DESKTOP-ONLY: it fixes the small centered dialog. The
+  // mobile sheet opens at the TOP (Threads' reply sheet) — and its 100dvh
+  // body varies with the browser chrome, so a blanket pin left it slightly
+  // scrolled whenever the collapsed/expanded URL bar made content overflow by
+  // a few px (an offset that tracked the PAGE's scroll position). Notices
+  // still pin on both breakpoints: their slot steals body height anywhere.
+  useLayoutEffect(() => {
+    if (!open) return;
+    const hasNotice = !!(rateLimitError || mediaError || submitFailed);
+    if (!hasNotice && window.matchMedia("(max-width: 700px)").matches) return;
+    const body = bodyRef.current;
+    if (body) body.scrollTop = body.scrollHeight;
+  }, [open, rateLimitError, mediaError, submitFailed]);
+
+  // Follow a fresh attachment the same way: the media tiles land at the END
+  // of your row — below the body's fold on small screens — so a successful
+  // attach was invisible without a manual scroll and read as "nothing
+  // happened". Pin only when the count GROWS (removing a tile must not yank
+  // the scroll). The ref keeps syncing while the dialog is closed so
+  // reopening never misreads an old count as a fresh attach.
+  const prevMediaCountRef = useRef(media.count);
+  useLayoutEffect(() => {
+    const grew = open && media.count > prevMediaCountRef.current;
+    prevMediaCountRef.current = media.count;
+    if (!grew) return;
+    const body = bodyRef.current;
+    if (body) body.scrollTop = body.scrollHeight;
+  }, [open, media.count]);
 
   // Escape closes (draft kept — it lives in the inline box) + Tab focus trap.
   useEffect(() => {
@@ -197,6 +264,9 @@ function PostReplyExpandModal({
   if (!open) return null;
 
   return createPortal(
+    // Videos inside the dialog register their playback candidacy under the
+    // dialog's scope — the pair to the setPlaybackScope effect above.
+    <PlaybackScopeContext.Provider value={REPLY_DIALOG_SCOPE}>
     <div className={styles.backdrop} onMouseDown={handleBackdropMouseDown}>
       <div
         ref={dialogRef}
@@ -322,6 +392,28 @@ function PostReplyExpandModal({
           </div>
         )}
 
+        {/* Failed submit: the dialog stays open (the draft is preserved for a
+            retry), so the box's notice shows here for the same reason. */}
+        {submitFailed && (
+          <div className={styles.noticeSlot}>
+            <ErrorNotice
+              title={t("post.replyErrorTitle")}
+              detail={t("post.replyErrorDetail")}
+            />
+          </div>
+        )}
+
+        {/* Rejected file (too large / unsupported / too many): same slot. */}
+        {mediaError && (
+          <div className={styles.noticeSlot}>
+            <ErrorNotice
+              title={t("post.attachErrorTitle")}
+              detail={mediaError}
+              onDismiss={onMediaErrorDismiss}
+            />
+          </div>
+        )}
+
         {/* === Footer: labeled Media option left, counters + Reply right === */}
         <footer className={styles.footer}>
           <button
@@ -378,7 +470,8 @@ function PostReplyExpandModal({
           onKeep={() => setConfirmingDiscard(false)}
         />
       )}
-    </div>,
+    </div>
+    </PlaybackScopeContext.Provider>,
     document.body
   );
 }

@@ -100,22 +100,23 @@ async function encodeCanvas(canvas, type, quality) {
   if (native && native.type === type) return { blob: native, type };
 
   try {
+    const encoderUrl =
+      type === "image/webp"
+        ? "https://esm.sh/@jsquash/webp"
+        : type === "image/avif"
+        ? "https://esm.sh/@jsquash/avif"
+        : "https://esm.sh/@jsquash/jpeg";
+    const outType =
+      type === "image/webp" || type === "image/avif" ? type : "image/jpeg";
+    // Resolve the WASM encoder BEFORE allocating the ImageData copy (~12.6 MB
+    // for a 2048px frame): the allocation must never sit across a network
+    // round-trip — that stacked original + canvas + copy at peak on iOS.
+    const mod = await importEsm(encoderUrl);
     const ctx = canvas.getContext("2d");
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const q = Math.round(quality * 100);
-    if (type === "image/webp") {
-      const mod = await importEsm("https://esm.sh/@jsquash/webp");
-      const buf = await mod.encode(imageData, { quality: q });
-      return { blob: new Blob([buf], { type: "image/webp" }), type: "image/webp" };
-    }
-    if (type === "image/avif") {
-      const mod = await importEsm("https://esm.sh/@jsquash/avif");
-      const buf = await mod.encode(imageData, { quality: q });
-      return { blob: new Blob([buf], { type: "image/avif" }), type: "image/avif" };
-    }
-    const mod = await importEsm("https://esm.sh/@jsquash/jpeg");
     const buf = await mod.encode(imageData, { quality: q });
-    return { blob: new Blob([buf], { type: "image/jpeg" }), type: "image/jpeg" };
+    return { blob: new Blob([buf], { type: outType }), type: outType };
   } catch (err) {
     // eslint-disable-next-line no-console
     console.error("jSquash encoder failed, falling back to native JPEG:", err);
@@ -138,9 +139,12 @@ function isWebp(file) {
 // without touching the pixels. Dimensions + dominant color are read best-effort
 // (a decode failure must never block the upload of the cleaned file).
 async function passthroughWebp(file) {
-  const buf = await readAsArrayBuffer(file);
+  let buf = await readAsArrayBuffer(file);
   const meta = readImageMetadata(buf, file.type);
   const { blob, removed } = stripWebpMetadata(buf);
+  // The original bytes are no longer needed — drop them before the decode
+  // below so the full-size ArrayBuffer doesn't sit across it.
+  buf = null;
 
   let width = 0;
   let height = 0;
@@ -207,9 +211,11 @@ export async function compressImage(file, config = COMPRESSION_CONFIG) {
   const { outputFormat, quality, maxDimension } = config;
 
   // "Before": read original bytes only to report metadata (the output won't
-  // carry any).
-  const buf = await readAsArrayBuffer(file);
+  // carry any). Dropped immediately after — the full-size ArrayBuffer must
+  // not stay reachable across the decode/encode below (peak-memory stacking).
+  let buf = await readAsArrayBuffer(file);
   const meta = readImageMetadata(buf, file.type);
+  buf = null;
 
   // Decode REDUCED (longest side ≤ maxDimension) — never the full-res photo —
   // so iOS doesn't run out of memory drawing a 12MP image to a full-res canvas.

@@ -15,6 +15,7 @@ import {
 } from "../../utils/geoPermission";
 import MediaScanList from "../media/MediaScanList";
 import RateLimitNotice from "../RateLimitNotice";
+import ErrorNotice from "../ErrorNotice";
 import { isRateLimitError } from "../../utils/rateLimit";
 import DiscardDialog from "./DiscardDialog";
 import useMediaComposer from "../../hooks/useMediaComposer";
@@ -498,6 +499,7 @@ function ComposeModal({ open, onClose }) {
     input.value = "";
     if (error) {
       setSubmitError({
+        title: t("post.attachErrorTitle"),
         message: t(error.key, error.params),
         timestamp: Date.now(),
       });
@@ -577,6 +579,7 @@ function ComposeModal({ open, onClose }) {
       // The raw error travels too: the 429 case is rendered as its own warm
       // notice (with the backend's wait), not as the red banner.
       setSubmitError({
+        title: t("compose.postErrorTitle"),
         message: getErrorMessage(err, t),
         timestamp: Date.now(),
         error: err,
@@ -810,43 +813,12 @@ function ComposeModal({ open, onClose }) {
           )}
 
           {submitError && !rateLimited && (
-            <div className={styles.errorBanner} role="alert">
-              <svg
-                className={styles.errorIcon}
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <line x1="2" y1="2" x2="22" y2="22" />
-                <path d="M5.782 5.782A7 7 0 0 0 9 19h8.5a4.5 4.5 0 0 0 1.307-.193" />
-                <path d="M21.532 16.5A4.5 4.5 0 0 0 17.5 10h-1.79A7.008 7.008 0 0 0 10 5.07" />
-              </svg>
-              <span className={styles.errorMessage}>{submitError.message}</span>
-              <button
-                type="button"
-                className={styles.errorDismiss}
-                onClick={handleDismissError}
-                aria-label={t("common.dismissError")}
-              >
-                <svg
-                  width="12"
-                  height="12"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                >
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
-            </div>
+            <ErrorNotice
+              className={styles.errorNotice}
+              title={submitError.title}
+              detail={submitError.message}
+              onDismiss={handleDismissError}
+            />
           )}
         </div>
 

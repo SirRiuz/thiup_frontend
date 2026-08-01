@@ -349,7 +349,13 @@ function MediaViewer({ images, index: startIndex, onClose }) {
   useEffect(() => {
     const onKey = (e) => {
       if (e.key === "Escape") {
-        e.stopPropagation();
+        // The viewer is the TOPMOST layer (z 1200, above the reply dialog and
+        // its discard confirm, which both listen for Escape on document too).
+        // capture + stopImmediatePropagation eats the press entirely so ONE
+        // Escape closes ONE layer: the viewer now, the dialog below on the
+        // next press (DiscardDialog's own handler uses the same pattern).
+        e.stopImmediatePropagation();
+        e.preventDefault();
         animateClose();
       } else if (e.key === "ArrowRight") {
         navTo(1);
@@ -375,8 +381,11 @@ function MediaViewer({ images, index: startIndex, onClose }) {
         }
       }
     };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
+    // CAPTURE phase: the layers below listen on document in the bubble phase,
+    // so the viewer must see (and stop) the key before they do.
+    document.addEventListener("keydown", onKey, { capture: true });
+    return () =>
+      document.removeEventListener("keydown", onKey, { capture: true });
   }, [animateClose, navTo]);
 
   // Gesture: pointer-driven, rAF-coalesced. Locks to horizontal (slide between

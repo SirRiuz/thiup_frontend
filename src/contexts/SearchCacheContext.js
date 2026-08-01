@@ -14,8 +14,8 @@ import { createContext, useContext, useRef, useCallback } from "react";
  */
 const SearchCacheContext = createContext(null);
 
-// Simple cap (FIFO eviction of the oldest): preserves recent searches
-// without growing unbounded.
+// Simple cap (LRU eviction of the least recently written): preserves recent
+// searches without growing unbounded.
 const MAX_CACHED = 12;
 
 export function SearchCacheProvider({ children }) {
@@ -27,10 +27,14 @@ export function SearchCacheProvider({ children }) {
   }, []);
 
   // Partial merge: keeps previous fields when updating only some.
+  // Delete-then-set refreshes the entry's Map insertion order (true LRU): a
+  // search the user keeps bouncing back to no longer ages out while colder
+  // one-off queries survive.
   const setCached = useCallback((key, data) => {
     if (!key) return;
     const cache = cacheRef.current;
     const prev = cache.get(key);
+    if (prev) cache.delete(key);
     cache.set(key, { ...prev, ...data });
     if (!prev && cache.size > MAX_CACHED) {
       const oldest = cache.keys().next().value;

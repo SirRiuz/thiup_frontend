@@ -1,6 +1,9 @@
 import {
   useCallback,
+  useContext,
   useEffect,
+  useId,
+  useMemo,
   useRef,
   useState,
   useSyncExternalStore,
@@ -21,7 +24,27 @@ import {
   removePlaybackCandidate,
   subscribePlayback,
 } from "../../services/media/playbackArbiter";
+import PlaybackScopeContext from "../../contexts/PlaybackScopeContext";
+import {
+  framePosterUrl,
+  optimizedVideoUrl,
+  optimizedImageUrl,
+  isTransformedUrl,
+} from "../../services/media/cdnMedia";
 import styles from "../../styles/components/media/ThreadMedia.module.css";
+
+// Generic FALLBACK poster: shown while no real frame is available —
+// transformation failed, unsupported source, or local dev (no CF zone).
+// Self-contained data URI (no asset, no network) — warm tile + play mark.
+const FALLBACK_POSTER =
+  "data:image/svg+xml," +
+  encodeURIComponent(
+    "<svg xmlns='http://www.w3.org/2000/svg' width='800' height='800'>" +
+      "<rect width='800' height='800' fill='#f3e3d3'/>" +
+      "<circle cx='400' cy='400' r='96' fill='#a85432' opacity='0.92'/>" +
+      "<path d='M372 352l84 48-84 48z' fill='#fdfcf8'/>" +
+      "</svg>"
+  );
 
 // Layout sizing. The cap/floor on the aspect-ratio gives the Threads look
 // (narrow verticals, wide horizontals) WITHOUT letting extremes become a sliver
@@ -118,8 +141,25 @@ function PlayIcon() {
 
 // Lazy image: native loading="lazy" + fade-in on load; reports its natural size
 // so the frame can size to the real aspect-ratio.
-function ImageMedia({ item, revealed, onNaturalSize, eager }) {
+function ImageMedia({ item, revealed, onNaturalSize, eager, cell }) {
   const [loaded, setLoaded] = useState(false);
+  // Optimized rendition (CF Image Transformations) until it errors — then the
+  // original file. Most failures never reach here: `onerror=redirect` in the
+  // URL makes the CDN itself 307 to the original; this state covers the
+  // endpoint being absent entirely (local dev, feature off).
+  const [transformFailed, setTransformFailed] = useState(false);
+  // Serve the width the layout can actually use: PORTRAITS render width-capped
+  // (~252 CSS px, the MAX_HEIGHT/ratio rule) — 800 covers them at 3x for a
+  // fraction of the bytes; landscapes span the 640px column — 1280 covers 2x.
+  // Carousel CELLS are a fixed 210px box — 640 covers them at 3x; the single
+  // sizes decoded 3-16x the pixels the cell can show (pure memory overdraw).
+  const portrait = item.width && item.height ? item.height > item.width : false;
+  const srcUrl =
+    (!transformFailed &&
+      optimizedImageUrl(item.url, {
+        width: cell ? 640 : portrait ? 800 : 1280,
+      })) ||
+    item.url;
   const handleLoad = (e) => {
     setLoaded(true);
     const { naturalWidth: w, naturalHeight: h } = e.currentTarget;
@@ -127,7 +167,7 @@ function ImageMedia({ item, revealed, onNaturalSize, eager }) {
   };
   return (
     <img
-      src={item.url}
+      src={srcUrl}
       alt=""
       // In a carousel, once the CARD is visible (eager) load now — native lazy
       // only measures vertical viewport proximity, so an off-screen-right item
@@ -136,6 +176,9 @@ function ImageMedia({ item, revealed, onNaturalSize, eager }) {
       decoding="async"
       draggable={false}
       onLoad={handleLoad}
+      onError={(e) => {
+        if (isTransformedUrl(e.currentTarget.src)) setTransformFailed(true);
+      }}
       className={cx(styles.img, loaded ? styles.loaded : "", revealed ? "" : styles.blurred)}
     />
   );
@@ -150,19 +193,37 @@ function ImageMedia({ item, revealed, onNaturalSize, eager }) {
 // video in the app actually plays (Threads rule) — the rest sit paused on their
 // poster frame. Multiple 4K iPhone videos decoding at once is what crashed iOS
 // Safari (few hardware decoders + a low memory ceiling).
-function VideoMedia({ item, revealed, onNaturalSize, eager }) {
+function VideoMedia({ item, revealed, onNaturalSize, eager, cell }) {
   const { t } = useTranslation();
   const videoRef = useRef(null);
+  // Arbitration key: per-INSTANCE, never item.id — the same media can be
+  // mounted twice at once (the thread's inline video AND the reply dialog's
+  // parent preview render the SAME item), and id-keyed ownership made the
+  // pair play/unmute in unison (the double-audio bug).
+  const instanceId = useId();
+  // The playback scope this video renders in (null = the base page; the reply
+  // dialog provides its own) — candidacy is tagged with it so the arbiter can
+  // ignore the page's videos while an overlay is up.
+  const playbackScope = useContext(PlaybackScopeContext);
+  // Real frame poster (CF Media Transformations) until it errors — then the
+  // generic fallback poster takes over for this instance.
+  const [posterFailed, setPosterFailed] = useState(false);
+  // Optimized playback rendition (CF Media Transformations) until IT errors
+  // (input over the 100 MiB cap, unsupported source, local dev) — then the
+  // original file takes over for this instance.
+  const [transformFailed, setTransformFailed] = useState(false);
+  const playbackUrl =
+    (!transformFailed && optimizedVideoUrl(item.url)) || item.url;
   const [src, setSrc] = useState(null); // lazy: unset until near viewport
   const [loaded, setLoaded] = useState(false);
   // Audio is GLOBAL: this video is unmuted only while it owns the audio (one at
   // a time across the whole feed). Deriving muted from the store means claiming
   // audio elsewhere mutes this one reactively.
   const audioOwner = useSyncExternalStore(subscribeAudioOwner, getAudioOwner);
-  const muted = audioOwner !== item.id;
+  const muted = audioOwner !== instanceId;
   // Playback is GLOBAL too: only the arbiter's owner plays.
   const playbackOwner = useSyncExternalStore(subscribePlayback, getPlaybackOwner);
-  const isPlaybackOwner = playbackOwner === item.id;
+  const isPlaybackOwner = playbackOwner === instanceId;
   const [needsTap, setNeedsTap] = useState(false); // reduced-motion: manual play
   const visibleRef = useRef(false);
   const reducedRef = useRef(false);
@@ -177,14 +238,14 @@ function VideoMedia({ item, revealed, onNaturalSize, eager }) {
     const el = videoRef.current;
     if (!el || !visibleRef.current || !revealed || !src) return;
     // Only the arbitrated owner may decode/play — everyone else stays paused.
-    if (getPlaybackOwner() !== item.id) return;
+    if (getPlaybackOwner() !== instanceId) return;
     if (reducedRef.current && !startedRef.current) {
       setNeedsTap(true);
       return;
     }
     const p = el.play();
     if (p && typeof p.catch === "function") p.catch(() => {});
-  }, [revealed, src, item.id]);
+  }, [revealed, src, instanceId]);
 
   // React to ownership changes: won → play; lost → pause (poster stays).
   useEffect(() => {
@@ -193,6 +254,15 @@ function VideoMedia({ item, revealed, onNaturalSize, eager }) {
     if (isPlaybackOwner) tryPlay();
     else el.pause();
   }, [isPlaybackOwner, tryPlay]);
+
+  // Fresh closure for the candidacy observer below. The observer must
+  // register ONCE per mount: its cleanup removes the candidacy, and a
+  // teardown on every tryPlay identity change (tryPlay tracks `src`) briefly
+  // STRIPS the arbiter's ownership each time the src flips — with the
+  // poster-mode src lifecycle (attach on own / detach on loss) that feedback
+  // became a hard attach→lose→detach loop.
+  const tryPlayRef = useRef(tryPlay);
+  tryPlayRef.current = tryPlay;
 
   useEffect(() => {
     reducedRef.current =
@@ -209,29 +279,25 @@ function VideoMedia({ item, revealed, onNaturalSize, eager }) {
   // item scrolls into horizontal view — so an off-screen-right item (e.g. the
   // last video) never stays an empty hole. Standalone (eager === undefined) we
   // fall back to the element's own viewport proximity.
+  // Poster-first (app-wide): the src lifecycle is OWNERSHIP-driven — attach
+  // the real file only while OWNING playback; detach (and release the
+  // hardware decoder — iOS needs the explicit removeAttribute + load()) the
+  // moment ownership moves on. The poster image takes over visually via the
+  // `loaded` flag resetting. N mounted videos therefore cost ZERO decoders;
+  // at most ONE pipeline is alive across the whole app.
   useEffect(() => {
+    if (isPlaybackOwner) {
+      setSrc(playbackUrl);
+      return;
+    }
+    setSrc(null);
+    setLoaded(false);
     const el = videoRef.current;
-    if (!el) return undefined;
-    if (eager !== undefined) {
-      if (eager) setSrc(item.url);
-      return undefined;
+    if (el) {
+      el.removeAttribute("src");
+      el.load();
     }
-    if (typeof IntersectionObserver === "undefined") {
-      setSrc(item.url);
-      return undefined;
-    }
-    const io = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((e) => e.isIntersecting)) {
-          setSrc(item.url);
-          io.disconnect();
-        }
-      },
-      { rootMargin: "300px 0px" }
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, [item.url, eager]);
+  }, [isPlaybackOwner, playbackUrl]);
 
   // (2) Playback candidacy while visible / drop out off-screen. The arbiter
   // picks the MOST visible candidate as the single playing video (the ownership
@@ -246,12 +312,20 @@ function VideoMedia({ item, revealed, onNaturalSize, eager }) {
         if (!e) return;
         const ratio = e.isIntersecting ? e.intersectionRatio : 0;
         visibleRef.current = ratio >= 0.5;
-        setPlaybackCandidate(item.id, ratio);
+        setPlaybackCandidate(instanceId, ratio, playbackScope);
         if (!visibleRef.current) {
           el.pause();
           // Leaving the screen releases the audio so nothing plays sound
           // off-screen; it returns muted next time it's visible.
-          clearAudioOwnerIf(item.id);
+          clearAudioOwnerIf(instanceId);
+        } else {
+          // Back on screen while ALREADY the owner: ownership doesn't change,
+          // so the won→play effect never fires — replay here or the video
+          // stays frozen on its poster (an unmute tap on a mostly-offscreen
+          // video force-claims ownership without playing, and scrolling back
+          // used to leave it paused forever). tryPlay self-guards (owner,
+          // revealed, src), so this is a no-op for every non-owner.
+          tryPlayRef.current();
         }
       },
       { threshold: [0, 0.25, 0.5, 0.75, 1] }
@@ -259,9 +333,9 @@ function VideoMedia({ item, revealed, onNaturalSize, eager }) {
     io.observe(el);
     return () => {
       io.disconnect();
-      removePlaybackCandidate(item.id);
+      removePlaybackCandidate(instanceId);
     };
-  }, [tryPlay, item.id]);
+  }, [instanceId, playbackScope]);
 
   // iOS Safari is lazy about decoding: once the src is set, explicitly load() so
   // it fetches metadata + renders the #t=0.1 poster frame (no full download).
@@ -281,12 +355,12 @@ function VideoMedia({ item, revealed, onNaturalSize, eager }) {
     // open/close this instance's render may lag the store for a tick, and a
     // stale closure would make the first click only resync (the "double click"
     // bug). The live value guarantees the first click toggles.
-    if (getAudioOwner() !== item.id) {
+    if (getAudioOwner() !== instanceId) {
       // Claim the audio → every other video mutes reactively. Unmuting is
       // explicit intent to WATCH this one, so it also claims playback (the
       // arbiter pauses whichever video was playing).
-      setAudioOwner(item.id);
-      forcePlaybackOwner(item.id);
+      setAudioOwner(instanceId);
+      forcePlaybackOwner(instanceId);
       const el = videoRef.current;
       if (el && visibleRef.current) {
         const p = el.play();
@@ -302,10 +376,10 @@ function VideoMedia({ item, revealed, onNaturalSize, eager }) {
   // arbiter can promote the next visible video).
   useEffect(
     () => () => {
-      clearAudioOwnerIf(item.id);
-      removePlaybackCandidate(item.id);
+      clearAudioOwnerIf(instanceId);
+      removePlaybackCandidate(instanceId);
     },
-    [item.id]
+    [instanceId]
   );
 
   const manualPlay = (e) => {
@@ -313,7 +387,7 @@ function VideoMedia({ item, revealed, onNaturalSize, eager }) {
     startedRef.current = true;
     setNeedsTap(false);
     // Manual play is explicit intent — claim playback from whoever has it.
-    forcePlaybackOwner(item.id);
+    forcePlaybackOwner(instanceId);
     const el = videoRef.current;
     if (el) {
       const p = el.play();
@@ -323,6 +397,44 @@ function VideoMedia({ item, revealed, onNaturalSize, eager }) {
 
   return (
     <>
+      {/* A permanent, always-opaque poster base layer — the video fades in
+          ABOVE it (and back out on detach), so the transition only ever
+          blends poster↔video, never the frame background. Real frame first
+          (CF Media Transformations); generic fallback poster on error. */}
+      <img
+        src={
+          (!posterFailed &&
+            framePosterUrl(item.url, cell ? { width: 640 } : undefined)) ||
+          FALLBACK_POSTER
+        }
+        onError={() => setPosterFailed(true)}
+        alt=""
+        aria-hidden="true"
+        // Same rule as ImageMedia: carousel cells load eager once the CARD is
+        // visible (an off-screen-right cell must never sit as an empty hole);
+        // standalone videos keep native lazy — a decoded poster is ~3-4 MB,
+        // and an eager one for every video ever scrolled past stays resident.
+        loading={eager ? "eager" : "lazy"}
+        decoding="async"
+        draggable={false}
+        className={cx(
+          styles.poster,
+          // Loading (src attached, first frame not painted): the poster
+          // gently UNFOCUSES — "warming up", never frozen. Skipped under
+          // the NSFW blur (which owns `filter` at full strength).
+          revealed && src && !loaded ? styles.posterLoading : "",
+          revealed ? "" : styles.blurred
+        )}
+      />
+      {/* Loading dial: frosted disc + cream ring, the sound pill's anatomy —
+          delayed so cached/fast loads never flash it. */}
+      {revealed && src && !loaded && (
+        <span className={styles.videoLoading} aria-hidden="true">
+          <span className={styles.videoLoadingDisc}>
+            <span className={styles.videoLoadingSpinner} />
+          </span>
+        </span>
+      )}
       <video
         ref={videoRef}
         // #t=0.1 makes iOS Safari seek to and RENDER that frame as the poster
@@ -331,7 +443,12 @@ function VideoMedia({ item, revealed, onNaturalSize, eager }) {
         // still waits for play() (autoplay-on-visible). The fragment is
         // client-side, so it never breaks a presigned (query-string) URL.
         src={src ? `${src}#t=0.1` : undefined}
-        className={cx(styles.img, loaded ? styles.loaded : "", revealed ? "" : styles.blurred)}
+        className={cx(
+          styles.img,
+          styles.overPosterFlow,
+          loaded ? styles.loaded : "",
+          revealed ? "" : styles.blurred
+        )}
         muted
         loop
         playsInline
@@ -345,6 +462,14 @@ function VideoMedia({ item, revealed, onNaturalSize, eager }) {
         }}
         onLoadedData={() => setLoaded(true)}
         onCanPlay={tryPlay}
+        onError={(e) => {
+          // Fall back to the ORIGINAL file only when the TRANSFORMED source
+          // failed (input over CF's cap, unsupported, local dev). The guard
+          // reads the live attribute so a detached/empty src or a failure of
+          // the original itself never trips it.
+          const cur = e.currentTarget.getAttribute("src") || "";
+          if (isTransformedUrl(cur)) setTransformFailed(true);
+        }}
       />
       {revealed && needsTap && (
         <button
@@ -403,6 +528,7 @@ function MediaFrame({
   frameProps = {},
   onNaturalSize,
   eager,
+  cell,
 }) {
   const { t } = useTranslation();
   const [revealed, setRevealed] = useState(!item.isNsfw);
@@ -417,9 +543,9 @@ function MediaFrame({
       {...frameProps}
     >
       {isVideo ? (
-        <VideoMedia item={item} revealed={revealed} onNaturalSize={onNaturalSize} eager={eager} />
+        <VideoMedia item={item} revealed={revealed} onNaturalSize={onNaturalSize} eager={eager} cell={cell} />
       ) : (
-        <ImageMedia item={item} revealed={revealed} onNaturalSize={onNaturalSize} eager={eager} />
+        <ImageMedia item={item} revealed={revealed} onNaturalSize={onNaturalSize} eager={eager} cell={cell} />
       )}
       {!revealed && (
         <button
@@ -841,6 +967,7 @@ function CarouselItem({ item, index, eager }) {
       className={styles.carouselItem}
       frameProps={{ "data-index": index }}
       eager={eager}
+      cell
     />
   );
 }
@@ -853,7 +980,10 @@ function CarouselItem({ item, index, eager }) {
  * viewer (images only); videos play inline.
  */
 function ThreadMedia({ items }) {
-  const media = (items || []).filter((m) => m && m.url);
+  // Memoized: MediaViewer's gesture effect depends on this array — a fresh
+  // identity per render tore down and re-registered its native listeners on
+  // every parent render while the viewer was open.
+  const media = useMemo(() => (items || []).filter((m) => m && m.url), [items]);
   // Index (in the media array) of the item open in the viewer (null = closed).
   const [viewerIndex, setViewerIndex] = useState(null);
   // Set when a tap opens the viewer so the resulting click is swallowed here
