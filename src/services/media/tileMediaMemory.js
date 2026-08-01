@@ -13,7 +13,11 @@
  * FIFO-capped so an endless gallery session can't grow it unbounded.
  */
 const loadedUrls = new Set();
-const MAX_URLS = 600;
+// ~10 screens of tiles: enough that a back-restore's viewport (and a healthy
+// scroll around it) mounts eager, without eager-decoding an entire long
+// gallery at once (every eager tile decodes immediately, off-screen or not —
+// at 600 that was a giant synchronous decode bill on restore).
+const MAX_URLS = 240;
 
 export function markTileMediaLoaded(url) {
   if (!url) return;

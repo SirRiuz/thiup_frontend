@@ -19,6 +19,11 @@ const HIDE_DELAY_MS = 150;
  */
 function PostProfileTrigger({ mask, children, className }) {
   const [isVisible, setIsVisible] = useState(false);
+  // True from hover-enter (show pending) until the card is fully hidden —
+  // gates the document scroll listener so idle triggers register NOTHING
+  // (every feed card mounts several of these; an always-on capture scroll
+  // listener per trigger meant hundreds firing on every scroll).
+  const [isArmed, setIsArmed] = useState(false);
   const showTimerRef = useRef(null);
   const hideTimerRef = useRef(null);
   const navigate = useNavigate();
@@ -58,14 +63,18 @@ function PostProfileTrigger({ mask, children, className }) {
 
   // Hide the card (and cancel any pending show) as soon as the page scrolls —
   // the card is anchored to the trigger and would otherwise drift. Same as the
-  // reaction picker. capture:true because scroll events don't bubble.
+  // reaction picker. capture:true because scroll events don't bubble. Only
+  // registered while armed (show pending or card visible) — same observable
+  // behavior, without one live listener per idle trigger.
   useEffect(() => {
+    if (!isArmed) return undefined;
     const hideOnScroll = () => {
       if (showTimerRef.current) {
         clearTimeout(showTimerRef.current);
         showTimerRef.current = null;
       }
       setIsVisible(false);
+      setIsArmed(false);
     };
     document.addEventListener("scroll", hideOnScroll, {
       capture: true,
@@ -73,7 +82,7 @@ function PostProfileTrigger({ mask, children, className }) {
     });
     return () =>
       document.removeEventListener("scroll", hideOnScroll, { capture: true });
-  }, []);
+  }, [isArmed]);
 
   const handleMouseEnter = () => {
     // Moving back onto the trigger (or onto the card) cancels any pending hide.
@@ -82,6 +91,7 @@ function PostProfileTrigger({ mask, children, className }) {
       hideTimerRef.current = null;
     }
     if (isVisible) return;
+    setIsArmed(true);
     showTimerRef.current = setTimeout(() => {
       setIsVisible(true);
       showTimerRef.current = null;
@@ -95,6 +105,7 @@ function PostProfileTrigger({ mask, children, className }) {
     }
     hideTimerRef.current = setTimeout(() => {
       setIsVisible(false);
+      setIsArmed(false);
       hideTimerRef.current = null;
     }, HIDE_DELAY_MS);
   };

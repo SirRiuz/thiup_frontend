@@ -293,17 +293,27 @@ function Post() {
     const start = performance.now();
     const DURATION = 500;
     let aborted = false;
+    // Both listeners are removed whichever way the ride ends: `once` only
+    // removes a listener that FIRES, so the counterpart (wheel on touch
+    // devices, touchstart on desktop) leaked per pill click, pinning this
+    // whole closure across navigations.
+    const cleanup = () => {
+      window.removeEventListener("wheel", abort);
+      window.removeEventListener("touchstart", abort);
+    };
     const abort = () => {
       aborted = true;
+      cleanup();
     };
-    window.addEventListener("wheel", abort, { passive: true, once: true });
-    window.addEventListener("touchstart", abort, { passive: true, once: true });
+    window.addEventListener("wheel", abort, { passive: true });
+    window.addEventListener("touchstart", abort, { passive: true });
     const tick = (now) => {
       if (aborted) return;
       const progress = Math.min(1, (now - start) / DURATION);
       const eased = 1 - Math.pow(1 - progress, 3);
       window.scrollTo(0, Math.round(startY * (1 - eased)));
       if (progress < 1) requestAnimationFrame(tick);
+      else cleanup();
     };
     requestAnimationFrame(tick);
   };

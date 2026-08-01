@@ -11,6 +11,10 @@ import { fetchMaskProfile } from "../api/userApi";
  *   the skeleton.
  */
 const profileCache = new Map();
+// FIFO cap: entries are tiny (5 scalars), but the map was the one module
+// cache with no eviction at all — a long session hovering many masks grew
+// it without bound.
+const MAX_PROFILES = 100;
 
 function mapProfile(data) {
   return {
@@ -51,6 +55,9 @@ export function useMaskProfile(fullHash) {
       .then((data) => {
         const mapped = mapProfile(data);
         profileCache.set(fullHash, mapped);
+        if (profileCache.size > MAX_PROFILES) {
+          profileCache.delete(profileCache.keys().next().value);
+        }
         if (!active) return;
         setProfile(mapped);
         setIsLoading(false);

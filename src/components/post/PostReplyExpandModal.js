@@ -158,8 +158,17 @@ function PostReplyExpandModal({
   // it — so an unscrolled body clips the row and the notice reads as painted
   // over the preview (the reported overlap). Pin the body to its end on open
   // and whenever a notice lands; pre-paint so there is no visible jump.
+  //
+  // The ON-OPEN pin is DESKTOP-ONLY: it fixes the small centered dialog. The
+  // mobile sheet opens at the TOP (Threads' reply sheet) — and its 100dvh
+  // body varies with the browser chrome, so a blanket pin left it slightly
+  // scrolled whenever the collapsed/expanded URL bar made content overflow by
+  // a few px (an offset that tracked the PAGE's scroll position). Notices
+  // still pin on both breakpoints: their slot steals body height anywhere.
   useLayoutEffect(() => {
     if (!open) return;
+    const hasNotice = !!(rateLimitError || mediaError || submitFailed);
+    if (!hasNotice && window.matchMedia("(max-width: 700px)").matches) return;
     const body = bodyRef.current;
     if (body) body.scrollTop = body.scrollHeight;
   }, [open, rateLimitError, mediaError, submitFailed]);

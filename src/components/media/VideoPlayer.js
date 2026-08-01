@@ -76,6 +76,11 @@ function VideoPlayer({ item, onReady, onError, fill = false }) {
   const [current, setCurrent] = useState(0);
   const [duration, setDuration] = useState(0);
   const [buffered, setBuffered] = useState(0);
+  // Fullscreen plays the ORIGINAL file directly (product decision, matching
+  // the inline/fullscreen split for images): previews stream the compressed
+  // rendition; the explicit fullscreen tap gets the source — originals honor
+  // Range (206) so playback starts progressively, and a cold CDN transform
+  // can never stall this player.
 
   // Keep the element's muted state in sync.
   useEffect(() => {
@@ -97,6 +102,32 @@ function VideoPlayer({ item, onReady, onError, fill = false }) {
   useEffect(() => {
     playSafe();
   }, [playSafe]);
+
+  // The src lives HERE, not in JSX: attach on setup, release the media
+  // pipeline on cleanup (the explicit detach ThreadMedia also does — iOS
+  // Safari can keep a detached <video> with an attached src alive until GC).
+  // SYMMETRY is load-bearing: a cleanup that detaches imperatively while JSX
+  // owns the attribute breaks under StrictMode's dev double-mount (setup →
+  // cleanup strips the DOM src behind React's back → second setup was a
+  // no-op and React never re-writes an attribute it thinks is unchanged →
+  // the player sat src-less forever, dev-only). Re-attaching in setup makes
+  // the double cycle self-healing, and slide navigation (item.url change)
+  // detaches the old rendition before attaching the new one.
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v || !item.url) return undefined;
+    v.src = item.url;
+    v.load();
+    return () => {
+      try {
+        v.pause();
+        v.removeAttribute("src");
+        v.load();
+      } catch (err) {
+        /* already detached */
+      }
+    };
+  }, [item.url]);
 
   const togglePlay = useCallback(() => {
     const v = videoRef.current;
@@ -181,7 +212,6 @@ function VideoPlayer({ item, onReady, onError, fill = false }) {
     >
       <video
         ref={videoRef}
-        src={item.url}
         className={cx(styles.video, ready ? styles.ready : "")}
         loop
         playsInline

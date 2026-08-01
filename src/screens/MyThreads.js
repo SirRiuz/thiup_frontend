@@ -22,6 +22,11 @@ import {
   stopTileVideoOnLeave,
 } from "../components/media/mediaTileHoverPlay";
 import {
+  framePosterUrl,
+  optimizedImageUrl,
+  isTransformedUrl,
+} from "../services/media/cdnMedia";
+import {
   isTileMediaLoaded,
   markTileMediaLoaded,
 } from "../services/media/tileMediaMemory";
@@ -259,7 +264,11 @@ function MyThreads() {
                         <video
                           className={styles.mediaTileMedia}
                           src={file.url}
-                          preload="metadata"
+                          // Poster-first tile: the real frame via CF (no media fetch, no
+                          // decoder per tile — preload none); hover-play still works, its
+                          // play() starts the fetch. Poster failure = the tile background.
+                          poster={framePosterUrl(file.url, { width: 640 }) || undefined}
+                          preload="none"
                           muted
                           playsInline
                           loop
@@ -267,7 +276,13 @@ function MyThreads() {
                       ) : (
                         <img
                           className={styles.mediaTileMedia}
-                          src={file.url}
+                          /* Tile-sized rendition: a ~212px cell decoding the
+                             2048px original held ~12 MB per tile; 640 covers
+                             the cell at 3x. onError swaps back to the
+                             original when the endpoint is absent (local
+                             dev) — the CDN itself 307s on a failed
+                             transform (onerror=redirect). */
+                          src={optimizedImageUrl(file.url, { width: 640 }) || file.url}
                           alt=""
                           /* No-blink restore (X/Threads): URLs that already
                              loaded this session mount EAGER (straight from
@@ -277,6 +292,11 @@ function MyThreads() {
                           loading={isTileMediaLoaded(file.url) ? "eager" : "lazy"}
                           decoding="sync"
                           onLoad={() => markTileMediaLoaded(file.url)}
+                          onError={(e) => {
+                            if (isTransformedUrl(e.currentTarget.src)) {
+                              e.currentTarget.src = file.url;
+                            }
+                          }}
                         />
                       )}
                       {/* ONE type mark per tile (IG's grid rule): carousel

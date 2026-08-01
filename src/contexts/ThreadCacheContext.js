@@ -13,8 +13,9 @@ import { createContext, useContext, useRef, useCallback } from "react";
  */
 const ThreadCacheContext = createContext(null);
 
-// Simple cache cap (FIFO eviction of the oldest). Preserves recent threads
-// without growing unbounded; 12 amply covers the go-and-return pattern.
+// Simple cache cap (LRU eviction of the least recently WRITTEN). Preserves
+// recent threads without growing unbounded; 12 amply covers the go-and-return
+// pattern.
 const MAX_CACHED = 12;
 
 export function ThreadCacheProvider({ children }) {
@@ -27,10 +28,14 @@ export function ThreadCacheProvider({ children }) {
 
   // Partial merge: keeps the previous fields (e.g. scrollY) when updating
   // only thread/replies. Evicts the oldest when exceeding the cap.
+  // Delete-then-set refreshes the entry's Map insertion order (true LRU):
+  // without it, a thread the user keeps revisiting still aged out and its
+  // heavy entry (full reply list) was replaced by colder ones.
   const setCachedThread = useCallback((id, data) => {
     if (!id) return;
     const cache = cacheRef.current;
     const prev = cache.get(id);
+    if (prev) cache.delete(id);
     cache.set(id, { ...prev, ...data });
     if (!prev && cache.size > MAX_CACHED) {
       const oldest = cache.keys().next().value;

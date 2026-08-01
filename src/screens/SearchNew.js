@@ -24,6 +24,11 @@ import {
   stopTileVideoOnLeave,
 } from "../components/media/mediaTileHoverPlay";
 import {
+  framePosterUrl,
+  optimizedImageUrl,
+  isTransformedUrl,
+} from "../services/media/cdnMedia";
+import {
   isTileMediaLoaded,
   markTileMediaLoaded,
 } from "../services/media/tileMediaMemory";
@@ -491,7 +496,13 @@ function SearchNew() {
                             <video
                               className={styles.mediaTileMedia}
                               src={m.url}
-                              preload="metadata"
+                              // Poster-first tile: the real frame via CF (no
+                              // media fetch, no decoder per tile — preload
+                              // none); hover-play still works, its play()
+                              // starts the fetch. Poster failure = the tile
+                              // background.
+                              poster={framePosterUrl(m.url, { width: 640 }) || undefined}
+                              preload="none"
                               muted
                               playsInline
                               loop
@@ -499,7 +510,16 @@ function SearchNew() {
                           ) : (
                             <img
                               className={styles.mediaTileMedia}
-                              src={m.url}
+                              /* Tile-sized rendition: a ~212px cell decoding
+                                 the 2048px original held ~12 MB per tile; 640
+                                 covers the cell at 3x. onError swaps back to
+                                 the original when the endpoint is absent
+                                 (local dev) — the CDN itself 307s on a
+                                 failed transform (onerror=redirect). */
+                              src={
+                                optimizedImageUrl(m.url, { width: 640 }) ||
+                                m.url
+                              }
                               alt=""
                               /* No-blink restore — see the profile grids. */
                               loading={
@@ -507,6 +527,11 @@ function SearchNew() {
                               }
                               decoding="sync"
                               onLoad={() => markTileMediaLoaded(m.url)}
+                              onError={(e) => {
+                                if (isTransformedUrl(e.currentTarget.src)) {
+                                  e.currentTarget.src = m.url;
+                                }
+                              }}
                             />
                           )}
                           {/* ONE type mark per tile (IG's grid rule), top-

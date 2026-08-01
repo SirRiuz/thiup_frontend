@@ -10,6 +10,11 @@ import {
   setAudioOwner,
   VIEWER_AUDIO_ID,
 } from "../../services/media/audioOwner";
+import {
+  framePosterUrl,
+  optimizedImageUrl,
+  isTransformedUrl,
+} from "../../services/media/cdnMedia";
 import { useScrollLock } from "../../utils/scrollLock";
 import styles from "../../styles/components/search/SearchMediaPreview.module.css";
 
@@ -296,22 +301,36 @@ function SearchMediaPreview({ item, onClose, onViewThread, onHashtag }) {
                          native controls. Only the CURRENT slide plays. */
                       <VideoPlayer item={m} fill />
                     ) : (
-                      /* Adjacent/NSFW video: a bare muted frame (no player). */
+                      /* Adjacent/NSFW video: a bare muted frame (no player).
+                         Poster-first — the CF frame paints it with NO media
+                         fetch and NO decoder claimed (preload none). */
                       <video
                         className={cx(styles.media, mRevealed ? "" : styles.mediaBlurred)}
                         src={m.url}
+                        poster={framePosterUrl(m.url) || undefined}
                         muted
                         playsInline
-                        preload="metadata"
+                        preload="none"
                       />
                     )
                   ) : (
                     <img
                       className={cx(styles.media, mRevealed ? "" : styles.mediaBlurred)}
-                      src={m.url}
+                      /* Stage-sized rendition (~600px wide at most): every
+                         slide of the track lives in-viewport horizontally,
+                         so `lazy` doesn't skip them — decoding the 2048px
+                         original per slide held ~12 MB each. onError swaps
+                         back to the original when the endpoint is absent
+                         (local dev). */
+                      src={optimizedImageUrl(m.url, { width: 1280 }) || m.url}
                       alt=""
                       draggable={false}
                       loading={isCurrent ? undefined : "lazy"}
+                      onError={(e) => {
+                        if (isTransformedUrl(e.currentTarget.src)) {
+                          e.currentTarget.src = m.url;
+                        }
+                      }}
                     />
                   )}
                   {!mRevealed && isCurrent && (

@@ -69,10 +69,27 @@ export function getPlaybackOwner() {
 
 // Report a video's current visibility (tagged with the scope it renders in —
 // see PlaybackScopeContext). Below MIN_RATIO it stops being a candidate (and
-// loses playback if it was the owner).
+// loses playback if it was the owner). `realRatio` remembers the last
+// observed visibility so a stale forced claim can be demoted back to it.
+//
+// A FORCED claim survives its own refreshes: the observer reporting the real
+// (≤1) ratio must not strip the oversized stickiness, or any slightly-more-
+// visible neighbor steals playback right after an explicit tap (the user
+// played it on purpose — like the audio rule, the claim holds until the video
+// leaves the ≥50% band, another force replaces it, or its scope deactivates).
 export function setPlaybackCandidate(id, ratio, scope = null) {
-  if (ratio >= MIN_RATIO) candidates.set(id, { ratio, scope });
-  else candidates.delete(id);
+  if (ratio >= MIN_RATIO) {
+    const prev = candidates.get(id);
+    const forced = !!(prev && prev.forced);
+    candidates.set(id, {
+      ratio: forced ? prev.ratio : ratio,
+      scope,
+      forced,
+      realRatio: ratio,
+    });
+  } else {
+    candidates.delete(id);
+  }
   recompute();
 }
 
@@ -84,8 +101,34 @@ export function setPlaybackCandidate(id, ratio, scope = null) {
 // the new owner stable until its own observer refreshes it, and belongs to
 // the scope active at the gesture — so entering/leaving an overlay scope
 // demotes it like any other candidate of its layer.
+//
+// Only ONE forced candidacy may exist at a time: a force never expires on its
+// own (observers only fire on real intersection changes), so a STALE one kept
+// its oversized ratio and stole ownership back as soon as the newer owner's
+// observer reported a real (≤1) ratio — tap B, tap C, and B "unfreezes"
+// itself while C dies. Each new force demotes every previous one back to its
+// last observed visibility.
 export function forcePlaybackOwner(id) {
-  candidates.set(id, { ratio: 2, scope: activeScope });
+  candidates.forEach((candidate, cid) => {
+    if (cid === id || !candidate.forced) return;
+    if (candidate.realRatio >= MIN_RATIO) {
+      candidates.set(cid, {
+        ratio: candidate.realRatio,
+        scope: candidate.scope,
+        forced: false,
+        realRatio: candidate.realRatio,
+      });
+    } else {
+      candidates.delete(cid);
+    }
+  });
+  const prev = candidates.get(id);
+  candidates.set(id, {
+    ratio: 2,
+    scope: activeScope,
+    forced: true,
+    realRatio: prev ? prev.realRatio : 0,
+  });
   if (ownerId !== id) {
     ownerId = id;
     listeners.forEach((fn) => fn(ownerId));
