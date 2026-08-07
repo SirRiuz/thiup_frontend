@@ -59,6 +59,18 @@ const lastPosByUrl = new Map();
 // remount): only there is the PUSH restoration reliable.
 const RAIL_RESTORE_PATHS = new Set(["/home", "/search", "/profile"]);
 
+// The media viewer's deep link (/p/:id/m/:mediaId — see Post.js) rewrites the
+// URL as the user opens/slides/closes it, but that is NOT a page navigation:
+// the viewer is an overlay on the SAME thread screen underneath it, which
+// never moves. Strips a trailing /m/:mediaId so open/slide/close all resolve
+// to the SAME base pathname and the effect below can recognize (and
+// completely ignore) that family of transitions.
+const MEDIA_SUFFIX_RE = /^(\/p\/[^/]+)\/m\/[^/]+\/?$/;
+function stripMediaSuffix(pathname) {
+  const m = pathname.match(MEDIA_SUFFIX_RE);
+  return m ? m[1] : pathname;
+}
+
 /**
  * Whether this history entry has a scroll position the manager will restore
  * on POP. Screens with their own landing anchor (the comment permalink's
@@ -93,6 +105,23 @@ function ScrollToTop() {
     const prevKey = prevKeyRef.current;
     const prevPath = prevPathRef.current;
     if (prevKey === location.key) return undefined; // initial mount
+
+    // The media viewer opening/sliding/closing (/p/:id ↔ /p/:id/m/:mediaId,
+    // in either direction): the underlying screen never actually changes, so
+    // this must be a COMPLETE no-op for scroll — no save, no restore, no
+    // scrollTo(0,0). Only the tracking refs advance, so the NEXT real
+    // navigation (leaving the thread entirely) still compares against the
+    // right previous key/path/url. This is critical: window.scrollTo() still
+    // physically moves the real document even while the viewer's scroll
+    // LOCK is up (overflow:hidden only blocks user-driven scroll, not
+    // programmatic calls) — treating this as an ordinary PUSH/REPLACE below
+    // would silently reset the thread's scroll position on every open/slide.
+    if (stripMediaSuffix(prevPath) === stripMediaSuffix(location.pathname)) {
+      prevKeyRef.current = location.key;
+      prevPathRef.current = location.pathname;
+      prevUrlRef.current = location.pathname + location.search;
+      return undefined;
+    }
 
     // Persists the exact position of the entry being left — by key (POP) and
     // by full URL (return to a rail screen via PUSH).

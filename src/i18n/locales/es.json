@@ -19,7 +19,30 @@
       "previous": "Imagen anterior",
       "next": "Imagen siguiente",
       "position": "Imagen {{current}} de {{total}}",
-      "loadError": "No se pudo cargar el contenido"
+      "loadError": "No se pudo cargar el contenido",
+      "download": "Descargar",
+      "downloading": "Descargando…"
+    },
+    "contextMenu": {
+      "copyImage": "Copiar imagen",
+      "copyLink": "Copiar enlace",
+      "viewDetails": "Ver detalles"
+    },
+    "details": {
+      "title": "Detalles del archivo",
+      "close": "Cerrar",
+      "type": "Tipo",
+      "typeImage": "Imagen",
+      "typeVideo": "Video",
+      "format": "Formato",
+      "dimensions": "Dimensiones",
+      "aspectRatio": "Relación de aspecto",
+      "sensitive": "Contenido sensible",
+      "yes": "Sí",
+      "no": "No",
+      "position": "Posición",
+      "positionValue": "{{current}} de {{total}}",
+      "unknown": "Desconocido"
     }
   },
   "common": {
@@ -191,6 +214,7 @@
     "noReplies": "Aún no hay respuestas",
     "replyCount_one": "{{count}} respuesta",
     "replyCount_other": "{{count}} respuestas",
+    "loadingReplies": "Cargando respuestas",
     "reply": "Responder",
     "replies": "Respuestas",
     "opAuthor": "Autor del hilo",
@@ -221,6 +245,7 @@
     "contentRejected": "El contenido del archivo no coincide con su tipo. Se omitió: {{names}}",
     "maxFiles": "Solo se permiten {{max}} archivos",
     "attachMedia": "Adjuntar imagen o video",
+    "dropToAttach": "Suelta aquí para adjuntar",
     "expandComposer": "Expandir editor"
   },
   "scan": {
@@ -270,8 +295,27 @@
   "threadOptions": {
     "more": "Más opciones",
     "viewDetails": "Ver detalles",
+    "share": "Compartir",
     "copyLink": "Copiar enlace",
+    "qrCode": "Código QR",
     "report": "Reportar"
+  },
+  "share": {
+    "title": "Compartir",
+    "close": "Cerrar",
+    "whatsapp": "WhatsApp",
+    "x": "X",
+    "facebook": "Facebook",
+    "email": "Correo",
+    "more": "Más",
+    "genericCaption": "Mira este hilo en Thiup",
+    "emailSubject": "Un hilo en Thiup"
+  },
+  "qrCode": {
+    "title": "Código QR",
+    "close": "Cerrar",
+    "download": "Descargar",
+    "downloadFailed": "No se pudo descargar el código QR"
   },
   "threadDetails": {
     "title": "Detalles del hilo",
@@ -291,6 +335,8 @@
     "idCopied": "ID copiado",
     "copied": "Copiado",
     "copyFailed": "No se pudo copiar",
+    "imageCopied": "Imagen copiada",
+    "imageCopyFailed": "No se pudo copiar la imagen",
     "publishing": "Publicando…",
     "posted": "Hilo publicado",
     "replyPosted": "Respuesta publicada",
@@ -339,7 +385,9 @@
     "notFound": "Perfil no encontrado",
     "mediaEmptyTitle": "Aún no hay media",
     "mediaEmptyBody": "Las fotos y videos de los hilos de esta máscara aparecerán aquí.",
-    "avatarLabel": "Foto de perfil"
+    "avatarLabel": "Foto de perfil",
+    "previewLabel": "Vista previa del perfil",
+    "viewProfile": "Ver perfil"
   },
   "myThreads": {
     "title": "Mis hilos",

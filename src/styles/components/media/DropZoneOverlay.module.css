@@ -1,0 +1,56 @@
+/* DropZoneOverlay — full-cover drag-over feedback, shared by every composer
+ * (ComposeModal, PostCommentBox, PostReplyExpandModal). Reuses the app's
+ * existing brand-highlight recipe (see the new-thread/new-reply highlight):
+ * the same rgba(168,84,50,0.1) wash + terracotta contour, dashed here to
+ * read as a drop target instead of a "just posted" confirmation. */
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: inherit;
+  background: rgba(168, 84, 50, 0.1);
+  border: 1.5px dashed rgba(168, 84, 50, 0.55);
+  pointer-events: none;
+  opacity: 0;
+  animation: dropZoneIn 0.2s ease forwards;
+}
+
+@keyframes dropZoneIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 22px;
+  border-radius: 14px;
+  background: #fdfcf8;
+  border: 1px solid rgba(168, 84, 50, 0.3);
+  box-shadow: 0 8px 24px rgba(26, 26, 26, 0.08);
+  color: #a85432;
+}
+
+.label {
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: #a85432;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .overlay {
+    animation: none;
+    opacity: 1;
+  }
+}

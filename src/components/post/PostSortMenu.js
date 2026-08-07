@@ -53,6 +53,9 @@ function PostSortMenu({ value, onChange, isLoading = false }) {
   // viewport — the menu opens to the right and this nudges it left when the
   // trigger sits near the screen edge (mobile).
   const [shiftX, setShiftX] = useState(0);
+  // Smart open: grow the menu UPWARD from the trigger instead of down past
+  // the viewport when there isn't enough room below (see recalcShift).
+  const [openUp, setOpenUp] = useState(false);
   const wrapperRef = useRef(null);
   const triggerRef = useRef(null);
   const menuRef = useRef(null);
@@ -67,15 +70,23 @@ function PostSortMenu({ value, onChange, isLoading = false }) {
     const wrapper = wrapperRef.current;
     const menu = menuRef.current;
     if (!wrapper || !menu) return;
-    const baseLeft = wrapper.getBoundingClientRect().left;
+    const rect = wrapper.getBoundingClientRect();
     const width = menu.offsetWidth;
     const maxLeft = window.innerWidth - VIEWPORT_MARGIN - width;
     let shift = 0;
-    if (baseLeft > maxLeft) shift = maxLeft - baseLeft; // would overflow right
-    if (baseLeft + shift < VIEWPORT_MARGIN) {
-      shift = VIEWPORT_MARGIN - baseLeft; // never off the left either
+    if (rect.left > maxLeft) shift = maxLeft - rect.left; // would overflow right
+    if (rect.left + shift < VIEWPORT_MARGIN) {
+      shift = VIEWPORT_MARGIN - rect.left; // never off the left either
     }
     setShiftX(shift);
+
+    // Smart open (same idea as PostOptionsMenu's popover / MediaContextMenu):
+    // flip above the trigger when there isn't enough room below to avoid
+    // being clipped by the viewport edge.
+    const height = menu.offsetHeight;
+    const spaceBelow = window.innerHeight - rect.bottom - 6;
+    const spaceAbove = rect.top - 6;
+    setOpenUp(height > 0 && spaceBelow < height && spaceAbove > spaceBelow);
   }, []);
 
   // Pre-paint: measure and reposition BEFORE painting (no flash); recompute
@@ -170,7 +181,7 @@ function PostSortMenu({ value, onChange, isLoading = false }) {
         // under the trigger; rows are Threads' sort menu: name + trailing
         // check on the selected one (the check IS the selection signal).
         <MenuSurface
-          className={styles.menu}
+          className={cx(styles.menu, openUp ? styles.menuUp : "")}
           ref={menuRef}
           style={{ left: shiftX }}
           onKeyDown={onMenuKeyDown}

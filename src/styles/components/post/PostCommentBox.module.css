@@ -1,6 +1,10 @@
 /* PostCommentBox — reply box with synchronized overlay for hashtags */
 
 .wrapper {
+  /* Anchors the drag-and-drop overlay (DropZoneOverlay, inset: 0) — the
+     mobile media query below overrides this to position: fixed, which is
+     an equally valid positioning context for it. */
+  position: relative;
   /* The composer now lives INSIDE the thread's elevated .surface card, so it
    * drops its own card (border/bg/radius). It's a section at the bottom of the
    * card, divided from the replies by a full-width top border: the negative

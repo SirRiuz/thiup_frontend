@@ -4,6 +4,7 @@ import PostProfileTrigger from "../post/PostProfileTrigger";
 import PostOptionsMenu from "../post/PostOptionsMenu";
 import ReactionStack from "../post/ReactionStack";
 import ThreadMedia from "../media/ThreadMedia";
+import useMediaViewerUrlSync from "../../hooks/useMediaViewerUrlSync";
 import { formatCount, renderTextWithHashtags } from "./homeHelpers";
 import { DEBUG } from "../../settings";
 import styles from "../../styles/components/home/HomeFeedCard.module.css";
@@ -39,6 +40,14 @@ function HomeFeedCard({
     media,
     topReply,
   } = post;
+  // This card's OWN media, and the embedded top-reply preview's OWN media,
+  // are each addressable at their own /p/:id — opening either navigates
+  // there. See useMediaViewerUrlSync.
+  const mediaSync = useMediaViewerUrlSync(post?.id || post?.uid, media);
+  const topReplyMediaSync = useMediaViewerUrlSync(
+    topReply?.id || topReply?.uid,
+    topReply?.media
+  );
 
   const renderOptions = {
     highlightQuery,
@@ -144,7 +153,7 @@ function HomeFeedCard({
       {topReply && <div className={styles.previewTrunk} aria-hidden="true" />}
       <div className={styles.grid}>
         <div className={styles.avatarCell}>
-          <PostProfileTrigger mask={mask}>
+          <PostProfileTrigger mask={mask} variant="avatar">
             <MaskAvatar seed={mask.id} size={36} online={mask.isOnline} />
           </PostProfileTrigger>
         </div>
@@ -166,7 +175,7 @@ function HomeFeedCard({
       <header className={styles.header}>
         {/* Same mask hover card as the thread (reused component). The avatar
             lives in the gutter; here only the mask id. */}
-        <PostProfileTrigger mask={mask}>
+        <PostProfileTrigger mask={mask} variant="hash">
           <span className={styles.maskId}>{mask.id}</span>
         </PostProfileTrigger>
         {/* No "·" separator — id and date sit close, spaced only by the
@@ -225,7 +234,9 @@ function HomeFeedCard({
       </p>
       </div>
 
-      {media && media.length > 0 && <ThreadMedia items={media} />}
+      {media && media.length > 0 && (
+        <ThreadMedia items={media} {...mediaSync} />
+      )}
 
       <footer className={styles.stats}>
         {/* Facebook-style stacked reaction summary first, then the replies
@@ -282,7 +293,7 @@ function HomeFeedCard({
       {topReply && (
         <div className={styles.replyPreview} onClick={handlePreviewClick}>
           <div className={styles.previewAvatarCell}>
-            <PostProfileTrigger mask={topReply.mask}>
+            <PostProfileTrigger mask={topReply.mask} variant="avatar">
               <MaskAvatar
                 seed={topReply.mask.id}
                 size={36}
@@ -292,7 +303,7 @@ function HomeFeedCard({
           </div>
           <div className={styles.previewContent}>
             <header className={cx(styles.header, styles.previewHeader)}>
-              <PostProfileTrigger mask={topReply.mask}>
+              <PostProfileTrigger mask={topReply.mask} variant="hash">
                 <span className={styles.maskId}>{topReply.mask.id}</span>
               </PostProfileTrigger>
               <span className={styles.timestamp}>{topReply.time}</span>
@@ -339,7 +350,7 @@ function HomeFeedCard({
               </p>
             </div>
             {topReply.media && topReply.media.length > 0 && (
-              <ThreadMedia items={topReply.media} />
+              <ThreadMedia items={topReply.media} {...topReplyMediaSync} />
             )}
             <footer className={styles.stats}>
               <ReactionStack

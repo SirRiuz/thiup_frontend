@@ -978,14 +978,44 @@ function CarouselItem({ item, index, eager }) {
  * grid/mosaic). Renders images AND videos (videos autoplay muted while visible).
  * Sensitive media blurs until tapped. Tapping an image opens the fullscreen
  * viewer (images only); videos play inline.
+ *
+ * URL sync (optional, used by the thread's OWN media on `/p/:id` — see
+ * Post.js): `initialIndex` auto-opens the viewer once at that index (a deep
+ * link like `/p/:id/m/:mediaId`, resolved by the caller); `onViewerOpen` /
+ * `onViewerIndexChange` / `onViewerClose` mirror the viewer's open/slide/close
+ * moments so the caller can push/replace/strip the URL in step. Every other
+ * consumer (replies, ancestors, the reply-dialog preview) simply omits these
+ * props — the viewer behaves exactly as before, no URL involved.
  */
-function ThreadMedia({ items }) {
+function ThreadMedia({
+  items,
+  initialIndex = null,
+  onViewerOpen,
+  onViewerIndexChange,
+  onViewerClose,
+  shareUrlBuilder,
+}) {
   // Memoized: MediaViewer's gesture effect depends on this array — a fresh
   // identity per render tore down and re-registered its native listeners on
   // every parent render while the viewer was open.
   const media = useMemo(() => (items || []).filter((m) => m && m.url), [items]);
   // Index (in the media array) of the item open in the viewer (null = closed).
   const [viewerIndex, setViewerIndex] = useState(null);
+  // Guards the auto-open to exactly ONCE per mount: initialIndex stays set
+  // across re-renders (it's derived from the URL, which we ourselves keep
+  // updating as the user slides), so without this every slide would re-open
+  // at the ORIGINAL index instead of following the user's navigation.
+  const autoOpenedRef = useRef(false);
+
+  useEffect(() => {
+    if (autoOpenedRef.current) return;
+    if (initialIndex == null || !media[initialIndex]) return;
+    autoOpenedRef.current = true;
+    // No onViewerOpen here: the URL already points at this exact item (that's
+    // WHY we're auto-opening) — nothing for the caller to push/replace.
+    setViewerIndex(initialIndex);
+  }, [initialIndex, media]);
+
   // Set when a tap opens the viewer so the resulting click is swallowed here
   // (capture phase) and never reaches the surrounding clickable card.
   // Images AND videos open in the fullscreen viewer (it renders both).
@@ -993,11 +1023,35 @@ function ThreadMedia({ items }) {
   // moved to navZone, a sibling of the media), so a tap on the media never
   // reaches a navigation handler — and a stale suppress flag used to eat the
   // first tap on the sound button after closing the viewer (the "double click").
-  const open = (mediaIndex) => {
-    if (!media[mediaIndex]) return;
-    setViewerIndex(mediaIndex);
-  };
-  const close = () => setViewerIndex(null);
+  // useCallback (stable identity unless media/the callback props themselves
+  // change) for the SAME reason `media` above is memoized: these three flow
+  // into MediaViewer as onClose/onIndexChange, which its own gesture effect
+  // depends on (via onClose → finishClose → animateClose, and onIndexChange
+  // → setIndex) — a fresh identity on every ThreadMedia render tore down and
+  // rebuilt that effect's native listeners on every render, and doing so
+  // MID in-flight slide-commit orphaned the commit's transitionend/timeout
+  // callback (cleared by the old effect's cleanup, never replaced by the
+  // new one) — so the visual slide finished but `index` (and this URL sync)
+  // silently never updated. Only ever observable with 2+ items (nothing to
+  // slide with one), which is exactly the symptom this fixes.
+  const open = useCallback(
+    (mediaIndex) => {
+      if (!media[mediaIndex]) return;
+      setViewerIndex(mediaIndex);
+      onViewerOpen?.(mediaIndex, media[mediaIndex]);
+    },
+    [media, onViewerOpen]
+  );
+  const close = useCallback(() => {
+    setViewerIndex(null);
+    onViewerClose?.();
+  }, [onViewerClose]);
+  const handleIndexChange = useCallback(
+    (n) => {
+      onViewerIndexChange?.(n, media[n]);
+    },
+    [media, onViewerIndexChange]
+  );
 
   if (media.length === 0) return null;
 
@@ -1015,7 +1069,13 @@ function ThreadMedia({ items }) {
         <Carousel images={media} onOpen={open} />
       )}
       {viewerIndex !== null && (
-        <MediaViewer images={media} index={viewerIndex} onClose={close} />
+        <MediaViewer
+          images={media}
+          index={viewerIndex}
+          onClose={close}
+          onIndexChange={handleIndexChange}
+          shareUrlBuilder={shareUrlBuilder}
+        />
       )}
     </div>
   );

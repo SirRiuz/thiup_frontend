@@ -5,6 +5,7 @@ import PostProfileTrigger from "./PostProfileTrigger";
 import PostReactionPicker from "./PostReactionPicker";
 import ReactionStack from "./ReactionStack";
 import ThreadMedia from "../media/ThreadMedia";
+import useMediaViewerUrlSync from "../../hooks/useMediaViewerUrlSync";
 import { renderTextWithHashtags } from "../home/homeHelpers";
 import { fullDateTitle } from "../../utils/formatDate";
 import styles from "../../styles/components/post/PostReply.module.css";
@@ -44,6 +45,10 @@ function PostReply({
   onHashtagClick,
 }) {
   const { t, i18n } = useTranslation();
+  // This reply's OWN media, addressable at its own /p/:id — opening it
+  // navigates there (a real permalink, same as tapping the row itself),
+  // landing with the viewer already open. See useMediaViewerUrlSync.
+  const mediaSync = useMediaViewerUrlSync(id, media);
   const replyClassName = `${styles.reply} ${
     dividerBelow ? styles.withDivider : ""
   } ${isLast ? styles.lastReply : ""} ${
@@ -91,14 +96,14 @@ function PostReply({
 
       <div className={styles.main}>
         <div className={styles.avatarCell}>
-          <PostProfileTrigger mask={mask}>
+          <PostProfileTrigger mask={mask} variant="avatar">
             <MaskAvatar seed={mask.id} size={36} online={mask.isOnline} />
           </PostProfileTrigger>
         </div>
 
         <div className={styles.contentCell}>
           <div className={styles.header}>
-            <PostProfileTrigger mask={mask}>
+            <PostProfileTrigger mask={mask} variant="hash">
               <span className={styles.maskId}>{mask.id}</span>
             </PostProfileTrigger>
             <span
@@ -129,7 +134,9 @@ function PostReply({
             {renderTextWithHashtags(text, styles.hashtag, onHashtagClick)}
           </p>
 
-          {media && media.length > 0 && <ThreadMedia items={media} />}
+          {media && media.length > 0 && (
+            <ThreadMedia items={media} {...mediaSync} />
+          )}
 
           {/* FB-style stacked reaction summary above the action bar. */}
           <ReactionStack

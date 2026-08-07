@@ -126,6 +126,15 @@ export default function App() {
                           thread's content is not modified. /p/:id is the
                           CANONICAL short URL; every in-app navigation uses it. */}
                         <Route path="/p/:id/" element={<Post />} />
+                        {/* Deep link into the thread's OWN media, opened
+                          directly in the fullscreen viewer (e.g. shared from
+                          the viewer's "Copy link", or restored on reload).
+                          SAME element as /p/:id — react-router doesn't key
+                          the rendered route by its path pattern, so toggling
+                          between the two as the viewer opens/slides/closes
+                          updates params WITHOUT remounting Post (no
+                          data re-fetch, no flash). */}
+                        <Route path="/p/:id/m/:mediaId" element={<Post />} />
                       </Route>
                       {/* Legacy long URL (back-compat): old shared /post/:id
                         links redirect to the canonical /p/:id. */}

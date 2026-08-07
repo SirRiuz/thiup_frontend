@@ -5,14 +5,17 @@ import MaskAvatar from "../MaskAvatar";
 import PostReplyContext from "./PostReplyContext";
 import PostReplyExpandModal from "./PostReplyExpandModal";
 import MediaScanList from "../media/MediaScanList";
+import DropZoneOverlay from "../media/DropZoneOverlay";
 import RateLimitNotice from "../RateLimitNotice";
 import ErrorNotice from "../ErrorNotice";
 import { isRateLimitError } from "../../utils/rateLimit";
 import useMediaComposer from "../../hooks/useMediaComposer";
+import useFileDrop from "../../hooks/useFileDrop";
 import { warmHumanPass } from "../../api/humanPass";
 import { ACCEPT_ATTR } from "../../services/media/allowedFormats";
 import { renderTextWithHashtags } from "../home/homeHelpers";
 import { normalizePastedText } from "../../utils/normalizeText";
+import { filesFromClipboard } from "../../utils/clipboardFiles";
 import { HASHTAG_RE } from "../../utils/hashtags";
 import styles from "../../styles/components/post/PostCommentBox.module.css";
 import cx from "../../utils/cx";
@@ -218,6 +221,12 @@ function PostCommentBox({
   // re-render.
   const handlePaste = (e) => {
     if (submitting) return;
+    const pastedFiles = filesFromClipboard(e);
+    if (pastedFiles.length > 0) {
+      e.preventDefault();
+      attachFiles(pastedFiles);
+      return;
+    }
     e.preventDefault();
     const pasted = (e.clipboardData || window.clipboardData).getData("text");
     const clean = normalizePastedText(pasted);
@@ -232,19 +241,31 @@ function PostCommentBox({
     });
   };
 
-  // Validate + start processing the picked files; show the first error (if
+  // Validate + start processing a batch of files (from the picker, a drop, or
+  // a clipboard paste — same shape either way); shows the first error (if
   // any). Async: addFiles sniffs each file's magic bytes before accepting it.
+  const attachFiles = async (fileList) => {
+    const { error } = await media.addFiles(fileList);
+    if (error) setErrorMessage(t(error.key, error.params));
+  };
+
   const handleFileChange = async (e) => {
     const input = e.target;
-    const { error } = await media.addFiles(input.files);
+    await attachFiles(input.files);
     input.value = "";
-    if (error) setErrorMessage(t(error.key, error.params));
   };
 
   const handleAttachClick = () => {
     if (media.attachDisabled) return;
     if (fileInputRef.current) fileInputRef.current.click();
   };
+
+  // Drag-and-drop onto the whole reply box. Rejections surface through the
+  // SAME attachFiles → errorMessage path as the picker/paste.
+  const { isDragging, dropProps } = useFileDrop({
+    onFiles: attachFiles,
+    disabled: submitting,
+  });
 
   const handleSubmit = async () => {
     if (busyRef.current) return;
@@ -285,6 +306,7 @@ function PostCommentBox({
     <div
       className={cx(styles.wrapper, keyboardOpen ? styles.wrapperKbOpen : "")}
       ref={boxRef}
+      {...dropProps}
     >
       <PostReplyContext target={replyingTo} onCancel={onCancelReply} />
 
@@ -520,6 +542,7 @@ function PostCommentBox({
         onMediaErrorDismiss={() => setErrorMessage(null)}
         submitFailed={!!submitError && !rateLimited}
         onAttach={handleAttachClick}
+        onAttachFiles={attachFiles}
         onSubmit={handleSubmit}
         submitting={submitting}
         isSubmittable={isSubmittable}
@@ -527,6 +550,8 @@ function PostCommentBox({
         overLimit={overLimit}
         tagsDetected={tagsDetected}
       />
+
+      <DropZoneOverlay active={isDragging} />
     </div>
   );
 }

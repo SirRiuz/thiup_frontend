@@ -14,15 +14,18 @@ import {
   subscribeGeolocationPermission,
 } from "../../utils/geoPermission";
 import MediaScanList from "../media/MediaScanList";
+import DropZoneOverlay from "../media/DropZoneOverlay";
 import RateLimitNotice from "../RateLimitNotice";
 import ErrorNotice from "../ErrorNotice";
 import { isRateLimitError } from "../../utils/rateLimit";
 import DiscardDialog from "./DiscardDialog";
 import useMediaComposer from "../../hooks/useMediaComposer";
+import useFileDrop from "../../hooks/useFileDrop";
 import { useScrollLock } from "../../utils/scrollLock";
 import { warmHumanPass } from "../../api/humanPass";
 import { renderTextWithHashtags } from "../home/homeHelpers";
 import { normalizePastedText } from "../../utils/normalizeText";
+import { filesFromClipboard } from "../../utils/clipboardFiles";
 import { HASHTAG_RE } from "../../utils/hashtags";
 import styles from "../../styles/components/compose/ComposeModal.module.css";
 
@@ -281,10 +284,19 @@ function ComposeModal({ open, onClose }) {
     setText(e.target.value);
   };
 
-  // Paste: normalizes the external text (CRLF→LF, nbsp, zero-width) before
+  // Paste: a pasted FILE (e.g. a copied screenshot) attaches as media — the
+  // same validate→compress→upload flow as the picker/drop, first so a
+  // pasted image never falls through to the text branch below. Otherwise,
+  // normalizes the external text (CRLF→LF, nbsp, zero-width) before
   // inserting it at the cursor position (same pattern as PostCommentBox).
   const handlePaste = (e) => {
     if (isDisabled) return;
+    const pastedFiles = filesFromClipboard(e);
+    if (pastedFiles.length > 0) {
+      e.preventDefault();
+      attachFiles(pastedFiles);
+      return;
+    }
     e.preventDefault();
     const pasted = (e.clipboardData || window.clipboardData).getData("text");
     const clean = normalizePastedText(pasted);
@@ -491,12 +503,11 @@ function ComposeModal({ open, onClose }) {
     },
   };
 
-  // Validate + start processing the picked files; show the first error inline.
+  // Validate + start processing a batch of files (from the picker, a drop, or
+  // a clipboard paste — same shape either way); shows the first error inline.
   // Async: addFiles sniffs each file's magic bytes before accepting it.
-  const handleFileChange = async (e) => {
-    const input = e.target;
-    const { error } = await media.addFiles(input.files);
-    input.value = "";
+  const attachFiles = async (fileList) => {
+    const { error } = await media.addFiles(fileList);
     if (error) {
       setSubmitError({
         title: t("post.attachErrorTitle"),
@@ -506,10 +517,24 @@ function ComposeModal({ open, onClose }) {
     }
   };
 
+  const handleFileChange = async (e) => {
+    const input = e.target;
+    await attachFiles(input.files);
+    input.value = "";
+  };
+
   const handleAttachClick = () => {
     if (isDisabled || media.attachDisabled) return;
     if (fileInputRef.current) fileInputRef.current.click();
   };
+
+  // Drag-and-drop onto the whole dialog. Rejections (too large/unsupported
+  // format) surface through the SAME attachFiles → submitError path as the
+  // picker, so the reason is never silent.
+  const { isDragging, dropProps } = useFileDrop({
+    onFiles: attachFiles,
+    disabled: isDisabled,
+  });
 
   const handleSubmit = async () => {
     if (!isSubmittable) return;
@@ -611,6 +636,7 @@ function ComposeModal({ open, onClose }) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="compose-modal-title"
+        {...dropProps}
       >
         {/* === Header: Cancel · centered title · balance spacer === */}
         <header className={styles.header}>
@@ -919,6 +945,8 @@ function ComposeModal({ open, onClose }) {
             {isSubmitting && <span className={styles.spinner} aria-hidden="true" />}
           </button>
         </footer>
+
+        <DropZoneOverlay active={isDragging} />
       </div>
 
       {confirmingDiscard && (

@@ -61,10 +61,18 @@ function VideoPlayer({ item, onReady, onError, fill = false }) {
   const scrubbingRef = useRef(false);
 
   const [playing, setPlaying] = useState(false);
-  // Whether playback has started at least once. Gates the big-play so it only
-  // shows when the USER paused — never during the initial autoplay startup (that
-  // was the play-button flash).
-  const [hasStarted, setHasStarted] = useState(false);
+  // Big-play visibility. Two regimes:
+  //  - Before playback has EVER started (still in the initial autoplay
+  //    window): DELAYED — a normal successful autoplay starts well within
+  //    the delay, so the button never flashes; if autoplay is silently
+  //    blocked (common for an unmuted fullscreen video, no `onPlay` ever
+  //    fires) it appears once the delay passes instead of the video just
+  //    sitting frozen with no affordance.
+  //  - Once it HAS started at least once: INSTANT — a real user pause is a
+  //    deliberate action, not a "maybe still starting up" ambiguity, so the
+  //    button must appear the moment `onPause` fires, no delay at all.
+  const [showBigPlay, setShowBigPlay] = useState(false);
+  const hasStartedRef = useRef(false);
   // Reveals the video + controls and clears the viewer's spinner. Flips on the
   // first decoded frame (loadeddata) → the spinner shows ONLY while the video is
   // still loading from the CDN, and the controls never appear over an empty box.
@@ -102,6 +110,23 @@ function VideoPlayer({ item, onReady, onError, fill = false }) {
   useEffect(() => {
     playSafe();
   }, [playSafe]);
+
+  useEffect(() => {
+    if (!ready || playing) {
+      setShowBigPlay(false);
+      return undefined;
+    }
+    if (hasStartedRef.current) {
+      // A real pause after having actually played — instant, no threshold.
+      setShowBigPlay(true);
+      return undefined;
+    }
+    // Still within the initial autoplay window: same threshold pattern as
+    // MediaViewer's loading spinner (delay it so a normal fast start never
+    // flashes it).
+    const id = window.setTimeout(() => setShowBigPlay(true), 200);
+    return () => clearTimeout(id);
+  }, [ready, playing]);
 
   // The src lives HERE, not in JSX: attach on setup, release the media
   // pipeline on cleanup (the explicit detach ThreadMedia also does — iOS
@@ -215,13 +240,14 @@ function VideoPlayer({ item, onReady, onError, fill = false }) {
         className={cx(styles.video, ready ? styles.ready : "")}
         loop
         playsInline
+        draggable={false}
         onClick={(e) => {
           e.stopPropagation();
           togglePlay();
         }}
         onPlay={() => {
+          hasStartedRef.current = true;
           setPlaying(true);
-          setHasStarted(true);
         }}
         onPause={() => setPlaying(false)}
         onTimeUpdate={() => {
@@ -243,7 +269,7 @@ function VideoPlayer({ item, onReady, onError, fill = false }) {
         onProgress={onProgress}
       />
 
-      {ready && !playing && hasStarted && (
+      {showBigPlay && (
         <button
           type="button"
           className={styles.bigPlay}

@@ -4,6 +4,7 @@ import PostOptionsMenu from "./PostOptionsMenu";
 import PostProfileTrigger from "./PostProfileTrigger";
 import ReactionStack from "./ReactionStack";
 import ThreadMedia from "../media/ThreadMedia";
+import useMediaViewerUrlSync from "../../hooks/useMediaViewerUrlSync";
 import { renderTextWithHashtags } from "../home/homeHelpers";
 import { fullDateTitle } from "../../utils/formatDate";
 import cx from "../../utils/cx";
@@ -33,6 +34,10 @@ function PostAncestor({ post, isRoot = false, onOpen, onHashtagClick }) {
     media,
     isOp,
   } = post;
+  // This ancestor's OWN media, addressable at its own /p/:id — opening it
+  // navigates there, same as tapping the row itself. See
+  // useMediaViewerUrlSync.
+  const mediaSync = useMediaViewerUrlSync(post?.id || post?.uid, media);
 
   const handleNavKeyDown = (e) => {
     if (e.key === "Enter" || e.key === " ") {
@@ -66,7 +71,7 @@ function PostAncestor({ post, isRoot = false, onOpen, onHashtagClick }) {
 
       <div className={styles.grid}>
         <div className={styles.avatarCell}>
-          <PostProfileTrigger mask={mask}>
+          <PostProfileTrigger mask={mask} variant="avatar">
             <MaskAvatar seed={mask.id} size={36} online={mask.isOnline} />
           </PostProfileTrigger>
         </div>
@@ -76,7 +81,7 @@ function PostAncestor({ post, isRoot = false, onOpen, onHashtagClick }) {
               three-dots menu is a sibling control, never a button nested in a
               role=link. Row clicks still navigate (the guard excludes it). */}
           <header className={styles.header}>
-            <PostProfileTrigger mask={mask}>
+            <PostProfileTrigger mask={mask} variant="hash">
               <span className={styles.maskId}>{mask.id}</span>
             </PostProfileTrigger>
             <span
@@ -114,7 +119,9 @@ function PostAncestor({ post, isRoot = false, onOpen, onHashtagClick }) {
             </p>
           </div>
 
-          {media && media.length > 0 && <ThreadMedia items={media} />}
+          {media && media.length > 0 && (
+            <ThreadMedia items={media} {...mediaSync} />
+          )}
 
           {/* Quiet display-only stats (feed-card language): reaction cluster +
               replies count. Interactions live on each node's own page. */}

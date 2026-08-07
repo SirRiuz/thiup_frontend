@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useLayoutEffect, useRef, useCallback } from "react";
 
 import {
   getThreadById,
@@ -53,7 +53,7 @@ function resolveReactionId(clicked, post, catalog) {
  * @param {string} threadId  thread uid (from useParams).
  * @returns {{
  *   thread: object|null, replies: object[],
- *   isLoading: boolean, isLoadingMore: boolean, loadMoreError: Error|null,
+ *   isLoading: boolean, isSwitchingThread: boolean, isLoadingMore: boolean, loadMoreError: Error|null,
  *   isCreatingReply: boolean,
  *   createReplyError: Error|null, hasMore: boolean, error: Error|null,
  *   createReply: Function, loadMore: Function, retry: Function
@@ -152,6 +152,14 @@ export function useThread(threadId, seedThread) {
   // already visible → dim, NOT skeletons.
   const [sortKey, setSortKey] = useState(0);
   const [isReloadingReplies, setIsReloadingReplies] = useState(false);
+  // Same-instance navigation (ancestor-chain click, Post.js never remounts
+  // between two /p/:id ids): true while `thread` shows a SEEDED head (its
+  // real replies not fetched yet) instead of the true full-page skeleton or
+  // a complete cache hit — see the hydration effect below. Post.js uses it
+  // to show a quiet spinner in place of the reply skeletons for this one
+  // case (everything else — full skeleton, load-more, sort-reload — keeps
+  // its own existing indicator untouched).
+  const [isSwitchingThread, setIsSwitchingThread] = useState(false);
   // Ref of the current sortBy: the fetch effect reads it without adding sortBy
   // to its deps (avoids a double trigger and stale closures). Marks whether the
   // effect's next run is a sort change (dim) vs a navigation/retry (skeleton +
@@ -170,6 +178,12 @@ export function useThread(threadId, seedThread) {
   const togglingRef = useRef(new Set());
   // Avoids writing state after unmount (the reaction POST's await is in progress).
   const isMountedRef = useRef(true);
+  // Tracks the threadId this hook INSTANCE last hydrated for — initialized to
+  // the mount value, so the hydration effect below can tell "this is the
+  // component's true first render" (ref already matches, lazy useState
+  // already handled it) apart from "threadId just changed on an existing
+  // instance" (ref is stale). See the effect for why this distinction matters.
+  const prevThreadIdRef = useRef(threadId);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -216,6 +230,74 @@ export function useThread(threadId, seedThread) {
     return () => controller.abort();
   }, []);
 
+  // === Same-instance navigation hydration (ancestor-chain clicks) =========
+  // `thread`/`replies` are seeded via a LAZY useState initializer above,
+  // which only runs on the component's true first mount. Post.js reuses the
+  // SAME instance across two /p/:id ids (no remount — see its own scroll-
+  // anchoring comments), so clicking a node in the ancestor chain used to
+  // leave `thread` on the PREVIOUS thread's data — frozen, no seed, no
+  // skeleton, nothing — until the real fetch below resolved. This effect is
+  // the fix: it re-runs the SAME cache → seed → null priority as the lazy
+  // initializer, but on every `threadId` change, not just the first one, and
+  // as a LAYOUT effect so the correction lands in the SAME commit as the
+  // navigation — before the browser paints, so the stale frame is never
+  // actually shown (a setState from a layout effect flushes synchronously,
+  // pre-paint). `prevThreadIdRef` distinguishes true first mount (ref
+  // already equals threadId — the lazy initializer already did this job,
+  // no-op here) from a genuine navigation (ref is stale — hydrate now).
+  useLayoutEffect(() => {
+    if (threadId === prevThreadIdRef.current) return;
+    prevThreadIdRef.current = threadId;
+    if (!threadId) return;
+
+    const cached = getCachedThread(threadId);
+    if (cached && cached.thread) {
+      // Full, authoritative data already known (a previously-visited node
+      // in this same session) — paint it complete, no spinner needed.
+      setThread(cached.thread);
+      setReplies(cached.replies || []);
+      setHasMore(Boolean(cached.hasMore));
+      nextUrlRef.current = cached.nextUrl || null;
+      if (cached.sortBy) {
+        setSortBy(cached.sortBy);
+        sortByRef.current = cached.sortBy;
+      }
+      setError(null);
+      setIsLoading(false);
+      setIsSwitchingThread(false);
+      return;
+    }
+
+    if (seedThread && seedThread.id === threadId) {
+      // Ancestor-row click: the clicked node's own data (text, media, mask,
+      // its own ancestors) is already known — it's the object Post.js was
+      // already rendering in the chain. Paint it now; only the REAL replies
+      // (and the authoritative thread) are still unknown, so isLoading stays
+      // true and isSwitchingThread flags the "seeded, replies pending"
+      // in-between state for the spinner.
+      setThread({
+        ...seedThread,
+        replyCount: seedThread.replyCount ?? seedThread.repliesCount ?? 0,
+      });
+      setReplies([]);
+      setHasMore(false);
+      setError(null);
+      setIsLoading(true);
+      setIsSwitchingThread(true);
+      return;
+    }
+
+    // No cache, no seed (e.g. some future same-instance navigation without
+    // router state): nothing is known about the new thread — fall back to
+    // the ordinary full-page skeleton, exactly like a fresh mount would.
+    setThread(null);
+    setReplies([]);
+    setHasMore(false);
+    setError(null);
+    setIsLoading(true);
+    setIsSwitchingThread(false);
+  }, [threadId, seedThread, getCachedThread]);
+
   // Thread fetch — runs on mount, when threadId changes, on retry(), and when
   // the sort changes (selectSort bumps sortKey).
   useEffect(() => {
@@ -241,6 +323,7 @@ export function useThread(threadId, seedThread) {
         }
         setError(null);
         setIsLoading(false);
+        setIsSwitchingThread(false);
         return undefined;
       }
     }
@@ -291,6 +374,7 @@ export function useThread(threadId, seedThread) {
         if (requestId === requestIdRef.current) {
           setIsLoading(false);
           setIsReloadingReplies(false);
+          setIsSwitchingThread(false);
         }
       }
     }
@@ -523,6 +607,7 @@ export function useThread(threadId, seedThread) {
     thread,
     replies,
     isLoading,
+    isSwitchingThread,
     isLoadingMore,
     loadMoreError,
     isReloadingReplies,

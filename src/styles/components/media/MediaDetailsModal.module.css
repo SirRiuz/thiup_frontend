@@ -1,0 +1,189 @@
+/* MediaDetailsModal — media file details panel, opened from the fullscreen
+ * viewer's right-click menu. Warm palette, Inter. Centered modal on desktop,
+ * bottom-sheet on mobile — mirrors ThreadDetailsModal (the app's canonical
+ * "details" panel shape), z-index bumped above the viewer it opens from
+ * (1200) instead of the app's normal dialog layer (1100/1000). */
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(31, 26, 20, 0.62);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  animation: mediaDetailsBackdropIn 160ms ease;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
+    Roboto, Helvetica, Arial, sans-serif;
+}
+
+.panel {
+  width: 100%;
+  max-width: 380px;
+  background: #fdfcf8;
+  border: 1px solid #e5e0d3;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 18px 50px rgba(26, 26, 26, 0.18);
+  outline: none;
+  transform-origin: center;
+  animation: mediaDetailsPanelIn 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Grabber — mobile sheet affordance only (hidden on desktop). */
+.grabber {
+  display: none;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.close {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #6b6b6b;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.close:hover {
+  background: #f0ece3;
+  color: #1a1a1a;
+}
+
+.rows {
+  margin: 0;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 13px 0;
+  border-bottom: 1px solid #ebe7dd;
+}
+
+.row:last-child {
+  border-bottom: 0;
+}
+
+/* Keys — the app's canonical quiet-meta voice (the profile/joined tone). */
+.key {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  flex: none;
+  color: #9b9591;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+.keyIcon {
+  display: inline-flex;
+  color: #b8b8b8;
+}
+
+/* Values — ink 600 (the stats-line value weight). */
+.value {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: #1a1a1a;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes mediaDetailsBackdropIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes mediaDetailsPanelIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ===== Mobile: bottom-sheet (matches the app's 700px breakpoint) ===== */
+@media (max-width: 700px) {
+  .backdrop {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .panel {
+    max-width: 100%;
+    border-radius: 16px 16px 0 0;
+    padding: 8px 20px calc(20px + env(safe-area-inset-bottom));
+    animation: mediaDetailsSheetIn 220ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .grabber {
+    display: block;
+    width: 36px;
+    height: 4px;
+    border-radius: 999px;
+    background: #d5cfc0;
+    margin: 8px auto 10px;
+  }
+}
+
+@keyframes mediaDetailsSheetIn {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .backdrop,
+  .panel {
+    animation: none;
+  }
+
+  .close {
+    transition: none;
+  }
+}

@@ -19,7 +19,30 @@
       "previous": "Previous image",
       "next": "Next image",
       "position": "Image {{current}} of {{total}}",
-      "loadError": "Couldn't load this media"
+      "loadError": "Couldn't load this media",
+      "download": "Download",
+      "downloading": "Downloading…"
+    },
+    "contextMenu": {
+      "copyImage": "Copy image",
+      "copyLink": "Copy link",
+      "viewDetails": "View details"
+    },
+    "details": {
+      "title": "Media details",
+      "close": "Close",
+      "type": "Type",
+      "typeImage": "Image",
+      "typeVideo": "Video",
+      "format": "Format",
+      "dimensions": "Dimensions",
+      "aspectRatio": "Aspect ratio",
+      "sensitive": "Sensitive content",
+      "yes": "Yes",
+      "no": "No",
+      "position": "Position",
+      "positionValue": "{{current}} of {{total}}",
+      "unknown": "Unknown"
     }
   },
   "common": {
@@ -191,6 +214,7 @@
     "noReplies": "No replies yet",
     "replyCount_one": "{{count}} reply",
     "replyCount_other": "{{count}} replies",
+    "loadingReplies": "Loading replies",
     "reply": "Reply",
     "replies": "Replies",
     "opAuthor": "Thread author",
@@ -221,6 +245,7 @@
     "contentRejected": "The file content doesn't match its type. Skipped: {{names}}",
     "maxFiles": "Only {{max}} files allowed",
     "attachMedia": "Attach image or video",
+    "dropToAttach": "Drop to attach",
     "expandComposer": "Expand composer"
   },
   "scan": {
@@ -270,8 +295,27 @@
   "threadOptions": {
     "more": "More options",
     "viewDetails": "View details",
+    "share": "Share",
     "copyLink": "Copy link",
+    "qrCode": "QR code",
     "report": "Report"
+  },
+  "share": {
+    "title": "Share",
+    "close": "Close",
+    "whatsapp": "WhatsApp",
+    "x": "X",
+    "facebook": "Facebook",
+    "email": "Email",
+    "more": "More",
+    "genericCaption": "Check out this thread on Thiup",
+    "emailSubject": "A thread on Thiup"
+  },
+  "qrCode": {
+    "title": "QR code",
+    "close": "Close",
+    "download": "Download",
+    "downloadFailed": "Couldn't download the QR code"
   },
   "threadDetails": {
     "title": "Thread details",
@@ -291,6 +335,8 @@
     "idCopied": "ID copied",
     "copied": "Copied",
     "copyFailed": "Couldn't copy",
+    "imageCopied": "Image copied",
+    "imageCopyFailed": "Couldn't copy image",
     "publishing": "Publishing…",
     "posted": "Thread posted",
     "replyPosted": "Reply posted",
@@ -339,7 +385,9 @@
     "notFound": "Profile not found",
     "mediaEmptyTitle": "No media yet",
     "mediaEmptyBody": "Photos and videos from this mask's threads will show up here.",
-    "avatarLabel": "Profile picture"
+    "avatarLabel": "Profile picture",
+    "previewLabel": "Profile preview",
+    "viewProfile": "View profile"
   },
   "myThreads": {
     "title": "My threads",

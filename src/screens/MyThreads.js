@@ -203,12 +203,8 @@ function MyThreads() {
         {/* Sticky corner mask (desktop): pins the surface card's rounded top
             under the masthead — same anatomy as home/search/thread. */}
         <div className={styles.cornerMask} aria-hidden="true">
-          <div className={styles.cornerMaskEdge} />
-          <div className={cx(styles.cornerCap, styles.cornerCapLeft)}>
-            <div className={styles.cornerCapBox} />
-          </div>
-          <div className={cx(styles.cornerCap, styles.cornerCapRight)}>
-            <div className={styles.cornerCapBox} />
+          <div className={styles.cornerMaskWindow}>
+            <div className={styles.cornerMaskShape} />
           </div>
         </div>
 

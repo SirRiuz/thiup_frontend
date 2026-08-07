@@ -1,6 +1,6 @@
 /* ComposeModal — the thread composer dialog (Threads/Substack-style).
    Canonical modal chrome: #fdfcf8 surface, #e5e0d3 border, radius 18,
-   rgba(31,26,20,0.42)+blur backdrop, 0 18px 50px shadow. On mobile (≤700px)
+   rgba(31,26,20,0.62)+blur backdrop, 0 18px 50px shadow. On mobile (≤700px)
    the card becomes a full-screen sheet. */
 
 .backdrop {
@@ -12,7 +12,7 @@
   align-items: center;
   justify-content: center;
   padding: 24px 16px;
-  background: rgba(31, 26, 20, 0.42);
+  background: rgba(31, 26, 20, 0.62);
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
   animation: backdropIn 180ms ease-out;
@@ -30,6 +30,9 @@
 .modal {
   display: flex;
   flex-direction: column;
+  /* Anchors the drag-and-drop overlay (DropZoneOverlay, inset: 0) to the
+     dialog itself instead of the fixed backdrop. */
+  position: relative;
   width: 600px;
   max-width: 100%;
   /* 100% of the PADDED backdrop (its flex box already subtracts the top/bottom

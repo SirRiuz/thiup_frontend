@@ -1,0 +1,96 @@
+/* PostProfileMobileModal — mobile-only stand-in for the desktop hover card
+ * (see PostProfileTrigger). Bottom sheet, same chrome language as
+ * MediaDetailsModal/ThreadDetailsModal — the app's canonical "details panel"
+ * shape. Only ever mounted on touch/mobile (gated by useIsMobile in the
+ * trigger), so no desktop layout variant is needed here. */
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(31, 26, 20, 0.62);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  animation: profileSheetBackdropIn 160ms ease;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
+    Roboto, Helvetica, Arial, sans-serif;
+}
+
+.panel {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  background: #fdfcf8;
+  border: 1px solid #e5e0d3;
+  border-radius: 16px 16px 0 0;
+  padding: 8px 20px calc(20px + env(safe-area-inset-bottom));
+  box-shadow: 0 18px 50px rgba(26, 26, 26, 0.18);
+  outline: none;
+  animation: profileSheetPanelIn 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.grabber {
+  width: 36px;
+  height: 4px;
+  border-radius: 999px;
+  background: #d5cfc0;
+  margin: 8px auto 14px;
+}
+
+/* Primary CTA — the card's own "go to the full profile" action (the tap the
+   avatar used to do directly before this sheet stood in the way). Same dark-
+   fill/cream-text primary button language as the rest of the app. */
+.viewProfile {
+  display: block;
+  width: 100%;
+  margin-top: 18px;
+  padding: 13px 14px;
+  border: 0;
+  border-radius: 12px;
+  background: #1a1a1a;
+  color: #fdfcf8;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.viewProfile:active {
+  opacity: 0.8;
+}
+
+@keyframes profileSheetBackdropIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes profileSheetPanelIn {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .backdrop,
+  .panel {
+    animation: none;
+  }
+
+  .viewProfile {
+    transition: none;
+  }
+}

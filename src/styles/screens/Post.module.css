@@ -366,13 +366,22 @@
 .opHeader {
   display: flex;
   align-items: center;
-  /* avatar↔mask spacing comes from the trigger (12px); this is Threads' exact
+  /* avatar↔mask spacing comes from .opIdentity (12px); this is Threads' exact
      column-gap (6px) between mask · timestamp on the single line. */
   gap: 6px;
   /* Threads' username-row rhythm. */
   line-height: 21px;
   /* Tight header→body gap (Threads-style). */
   margin-bottom: 8px;
+}
+
+/* Wraps the avatar + mask triggers (now two separate PostProfileTrigger
+   instances — see Post.js) so they keep Threads' 12px avatar↔name gap
+   regardless of .opHeader's own (different) 6px mask↔timestamp gap. */
+.opIdentity {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .opMaskId {
@@ -679,80 +688,64 @@
 
 /* === Threads-style sticky corner mask (desktop) ===
    Keeps the .surface card's rounded TOP pinned below the app bar while content
-   scrolls under it (Threads' column never "loses" its oval shape). Mechanism —
-   lifted from Threads' own markup: a 0-height sticky row whose children paint,
-   in page-bg (#f7f5f0), the region above the card's top edge:
-     • .cornerMaskEdge — the strip between the corners, carrying the 1px top
-       border line (like Threads' 12px strip with border-bottom).
-     • .cornerCap — a 24×39 overflow-hidden window at each end holding a 48×48
-       rounded box whose `box-shadow: 0 0 0 48px #f7f5f0` fills everything
-       OUTSIDE the 24px arc (Threads' EXACT geometry: their cap is a 48×48
-       radius-24 box + `0 0 0 48px background-secondary`, matching their
-       column's 24px corners); the box border redraws the arc outline.
+   scrolls under it (Threads' column never "loses" its oval shape). Mechanism:
+   a 0-height sticky row holding ONE continuous rounded-rect shape (border +
+   border-radius, drawn as a single anti-aliased pass by the browser) that
+   paints, in page-bg (#f7f5f0), the region above the card's top edge:
+     • .cornerMaskWindow — a full-width overflow-hidden clipping band.
+     • .cornerMaskShape — a border-radius'd box whose `box-shadow: 0 0 0 48px
+       #f7f5f0` fills everything OUTSIDE its rounded top corners (Threads'
+       EXACT geometry: a 48px-tall box with 24px top corners + a 48px spread,
+       matching their column's 24px corners); the box's own border redraws
+       the line + arc outline as ONE shape.
+   (Previously this was a 3-piece split — two circular "corner cap" box-
+   shadow tricks + a separate flat-edge border-bottom in the middle — which
+   rendered the curve and the straight line via two DIFFERENT rasterization
+   paths that only coincided at an exact shared pixel at 100% browser zoom;
+   any other zoom (125%, 150%…) left them rounding to different device
+   pixels right where they were supposed to meet — a visible 1-2px seam at
+   the corner. A single shape has no seam to misalign, at any zoom.)
    Geometry: sticky top = app bar (60px — same height as home's masthead).
    The card rests FLUSH under the bar (no top gap), so the mask is ALWAYS
    pinned: rest and scrolled paint the same line (60..61) + arcs, identical to
-   the card's own top border/corners — the mouth never moves. The children's
+   the card's own top border/corners — the mouth never moves. The window's
    -14px band tucks under the opaque bar. */
 .cornerMask {
   position: sticky;
   top: 60px;
   height: 0;
   z-index: 5;
-  /* Decorative overlay — its caps float over the card's top edge and must
+  /* Decorative overlay — its shape floats over the card's top edge and must
      never steal hover/click from the content scrolling under them. */
   pointer-events: none;
 }
 
-.cornerMaskEdge {
+.cornerMaskWindow {
   position: absolute;
   top: -14px;
-  left: 24px;
-  right: 24px;
-  height: 15px;
-  background: #f7f5f0;
-  border-bottom: 1px solid #e5e0d3;
-  overflow: hidden;
-}
-
-/* (The old strip-shadow ::after is gone: the card no longer casts a halo, so
-   the masked strip needs no re-cast shadow — border only.) */
-
-.cornerCap {
-  position: absolute;
-  top: -14px;
-  width: 24px;
+  left: 0;
+  right: 0;
   height: 39px;
   overflow: hidden;
 }
 
-.cornerCapLeft {
-  left: 0;
-}
+/* (The old strip-shadow ::after is gone: the card no longer casts a halo, so
+   the masked shape needs no re-cast shadow — border only.) */
 
-.cornerCapRight {
-  right: 0;
-}
-
-.cornerCapBox {
+.cornerMaskShape {
   position: absolute;
   top: 14px;
-  width: 48px;
+  left: 0;
+  right: 0;
   height: 48px;
   border: 1px solid #e5e0d3;
-  border-radius: 24px;
-  /* THE trick — the giant spread paints the page bg outside the rounded arc,
-     masking the content that scrolls beneath. (No ambient layer anymore: the
-     card itself no longer casts a halo.) */
+  border-radius: 24px 24px 0 0;
+  /* THE trick — the giant spread paints the page bg outside the rounded top
+     corners, masking the content that scrolls beneath. (No ambient layer
+     anymore: the card itself no longer casts a halo.) The shape's own
+     transparent interior is never painted by the shadow, so real content
+     scrolling underneath still shows through unobstructed. */
   box-shadow: 0 0 0 48px #f7f5f0;
-}
-
-.cornerCapLeft .cornerCapBox {
-  left: 0;
-}
-
-.cornerCapRight .cornerCapBox {
-  right: 0;
 }
 
 /* === Mobile: full-bleed, borderless thread card (Threads-style) ===

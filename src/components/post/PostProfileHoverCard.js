@@ -36,8 +36,11 @@ function formatJoinedDate(isoString, locale, unknownLabel) {
  *   - mask: { id, fullHash, joinedAt?, postsCount?, repliesCount? }
  *   - onMouseEnter / onMouseLeave: forwarded from the trigger so the card
  *     participates in the same hover "safe zone".
+ *   - bare: drop the floating-card chrome (bg/border/radius/shadow) — used
+ *     by PostProfileMobileModal, which supplies its own panel chrome, so the
+ *     same content never renders as a box nested inside another box.
  */
-function PostProfileHoverCard({ mask, onMouseEnter, onMouseLeave }) {
+function PostProfileHoverCard({ mask, onMouseEnter, onMouseLeave, bare = false }) {
   const { t, i18n } = useTranslation();
   const { profile, isLoading } = useMaskProfile(mask?.fullHash);
 
@@ -57,8 +60,8 @@ function PostProfileHoverCard({ mask, onMouseEnter, onMouseLeave }) {
 
   return (
     <div
-      className={styles.card}
-      role="tooltip"
+      className={bare ? styles.cardBare : styles.card}
+      role={bare ? undefined : "tooltip"}
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
     >

@@ -13,6 +13,11 @@
   max-width: 100vw;
   max-height: 100dvh;
   object-fit: contain;
+  /* Same defense-in-depth as the viewer's .image against Windows Chrome's
+     native "drag this media out" gesture hijacking the custom swipe (see
+     MediaViewer's dragstart handler for the deterministic fix). */
+  user-select: none;
+  -webkit-user-drag: none;
   /* While loading there's no frame yet — keep the element invisible (no empty
      box / floating border). Only the viewer's centered spinner shows; the video
      cross-fades in once the first frame is decoded (.ready). */

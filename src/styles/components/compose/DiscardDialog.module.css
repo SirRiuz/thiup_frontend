@@ -10,7 +10,9 @@
   align-items: center;
   justify-content: center;
   padding: 24px;
-  background: rgba(31, 26, 20, 0.42);
+  background: rgba(31, 26, 20, 0.62);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
   animation: discardBackdropIn 150ms ease-out;
 }
 

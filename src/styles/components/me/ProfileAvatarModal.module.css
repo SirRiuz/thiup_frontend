@@ -9,8 +9,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  /* A step darker than the standard modal backdrop (0.42): the viewer is a
-     media stage — the page should recede further behind the blown-up mask. */
+  /* The app's ONE modal backdrop value (every dialog/sheet uses this same
+     rgba(31,26,20,0.62) + blur(8px) — see CLAUDE.md "Translucent overlays"). */
   background: rgba(31, 26, 20, 0.62);
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);

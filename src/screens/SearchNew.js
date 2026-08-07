@@ -321,12 +321,8 @@ function SearchNew() {
           under the 60px masthead — same anatomy as home/thread. */}
       {!isMobile && (
         <div className={styles.cornerMask} aria-hidden="true">
-          <div className={styles.cornerMaskEdge} />
-          <div className={cx(styles.cornerCap, styles.cornerCapLeft)}>
-            <div className={styles.cornerCapBox} />
-          </div>
-          <div className={cx(styles.cornerCap, styles.cornerCapRight)}>
-            <div className={styles.cornerCapBox} />
+          <div className={styles.cornerMaskWindow}>
+            <div className={styles.cornerMaskShape} />
           </div>
         </div>
       )}

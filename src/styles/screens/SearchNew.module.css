@@ -115,7 +115,13 @@
 
 /* === Threads-style sticky corner mask (desktop) — same anatomy as home/
    thread (see Post.module.css for the full explanation): pins the card's
-   rounded top under the 60px header while content scrolls beneath. */
+   rounded top under the 60px header while content scrolls beneath. ONE
+   continuous rounded-rect shape (border + border-radius, one anti-aliased
+   render pass) instead of the old 3-piece split (two circular "corner cap"
+   box-shadow tricks + a separate flat-edge border-bottom), which left a
+   visible 1-2px seam at the corner on any non-100% browser zoom — the curve
+   and the straight line rasterized via two different paths that only
+   coincided at an exact shared pixel at 100%. */
 .cornerMask {
   position: sticky;
   top: 60px;
@@ -123,56 +129,33 @@
   z-index: 5;
   max-width: 640px;
   margin: 0 auto;
-  /* Decorative overlay — its caps float over the card's top edge and must
+  /* Decorative overlay — its shape floats over the card's top edge and must
      never steal hover/click from the content scrolling under them. */
   pointer-events: none;
 }
 
-.cornerMaskEdge {
+.cornerMaskWindow {
   position: absolute;
   top: -14px;
-  left: 24px;
-  right: 24px;
-  height: 15px;
-  background: #f7f5f0;
-  border-bottom: 1px solid #e5e0d3;
-  overflow: hidden;
-}
-
-.cornerCap {
-  position: absolute;
-  top: -14px;
-  width: 24px;
+  left: 0;
+  right: 0;
   height: 39px;
   overflow: hidden;
 }
 
-.cornerCapLeft {
-  left: 0;
-}
-
-.cornerCapRight {
-  right: 0;
-}
-
-.cornerCapBox {
+.cornerMaskShape {
   position: absolute;
   top: 14px;
-  width: 48px;
+  left: 0;
+  right: 0;
   height: 48px;
   border: 1px solid #e5e0d3;
-  border-radius: 24px;
-  /* THE trick — the giant spread paints the page bg outside the rounded arc
-     (no ambient layer: the card casts no halo). */
+  border-radius: 24px 24px 0 0;
+  /* THE trick — the giant spread paints the page bg outside the rounded top
+     corners (no ambient layer: the card casts no halo). The shape's own
+     transparent interior is never painted, so real content scrolling
+     underneath still shows through unobstructed. */
   box-shadow: 0 0 0 48px #f7f5f0;
-}
-
-.cornerCapLeft .cornerCapBox {
-  left: 0;
-}
-
-.cornerCapRight .cornerCapBox {
-  right: 0;
 }
 
 /* Sort dropdown row (tag feed): its own line, right-aligned — the sort control
