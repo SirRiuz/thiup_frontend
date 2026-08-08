@@ -156,6 +156,11 @@ function PostCommentBox({
 
   const rateLimited = isRateLimitError(submitError);
   const showRateLimit = rateLimited && submitError !== expiredRateLimit;
+  // Belt-and-suspenders: the UI already hides the composer for a thread with
+  // repliesDisabled (see Post.js), but a stale client or a race (replies
+  // toggled off between page load and submit) can still hit the backend's
+  // real enforcement — same quiet copy as the notice that replaces the box.
+  const repliesDisabled = submitError?.payload?.detail === "replies_disabled";
 
   // Submit is gated while media is still being analyzed / compressed / uploaded
   // (media.pending) and while over the char limit.
@@ -330,8 +335,8 @@ function PostCommentBox({
         <ErrorNotice
           compact
           className={styles.errorNotice}
-          title={t("post.replyErrorTitle")}
-          detail={t("post.replyErrorDetail")}
+          title={repliesDisabled ? t("post.repliesDisabledTitle") : t("post.replyErrorTitle")}
+          detail={repliesDisabled ? t("post.repliesDisabledNotice") : t("post.replyErrorDetail")}
         />
       )}
 
@@ -541,6 +546,7 @@ function PostCommentBox({
         mediaError={errorMessage}
         onMediaErrorDismiss={() => setErrorMessage(null)}
         submitFailed={!!submitError && !rateLimited}
+        repliesDisabledError={repliesDisabled}
         onAttach={handleAttachClick}
         onAttachFiles={attachFiles}
         onSubmit={handleSubmit}

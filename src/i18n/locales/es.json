@@ -1,10 +1,12 @@
 {
   "media": {
     "multipleIndicator": "Contiene más archivos",
-    "tapToView": "Toca para ver",
     "sensitiveTitle": "Contenido sensible",
-    "hideSensitive": "Ocultar contenido sensible",
+    "spoilerTitle": "Spoiler",
     "viewSensitive": "Ver contenido sensible",
+    "tileOptions": "Opciones del archivo",
+    "markSpoiler": "Marcar spoiler",
+    "unmarkSpoiler": "Quitar spoiler",
     "video": "Video",
     "mute": "Silenciar",
     "unmute": "Activar sonido",
@@ -120,6 +122,12 @@
       }
     }
   },
+  "locationOptIn": {
+    "title": "Descubre lo que pasa cerca de ti",
+    "body": "Comparte tu zona aproximada (~5 km, difuminada) para ver y que te vean hilos cerca de ti. Nunca tu ubicación exacta — y puedes desactivarla cuando quieras.",
+    "enable": "Activar ubicación",
+    "notNow": "Ahora no"
+  },
   "home": {
     "tabForYou": "Para ti",
     "tabCloseYou": "Cerca de ti",
@@ -147,6 +155,8 @@
     "discard": "Descartar",
     "discardThreadTitle": "¿Descartar hilo?",
     "discardReplyTitle": "¿Descartar respuesta?",
+    "discardEditTitle": "¿Descartar cambios?",
+    "editSubmit": "Guardar",
     "mediaLabel": "Multimedia",
     "areaLabel": "Zona",
     "locationDefault": "Comparte tu zona aproximada al publicar (para Cerca de ti) — nunca tu ubicación exacta",
@@ -235,6 +245,14 @@
     "replying": "Respondiendo…",
     "replyErrorTitle": "No se pudo publicar tu respuesta",
     "replyErrorDetail": "Inténtalo de nuevo.",
+    "repliesDisabledTitle": "Las respuestas están desactivadas",
+    "repliesDisabledNotice": "El autor desactivó las respuestas para este hilo.",
+    "privateBadge": "Privado",
+    "privateBadgeHint": "Solo visible para quien tenga el enlace",
+    "snapBadgeHint": "Este hilo desaparece automáticamente",
+    "snapExpiringSoon": "A punto de desaparecer",
+    "snapCountdownHours": "Desaparece en {{count}}h",
+    "snapCountdownMinutes": "Desaparece en {{count}}m",
     "attachErrorTitle": "No se puede adjuntar este archivo",
     "fileTooLarge": "{{name}} es demasiado grande (máx. 10MB)",
     "imageTooLarge": "Las imágenes no pueden superar 8 MB",
@@ -246,7 +264,13 @@
     "maxFiles": "Solo se permiten {{max}} archivos",
     "attachMedia": "Adjuntar imagen o video",
     "dropToAttach": "Suelta aquí para adjuntar",
-    "expandComposer": "Expandir editor"
+    "expandComposer": "Expandir editor",
+    "edited": "Editado",
+    "editTitle": "Editar publicación",
+    "editErrorTitle": "Tu edición no pudo guardarse",
+    "editErrorGone": "Esta publicación ya no está disponible para editar",
+    "editErrorGoneDetail": "Puede haber sido eliminada, o ya no estás identificado como su autor.",
+    "undoRemove": "Deshacer"
   },
   "scan": {
     "queued": "En cola…",
@@ -298,6 +322,7 @@
     "share": "Compartir",
     "copyLink": "Copiar enlace",
     "qrCode": "Código QR",
+    "edit": "Editar",
     "report": "Reportar"
   },
   "share": {
@@ -340,6 +365,8 @@
     "publishing": "Publicando…",
     "posted": "Hilo publicado",
     "replyPosted": "Respuesta publicada",
+    "editing": "Guardando…",
+    "edited": "Publicación actualizada",
     "viewPost": "Ver"
   },
   "report": {
@@ -465,6 +492,27 @@
     "replyTitle": "Demasiadas respuestas seguidas",
     "replyWait": "Puedes responder de nuevo en {{seconds}} s",
     "replySoon": "Espera unos segundos e inténtalo de nuevo",
-    "replyReady": "Ya puedes responder de nuevo"
+    "replyReady": "Ya puedes responder de nuevo",
+    "editTitle": "Demasiadas ediciones seguidas",
+    "editWait": "Puedes editar de nuevo en {{seconds}} s",
+    "editSoon": "Espera unos segundos e inténtalo de nuevo",
+    "editReady": "Ya puedes editar de nuevo"
+  },
+  "postOptions": {
+    "title": "Opciones",
+    "private": "Privado",
+    "snap": "Snap",
+    "snapHint": "Se elimina solo en 24 horas",
+    "disableReplies": "Desactivar respuestas"
+  },
+  "editHistory": {
+    "title": "Historial de edición",
+    "empty": "Aún no hay ediciones",
+    "errorTitle": "No se pudo cargar el historial de edición",
+    "mediaAddedCount_one": "{{count}} archivo añadido",
+    "mediaAddedCount_other": "{{count}} archivos añadidos",
+    "mediaRemovedCount_one": "{{count}} archivo eliminado",
+    "mediaRemovedCount_other": "{{count}} archivos eliminados",
+    "loadMore": "Cargar más"
   }
 }

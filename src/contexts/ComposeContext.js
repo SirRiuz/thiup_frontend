@@ -20,9 +20,20 @@ const ComposeContext = createContext(null);
  */
 export function ComposeProvider({ children }) {
   const [isOpen, setIsOpen] = useState(false);
+  // Files dropped on an entry point BEFORE the modal is open (e.g.
+  // HomeCompose's collapsed row) — since ComposeModal stays mounted for the
+  // whole session (never remounts), there's no "fresh mount" moment to seed
+  // its media state via a constructor arg the way an edit form would. This
+  // is the hand-off instead: openCompose(files) stages them here, and
+  // ComposeModal drains + clears them itself once it's actually open.
+  const [pendingFiles, setPendingFiles] = useState(null);
 
-  const openCompose = useCallback(() => setIsOpen(true), []);
+  const openCompose = useCallback((files) => {
+    if (files && files.length > 0) setPendingFiles(files);
+    setIsOpen(true);
+  }, []);
   const closeCompose = useCallback(() => setIsOpen(false), []);
+  const clearPendingFiles = useCallback(() => setPendingFiles(null), []);
 
   const value = useMemo(
     () => ({ isComposeOpen: isOpen, openCompose, closeCompose }),
@@ -32,7 +43,12 @@ export function ComposeProvider({ children }) {
   return (
     <ComposeContext.Provider value={value}>
       {children}
-      <ComposeModal open={isOpen} onClose={closeCompose} />
+      <ComposeModal
+        open={isOpen}
+        onClose={closeCompose}
+        pendingFiles={pendingFiles}
+        onPendingFilesConsumed={clearPendingFiles}
+      />
     </ComposeContext.Provider>
   );
 }

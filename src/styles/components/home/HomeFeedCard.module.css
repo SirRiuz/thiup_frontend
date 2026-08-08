@@ -186,11 +186,35 @@
 .previewAuthorTag {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   font-size: 14px;
   color: #a3a3a3;
   font-weight: 400;
   white-space: nowrap;
+}
+
+/* Persistent, TENUE background wash marking a Snap (self-deleting) thread —
+   a standing state for as long as the thread exists, so unlike .cardNew it
+   never animates. Same FULL-BLEED trick as the divider/new-post highlight
+   (the row box has no side padding of its own — the container carries
+   --layout-pad-x — so a plain background-color on the row left the
+   container's side gutter unpainted; this bleeds past it to the true edge).
+   Declared BEFORE .cardNew so that if a thread is somehow both brand-new AND
+   Snap, .cardNew::before's rule (declared later, same specificity) wins the
+   shared ::before during its brief 3.6s life, then automatically hands off
+   to this wash once FeedContext clears the .cardNew class. Paired with
+   MaskAvatar's `snapRing` for the glanceable signal. */
+.cardSnap {
+  isolation: isolate;
+}
+
+.cardSnap::before {
+  content: "";
+  position: absolute;
+  inset: 0 calc(-1 * var(--layout-pad-x, 0px));
+  z-index: -1;
+  pointer-events: none;
+  background-color: rgba(184, 132, 95, 0.045);
 }
 
 /* Just-created thread: a brief brand highlight (terracotta wash + 1px contour
@@ -284,10 +308,20 @@
   }
 }
 
+/* Trailing meta group (Your thread / Author / Edited): its OWN tighter 4px
+   gap, separate from .header's primary 6px (Threads' documented mask·time
+   jump) — chaining these at the full 6px each compounded into visibly loose
+   spacing that has no direct Threads reference (Threads never chains this
+   many meta tags). .header's 6px still applies once, between the timestamp
+   and this group. */
+.metaTrail {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
 /* "Your thread" tag — warm pill next to the metadata. Private (only the author
    sees it on their own threads). Same palette family as the active blob. */
-/* Dot between the timestamp and the badge (separator glyph token), with a bit
-   of extra air on each side beyond the header's 6px gap. */
 .badgeDivider {
   /* Same tone/size as the replies' "· Author" divider (the new meta scale). */
   color: #a3a3a3;
@@ -306,6 +340,33 @@
   font-weight: 400;
   color: #a3a3a3;
   white-space: nowrap;
+}
+
+/* "· Edited" — same quiet-meta pattern as .mineBadge/the replies' "·
+   Author", visible to every viewer (not owner-gated). Two shapes reuse this
+   class: the root header (divider is a separate sibling, spaced by
+   .metaTrail's gap) and the topReply preview (divider nested INSIDE this
+   span, so it needs its own inline-flex + gap too — without it "·Edited"
+   had no gap between the mark and the word). */
+/* A real <button> now (EditedTag) — it opens the edit-history modal, no
+   menu item anymore — so it resets the browser's button chrome. The hover
+   underline itself lives in EditedTag.module.css (.trigger:hover .label),
+   scoped to the label word only — never the "·" divider next to it. */
+.editedTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 400;
+  color: #a3a3a3;
+  white-space: nowrap;
+  cursor: pointer;
 }
 
 .header {
@@ -333,6 +394,9 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  /* A touch more air before the timestamp/meta than the header's own 6px
+     gap alone gave — the mask id reads a little too close to what follows. */
+  padding-right: 2px;
 }
 
 .maskId:hover {
@@ -346,17 +410,27 @@
 }
 
 .timestamp {
-  /* Threads-exact <time>, same as the thread view: name-sized, 400, light
-     secondary (#9b9591 ≈ Threads' light-theme #999 — the old darker #6b6b6b
-     competed with the name), centered in a min 24px box (their time element:
-     even rhythm for short stamps like "1m" / "4d"). */
+  /* Threads-exact <time> tone, same as the thread view: name-sized, 400,
+     light secondary (#9b9591 ≈ Threads' light-theme #999 — the old darker
+     #6b6b6b competed with the name). NO min-width/centering (that box's
+     slack read as an oversized gap once a trailing meta chain — · Your
+     thread · Edited / · Author · Edited — followed it) — the header's own
+     flex gap is the only spacing now, identical regardless of the
+     timestamp's own text length. */
   font-size: 14px;
   font-weight: 400;
   color: #a3a3a3;
   white-space: nowrap;
   display: inline-block;
-  min-width: 24px;
-  text-align: center;
+}
+
+/* Bare "this thread is temporary" glyph — same warm accent as the Snap
+   avatar ring / card wash, so all three read as one signal. */
+.snapIcon {
+  display: inline-flex;
+  align-items: center;
+  color: #b8845f;
+  flex: none;
 }
 
 .trendingBadge {

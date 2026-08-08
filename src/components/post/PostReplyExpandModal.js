@@ -57,6 +57,7 @@ function PostReplyExpandModal({
   mediaError,
   onMediaErrorDismiss,
   submitFailed,
+  repliesDisabledError,
   onAttach,
   onAttachFiles,
   onSubmit,
@@ -416,8 +417,8 @@ function PostReplyExpandModal({
         {submitFailed && (
           <div className={styles.noticeSlot}>
             <ErrorNotice
-              title={t("post.replyErrorTitle")}
-              detail={t("post.replyErrorDetail")}
+              title={repliesDisabledError ? t("post.repliesDisabledTitle") : t("post.replyErrorTitle")}
+              detail={repliesDisabledError ? t("post.repliesDisabledNotice") : t("post.replyErrorDetail")}
             />
           </div>
         )}

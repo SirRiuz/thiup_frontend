@@ -88,6 +88,7 @@ function AnonProfile() {
     hasMore,
     loadMore,
     refetch,
+    patchPost,
   } = useAnonThreads(maskId);
 
   const sentinelRef = useInfiniteScroll({
@@ -443,6 +444,7 @@ function AnonProfile() {
                       // (same seeded navigation; the reply IS a post shape).
                       onReplyClick={handlePostClick}
                       onHashtagClick={handleHashtagClick}
+                      onEdited={(patch) => patchPost(patch.id, patch)}
                     />
                   ))}
                 </div>

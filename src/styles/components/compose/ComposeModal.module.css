@@ -278,6 +278,39 @@
   flex: none;
 }
 
+/* Small phones: the three labeled tool buttons + counter + Post button don't
+   fit on one line at the row's default flex-shrink — since none of the
+   children below opt out of shrinking, the flexbox default squeezed
+   everything (icons included) to make it fit instead of reflowing. Wrap is
+   enabled ONLY here (desktop/tablet keep the single row) and the Options
+   button (Private/Snap/Disable-replies — the least time-critical of the
+   three) is the one pushed to its own second line, freeing line 1 for
+   Media/Area/counter/Post at full, unsquished size. */
+@media (max-width: 480px) {
+  .footer {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+
+  /* The classic zero-size flex "line break": an invisible item with
+     flex-basis: 100% forces everything AFTER it (in flex order) onto a new
+     row, without itself taking any visible space — so the Options button
+     that follows it keeps its own natural pill width instead of stretching
+     to fill the whole row (a real flex-basis: 100% on the button itself did
+     exactly that: correct row, wrong — oversized — button). */
+  .footerBreak {
+    display: block;
+    order: 9;
+    flex-basis: 100%;
+    width: 0;
+    height: 0;
+  }
+
+  .optionsToolButton {
+    order: 10;
+  }
+}
+
 /* Icon + LABEL buttons (Substack's footer anatomy): the label is what makes
    the media/area options discoverable — the old icon-only 14px controls went
    unnoticed by users. */
@@ -294,6 +327,23 @@
   cursor: pointer;
   font-family: inherit;
   transition: background 0.2s ease, color 0.2s ease;
+  /* Never compress — a squeezed flex item shrinks its own icon+label
+     children too, since neither opts out on its own. Reflow (see the
+     ≤480px query below), never shrink. */
+  flex-shrink: 0;
+}
+
+/* Same button, given its own class so the ≤480px query can single it out
+   (order + flex-basis) without a fragile positional selector. */
+.optionsToolButton {
+  composes: toolButton;
+}
+
+/* Hidden outside the ≤480px query — display: none excludes it from the
+   footer's flex layout entirely, so it adds no extra `gap` on desktop/
+   tablet, where the row stays exactly as it was before this element. */
+.footerBreak {
+  display: none;
 }
 
 .toolButton:hover {
@@ -341,6 +391,7 @@
   color: #c53030;
   font-variant-numeric: tabular-nums;
   margin-right: 8px;
+  flex-shrink: 0;
 }
 
 /* Primary Post — the canonical dark button (Inter 15/600, cream text). */
@@ -359,6 +410,7 @@
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
+  flex-shrink: 0;
 }
 
 .postButton:hover {

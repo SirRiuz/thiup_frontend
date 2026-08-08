@@ -93,28 +93,6 @@ const cancelEl = (el) => {
   el.style.transition = "";
 };
 
-// Crossed-out eye — "hidden" (the IG/Threads sensitive-content glyph).
-function EyeOffIcon({ size = 16 }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c6.5 0 10 8 10 8a13.16 13.16 0 0 1-1.67 2.68" />
-      <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3.5 8 10 8a9.74 9.74 0 0 0 5.39-1.61" />
-      <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
-      <line x1="2" y1="2" x2="22" y2="22" />
-    </svg>
-  );
-}
-
 function SpeakerIcon({ muted }) {
   return (
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -344,9 +322,27 @@ function VideoMedia({ item, revealed, onNaturalSize, eager, cell }) {
     if (el && src) el.load();
   }, [src]);
 
-  // Play once an NSFW video is revealed (if it's already on screen).
+  // Play once revealed (if it's already on screen); pause + detach the
+  // moment it's HIDDEN (e.g. an optimistic edit marks it spoiler/NSFW
+  // mid-playback) — a blurred video must never keep decoding/playing
+  // behind the blur. This is independent of the playback-owner effect
+  // above: marking a video spoiler doesn't take away its turn to play, so
+  // that effect never re-fires on its own here. Same detach sequence
+  // (the explicit iOS decoder release) reused verbatim; the poster takes
+  // back over visually via `loaded` resetting, same as losing ownership.
   useEffect(() => {
-    if (revealed) tryPlay();
+    if (revealed) {
+      tryPlay();
+      return;
+    }
+    const el = videoRef.current;
+    if (el) el.pause();
+    setSrc(null);
+    setLoaded(false);
+    if (el) {
+      el.removeAttribute("src");
+      el.load();
+    }
   }, [revealed, tryPlay]);
 
   const toggleMute = (e) => {
@@ -531,7 +527,23 @@ function MediaFrame({
   cell,
 }) {
   const { t } = useTranslation();
-  const [revealed, setRevealed] = useState(!item.isNsfw);
+  // Blurred behind the SAME gate whether the reason is automatic (isNsfw) or
+  // a deliberate user choice (isSpoiler, toggled anytime post-publish via
+  // ThreadFilesViewSet.spoiler) — one state machine, two triggers. A
+  // content-safety label is never downgraded to "Spoiler": NSFW copy wins
+  // when both are set. Revealing is ONE-WAY (Threads' behavior) — once
+  // tapped, the pill never comes back for this render; there's no re-hide.
+  const [revealed, setRevealed] = useState(!(item.isNsfw || item.isSpoiler));
+  // The useState initializer above only runs on MOUNT — it never re-reads
+  // item.isNsfw/isSpoiler on its own. Without this, editing a thread and
+  // toggling spoiler (optimistic in-memory update, MediaFrame stays mounted
+  // at the same tree position) left the OLD blur state on screen until a
+  // full page reload forced a remount. Only fires when these two values
+  // actually CHANGE — a normal user reveal-click is a separate state update
+  // and is never undone by this.
+  useEffect(() => {
+    setRevealed(!(item.isNsfw || item.isSpoiler));
+  }, [item.isNsfw, item.isSpoiler]);
   const isVideo = item.type === "video";
 
   return (
@@ -559,35 +571,13 @@ function MediaFrame({
             setRevealed(true);
           }}
         >
-          {/* IG-style centered notice over the blur: glyph in a hairline-
-              OUTLINED ring (their light anatomy — no heavy disc), title, and
-              the tap hint as an explicit dark-glass action pill. */}
-          <span className={styles.revealContent} aria-hidden="true">
-            <span className={styles.revealIcon}>
-              <EyeOffIcon size={20} />
-            </span>
-            <span className={styles.revealTitle}>
-              {t("media.sensitiveTitle")}
-            </span>
-            <span className={styles.revealHint}>{t("media.tapToView")}</span>
+          {/* Threads' exact anatomy: just the label on a translucent dark
+              pill (their --x-opacity: 0.8) — no icon, no hint text. The
+              whole overlay is the tap target; the pill is only the visible
+              affordance. */}
+          <span className={styles.revealTitle} aria-hidden="true">
+            {item.isNsfw ? t("media.sensitiveTitle") : t("media.spoilerTitle")}
           </span>
-        </button>
-      )}
-      {revealed && item.isNsfw && (
-        /* Re-hide toggle (top-right, dark-glass — the sound button's family).
-           data-control: the carousel/tap logic leaves it alone, so hiding
-           never opens the viewer or navigates. */
-        <button
-          type="button"
-          data-control=""
-          className={styles.rehideButton}
-          aria-label={t("media.hideSensitive")}
-          onClick={(e) => {
-            e.stopPropagation();
-            setRevealed(false);
-          }}
-        >
-          <EyeOffIcon size={13} />
         </button>
       )}
     </div>
@@ -740,6 +730,11 @@ function Carousel({ images, onOpen }) {
   }, [eager]);
   const drag = useRef({
     active: false,
+    // True between pointerdown and the movement threshold — the drag isn't
+    // "engaged" (no pointer capture, no scroll tracking) until onMove
+    // promotes it, so a plain click never triggers capture (see onMove).
+    pendingDrag: false,
+    pointerId: null,
     startX: 0,
     startY: 0,
     startScroll: 0,
@@ -796,25 +791,28 @@ function Carousel({ images, onOpen }) {
       // suppressClick (which the click-suppressor below would eat).
       d.moved = false;
       d.suppressClick = false;
-      // Let the in-frame controls (sound/play) and the reveal button handle
-      // their own taps — don't press, track, or capture (capture would steal the
-      // button's click and make it navigate the card).
-      if (e.target.closest("[data-control],[data-reveal]")) return;
-      // Tap spring (all pointer types): press the frame under the pointer.
-      d.pressedEl = e.target.closest("[data-frame]");
+      // Movement tracking always starts, regardless of target — a
+      // spoiler/NSFW cell's full-cover reveal button must never block
+      // starting a swipe (a carousel where EVERY cell is blurred would
+      // otherwise have no draggable surface left at all).
       d.startX = e.clientX;
       d.startY = e.clientY;
-      pressEl(d.pressedEl);
+      // The FRAME's own press-spring is skipped for controls/reveal (their
+      // native button already gives its own feedback, and pressing would
+      // steal their click into navigating the card).
+      if (!e.target.closest("[data-control],[data-reveal]")) {
+        d.pressedEl = e.target.closest("[data-frame]");
+        pressEl(d.pressedEl);
+      }
       // Scroll-drag is mouse only — touch/pen/trackpad keep native scroll + inertia.
       if (e.pointerType !== "mouse") return;
-      d.active = true;
+      // Engaging the drag (pointer capture, scroll tracking, the .dragging
+      // class) is DEFERRED to onMove, once real movement crosses the tap
+      // threshold — see below for why: capturing immediately on down broke
+      // a plain click on the reveal button.
+      d.pendingDrag = true;
       d.startScroll = el.scrollLeft;
-      d.target = el.scrollLeft;
-      el.classList.add(styles.dragging);
-      // The stretch must track the pointer 1:1 while dragging — no easing.
-      if (inner) inner.style.transition = "none";
-      // Capture so move/up keep firing even if the cursor leaves the element.
-      if (el.setPointerCapture) el.setPointerCapture(e.pointerId);
+      d.pointerId = e.pointerId;
     };
     const onMove = (e) => {
       // Past the threshold it's a drag/swipe, not a tap — remember that for
@@ -823,7 +821,25 @@ function Carousel({ images, onOpen }) {
       // cursor never releases it — only pointer-up does).
       if (!d.moved) {
         const dist = Math.hypot(e.clientX - d.startX, e.clientY - d.startY);
-        if (dist > TAP_MOVE_THRESHOLD) d.moved = true;
+        if (dist > TAP_MOVE_THRESHOLD) {
+          d.moved = true;
+          // NOW engage the mouse-drag-to-scroll, not on pointerdown — a
+          // plain click on the reveal/pano-toggle button (no movement)
+          // must never acquire pointer capture: capture retargets the
+          // subsequent click's target to the SCROLLER (see the drag ref's
+          // own comment on suppressClick), which stops it from ever
+          // reaching the button's own onClick — that's what silently broke
+          // "tap to reveal" once every drag start captured the pointer.
+          if (d.pendingDrag) {
+            d.pendingDrag = false;
+            d.active = true;
+            d.target = d.startScroll;
+            el.classList.add(styles.dragging);
+            // The stretch must track the pointer 1:1 while dragging — no easing.
+            if (inner) inner.style.transition = "none";
+            if (el.setPointerCapture) el.setPointerCapture(d.pointerId);
+          }
+        }
       }
       if (!d.active) return;
       d.target = d.startScroll - (e.clientX - d.startX);
@@ -850,6 +866,7 @@ function Carousel({ images, onOpen }) {
         }
         d.pressedEl = null;
       }
+      d.pendingDrag = false;
       if (!d.active) return;
       d.active = false;
       el.classList.remove(styles.dragging);
@@ -885,6 +902,20 @@ function Carousel({ images, onOpen }) {
     // alone so it bubbles and navigates (Threads' pressable row).
     // Never eat a click that lands on a control (sound/play) or the reveal button.
     const onClick = (e) => {
+      // Panorama mode WINS over everything else on a clean tap — including
+      // one that landed on the reveal button (spoiler/NSFW): the first tap
+      // while joined must separate the strip, never reveal (Threads'
+      // behavior). Only real controls (sound button, the pano-toggle seam
+      // itself) stay exempt — they need their own click regardless of pano
+      // state. This runs in the CAPTURE phase (see the listener below), so
+      // stopPropagation here keeps the event from ever reaching the reveal
+      // button's own bubble-phase onClick.
+      if (panoRef.current && !e.target.closest("[data-control]")) {
+        e.preventDefault();
+        e.stopPropagation();
+        setPano(false);
+        return;
+      }
       if (e.target.closest("[data-control],[data-reveal]")) return;
       // A drag/swipe release is not a tap, and a tap that acted on a frame
       // (viewer opened / panorama separated) already did its job — never

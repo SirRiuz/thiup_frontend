@@ -42,6 +42,16 @@
   display: block;
 }
 
+/* Spoiler-marked preview: blurred right here in the composer/edit-form tile
+   too, not just after publish (ThreadMedia's own .blurred) — the author
+   should see what viewers will see. Scaled down from ThreadMedia's 22px/1.06
+   for this tile's much smaller 84px footprint; the extra scale hides the
+   blur's soft edges at the tile's border, same trick. */
+.tileImageBlurred {
+  filter: blur(8px);
+  transform: scale(1.15);
+}
+
 /* Video first-frame preview: purely a picture — never a playable control. */
 .tileVideo {
   pointer-events: none;

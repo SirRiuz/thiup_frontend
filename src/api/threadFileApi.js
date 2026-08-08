@@ -18,6 +18,7 @@ import { apiFetch, APIError } from "./client";
 
 const PRESIGN_ENDPOINT = "/thread-files/presign/";
 const CONFIRM_ENDPOINT = "/thread-files/confirm/";
+const SPOILER_ENDPOINT = "/thread-files/spoiler/";
 
 /**
  * Step 1 — ask the backend for a presigned PUT URL (no thread).
@@ -133,7 +134,7 @@ export async function presignAndUpload({
  *
  * @param {{ uid:string, thread:string, isVideo?:boolean, width?:number,
  *           height?:number, targetColor?:string, isNsfw?:boolean,
- *           metadata?:object, signal?:AbortSignal }} params
+ *           isSpoiler?:boolean, metadata?:object, signal?:AbortSignal }} params
  * @returns {Promise<object>} The persisted record.
  */
 export function confirmThreadFile({
@@ -144,6 +145,7 @@ export function confirmThreadFile({
   height = 0,
   targetColor = "161c1e",
   isNsfw = false,
+  isSpoiler = false,
   metadata = {},
   signal,
 }) {
@@ -158,7 +160,24 @@ export function confirmThreadFile({
       height,
       target_color: targetColor,
       is_nsfw: isNsfw,
+      is_spoiler: isSpoiler,
       metadata,
     }),
+  });
+}
+
+/**
+ * Re-toggles the spoiler flag on an ALREADY-published file, anytime after
+ * confirm — independent of the automatic isNsfw detection. Ownership is
+ * enforced server-side (opaque 404 on mismatch), same as confirm.
+ *
+ * @param {{ uid:string, isSpoiler:boolean, signal?:AbortSignal }} params
+ * @returns {Promise<{uid:string, is_spoiler:boolean}>}
+ */
+export function toggleSpoiler({ uid, isSpoiler, signal }) {
+  return apiFetch(SPOILER_ENDPOINT, {
+    method: "POST",
+    signal,
+    body: JSON.stringify({ uid, is_spoiler: isSpoiler }),
   });
 }

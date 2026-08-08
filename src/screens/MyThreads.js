@@ -71,6 +71,7 @@ function MyThreads() {
     hasMore,
     loadMore,
     refetch,
+    patchPost,
   } = useMyThreads();
 
   const sentinelRef = useInfiniteScroll({
@@ -425,6 +426,7 @@ function MyThreads() {
                   // seeded navigation; the reply IS a post shape).
                   onReplyClick={handlePostClick}
                   onHashtagClick={handleHashtagClick}
+                  onEdited={(patch) => patchPost(patch.id, patch)}
                   // Every thread here is the user's own — the "Your thread" tag
                   // would be redundant on this screen.
                   hideMineTag

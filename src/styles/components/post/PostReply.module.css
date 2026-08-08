@@ -177,6 +177,20 @@
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
+  /* A touch more air before the timestamp/meta than the header's own 6px
+     gap alone gave — the mask id reads a little too close to what follows. */
+  padding-right: 2px;
+}
+
+/* Trailing meta group (Author / Edited): its OWN tighter 4px gap, separate
+   from .header's primary 6px (Threads' documented mask·time jump) — chaining
+   these at the full 6px each compounded into visibly loose spacing that has
+   no direct Threads reference (Threads never chains this many meta tags).
+   .header's 6px still applies once, between the timestamp and this group. */
+.metaTrail {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 /* OP tag (Threads-style "· Author"): the reply author is the thread's Original
@@ -185,7 +199,7 @@
 .authorTag {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   font-size: 14px;
   color: #a3a3a3;
   font-weight: 400;
@@ -198,21 +212,52 @@
   line-height: 1;
 }
 
+/* "· Edited" — same quiet-meta pattern as "· Author", visible to every
+   viewer (not owner-gated). Identical declarations, own class so both can
+   appear together (mask · time · Author · Edited, inside .metaTrail). A
+   real <button> now (EditedTag) — it opens the edit-history modal, no menu
+   item anymore — so it resets the browser's button chrome. The hover
+   underline itself lives in EditedTag.module.css (.trigger:hover .label),
+   scoped to the label word only — never the "·" divider next to it. */
+.editedTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  font-family: inherit;
+  font-size: 14px;
+  color: #a3a3a3;
+  font-weight: 400;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.editedDivider {
+  color: #a3a3a3;
+  font-size: 14px;
+  line-height: 1;
+}
+
 .divider {
   color: #c4bfb1;
   font-size: 13px;
 }
 
 .timestamp {
-  /* Threads-exact <time>: 14px like the name, 400, muted #a3a3a3. Their
-     time sits centered in a min 24px box, which is what gives short stamps
-     ("1m", "4d") their even rhythm. */
+  /* Threads-exact <time> tone: 14px like the name, 400, muted #a3a3a3.
+     NO min-width/centering here (that box's slack, split around a short
+     "1h"/"4d", read as an oversized gap once a trailing meta chain — ·
+     Author · Edited — followed it: the flex gap plus the box's own slack
+     compounded asymmetrically). The row's flex gap alone is the ONLY
+     spacing now, so it stays identical on every side regardless of the
+     timestamp's own text length. */
   font-size: 14px;
   font-weight: 400;
   color: #a3a3a3;
   display: inline-block;
-  min-width: 24px;
-  text-align: center;
 }
 
 .parentRef {

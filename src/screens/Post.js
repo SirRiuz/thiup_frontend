@@ -10,7 +10,10 @@ import { useTranslation } from "react-i18next";
 import BrandLogo from "../components/BrandLogo";
 import MaskAvatar from "../components/MaskAvatar";
 import PostCommentBox from "../components/post/PostCommentBox";
+import RepliesDisabledNotice from "../components/post/RepliesDisabledNotice";
 import PostOptionsMenu from "../components/post/PostOptionsMenu";
+import EditedTag from "../components/post/EditedTag";
+import ThreadFlagBadges from "../components/post/ThreadFlagBadges";
 import PostProfileTrigger from "../components/post/PostProfileTrigger";
 import PostReactionPicker from "../components/post/PostReactionPicker";
 import PostRepliesBar from "../components/post/PostRepliesBar";
@@ -91,6 +94,7 @@ function Post() {
     selectSort,
     createReply,
     attachMediaToReply,
+    applyEdit,
     loadMore,
     retry,
     toggleReaction,
@@ -863,11 +867,34 @@ function Post() {
           >
             {post.time}
           </span>
+          <ThreadFlagBadges
+            isPrivate={post.isPrivate}
+            isSnap={post.isSnap}
+            expiresAt={post.expiresAt}
+            className={styles.flagBadge}
+            dividerClassName={styles.flagDivider}
+          />
+          {/* "· Edited" — same quiet-meta pattern as "· Author", visible to
+              every viewer (not just the owner). Clicking it opens the edit
+              history — its own entry point now, no menu item. */}
+          {post.isEdited && (
+            <EditedTag
+              post={post}
+              editedAt={post.editedAt}
+              language={i18n.language}
+              className={styles.editedTag}
+              dividerClassName={styles.editedDivider}
+            />
+          )}
           {/* Thread options on the parent thread's header row (Threads' new
               anatomy) — every breakpoint; the app bar carries no menu. Sorting
               is NOT here anymore: it lives in the replies bar below the OP. */}
           <span className={styles.opHeaderSpacer} />
-          <PostOptionsMenu post={post} variant="inline" />
+          <PostOptionsMenu
+            post={post}
+            variant="inline"
+            onEdited={(patch) => applyEdit(post.id, patch)}
+          />
         </div>
 
         {/* The opened thread's head shows its FULL text — no "show more"
@@ -1007,6 +1034,7 @@ function Post() {
                 isHighlighted={reply.id === highlightedReplyId}
                 onHashtagClick={handleHashtagClick}
                 onReaction={(reaction) => toggleReaction(reply.id, reaction)}
+                onEdited={(patch) => applyEdit(reply.id, patch)}
                 onReplyClick={() =>
                   handleReplyClick({
                     maskId: reply.mask.id,
@@ -1079,15 +1107,19 @@ function Post() {
           viewport — without the pin the composer floats mid-card over dead
           space). */}
       <div ref={commentBoxRef} className={styles.composerDock}>
-        <PostCommentBox
-          thread={post}
-          currentUserMask={currentUserMask}
-          replyingTo={replyingTo}
-          onCancelReply={handleCancelReply}
-          onSubmit={handleSubmitReply}
-          isSubmitting={isCreatingReply}
-          submitError={createReplyError}
-        />
+        {post.repliesDisabled ? (
+          <RepliesDisabledNotice />
+        ) : (
+          <PostCommentBox
+            thread={post}
+            currentUserMask={currentUserMask}
+            replyingTo={replyingTo}
+            onCancelReply={handleCancelReply}
+            onSubmit={handleSubmitReply}
+            isSubmitting={isCreatingReply}
+            submitError={createReplyError}
+          />
+        )}
       </div>
       </div>
         </>

@@ -23,6 +23,16 @@ const AVATAR_STYLE = {
   outlineOffset: "-0.5px",
 };
 
+// Snap "story ring" (Instagram/Snapchat-style): replaces the hairline with a
+// solid warm-accent ring, drawn OUTWARD with a small gap so it reads as its
+// own signal rather than a thicker hairline.
+const SNAP_RING_COLOR = "#b8845f";
+const SNAP_AVATAR_STYLE = {
+  ...AVATAR_STYLE,
+  outline: `2px solid ${SNAP_RING_COLOR}`,
+  outlineOffset: "1px",
+};
+
 // === The mask's visual language: a COILED THREAD + ITS DOT ===
 // Every mask is the brand mark retold: one bold rounded thread (an arc, each
 // mask coiled differently) and the dot that starts it, resting in the coil's
@@ -123,6 +133,8 @@ function OnlineDot({ size, ringColor }) {
  * activity dot (bottom-right). Falsy/omitted -> identical legacy render.
  * `ringColor`: the dot's cut-out ring — must match the surface BEHIND the
  * avatar (defaults to the card surface #fdfcf8).
+ * `snapRing`: when true, swaps the hairline for a solid warm-accent ring —
+ * the "this is a Snap thread" story-ring signal.
  */
 function MaskAvatar({
   seed,
@@ -131,7 +143,9 @@ function MaskAvatar({
   className,
   online = false,
   ringColor,
+  snapRing = false,
 }) {
+  const avatarStyle = snapRing ? SNAP_AVATAR_STYLE : AVATAR_STYLE;
   const params = useMemo(() => {
     const raw = (seed || id || "").toString().replace(/-/g, "").toLowerCase();
     if (!raw) return null;
@@ -200,7 +214,7 @@ function MaskAvatar({
         viewBox={`0 0 ${VB} ${VB}`}
         className={className}
         aria-hidden="true"
-        style={AVATAR_STYLE}
+        style={avatarStyle}
       >
         <rect width={VB} height={VB} fill="#ebe7dd" />
       </svg>
@@ -217,7 +231,7 @@ function MaskAvatar({
       xmlns="http://www.w3.org/2000/svg"
       className={className}
       aria-hidden="true"
-      style={AVATAR_STYLE}
+      style={avatarStyle}
     >
       <rect width={VB} height={VB} fill={bg} />
       <g

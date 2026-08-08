@@ -19,6 +19,7 @@ import RateLimitNotice from "../RateLimitNotice";
 import ErrorNotice from "../ErrorNotice";
 import { isRateLimitError } from "../../utils/rateLimit";
 import DiscardDialog from "./DiscardDialog";
+import PostOptionsPanel from "./PostOptionsPanel";
 import useMediaComposer from "../../hooks/useMediaComposer";
 import useFileDrop from "../../hooks/useFileDrop";
 import { useScrollLock } from "../../utils/scrollLock";
@@ -74,7 +75,7 @@ function getErrorMessage(err, t) {
  * close path funnels through requestClose: with a non-empty draft it shows
  * Threads' "Discard thread?" confirm (Discard clears, Cancel keeps editing).
  */
-function ComposeModal({ open, onClose }) {
+function ComposeModal({ open, onClose, pendingFiles, onPendingFilesConsumed }) {
   const { t } = useTranslation();
   const { currentUserMask } = useCurrentUser();
   const [text, setText] = useState("");
@@ -83,6 +84,14 @@ function ComposeModal({ open, onClose }) {
   // Threads' "Discard thread?" confirm: closing with a non-empty draft asks
   // first — Discard clears everything, Cancel keeps editing.
   const [confirmingDiscard, setConfirmingDiscard] = useState(false);
+  // Creation-time options from PostOptionsPanel — Private/Snap/Disable
+  // replies, all reset to false on every fresh compose (never persisted
+  // between drafts, unlike the location preference below).
+  const [isPrivate, setIsPrivate] = useState(false);
+  const [isSnap, setIsSnap] = useState(false);
+  const [repliesDisabled, setRepliesDisabled] = useState(false);
+  const [optionsOpen, setOptionsOpen] = useState(false);
+  const optionsButtonRef = useRef(null);
   // AUTHOR opt-in: share approximate area when publishing. The PREFERENCE
   // (boolean) is persisted — the location never: it is requested when
   // publishing, fuzzed, encoded to a ~5km cell and discarded.
@@ -145,7 +154,8 @@ function ComposeModal({ open, onClose }) {
   // the thread is never posted referencing an incomplete upload.
   const isSubmittable =
     text.trim().length > 0 && !overLimit && !isDisabled && !media.pending;
-  const hasDraft = text.trim().length > 0 || media.count > 0;
+  const hasDraft =
+    text.trim().length > 0 || media.count > 0 || isPrivate || isSnap || repliesDisabled;
   // A throttled post (429) is not a failure but a wait: it gets the warm
   // RateLimitNotice with its countdown instead of the red error banner.
   const rateLimited = isRateLimitError(submitError?.error);
@@ -167,6 +177,9 @@ function ComposeModal({ open, onClose }) {
   const handleDiscard = () => {
     setText("");
     media.clear();
+    setIsPrivate(false);
+    setIsSnap(false);
+    setRepliesDisabled(false);
     setSubmitError(null);
     setConfirmingDiscard(false);
     onClose();
@@ -523,6 +536,27 @@ function ComposeModal({ open, onClose }) {
     input.value = "";
   };
 
+  // Files staged from an entry point BEFORE this modal was open (e.g.
+  // dropped on HomeCompose's collapsed row — see ComposeContext). Attached
+  // through the SAME validated pipeline as the picker/paste/in-modal-drag
+  // flows, once per open transition. Refs (not deps) for pendingFiles/
+  // onPendingFilesConsumed/attachFiles: none of them are memoized, and
+  // pendingFilesRef is cleared IMMEDIATELY — before the async attach even
+  // starts — so this can never double-fire even if the effect re-ran while
+  // `open` stayed true.
+  const pendingFilesRef = useRef(pendingFiles);
+  pendingFilesRef.current = pendingFiles;
+  const onPendingFilesConsumedRef = useRef(onPendingFilesConsumed);
+  onPendingFilesConsumedRef.current = onPendingFilesConsumed;
+  const attachFilesRef = useRef(attachFiles);
+  attachFilesRef.current = attachFiles;
+  useEffect(() => {
+    if (!open || !pendingFilesRef.current) return;
+    const files = pendingFilesRef.current;
+    onPendingFilesConsumedRef.current?.();
+    attachFilesRef.current(files);
+  }, [open]);
+
   const handleAttachClick = () => {
     if (isDisabled || media.attachDisabled) return;
     if (fileInputRef.current) fileInputRef.current.click();
@@ -555,7 +589,7 @@ function ComposeModal({ open, onClose }) {
       // WAIT for the geolocation BEFORE the POST (no race): the payload
       // goes out with the geohash or, if it failed, without it.
       const { geohash, failure } = await getAuthorGeohash();
-      const created = await createPost(text, { geohash });
+      const created = await createPost(text, { geohash, isPrivate, isSnap, repliesDisabled });
       // Attach the already-uploaded media to the new thread (confirm), then
       // inject it into the just-inserted feed post so it renders immediately.
       if (created?.uid) {
@@ -564,6 +598,9 @@ function ComposeModal({ open, onClose }) {
       }
       setText("");
       media.clear();
+      setIsPrivate(false);
+      setIsSnap(false);
+      setRepliesDisabled(false);
       // Posted: close the dialog. The location-failure notice (if any) would
       // be invisible in a closed modal, so it travels via the toast flow —
       // the success toast still confirms the post itself.
@@ -624,6 +661,19 @@ function ComposeModal({ open, onClose }) {
   // close it.
   const handleBackdropMouseDown = (e) => {
     if (e.target === e.currentTarget) requestClose();
+  };
+
+  // Private and Snap are mutually exclusive in the composer (product
+  // decision — both fields are independent server-side, this is purely
+  // about how the two checkboxes behave together): turning one on turns
+  // the other off automatically.
+  const handlePrivateChange = (next) => {
+    setIsPrivate(next);
+    if (next) setIsSnap(false);
+  };
+  const handleSnapChange = (next) => {
+    setIsSnap(next);
+    if (next) setIsPrivate(false);
   };
 
   if (!open) return null;
@@ -923,6 +973,50 @@ function ComposeModal({ open, onClose }) {
             </svg>
             <span className={styles.toolLabel}>{t("compose.areaLabel")}</span>
           </button>
+          {/* Invisible flex line-break (mobile only, see .footerBreak): forces
+              the Options button onto its own row without stretching it. */}
+          <span className={styles.footerBreak} aria-hidden="true" />
+          <button
+            ref={optionsButtonRef}
+            type="button"
+            className={cx(
+              styles.optionsToolButton,
+              isPrivate || isSnap || repliesDisabled ? styles.toolButtonActive : ""
+            )}
+            onClick={() => setOptionsOpen((v) => !v)}
+            disabled={isDisabled}
+            aria-haspopup="menu"
+            aria-expanded={optionsOpen}
+            title={t("postOptions.title")}
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+              <circle cx="12" cy="12" r="3" />
+            </svg>
+            <span className={styles.toolLabel}>{t("postOptions.title")}</span>
+          </button>
+          <PostOptionsPanel
+            open={optionsOpen}
+            onClose={() => setOptionsOpen(false)}
+            anchorRef={optionsButtonRef}
+            isPrivate={isPrivate}
+            onIsPrivateChange={handlePrivateChange}
+            isSnap={isSnap}
+            onIsSnapChange={handleSnapChange}
+            showSnap
+            repliesDisabled={repliesDisabled}
+            onRepliesDisabledChange={setRepliesDisabled}
+          />
           <span className={styles.footerSpacer} />
           {/* Threads-style: the counter only appears once the limit is
               exceeded, counting DOWN into the negative (e.g. "-38"). */}

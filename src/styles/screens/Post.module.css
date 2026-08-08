@@ -396,17 +396,61 @@
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
+  /* A touch more air before the timestamp/meta than the header's own 6px
+     gap alone gave — the mask id reads a little too close to what follows. */
+  padding-right: 2px;
 }
 
 .opMetaLine {
-  /* Threads-exact <time>: 14px like the name, 400, muted #a3a3a3, centered
-     in a min 24px box like their time element (even rhythm for short stamps). */
+  /* Threads-exact <time> tone: 14px like the name, 400, muted #a3a3a3. NO
+     min-width/centering (that box's slack read as an oversized gap once
+     "· Edited" followed it) — the header's own flex gap is the only
+     spacing now, identical regardless of the timestamp's text length. */
   font-size: 14px;
   font-weight: 400;
   color: #a3a3a3;
   display: inline-block;
-  min-width: 24px;
-  text-align: center;
+}
+
+/* "· Edited" — same quiet-meta pattern as the mask/timestamp row (own
+   class, mirrors .opMetaLine's declarations). Tighter 4px internal gap —
+   same scale as the reply/ancestor meta trail, not the header's primary
+   6px (that one still applies once, between the timestamp and this tag).
+   A real <button> now (EditedTag) — it opens the edit-history modal, no
+   menu item anymore — so it resets the browser's button chrome. The hover
+   underline itself lives in EditedTag.module.css (.trigger:hover .label),
+   scoped to the label word only — never the "·" divider next to it. */
+.editedTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  font-family: inherit;
+  font-size: 14px;
+  color: #a3a3a3;
+  font-weight: 400;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.editedDivider {
+  color: #a3a3a3;
+  font-size: 14px;
+  line-height: 1;
+}
+
+/* Private-lock / snap-countdown badges — same quiet-meta anatomy as
+   "· Edited" (see ThreadFlagBadges), just not a button (nothing to click). */
+.flagBadge {
+  composes: editedTag;
+  cursor: default;
+}
+
+.flagDivider {
+  composes: editedDivider;
 }
 
 .opBody {

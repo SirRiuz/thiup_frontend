@@ -52,6 +52,7 @@ function HomeNew() {
     ensureLoaded,
     loadMore,
     refetch,
+    patchPostInFeed,
   } = useFeedContext();
 
   // Home tabs: For You (default) and Close You. HomeFilterBar is reused
@@ -307,6 +308,7 @@ function HomeNew() {
                   onClick={() => handlePostClick(post)}
                   onReplyClick={handleReplyPreviewClick}
                   onHashtagClick={handleHashtagClick}
+                  onEdited={(patch) => patchPostInFeed(patch.id, patch)}
                 />
               ))}
             </div>

@@ -106,24 +106,38 @@
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
+  /* A touch more air before the timestamp/meta than the header's own 6px
+     gap alone gave — the mask id reads a little too close to what follows. */
+  padding-right: 2px;
 }
 
 .timestamp {
-  /* Threads-exact <time>: same size, 400, light secondary, centered in a
-     min 24px box (even rhythm for short stamps). */
+  /* Threads-exact <time> tone: same size, 400, light secondary. NO
+     min-width/centering (that box's slack read as an oversized gap once a
+     trailing meta chain — · Author · Edited — followed it) — the row's
+     flex gap alone is the spacing now, identical regardless of the
+     timestamp's own text length. */
   font-size: 14px;
   font-weight: 400;
   color: #a3a3a3;
   display: inline-block;
-  min-width: 24px;
-  text-align: center;
+}
+
+/* Trailing meta group (Author / Edited): its OWN tighter 4px gap, separate
+   from .header's primary 6px — chaining these at the full 6px each read
+   too spaced out. .header's 6px still applies once, between the timestamp
+   and this group. */
+.metaTrail {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 /* "· Author" quiet meta — same spec as PostReply's tag. */
 .authorTag {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   font-size: 14px;
   color: #a3a3a3;
   font-weight: 400;
@@ -131,6 +145,35 @@
 }
 
 .authorDivider {
+  color: #a3a3a3;
+  font-size: 14px;
+  line-height: 1;
+}
+
+/* "· Edited" — same quiet-meta pattern as "· Author", visible to every
+   viewer (not owner-gated). Own class so both can appear together inside
+   .metaTrail (mask · time · Author · Edited). A real <button> now
+   (EditedTag) — it opens the edit-history modal, no menu item anymore —
+   so it resets the browser's button chrome. The hover underline itself
+   lives in EditedTag.module.css (.trigger:hover .label), scoped to the
+   label word only — never the "·" divider next to it. */
+.editedTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  font-family: inherit;
+  font-size: 14px;
+  color: #a3a3a3;
+  font-weight: 400;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.editedDivider {
   color: #a3a3a3;
   font-size: 14px;
   line-height: 1;

@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import MaskAvatar from "../MaskAvatar";
 import PostOptionsMenu from "./PostOptionsMenu";
+import EditedTag from "./EditedTag";
 import PostProfileTrigger from "./PostProfileTrigger";
 import ReactionStack from "./ReactionStack";
 import ThreadMedia from "../media/ThreadMedia";
@@ -33,6 +34,8 @@ function PostAncestor({ post, isRoot = false, onOpen, onHashtagClick }) {
     reactions = [],
     media,
     isOp,
+    isEdited,
+    editedAt,
   } = post;
   // This ancestor's OWN media, addressable at its own /p/:id — opening it
   // navigates there, same as tapping the row itself. See
@@ -90,14 +93,30 @@ function PostAncestor({ post, isRoot = false, onOpen, onHashtagClick }) {
             >
               {time}
             </span>
-            {/* "· Author" only on intermediate ancestors authored by the
-                OP — on the root itself it's redundant (the root IS the OP). */}
-            {isOp && !isRoot && (
-              <span className={styles.authorTag} aria-label={t("post.opAuthor")}>
-                <span className={styles.authorDivider} aria-hidden="true">
-                  ·
-                </span>
-                {t("post.author")}
+            {((isOp && !isRoot) || isEdited) && (
+              // Trailing meta tags get their OWN tighter gap (4px) instead of
+              // the header's primary 6px — same pattern as PostReply, so an
+              // ancestor row reads identically to a reply row.
+              <span className={styles.metaTrail}>
+                {/* "· Author" only on intermediate ancestors authored by the
+                    OP — on the root itself it's redundant (the root IS the OP). */}
+                {isOp && !isRoot && (
+                  <span className={styles.authorTag} aria-label={t("post.opAuthor")}>
+                    <span className={styles.authorDivider} aria-hidden="true">
+                      ·
+                    </span>
+                    {t("post.author")}
+                  </span>
+                )}
+                {isEdited && (
+                  <EditedTag
+                    post={post}
+                    editedAt={editedAt}
+                    language={i18n.language}
+                    className={styles.editedTag}
+                    dividerClassName={styles.editedDivider}
+                  />
+                )}
               </span>
             )}
             <span className={styles.spacer} />

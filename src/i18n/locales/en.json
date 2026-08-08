@@ -1,10 +1,12 @@
 {
   "media": {
     "multipleIndicator": "Contains more media",
-    "tapToView": "Tap to view",
     "sensitiveTitle": "Sensitive content",
-    "hideSensitive": "Hide sensitive content",
+    "spoilerTitle": "Spoiler",
     "viewSensitive": "View sensitive content",
+    "tileOptions": "Media options",
+    "markSpoiler": "Mark spoiler",
+    "unmarkSpoiler": "Unmark spoiler",
     "video": "Video",
     "mute": "Mute",
     "unmute": "Unmute",
@@ -120,6 +122,12 @@
       }
     }
   },
+  "locationOptIn": {
+    "title": "See what's happening near you",
+    "body": "Share your approximate area (~5 km, blurred) to see and be seen by threads close to you. Never your exact location — and you can turn it off anytime.",
+    "enable": "Enable location",
+    "notNow": "Not now"
+  },
   "home": {
     "tabForYou": "For You",
     "tabCloseYou": "Close You",
@@ -147,6 +155,8 @@
     "discard": "Discard",
     "discardThreadTitle": "Discard thread?",
     "discardReplyTitle": "Discard reply?",
+    "discardEditTitle": "Discard changes?",
+    "editSubmit": "Save",
     "mediaLabel": "Media",
     "areaLabel": "Area",
     "locationDefault": "Share your approximate area when posting (for Close You) — never your exact location",
@@ -235,6 +245,14 @@
     "replying": "Replying…",
     "replyErrorTitle": "Your reply couldn't be posted",
     "replyErrorDetail": "Please try again.",
+    "repliesDisabledTitle": "Replies are off",
+    "repliesDisabledNotice": "The author turned off replies for this thread.",
+    "privateBadge": "Private",
+    "privateBadgeHint": "Only visible to people with the link",
+    "snapBadgeHint": "This thread disappears automatically",
+    "snapExpiringSoon": "Disappearing soon",
+    "snapCountdownHours": "Disappears in {{count}}h",
+    "snapCountdownMinutes": "Disappears in {{count}}m",
     "attachErrorTitle": "Can't attach this file",
     "fileTooLarge": "{{name}} is too large (max 10MB)",
     "imageTooLarge": "Images can't exceed 8 MB",
@@ -246,7 +264,13 @@
     "maxFiles": "Only {{max}} files allowed",
     "attachMedia": "Attach image or video",
     "dropToAttach": "Drop to attach",
-    "expandComposer": "Expand composer"
+    "expandComposer": "Expand composer",
+    "edited": "Edited",
+    "editTitle": "Edit post",
+    "editErrorTitle": "Your edit couldn't be saved",
+    "editErrorGone": "This post is no longer available to edit",
+    "editErrorGoneDetail": "It may have been removed, or you're no longer signed in as its author.",
+    "undoRemove": "Undo"
   },
   "scan": {
     "queued": "Queued…",
@@ -298,6 +322,7 @@
     "share": "Share",
     "copyLink": "Copy link",
     "qrCode": "QR code",
+    "edit": "Edit",
     "report": "Report"
   },
   "share": {
@@ -340,6 +365,8 @@
     "publishing": "Publishing…",
     "posted": "Thread posted",
     "replyPosted": "Reply posted",
+    "editing": "Saving…",
+    "edited": "Post updated",
     "viewPost": "View"
   },
   "report": {
@@ -465,6 +492,27 @@
     "replyTitle": "Too many replies in a row",
     "replyWait": "You can reply again in {{seconds}} s",
     "replySoon": "Wait a few seconds and try again",
-    "replyReady": "You can reply again now"
+    "replyReady": "You can reply again now",
+    "editTitle": "Too many edits in a row",
+    "editWait": "You can edit again in {{seconds}} s",
+    "editSoon": "Wait a few seconds and try again",
+    "editReady": "You can edit again now"
+  },
+  "postOptions": {
+    "title": "Post options",
+    "private": "Private",
+    "snap": "Snap",
+    "snapHint": "Auto-deletes after 24 hours",
+    "disableReplies": "Turn off replies"
+  },
+  "editHistory": {
+    "title": "Edit history",
+    "empty": "No edits yet",
+    "errorTitle": "Couldn't load edit history",
+    "mediaAddedCount_one": "{{count}} file added",
+    "mediaAddedCount_other": "{{count}} files added",
+    "mediaRemovedCount_one": "{{count}} file removed",
+    "mediaRemovedCount_other": "{{count}} files removed",
+    "loadMore": "Load more"
   }
 }

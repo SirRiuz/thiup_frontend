@@ -1,13 +1,31 @@
 /* PostRepliesBar — Threads' exact bar between the OP and the replies list:
    sort trigger left, "View activity" right, both in the quiet secondary tone.
-   Sits right under the OP's full-bleed divider; draws no divider of its own. */
+   Sits right under the OP's full-bleed divider, and draws its OWN full-bleed
+   divider below (same technique/tone as Post's .opSectionDivided::after —
+   0.5px rgba(0,0,0,0.15), -16px each side to reach the card edge) so the
+   bar reads as its own distinct strip above the replies list. */
 
 .bar {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  /* Compact Threads rhythm: the 36px controls + a little air on both sides. */
-  padding: 5px 0;
+  /* SYMMETRIC top/bottom — the bar's own box IS the gap between the two
+     parallel dividers (the OP's above, this one's own ::after below), so
+     equal padding is what actually centers the row content between them. */
+  padding: 8px 0;
+}
+
+.bar::after {
+  content: "";
+  position: absolute;
+  /* .bar sits in the same 16px surface inset as .opSection — -16px reaches
+     the same card edge as the OP's own divider above it. */
+  left: -16px;
+  right: -16px;
+  bottom: 0;
+  height: 0.5px;
+  background: rgba(0, 0, 0, 0.15);
 }
 
 /* "View activity" — quiet text control (Threads': label + 12px chevron). */

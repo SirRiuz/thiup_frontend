@@ -113,6 +113,30 @@ export function useAnonThreads(maskId) {
     }
   }, [maskId]);
 
+  // Patches a post's fields in place after a successful edit — mirrors
+  // FeedContext.patchPostInFeed/useSearch.patchResult for this screen's own
+  // local state (module-level cache included, same pattern loadMore already
+  // uses to keep it in step). The topReply branch matters here too: this
+  // profile's post cards carry the same conversation-preview nesting
+  // Home/search do (see CLAUDE.md — every feed surface, incl. /m/:maskId).
+  const patchPost = useCallback(
+    (uid, patch) => {
+      if (!uid || !patch) return;
+      setPosts((prev) => {
+        const next = prev.map((p) => {
+          if (p.uid === uid || p.id === uid) return { ...p, ...patch };
+          if (p.topReply && (p.topReply.uid === uid || p.topReply.id === uid)) {
+            return { ...p, topReply: { ...p.topReply, ...patch } };
+          }
+          return p;
+        });
+        if (maskId) cacheSet(maskId, { posts: next, nextUrl: nextUrlRef.current });
+        return next;
+      });
+    },
+    [maskId]
+  );
+
   const refetch = useCallback(() => {
     if (!maskId) return;
     // Explicit retry bypasses (and then refreshes) the cache.
@@ -149,5 +173,6 @@ export function useAnonThreads(maskId) {
     hasMore,
     loadMore,
     refetch,
+    patchPost,
   };
 }

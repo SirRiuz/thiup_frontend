@@ -6,6 +6,7 @@ import ThreadDetailsModal from "./ThreadDetailsModal";
 import PostQrModal from "./PostQrModal";
 import PostShareModal from "./PostShareModal";
 import ReportModal from "./ReportModal";
+import PostEditModal from "./PostEditModal";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import useMenuVerticalFlip from "../../hooks/useMenuVerticalFlip";
 import { useToast } from "../../contexts/ToastContext";
@@ -102,6 +103,12 @@ const ShareIcon = () => (
     <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
   </svg>
 );
+const EditIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M12 20h9" />
+    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
+  </svg>
+);
 const CheckIcon = () => (
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <path d="m5 12 4.5 4.5L19 7" />
@@ -129,6 +136,12 @@ function PostOptionsMenu({
   className = "",
   sortValue,
   onSortChange,
+  onEdited,
+  // True for a reply's own menu (PostReply, HomeFeedCard's topReply preview)
+  // — forwarded to PostEditModal so it hides the "Post options" trigger
+  // entirely (Private has no effect below a root thread anyway, and
+  // Disable-replies-on-a-reply isn't offered from this surface either).
+  isReply = false,
 }) {
   const { t } = useTranslation();
   const isMobile = useIsMobile();
@@ -140,6 +153,7 @@ function PostOptionsMenu({
   const [qrOpen, setQrOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const canSort = typeof onSortChange === "function";
   // Fixed coords for the (desktop) portaled popover, right-aligned to trigger.
   const [pos, setPos] = useState(null);
@@ -242,6 +256,10 @@ function PostOptionsMenu({
     }
     if (key === "report") {
       setReportOpen(true);
+      return;
+    }
+    if (key === "edit") {
+      setEditOpen(true);
     }
   };
 
@@ -298,16 +316,32 @@ function PostOptionsMenu({
       );
     }
 
-    // Root: optional "Sort" entry (only when sorting is wired) + the base items.
-    const items = canSort
-      ? [
-          { key: "sort", icon: <SortIcon />, labelKey: "post.sort", submenu: true },
-          ...ITEMS,
-        ]
-      : ITEMS;
+    // Root: optional "Sort" entry (only when sorting is wired) + an
+    // owner-only "Edit" + the base items, grouped Threads-style with a
+    // divider between each semantic cluster (desktop popover only — the
+    // mobile sheet already separates every row with its own hairline, see
+    // .sheetItem's border-top). Edit history no longer lives here — it
+    // opens from clicking the "· Edited" tag itself now.
+    //   1. Edit (owner-only — modifies the post)
+    //   2. View details / Share / Copy link / QR code (info + share)
+    //   3. Report (destructive, always last)
+    const hasEdit = Boolean(post?.isMine);
+    const items = [
+      ...(canSort
+        ? [{ key: "sort", icon: <SortIcon />, labelKey: "post.sort", submenu: true }]
+        : []),
+      ...(hasEdit
+        ? [{ key: "edit", icon: <EditIcon />, labelKey: "threadOptions.edit" }]
+        : []),
+      // dividerBefore on the group's FIRST item only — the marker that
+      // renders the shared divider ahead of it.
+      { ...ITEMS[0], dividerBefore: hasEdit },
+      ...ITEMS.slice(1, -1),
+      { ...ITEMS[ITEMS.length - 1], dividerBefore: true },
+    ];
     return items.map((it) => (
       <Fragment key={it.key}>
-        {dividerClass && it.key === "report" && (
+        {dividerClass && it.dividerBefore && (
           <div className={dividerClass} role="separator" aria-hidden="true" />
         )}
         <button
@@ -403,6 +437,15 @@ function PostOptionsMenu({
 
       {reportOpen && (
         <ReportModal post={post} onClose={() => setReportOpen(false)} />
+      )}
+
+      {editOpen && (
+        <PostEditModal
+          post={post}
+          onClose={() => setEditOpen(false)}
+          onEdited={onEdited}
+          isReply={isReply}
+        />
       )}
     </div>
   );

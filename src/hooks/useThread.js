@@ -519,6 +519,20 @@ export function useThread(threadId, seedThread) {
     );
   }, []);
 
+  // Patches a post (thread OR a reply) in place after a successful edit —
+  // same "find by id, spread the changed subset" idea as attachMediaToReply,
+  // but the caller doesn't already know whether the edited post was the root
+  // or a nested reply, so it tries both setters unconditionally (a thread id
+  // and a reply id are mutually exclusive — at most one ever matches).
+  // ThreadCacheContext's existing effect persists this automatically.
+  const applyEdit = useCallback((postId, patch) => {
+    if (!postId || !patch) return;
+    setThread((t) => (t && t.id === postId ? { ...t, ...patch } : t));
+    setReplies((prev) =>
+      prev.map((r) => (r.id === postId ? { ...r, ...patch } : r))
+    );
+  }, []);
+
   /**
    * Toggles the current user's reaction on a post (thread or reply).
    * Immediate optimistic update + POST /reactions/ + rollback on error.
@@ -619,6 +633,7 @@ export function useThread(threadId, seedThread) {
     selectSort,
     createReply,
     attachMediaToReply,
+    applyEdit,
     loadMore,
     retry,
     toggleReaction,

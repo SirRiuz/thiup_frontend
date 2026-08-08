@@ -109,6 +109,7 @@ function SearchNew() {
     hasMore,
     loadMore,
     refetch,
+    patchResult,
   } = useSearch(query, activeTab);
 
   // Search landing (the magnifier, no query): Threads-style suggestion list —
@@ -426,6 +427,7 @@ function SearchNew() {
                         onReplyClick={handlePostClick}
                         onHashtagClick={searchHashtag}
                         highlightQuery={highlightTerm}
+                        onEdited={(patch) => patchResult(patch.id, patch)}
                       />
                     ))}
                   {loadedTab === "tags" &&
