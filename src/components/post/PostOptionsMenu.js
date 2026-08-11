@@ -3,8 +3,12 @@ import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import BottomSheet from "../BottomSheet";
 import ThreadDetailsModal from "./ThreadDetailsModal";
+import PostQrModal from "./PostQrModal";
+import PostShareModal from "./PostShareModal";
 import ReportModal from "./ReportModal";
+import PostEditModal from "./PostEditModal";
 import { useIsMobile } from "../../hooks/useIsMobile";
+import useMenuVerticalFlip from "../../hooks/useMenuVerticalFlip";
 import { useToast } from "../../contexts/ToastContext";
 import MenuSurface, { menuStyles } from "../menu/MenuSurface";
 import styles from "../../styles/components/post/PostOptionsMenu.module.css";
@@ -78,6 +82,33 @@ const ChevronRight = () => (
     />
   </svg>
 );
+/* QR code glyph — the classic three-corner-finder silhouette (outline, same
+   weight as InfoIcon) so it reads instantly even at menu-row size. */
+const QrIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <rect x="3" y="3" width="7" height="7" rx="1.5" />
+    <rect x="14" y="3" width="7" height="7" rx="1.5" />
+    <rect x="3" y="14" width="7" height="7" rx="1.5" />
+    <path d="M14 14h3v3h-3zM19 14h2v2h-2zM14 19h2v2h-2zM19 19h2v2h-2z" />
+  </svg>
+);
+/* Feather's "share-2" (three linked nodes) — the app's one generic Share
+   glyph, reused inside PostShareModal for its own native-share row. */
+const ShareIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <circle cx="18" cy="5" r="3" />
+    <circle cx="6" cy="12" r="3" />
+    <circle cx="18" cy="19" r="3" />
+    <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+    <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+  </svg>
+);
+const EditIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M12 20h9" />
+    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
+  </svg>
+);
 const CheckIcon = () => (
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <path d="m5 12 4.5 4.5L19 7" />
@@ -86,7 +117,9 @@ const CheckIcon = () => (
 
 const ITEMS = [
   { key: "viewDetails", icon: <InfoIcon />, labelKey: "threadOptions.viewDetails" },
+  { key: "share", icon: <ShareIcon />, labelKey: "threadOptions.share" },
   { key: "copyLink", icon: <LinkIcon />, labelKey: "threadOptions.copyLink" },
+  { key: "qrCode", icon: <QrIcon />, labelKey: "threadOptions.qrCode" },
   { key: "report", icon: <FlagIcon />, labelKey: "threadOptions.report", danger: true },
 ];
 
@@ -103,6 +136,12 @@ function PostOptionsMenu({
   className = "",
   sortValue,
   onSortChange,
+  onEdited,
+  // True for a reply's own menu (PostReply, HomeFeedCard's topReply preview)
+  // — forwarded to PostEditModal so it hides the "Post options" trigger
+  // entirely (Private has no effect below a root thread anyway, and
+  // Disable-replies-on-a-reply isn't offered from this surface either).
+  isReply = false,
 }) {
   const { t } = useTranslation();
   const isMobile = useIsMobile();
@@ -111,13 +150,26 @@ function PostOptionsMenu({
   // Which sub-panel is showing inside the menu (Threads-style): null = root.
   const [submenu, setSubmenu] = useState(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [qrOpen, setQrOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const canSort = typeof onSortChange === "function";
   // Fixed coords for the (desktop) portaled popover, right-aligned to trigger.
   const [pos, setPos] = useState(null);
   const wrapperRef = useRef(null);
   const triggerRef = useRef(null);
   const menuRef = useRef(null);
+  // Smart open: flips the popover above the trigger instead of below when
+  // there isn't enough room (the three-dots trigger sits on EVERY card, so
+  // it's routinely near the bottom of the viewport while scrolling — this
+  // is what used to get the menu clipped by the screen edge). null = the
+  // "below" position below already fits, use it as-is.
+  const openUpTop = useMenuVerticalFlip({
+    open: open && !isMobile,
+    triggerRef,
+    menuRef,
+  });
 
   const close = () => {
     setOpen(false);
@@ -181,6 +233,14 @@ function PostOptionsMenu({
       setDetailsOpen(true);
       return;
     }
+    if (key === "qrCode") {
+      setQrOpen(true);
+      return;
+    }
+    if (key === "share") {
+      setShareOpen(true);
+      return;
+    }
     if (key === "copyLink") {
       // Public thread URL — the canonical SHORT form (/p/:id; the legacy
       // /post/:id still redirects). The toast shows only a confirmation.
@@ -196,6 +256,10 @@ function PostOptionsMenu({
     }
     if (key === "report") {
       setReportOpen(true);
+      return;
+    }
+    if (key === "edit") {
+      setEditOpen(true);
     }
   };
 
@@ -252,16 +316,32 @@ function PostOptionsMenu({
       );
     }
 
-    // Root: optional "Sort" entry (only when sorting is wired) + the base items.
-    const items = canSort
-      ? [
-          { key: "sort", icon: <SortIcon />, labelKey: "post.sort", submenu: true },
-          ...ITEMS,
-        ]
-      : ITEMS;
+    // Root: optional "Sort" entry (only when sorting is wired) + an
+    // owner-only "Edit" + the base items, grouped Threads-style with a
+    // divider between each semantic cluster (desktop popover only — the
+    // mobile sheet already separates every row with its own hairline, see
+    // .sheetItem's border-top). Edit history no longer lives here — it
+    // opens from clicking the "· Edited" tag itself now.
+    //   1. Edit (owner-only — modifies the post)
+    //   2. View details / Share / Copy link / QR code (info + share)
+    //   3. Report (destructive, always last)
+    const hasEdit = Boolean(post?.isMine);
+    const items = [
+      ...(canSort
+        ? [{ key: "sort", icon: <SortIcon />, labelKey: "post.sort", submenu: true }]
+        : []),
+      ...(hasEdit
+        ? [{ key: "edit", icon: <EditIcon />, labelKey: "threadOptions.edit" }]
+        : []),
+      // dividerBefore on the group's FIRST item only — the marker that
+      // renders the shared divider ahead of it.
+      { ...ITEMS[0], dividerBefore: hasEdit },
+      ...ITEMS.slice(1, -1),
+      { ...ITEMS[ITEMS.length - 1], dividerBefore: true },
+    ];
     return items.map((it) => (
       <Fragment key={it.key}>
-        {dividerClass && it.key === "report" && (
+        {dividerClass && it.dividerBefore && (
           <div className={dividerClass} role="separator" aria-hidden="true" />
         )}
         <button
@@ -316,7 +396,14 @@ function PostOptionsMenu({
         createPortal(
           <MenuSurface
             ref={menuRef}
-            style={{ position: "fixed", top: pos.top, right: pos.right }}
+            style={{
+              position: "fixed",
+              top: openUpTop ?? pos.top,
+              right: pos.right,
+              // Pop FROM the trigger, whichever side it's actually growing
+              // toward — a downward pop looks upside-down once flipped.
+              transformOrigin: openUpTop ? "bottom right" : "top right",
+            }}
           >
             {renderItems(
               menuStyles.item,
@@ -342,8 +429,23 @@ function PostOptionsMenu({
         <ThreadDetailsModal post={post} onClose={() => setDetailsOpen(false)} />
       )}
 
+      {qrOpen && <PostQrModal post={post} onClose={() => setQrOpen(false)} />}
+
+      {shareOpen && (
+        <PostShareModal post={post} onClose={() => setShareOpen(false)} />
+      )}
+
       {reportOpen && (
         <ReportModal post={post} onClose={() => setReportOpen(false)} />
+      )}
+
+      {editOpen && (
+        <PostEditModal
+          post={post}
+          onClose={() => setEditOpen(false)}
+          onEdited={onEdited}
+          isReply={isReply}
+        />
       )}
     </div>
   );

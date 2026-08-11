@@ -268,11 +268,18 @@ export default function useMediaComposer() {
     [media, removeUpload]
   );
 
+  const itemsById = useMemo(() => {
+    const map = new Map();
+    media.items.forEach((item) => map.set(item.id, item));
+    return map;
+  }, [media.items]);
+
   // Attach every uploaded object to the thread (called at submit, once the
-  // thread exists). Best-effort per file.
+  // thread exists). Best-effort per file. Passes itemsById so confirmAll
+  // reads each file's CURRENT isSpoiler flag (toggled anytime before Send).
   const confirmTo = useCallback(
-    (threadUid) => confirmAll(threadUid),
-    [confirmAll]
+    (threadUid) => confirmAll(threadUid, itemsById),
+    [confirmAll, itemsById]
   );
 
   const clear = useCallback(() => {
@@ -297,6 +304,7 @@ export default function useMediaComposer() {
     attachDisabled: media.items.length >= MAX_FILES,
     addFiles,
     removeItem,
+    toggleSpoiler: media.toggleSpoiler,
     retryUpload,
     confirmTo,
     clear,

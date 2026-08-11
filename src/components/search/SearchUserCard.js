@@ -19,7 +19,7 @@ function SearchUserCard({ user, highlightQuery, onClick }) {
 
   return (
     <button type="button" className={styles.card} onClick={onClick}>
-      <PostProfileTrigger mask={hoverMask}>
+      <PostProfileTrigger mask={hoverMask} variant="avatar">
         <div className={styles.identiconWrap}>
           {/* Rows live on the results surface (#fdfcf8) now — the dot's ring
               uses the default surface tone. */}

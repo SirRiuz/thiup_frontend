@@ -10,7 +10,10 @@ import { useTranslation } from "react-i18next";
 import BrandLogo from "../components/BrandLogo";
 import MaskAvatar from "../components/MaskAvatar";
 import PostCommentBox from "../components/post/PostCommentBox";
+import RepliesDisabledNotice from "../components/post/RepliesDisabledNotice";
 import PostOptionsMenu from "../components/post/PostOptionsMenu";
+import EditedTag from "../components/post/EditedTag";
+import ThreadFlagBadges from "../components/post/ThreadFlagBadges";
 import PostProfileTrigger from "../components/post/PostProfileTrigger";
 import PostReactionPicker from "../components/post/PostReactionPicker";
 import PostRepliesBar from "../components/post/PostRepliesBar";
@@ -19,11 +22,13 @@ import PostAncestor from "../components/post/PostAncestor";
 import PostInitialSkeleton from "../components/post/PostInitialSkeleton";
 import PostReply from "../components/post/PostReply";
 import PostReplySkeleton from "../components/post/PostReplySkeleton";
+import PostThreadSwitchSpinner from "../components/post/PostThreadSwitchSpinner";
 import ThreadMedia from "../components/media/ThreadMedia";
 import PostThreadNotFound from "../components/post/PostThreadNotFound";
 import HomeFeedRetryBanner from "../components/home/HomeFeedRetryBanner";
 import { hasSavedScrollPosition } from "../components/ScrollToTop";
 import { useThread } from "../hooks/useThread";
+import useMediaViewerUrlSync from "../hooks/useMediaViewerUrlSync";
 import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
 import usePageTitle from "../hooks/usePageTitle";
 import useMobileSurfacePage from "../hooks/useMobileSurfacePage";
@@ -77,6 +82,7 @@ function Post() {
     thread,
     replies,
     isLoading,
+    isSwitchingThread,
     isLoadingMore,
     loadMoreError,
     isReloadingReplies,
@@ -88,6 +94,7 @@ function Post() {
     selectSort,
     createReply,
     attachMediaToReply,
+    applyEdit,
     loadMore,
     retry,
     toggleReaction,
@@ -187,6 +194,13 @@ function Post() {
   // here we only render its state. Aliases for JSX readability.
   const post = thread;
   const displayReplies = replies;
+
+  // Deep link into the OP's own media (/p/:id/m/:mediaId) — the SAME shared
+  // mechanism every post (reply/ancestor/feed card) uses for its own media,
+  // see useMediaViewerUrlSync. The OP is always "its own page" here (its id
+  // IS the route's :id), so this is the in-place modal branch: push once on
+  // open, replace per slide, back (or a plain strip) on close.
+  const opMediaSync = useMediaViewerUrlSync(id, post?.media);
   // Comment permalink (Threads' thread continuity): when the head is a reply,
   // the backend sends its ancestor chain — root thread FIRST. Rendered above
   // the OP section, threadline-connected. Empty for root threads and while a
@@ -494,6 +508,33 @@ function Post() {
     };
   }, [hasAncestorChain, location.key]);
 
+  // === Root-landing scroll correction =====================================
+  // Post never remounts between two navigations on /p/:id (same route, no
+  // `key`) — clicking an ancestor row reuses this same instance, so
+  // useThread's `thread` state stays STALE (the PREVIOUS, chained thread)
+  // for the render(s) right after the click, until its fetch/cache-hit
+  // effect resolves. When the previous page HAD a chain, the landing-anchor
+  // effect above still re-runs on that stale commit (its `location.key` dep
+  // already changed) and settles the scroll against the stale, still-
+  // chained DOM. Once the fresh data lands and `hasAncestorChain` flips
+  // true → false (this really is the root — nothing above it), that same
+  // effect re-runs too, but only tears down and bails (no chain left to
+  // anchor under) — it never asserts scrollY back to 0, so whatever
+  // slightly-off value the stale commit left behind just sticks. This
+  // effect is the one place that snaps it back to exactly 0, but only once
+  // FRESH data (post.id === id) confirms the root, and only for a genuinely
+  // fresh arrival (no saved position — real back/forward keeps owning the
+  // scroll, same rule as the chain anchor above). A true root visited
+  // directly (never had a stale chained render) is already at 0 via
+  // ScrollToTop, so this is then a harmless no-op re-assertion.
+  useLayoutEffect(() => {
+    if (hasAncestorChain) return undefined;
+    if (!post || post.id !== id) return undefined; // still stale — wait for the real data
+    if (hasSavedScrollPosition(location.key)) return undefined;
+    window.scrollTo(0, 0);
+    return undefined;
+  }, [hasAncestorChain, post, id, location.key]);
+
   // Infinite scroll for the replies (same engine as the feeds): a sentinel
   // after the list prefetches the next page one screen ahead. Stands down
   // while ANY fetch is in flight and after a pagination failure (the retry
@@ -736,12 +777,8 @@ function Post() {
           invisible until you scroll. Only rendered alongside the surface. */}
       {(post || isLoading) && (
         <div className={styles.cornerMask} aria-hidden="true">
-          <div className={styles.cornerMaskEdge} />
-          <div className={cx(styles.cornerCap, styles.cornerCapLeft)}>
-            <div className={styles.cornerCapBox} />
-          </div>
-          <div className={cx(styles.cornerCap, styles.cornerCapRight)}>
-            <div className={styles.cornerCapBox} />
+          <div className={styles.cornerMaskWindow}>
+            <div className={styles.cornerMaskShape} />
           </div>
         </div>
       )}
@@ -810,13 +847,19 @@ function Post() {
         )}
       >
         <div className={styles.opHeader}>
-          {/* One line (Threads-style), same pattern as replies: avatar + mask
-              inside the profile trigger, then '·' + the short timestamp. */}
-          <PostProfileTrigger mask={post.mask}>
+          {/* One line (Threads-style), same pattern as replies: avatar + mask,
+              each its own trigger (PostProfileTrigger's mobile split needs to
+              tell which was tapped — see its own comment), then '·' + the
+              short timestamp. */}
+          <span className={styles.opIdentity}>
             {/* 36px — Threads' avatar size everywhere (feed, OP and replies). */}
-            <MaskAvatar seed={post.mask.id} size={36} online={post.mask.isOnline} />
-            <span className={styles.opMaskId}>{post.mask.id}</span>
-          </PostProfileTrigger>
+            <PostProfileTrigger mask={post.mask} variant="avatar">
+              <MaskAvatar seed={post.mask.id} size={36} online={post.mask.isOnline} />
+            </PostProfileTrigger>
+            <PostProfileTrigger mask={post.mask} variant="hash">
+              <span className={styles.opMaskId}>{post.mask.id}</span>
+            </PostProfileTrigger>
+          </span>
           {/* Short relative time ('20h'); full date on hover via `title`. */}
           <span
             className={styles.opMetaLine}
@@ -824,11 +867,34 @@ function Post() {
           >
             {post.time}
           </span>
+          <ThreadFlagBadges
+            isPrivate={post.isPrivate}
+            isSnap={post.isSnap}
+            expiresAt={post.expiresAt}
+            className={styles.flagBadge}
+            dividerClassName={styles.flagDivider}
+          />
+          {/* "· Edited" — same quiet-meta pattern as "· Author", visible to
+              every viewer (not just the owner). Clicking it opens the edit
+              history — its own entry point now, no menu item. */}
+          {post.isEdited && (
+            <EditedTag
+              post={post}
+              editedAt={post.editedAt}
+              language={i18n.language}
+              className={styles.editedTag}
+              dividerClassName={styles.editedDivider}
+            />
+          )}
           {/* Thread options on the parent thread's header row (Threads' new
               anatomy) — every breakpoint; the app bar carries no menu. Sorting
               is NOT here anymore: it lives in the replies bar below the OP. */}
           <span className={styles.opHeaderSpacer} />
-          <PostOptionsMenu post={post} variant="inline" />
+          <PostOptionsMenu
+            post={post}
+            variant="inline"
+            onEdited={(patch) => applyEdit(post.id, patch)}
+          />
         </div>
 
         {/* The opened thread's head shows its FULL text — no "show more"
@@ -838,7 +904,7 @@ function Post() {
         </p>
 
         {post.media && post.media.length > 0 && (
-          <ThreadMedia items={post.media} />
+          <ThreadMedia items={post.media} {...opMediaSync} />
         )}
 
         {/* Facebook-style stacked reaction summary (display-only) — the counts
@@ -968,6 +1034,7 @@ function Post() {
                 isHighlighted={reply.id === highlightedReplyId}
                 onHashtagClick={handleHashtagClick}
                 onReaction={(reaction) => toggleReaction(reply.id, reaction)}
+                onEdited={(patch) => applyEdit(reply.id, patch)}
                 onReplyClick={() =>
                   handleReplyClick({
                     maskId: reply.mask.id,
@@ -982,17 +1049,29 @@ function Post() {
             );
           });
         })()}
-        {/* Seeded navigation (OP painted from the feed card, replies still
-            fetching): skeleton ONLY the replies — as many as the thread has,
-            capped at 3, so a 1-reply thread doesn't flash 3 ghosts. */}
-        {isLoading && displayReplies.length === 0 && hasReplies && (
-          <>
-            {["medium", "short", "long"]
-              .slice(0, Math.max(1, Math.min(replyCount, 3)))
-              .map((v) => (
-                <PostReplySkeleton key={v} variant={v} />
-              ))}
-          </>
+        {/* Same-instance navigation (ancestor-chain click): the OP already
+            repainted instantly from the seed (useThread's isSwitchingThread)
+            — a quiet Threads-style spinner stands in for the replies while
+            the real thread/replies fetch in the background, instead of the
+            feed-seed skeleton below (kept exactly as it was for its own
+            case: a genuine fresh mount, e.g. opening a card from the feed). */}
+        {isSwitchingThread ? (
+          <PostThreadSwitchSpinner />
+        ) : (
+          /* Seeded navigation (OP painted from the feed card, replies still
+             fetching): skeleton ONLY the replies — as many as the thread has,
+             capped at 3, so a 1-reply thread doesn't flash 3 ghosts. */
+          isLoading &&
+          displayReplies.length === 0 &&
+          hasReplies && (
+            <>
+              {["medium", "short", "long"]
+                .slice(0, Math.max(1, Math.min(replyCount, 3)))
+                .map((v) => (
+                  <PostReplySkeleton key={v} variant={v} />
+                ))}
+            </>
+          )
         )}
         {isLoadingMore && (
           <>
@@ -1028,15 +1107,19 @@ function Post() {
           viewport — without the pin the composer floats mid-card over dead
           space). */}
       <div ref={commentBoxRef} className={styles.composerDock}>
-        <PostCommentBox
-          thread={post}
-          currentUserMask={currentUserMask}
-          replyingTo={replyingTo}
-          onCancelReply={handleCancelReply}
-          onSubmit={handleSubmitReply}
-          isSubmitting={isCreatingReply}
-          submitError={createReplyError}
-        />
+        {post.repliesDisabled ? (
+          <RepliesDisabledNotice />
+        ) : (
+          <PostCommentBox
+            thread={post}
+            currentUserMask={currentUserMask}
+            replyingTo={replyingTo}
+            onCancelReply={handleCancelReply}
+            onSubmit={handleSubmitReply}
+            isSubmitting={isCreatingReply}
+            submitError={createReplyError}
+          />
+        )}
       </div>
       </div>
         </>

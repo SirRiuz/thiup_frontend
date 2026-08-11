@@ -20,6 +20,7 @@ import { getCoarsePosition } from "../utils/robustGeolocation";
 import {
   prependToMyThreadsCache,
   patchMyThreadsCacheMedia,
+  patchMyThreadsCache,
 } from "../hooks/useMyThreads";
 
 const FeedContext = createContext(null);
@@ -438,7 +439,7 @@ export function FeedProvider({ children }) {
     setRefetchKey((k) => k + 1);
   }, []);
 
-  const createPost = useCallback(async (text, { geohash } = {}) => {
+  const createPost = useCallback(async (text, { geohash, isPrivate, isSnap, repliesDisabled } = {}) => {
     const trimmed = (text || "").trim();
     if (!trimmed) {
       throw new Error("Text cannot be empty");
@@ -456,6 +457,11 @@ export function FeedProvider({ children }) {
     // geohash: ONLY if the author enabled location sharing (opt-in).
     // It arrives already coarse (precision 5) and fuzzed from HomeCompose.
     if (geohash) payload.geohash = geohash;
+    // Creation-time options from PostOptionsPanel (see ComposeModal). isSnap
+    // is create-only — there is no edit path for it anywhere in the app.
+    if (isPrivate) payload.is_private = true;
+    if (isSnap) payload.is_snap = true;
+    if (repliesDisabled) payload.replies_disabled = true;
 
     const created = await apiFetch(POSTS_ENDPOINT, {
       method: "POST",
@@ -486,6 +492,26 @@ export function FeedProvider({ children }) {
       prev.map((p) => (p.uid === uid || p.id === uid ? { ...p, media } : p))
     );
     patchMyThreadsCacheMedia(uid, media);
+  }, []);
+
+  // Patches a post's fields in place after a successful edit (text, media,
+  // isEdited, editedAt) — same find-by-id-and-patch idea as
+  // attachMediaToPost, generalized to any changed subset.
+  const patchPostInFeed = useCallback((uid, patch) => {
+    if (!uid || !patch) return;
+    setPosts((prev) =>
+      prev.map((p) => {
+        if (p.uid === uid || p.id === uid) return { ...p, ...patch };
+        // The conversation-preview reply (topReply) is nested, not its own
+        // top-level entry — patch it in place too so editing it from the
+        // feed card reflects immediately.
+        if (p.topReply && (p.topReply.uid === uid || p.topReply.id === uid)) {
+          return { ...p, topReply: { ...p.topReply, ...patch } };
+        }
+        return p;
+      })
+    );
+    patchMyThreadsCache(uid, patch);
   }, []);
 
   // Auto-clear the "new" mark once the highlight has faded, so it never
@@ -521,6 +547,7 @@ export function FeedProvider({ children }) {
     refetch,
     createPost,
     attachMediaToPost,
+    patchPostInFeed,
   };
 
   return <FeedContext.Provider value={value}>{children}</FeedContext.Provider>;

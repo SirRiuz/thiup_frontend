@@ -1,0 +1,95 @@
+/* PostOptionsPanel — the shared Private/Snap/Disable-replies dropdown.
+   Desktop: the floating PANEL is MenuSurface (see MenuSurface.module.css);
+   this module only widens it slightly (longer labels than the sort menu)
+   and owns the check glyph + the Snap warning line. Mobile: a bottom sheet
+   with the same rows, Threads-sheet-row anatomy (see PostOptionsMenu). */
+
+.desktopMenu {
+  width: 264px;
+}
+
+/* Check stays in layout (visibility, not display) so rows never shift —
+   same convention as PostSortMenu. */
+.check {
+  visibility: hidden;
+}
+
+.checkVisible {
+  visibility: visible;
+}
+
+/* Muted note under the Snap row, ONLY while checked — the flag can't be
+   undone after posting. Not a native row subtitle: MenuSurface's row shape
+   has no description slot. */
+.warning {
+  margin: 0;
+  padding: 2px 12px 8px;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: #9b9591;
+}
+
+/* ===== Mobile sheet ===== */
+
+.sheetTitle {
+  padding: 4px 8px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #9b9591;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.sheetMenu {
+  display: flex;
+  flex-direction: column;
+}
+
+.sheetItem {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 15px 8px;
+  border: 0;
+  border-top: 1px solid #f0ece2;
+  border-radius: 12px;
+  background: transparent;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: #1a1a1a;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.1s ease, transform 0.1s ease;
+}
+
+.sheetItem:first-child {
+  border-top: 0;
+}
+
+.sheetItem:hover,
+.sheetItem:active {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.sheetItem:active {
+  transform: scale(0.98);
+}
+
+.sheetItemIcon {
+  display: inline-flex;
+  flex: none;
+  color: #424242;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheetItem {
+    transition: none;
+  }
+
+  .sheetItem:active {
+    transform: none;
+  }
+}

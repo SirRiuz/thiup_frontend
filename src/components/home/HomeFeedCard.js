@@ -2,8 +2,11 @@ import { useTranslation } from "react-i18next";
 import MaskAvatar from "../MaskAvatar";
 import PostProfileTrigger from "../post/PostProfileTrigger";
 import PostOptionsMenu from "../post/PostOptionsMenu";
+import EditedTag from "../post/EditedTag";
+import { SnapIcon } from "../post/ThreadFlagBadges";
 import ReactionStack from "../post/ReactionStack";
 import ThreadMedia from "../media/ThreadMedia";
+import useMediaViewerUrlSync from "../../hooks/useMediaViewerUrlSync";
 import { formatCount, renderTextWithHashtags } from "./homeHelpers";
 import { DEBUG } from "../../settings";
 import styles from "../../styles/components/home/HomeFeedCard.module.css";
@@ -19,19 +22,23 @@ function HomeFeedCard({
   onClick,
   onReplyClick,
   onHashtagClick,
+  onEdited,
   isLast,
   isNew,
   hideMineTag,
   highlightQuery,
   activeTag,
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const {
     mask,
     text,
     time,
     isTrending,
     isMine,
+    isEdited,
+    editedAt,
+    isSnap,
     momentum,
     repliesCount,
     viewsCount,
@@ -39,6 +46,14 @@ function HomeFeedCard({
     media,
     topReply,
   } = post;
+  // This card's OWN media, and the embedded top-reply preview's OWN media,
+  // are each addressable at their own /p/:id — opening either navigates
+  // there. See useMediaViewerUrlSync.
+  const mediaSync = useMediaViewerUrlSync(post?.id || post?.uid, media);
+  const topReplyMediaSync = useMediaViewerUrlSync(
+    topReply?.id || topReply?.uid,
+    topReply?.media
+  );
 
   const renderOptions = {
     highlightQuery,
@@ -122,12 +137,17 @@ function HomeFeedCard({
 
   return (
     <article
-      className={cx(styles.card, isLast ? styles.cardLast : "", isNew ? styles.cardNew : "")}
+      className={cx(
+        styles.card,
+        isLast ? styles.cardLast : "",
+        isNew ? styles.cardNew : "",
+        isSnap ? styles.cardSnap : ""
+      )}
       onClick={handleCardClick}
     >
       {/* Three-dots options (View details / Copy link / Report). Self-contained;
           stops propagation so it never triggers the card's navigation. */}
-      <PostOptionsMenu post={post} />
+      <PostOptionsMenu post={post} onEdited={onEdited} />
 
       {/* Optional "why is this highlighted" badge — fades with the card. Off by
           default (SHOW_NEW_BADGE); shown only on the just-created thread. */}
@@ -144,8 +164,13 @@ function HomeFeedCard({
       {topReply && <div className={styles.previewTrunk} aria-hidden="true" />}
       <div className={styles.grid}>
         <div className={styles.avatarCell}>
-          <PostProfileTrigger mask={mask}>
-            <MaskAvatar seed={mask.id} size={36} online={mask.isOnline} />
+          <PostProfileTrigger mask={mask} variant="avatar">
+            <MaskAvatar
+              seed={mask.id}
+              size={36}
+              online={mask.isOnline}
+              snapRing={isSnap}
+            />
           </PostProfileTrigger>
         </div>
 
@@ -166,23 +191,54 @@ function HomeFeedCard({
       <header className={styles.header}>
         {/* Same mask hover card as the thread (reused component). The avatar
             lives in the gutter; here only the mask id. */}
-        <PostProfileTrigger mask={mask}>
+        <PostProfileTrigger mask={mask} variant="hash">
           <span className={styles.maskId}>{mask.id}</span>
         </PostProfileTrigger>
         {/* No "·" separator — id and date sit close, spaced only by the
             header's small flex gap (e.g. "6be4a5 2w"). */}
         <span className={styles.timestamp}>{time}</span>
+        {/* Temporary-thread glyph (same icon as ThreadFlagBadges' Snap row) —
+            bare, no text: the ring + card wash already carry the signal,
+            this just makes it legible at the header's small scale too. */}
+        {isSnap && (
+          <span
+            className={styles.snapIcon}
+            role="img"
+            aria-label={t("post.snapBadgeHint")}
+            title={t("post.snapBadgeHint")}
+          >
+            <SnapIcon />
+          </span>
+        )}
         {/* "Your thread" — PRIVATE tag, shown only to the author on their own
             threads (is_mine, a backend boolean). Feed/search only; suppressed on
             the /me screen via hideMineTag (redundant there). */}
-        {isMine && !hideMineTag && (
-          <>
-            {/* Dot separator (same language as the replies' "· Author" meta). */}
-            <span className={styles.badgeDivider} aria-hidden="true">
-              ·
-            </span>
-            <span className={styles.mineBadge}>{t("home.yourThread")}</span>
-          </>
+        {((isMine && !hideMineTag) || isEdited) && (
+          // Trailing meta tags get their OWN tighter gap (4px) instead of
+          // inheriting the header's primary 6px (Threads' documented
+          // mask·time jump) — chaining "· Your thread · Edited" at 6px each
+          // compounded into visibly loose spacing with no direct Threads
+          // reference (Threads has no multi-tag chain like this).
+          <span className={styles.metaTrail}>
+            {isMine && !hideMineTag && (
+              <>
+                {/* Dot separator (same language as the replies' "· Author" meta). */}
+                <span className={styles.badgeDivider} aria-hidden="true">
+                  ·
+                </span>
+                <span className={styles.mineBadge}>{t("home.yourThread")}</span>
+              </>
+            )}
+            {isEdited && (
+              <EditedTag
+                post={post}
+                editedAt={editedAt}
+                language={i18n.language}
+                className={styles.editedTag}
+                dividerClassName={styles.badgeDivider}
+              />
+            )}
+          </span>
         )}
         {/* DEBUG tool (src/settings.js): momentum from the For You engine,
             visible only with REACT_APP_DEBUG=true. In production the flag is
@@ -225,7 +281,9 @@ function HomeFeedCard({
       </p>
       </div>
 
-      {media && media.length > 0 && <ThreadMedia items={media} />}
+      {media && media.length > 0 && (
+        <ThreadMedia items={media} {...mediaSync} />
+      )}
 
       <footer className={styles.stats}>
         {/* Facebook-style stacked reaction summary first, then the replies
@@ -282,7 +340,7 @@ function HomeFeedCard({
       {topReply && (
         <div className={styles.replyPreview} onClick={handlePreviewClick}>
           <div className={styles.previewAvatarCell}>
-            <PostProfileTrigger mask={topReply.mask}>
+            <PostProfileTrigger mask={topReply.mask} variant="avatar">
               <MaskAvatar
                 seed={topReply.mask.id}
                 size={36}
@@ -292,21 +350,37 @@ function HomeFeedCard({
           </div>
           <div className={styles.previewContent}>
             <header className={cx(styles.header, styles.previewHeader)}>
-              <PostProfileTrigger mask={topReply.mask}>
+              <PostProfileTrigger mask={topReply.mask} variant="hash">
                 <span className={styles.maskId}>{topReply.mask.id}</span>
               </PostProfileTrigger>
               <span className={styles.timestamp}>{topReply.time}</span>
-              {/* The OP continuing their own thread — quiet "· Author" meta
-                  (is_op computed vs the ROOT author, boolean only). */}
-              {topReply.isOp && (
-                <span
-                  className={styles.previewAuthorTag}
-                  aria-label={t("post.opAuthor")}
-                >
-                  <span className={styles.badgeDivider} aria-hidden="true">
-                    ·
-                  </span>
-                  {t("post.author")}
+              {(topReply.isOp || topReply.isEdited) && (
+                // Same tighter trailing-meta group as the root header (see
+                // .metaTrail) — chaining "· Author · Edited" at the header's
+                // full 6px each read too spaced out.
+                <span className={styles.metaTrail}>
+                  {/* The OP continuing their own thread — quiet "· Author" meta
+                      (is_op computed vs the ROOT author, boolean only). */}
+                  {topReply.isOp && (
+                    <span
+                      className={styles.previewAuthorTag}
+                      aria-label={t("post.opAuthor")}
+                    >
+                      <span className={styles.badgeDivider} aria-hidden="true">
+                        ·
+                      </span>
+                      {t("post.author")}
+                    </span>
+                  )}
+                  {topReply.isEdited && (
+                    <EditedTag
+                      post={topReply}
+                      editedAt={topReply.editedAt}
+                      language={i18n.language}
+                      className={styles.editedTag}
+                      dividerClassName={styles.badgeDivider}
+                    />
+                  )}
                 </span>
               )}
               <span className={styles.previewSpacer} />
@@ -317,6 +391,8 @@ function HomeFeedCard({
                 post={topReply}
                 variant="inline"
                 className={styles.previewMenu}
+                onEdited={onEdited}
+                isReply
               />
             </header>
             {/* Keyboard-accessible navigable zone (the body) — the menu and
@@ -339,7 +415,7 @@ function HomeFeedCard({
               </p>
             </div>
             {topReply.media && topReply.media.length > 0 && (
-              <ThreadMedia items={topReply.media} />
+              <ThreadMedia items={topReply.media} {...topReplyMediaSync} />
             )}
             <footer className={styles.stats}>
               <ReactionStack

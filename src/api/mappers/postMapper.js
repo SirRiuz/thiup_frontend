@@ -46,6 +46,9 @@ export function mapMedia(media) {
     type: m.is_video || m.type === "video" ? "video" : "image",
     url: m.file || m.url || null,
     isNsfw: m.is_nsfw ?? false,
+    // Deliberate user-marked spoiler — separate from the automatic isNsfw
+    // detection, toggled anytime via ThreadFilesViewSet.spoiler.
+    isSpoiler: m.is_spoiler ?? false,
     width: m.width || m.metadata?.width || 0,
     height: m.height || m.metadata?.height || 0,
     // Dominant color for the fullscreen viewer background (null → warm fallback).
@@ -104,6 +107,19 @@ export function mapBackendPostToFrontend(backendPost) {
     // as plain booleans (no author identity); default false (never assume).
     isMine: backendPost.is_mine ?? false,
     isOp: backendPost.is_op ?? false,
+    // isEdited/editedAt: the "· Edited" indicator, visible to every viewer
+    // (unlike isMine, not private) — mirrors publishedAt's ISO shape.
+    isEdited: backendPost.is_edited ?? false,
+    editedAt: backendPost.edited_at_iso || null,
+    // isPrivate: excluded from feed/search, viewable only via direct URL —
+    // toggleable anytime. isSnap: self-deletes ~24h after creation via
+    // expiresAt; set only at creation, never editable (no edit-form field
+    // exists server-side for it — see ThreadEditSerializer). repliesDisabled:
+    // owner turned commenting off, enforced server-side on reply creation.
+    isPrivate: backendPost.is_private ?? false,
+    isSnap: backendPost.is_snap ?? false,
+    expiresAt: backendPost.expires_at_iso || null,
+    repliesDisabled: backendPost.replies_disabled ?? false,
     // Thread media (feed + head + replies) — real URLs + sensitive flag.
     media: mapMedia(backendPost.media),
     // Feed conversation preview (X-style two-story card): the root's BEST
@@ -113,5 +129,25 @@ export function mapBackendPostToFrontend(backendPost) {
     topReply: backendPost.top_reply
       ? mapBackendPostToFrontend(backendPost.top_reply)
       : null,
+  };
+}
+
+/**
+ * Maps one backend ThreadEditHistory row (GET /threads/<uid>/edit-history/)
+ * to the shape EditHistoryModal consumes. Text-only, no media preview (see
+ * ThreadEditHistory on the backend) — mediaAddedCount/mediaRemovedCount are
+ * just counts for a "+N / -N files" note.
+ */
+export function mapEditHistoryEntry(entry) {
+  return {
+    id: entry.uid,
+    previousText: entry.previous_text || "",
+    mediaAddedCount: entry.media_added_count || 0,
+    mediaRemovedCount: entry.media_removed_count || 0,
+    editedAt: entry.edited_at || null,
+    // Compact relative string ("2h", "3d"...) — same idiom as post.time,
+    // computed server-side (format_short_time) so it never drifts from the
+    // rest of the app's short-time convention.
+    editedAtShort: entry.edited_at_short || "",
   };
 }

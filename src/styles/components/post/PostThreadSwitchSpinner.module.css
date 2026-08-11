@@ -1,0 +1,53 @@
+/* PostThreadSwitchSpinner — Threads' own circular spinner motion (decoded
+   from their CSS keyframes: the arc grows/shrinks via stroke-dasharray on
+   their exact two-phase cubic-bezier easing, the dash pattern travelling a
+   full lap via stroke-dashoffset so the loop is seamless), scaled to a 20px
+   ring and recolored to the app's warm accent instead of their neutral gray.
+   Same row spacing language as PostReplySkeleton so it doesn't jump the
+   layout when it's swapped in for it. */
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 28px 0;
+}
+
+.spinnerCircle {
+  stroke: #c5a572;
+  stroke-linecap: round;
+  animation: postThreadSwitchSpin 1.4s infinite;
+}
+
+/* Circle circumference (r=9): 2 * PI * 9 ≈ 56.5px — dasharray's second value
+   below matches it so the "gap" always covers the rest of the ring with no
+   repeat artifact. The arc's max length (≈42.2px) mirrors Threads' own
+   ratio (their 118px arc over a ~158px pattern ≈ 74.7% of the ring). */
+@keyframes postThreadSwitchSpin {
+  0% {
+    animation-timing-function: cubic-bezier(0.895, 0.03, 0.685, 0.22);
+    stroke-dasharray: 42.2px 56.5px;
+    stroke-dashoffset: 0;
+  }
+  49.999% {
+    stroke-dasharray: 0px 56.5px;
+    stroke-dashoffset: 0;
+  }
+  50.001% {
+    animation-timing-function: cubic-bezier(0.165, 0.84, 0.44, 1);
+    stroke-dasharray: 0px 56.5px;
+    stroke-dashoffset: -56.5px;
+  }
+  100% {
+    stroke-dasharray: 42.2px 56.5px;
+    stroke-dashoffset: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinnerCircle {
+    animation: none;
+    /* Static half-visible ring — still reads as "loading", no motion. */
+    stroke-dasharray: 28px 56.5px;
+  }
+}

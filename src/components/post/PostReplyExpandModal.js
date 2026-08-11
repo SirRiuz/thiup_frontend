@@ -5,11 +5,13 @@ import { useNavigate } from "react-router-dom";
 import DiscardDialog from "../compose/DiscardDialog";
 import MaskAvatar from "../MaskAvatar";
 import MediaScanList from "../media/MediaScanList";
+import DropZoneOverlay from "../media/DropZoneOverlay";
 import RateLimitNotice from "../RateLimitNotice";
 import ErrorNotice from "../ErrorNotice";
 import PostProfileTrigger from "./PostProfileTrigger";
 import ThreadMedia from "../media/ThreadMedia";
 import { useScrollLock } from "../../utils/scrollLock";
+import useFileDrop from "../../hooks/useFileDrop";
 import { setAudioOwner } from "../../services/media/audioOwner";
 import {
   setPlaybackScope,
@@ -18,6 +20,7 @@ import {
 import PlaybackScopeContext from "../../contexts/PlaybackScopeContext";
 import { renderTextWithHashtags } from "../home/homeHelpers";
 import { normalizePastedText } from "../../utils/normalizeText";
+import { filesFromClipboard } from "../../utils/clipboardFiles";
 import styles from "../../styles/components/post/PostReplyExpandModal.module.css";
 import cx from "../../utils/cx";
 
@@ -54,7 +57,9 @@ function PostReplyExpandModal({
   mediaError,
   onMediaErrorDismiss,
   submitFailed,
+  repliesDisabledError,
   onAttach,
+  onAttachFiles,
   onSubmit,
   submitting,
   isSubmittable,
@@ -238,6 +243,12 @@ function PostReplyExpandModal({
   // the caret in place — same pattern as the inline box, on this textarea.
   const handlePaste = (e) => {
     if (submitting) return;
+    const pastedFiles = filesFromClipboard(e);
+    if (pastedFiles.length > 0) {
+      e.preventDefault();
+      onAttachFiles?.(pastedFiles);
+      return;
+    }
     e.preventDefault();
     const pasted = (e.clipboardData || window.clipboardData).getData("text");
     const clean = normalizePastedText(pasted);
@@ -261,6 +272,14 @@ function PostReplyExpandModal({
     if (e.target === e.currentTarget) requestClose();
   };
 
+  // Drag-and-drop onto the whole dialog. Rejections surface through the
+  // SAME onAttachFiles → mediaError path (owned by PostCommentBox) as the
+  // picker/paste.
+  const { isDragging, dropProps } = useFileDrop({
+    onFiles: (files) => onAttachFiles?.(files),
+    disabled: submitting,
+  });
+
   if (!open) return null;
 
   return createPortal(
@@ -274,6 +293,7 @@ function PostReplyExpandModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="reply-expand-title"
+        {...dropProps}
       >
         {/* === Header: Cancel · centered "Reply" · balance spacer === */}
         <header className={styles.header}>
@@ -300,7 +320,7 @@ function PostReplyExpandModal({
                   name, two triggers like PostReply) — your own row below
                   deliberately doesn't: you know who you are. */}
               {target.mask?.id && (
-                <PostProfileTrigger mask={target.mask}>
+                <PostProfileTrigger mask={target.mask} variant="avatar">
                   <MaskAvatar
                     seed={target.mask.id}
                     size={36}
@@ -312,7 +332,7 @@ function PostReplyExpandModal({
             </div>
             <div className={styles.previewContent}>
               <div className={styles.previewHeader}>
-                <PostProfileTrigger mask={target.mask}>
+                <PostProfileTrigger mask={target.mask} variant="hash">
                   <span className={styles.previewMaskId}>
                     {target.mask?.id}
                   </span>
@@ -397,8 +417,8 @@ function PostReplyExpandModal({
         {submitFailed && (
           <div className={styles.noticeSlot}>
             <ErrorNotice
-              title={t("post.replyErrorTitle")}
-              detail={t("post.replyErrorDetail")}
+              title={repliesDisabledError ? t("post.repliesDisabledTitle") : t("post.replyErrorTitle")}
+              detail={repliesDisabledError ? t("post.repliesDisabledNotice") : t("post.replyErrorDetail")}
             />
           </div>
         )}
@@ -461,6 +481,8 @@ function PostReplyExpandModal({
             {submitting && <span className={styles.spinner} aria-hidden="true" />}
           </button>
         </footer>
+
+        <DropZoneOverlay active={isDragging} />
       </div>
 
       {confirmingDiscard && (

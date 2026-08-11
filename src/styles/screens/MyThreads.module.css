@@ -203,60 +203,50 @@
   }
 }
 
-/* === Sticky corner mask (desktop) — same geometry as home/search/thread. */
+/* === Sticky corner mask (desktop) — same geometry as home/search/thread.
+   ONE continuous rounded-rect shape (border + border-radius, drawn as a
+   single anti-aliased pass by the browser) instead of the old 3-piece split
+   (two circular "corner cap" box-shadow tricks + a separate flat-edge
+   border-bottom in the middle): that split rendered the curve and the
+   straight line via two DIFFERENT rasterization paths that only coincided
+   at an exact shared pixel at 100% browser zoom — any other zoom level
+   (125%, 150%…) left the two paths rounding to different device pixels
+   right where they were supposed to meet, a visible 1-2px seam at the
+   corner ("cortado" bug). A single bordered, radius'd shape has no seam to
+   misalign, at any zoom level — the browser renders the straight-to-curve
+   transition as one shape, always. */
 .cornerMask {
   position: sticky;
   top: 60px;
   height: 0;
   z-index: 5;
-  /* Decorative overlay — its caps float over the card's top edge and must
+  /* Decorative overlay — its shape floats over the card's top edge and must
      never steal hover/click from the content scrolling under them. */
   pointer-events: none;
 }
 
-.cornerMaskEdge {
+.cornerMaskWindow {
   position: absolute;
   top: -14px;
-  left: 24px;
-  right: 24px;
-  height: 15px;
-  background: #f7f5f0;
-  border-bottom: 1px solid #e5e0d3;
-  overflow: hidden;
-}
-
-.cornerCap {
-  position: absolute;
-  top: -14px;
-  width: 24px;
+  left: 0;
+  right: 0;
   height: 39px;
   overflow: hidden;
 }
 
-.cornerCapLeft {
-  left: 0;
-}
-
-.cornerCapRight {
-  right: 0;
-}
-
-.cornerCapBox {
+.cornerMaskShape {
   position: absolute;
   top: 14px;
-  width: 48px;
+  left: 0;
+  right: 0;
   height: 48px;
   border: 1px solid #e5e0d3;
-  border-radius: 24px;
+  border-radius: 24px 24px 0 0;
+  /* THE trick — the giant spread paints the page bg outside the rounded top
+     corners (the window above clips everything else; box-shadow never
+     paints the shape's own transparent interior, so real content scrolling
+     underneath still shows through unobstructed, exactly like the old caps). */
   box-shadow: 0 0 0 48px #f7f5f0;
-}
-
-.cornerCapLeft .cornerCapBox {
-  left: 0;
-}
-
-.cornerCapRight .cornerCapBox {
-  right: 0;
 }
 
 /* === The elevated surface card === */

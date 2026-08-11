@@ -251,6 +251,25 @@ export function useSearch(query, tab) {
     setRefetchKey((k) => k + 1);
   }, []);
 
+  // Patches a post's fields in place after a successful edit — mirrors
+  // FeedContext.patchPostInFeed for this screen's own local state (the
+  // topReply branch matters here too: search's "top"/"latest" post cards
+  // carry the same conversation-preview nesting Home's do). The existing
+  // results→cache sync effect above picks up the change automatically —
+  // no separate cache write needed here.
+  const patchResult = useCallback((uid, patch) => {
+    if (!uid || !patch) return;
+    setResults((prev) =>
+      prev.map((p) => {
+        if (p.uid === uid || p.id === uid) return { ...p, ...patch };
+        if (p.topReply && (p.topReply.uid === uid || p.topReply.id === uid)) {
+          return { ...p, topReply: { ...p.topReply, ...patch } };
+        }
+        return p;
+      })
+    );
+  }, []);
+
   // Expose counts ONLY when they belong to the current query — during a new
   // query's load they're stale, so the screen hides the badges.
   const currentCounts =
@@ -267,5 +286,6 @@ export function useSearch(query, tab) {
     hasMore,
     loadMore,
     refetch,
+    patchResult,
   };
 }

@@ -58,6 +58,21 @@ export function patchMyThreadsCacheMedia(uid, media) {
   };
 }
 
+/**
+ * Generic patch of a cached thread's fields (e.g. after an edit: text,
+ * media, isEdited, editedAt) — same find-by-id-and-patch idea as
+ * patchMyThreadsCacheMedia, just not media-specific.
+ */
+export function patchMyThreadsCache(uid, patch) {
+  if (!myThreadsCache || !uid || !patch) return;
+  myThreadsCache = {
+    ...myThreadsCache,
+    posts: myThreadsCache.posts.map((p) =>
+      p.uid === uid || p.id === uid ? { ...p, ...patch } : p
+    ),
+  };
+}
+
 export function useMyThreads() {
   const [posts, setPosts] = useState(() => myThreadsCache?.posts || []);
   const [totalCount, setTotalCount] = useState(
@@ -154,6 +169,16 @@ export function useMyThreads() {
     setRefetchKey((k) => k + 1);
   }, []);
 
+  // Patches a post's fields in place after a successful edit — mirrors
+  // FeedContext.patchPostInFeed for this screen's own local state.
+  const patchPost = useCallback((uid, patch) => {
+    if (!uid || !patch) return;
+    setPosts((prev) =>
+      prev.map((p) => (p.uid === uid || p.id === uid ? { ...p, ...patch } : p))
+    );
+    patchMyThreadsCache(uid, patch);
+  }, []);
+
   return {
     posts,
     totalCount,
@@ -164,5 +189,6 @@ export function useMyThreads() {
     hasMore,
     loadMore,
     refetch,
+    patchPost,
   };
 }

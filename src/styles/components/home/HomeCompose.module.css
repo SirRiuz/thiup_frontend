@@ -12,6 +12,11 @@
   display: flex;
   align-items: center;
   padding: 16px 0;
+  /* Lets DropZoneOverlay's border-radius:inherit trick draw its dashed
+     highlight as one real rounded box around the whole row while dragging a
+     file over it — the row itself stays visually flush otherwise (no bg/
+     border of its own at rest). */
+  border-radius: 12px;
 }
 
 /* Threads' exact hairline under the compose strip (0.5px --lines-primary,

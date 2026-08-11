@@ -17,6 +17,9 @@ import Notifications from "./screens/Notifications";
 import ScrollToTop from "./components/ScrollToTop";
 import SplashScreen from "./components/SplashSreen";
 import WelcomeModal, { hasSeenWelcome } from "./components/WelcomeModal";
+import LocationOptInModal, {
+  hasSeenLocationOptIn,
+} from "./components/LocationOptInModal";
 import AppShell from "./components/nav/AppShell";
 import { FeedProvider } from "./contexts/FeedContext";
 import { ComposeProvider } from "./contexts/ComposeContext";
@@ -63,13 +66,27 @@ export default function App() {
   // Welcome modal: shown ONCE on the first visit (flag in localStorage). The
   // modal sets the flag on close, so on later visits/reloads this is false.
   const [showWelcome, setShowWelcome] = useState(() => !hasSeenWelcome());
+  // Location opt-in: shown ONCE, a couple seconds after the first-visit
+  // Welcome closes (never on the ☰ "About" reopen — that's a separate,
+  // dismissible mount not wired to this trigger). Optional and one-shot,
+  // same "seen" flag pattern as Welcome — see LocationOptInModal.
+  const [showLocationOptIn, setShowLocationOptIn] = useState(false);
+  const handleWelcomeClose = () => {
+    setShowWelcome(false);
+    if (!hasSeenLocationOptIn()) {
+      setTimeout(() => setShowLocationOptIn(true), 2000);
+    }
+  };
 
   return (
     <>
       {showSplash && <SplashScreen onFinish={() => setShowSplash(false)} />}
       {/* First-visit welcome — overlays any screen once the splash has faded. */}
       {!showSplash && showWelcome && (
-        <WelcomeModal mandatory onClose={() => setShowWelcome(false)} />
+        <WelcomeModal mandatory onClose={handleWelcomeClose} />
+      )}
+      {!showSplash && !showWelcome && showLocationOptIn && (
+        <LocationOptInModal onClose={() => setShowLocationOptIn(false)} />
       )}
       {/* Server down (healthcheck) => Oops screen instead of the app.
           The check runs on load and on any 5xx. */}
@@ -126,6 +143,15 @@ export default function App() {
                           thread's content is not modified. /p/:id is the
                           CANONICAL short URL; every in-app navigation uses it. */}
                         <Route path="/p/:id/" element={<Post />} />
+                        {/* Deep link into the thread's OWN media, opened
+                          directly in the fullscreen viewer (e.g. shared from
+                          the viewer's "Copy link", or restored on reload).
+                          SAME element as /p/:id — react-router doesn't key
+                          the rendered route by its path pattern, so toggling
+                          between the two as the viewer opens/slides/closes
+                          updates params WITHOUT remounting Post (no
+                          data re-fetch, no flash). */}
+                        <Route path="/p/:id/m/:mediaId" element={<Post />} />
                       </Route>
                       {/* Legacy long URL (back-compat): old shared /post/:id
                         links redirect to the canonical /p/:id. */}

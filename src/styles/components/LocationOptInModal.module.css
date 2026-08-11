@@ -1,0 +1,73 @@
+/* LocationOptInModal — reuses WelcomeModal's exact panel/backdrop/button
+   chrome (that stylesheet is imported directly into the component); this
+   module holds only what's new here: the centered icon tile, the primary
+   button's loading state, and the secondary "Not now" action. */
+
+.iconTile {
+  margin: 0 auto 16px;
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #f3e3d3;
+  color: #a85432;
+}
+
+/* Same "no resize while busy" recipe as ComposeModal's Post button: the
+   label stays laid out (hidden, not removed) and a spinner centers over it
+   with position: absolute so the rotation never fights the centering. */
+.primaryButton {
+  position: relative;
+}
+
+.labelHidden {
+  visibility: hidden;
+}
+
+.spinner {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid rgba(253, 252, 248, 0.35);
+  border-top-color: #fdfcf8;
+  border-radius: 50%;
+  animation: locationSpin 700ms linear infinite;
+}
+
+@keyframes locationSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.secondaryButton {
+  width: 100%;
+  margin-top: 4px;
+  padding: 13px 14px;
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  color: #6b6b6b;
+  cursor: pointer;
+}
+
+.secondaryButton:hover {
+  color: #1a1a1a;
+}
+
+.secondaryButton:focus-visible {
+  outline: 2px solid #1a1a1a;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+  }
+}

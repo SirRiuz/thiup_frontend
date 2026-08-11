@@ -1,6 +1,11 @@
 /* ThreadDetailsModal — thread details panel.
    Warm palette (never #FFFFFF), Inter. Centered modal on desktop, bottom-sheet
-   on mobile. Mirrors LanguageModal. */
+   on mobile. Chrome mirrors PostQrModal/EditHistoryModal: close button floats
+   OUTSIDE the card over the backdrop (same floating dark-glass-disc family as
+   ProfileAvatarModal's close), centered title (same 16/700 scale as the
+   compose/reply dialogs), spring panel entrance on desktop. The mobile
+   bottom-sheet keeps its own slide-up entrance (sheetIn) — a sheet motion,
+   not a centered-dialog one, so it isn't swapped for the spring. */
 
 .backdrop {
   position: fixed;
@@ -10,12 +15,23 @@
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background: rgba(26, 26, 26, 0.34);
+  background: rgba(31, 26, 20, 0.62);
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
-  animation: backdropIn 160ms ease;
+  animation: backdropIn 180ms ease;
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
     Roboto, Helvetica, Arial, sans-serif;
+}
+
+.iconButton {
+  composes: iconButton from "./PostQrModal.module.css";
+}
+
+/* Single action here (no download pair) — same corner as
+   ProfileAvatarModal's/EditHistoryModal's lone close. */
+.closeButton {
+  top: 16px;
+  right: 16px;
 }
 
 .panel {
@@ -28,7 +44,9 @@
   box-shadow: 0 18px 50px rgba(26, 26, 26, 0.18);
   outline: none;
   transform-origin: center;
-  animation: panelIn 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  /* Same spring "alive" entrance as the QR card — an overshoot ease past
+     100% and back, not the old flat expo-out. */
+  animation: panelIn 460ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 /* Grabber — mobile sheet affordance only (hidden on desktop). */
@@ -39,36 +57,18 @@
 .head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  justify-content: center;
   margin-bottom: 8px;
 }
 
+/* Same size/weight as the compose & reply-expand dialogs' title (16/700) —
+   one title scale across every dialog in the app. */
 .title {
   margin: 0;
-  font-size: 17px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 700;
   color: #1a1a1a;
-}
-
-.close {
-  flex: none;
-  width: 36px;
-  height: 36px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 0;
-  border-radius: 8px;
-  background: transparent;
-  color: #6b6b6b;
-  cursor: pointer;
-  transition: background 0.2s ease, color 0.2s ease;
-}
-
-.close:hover {
-  background: #f0ece3;
-  color: #1a1a1a;
+  text-align: center;
 }
 
 .rows {
@@ -168,11 +168,11 @@
 @keyframes panelIn {
   from {
     opacity: 0;
-    transform: scale(0.96) translateY(8px);
+    transform: scale(0.8);
   }
   to {
     opacity: 1;
-    transform: none;
+    transform: scale(1);
   }
 }
 
@@ -217,7 +217,6 @@
     animation: none;
   }
 
-  .close,
   .idPill {
     transition: none;
   }

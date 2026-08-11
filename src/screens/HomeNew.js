@@ -52,6 +52,7 @@ function HomeNew() {
     ensureLoaded,
     loadMore,
     refetch,
+    patchPostInFeed,
   } = useFeedContext();
 
   // Home tabs: For You (default) and Close You. HomeFilterBar is reused
@@ -235,12 +236,8 @@ function HomeNew() {
             scrolls underneath. Same anatomy as the thread view's mask (see
             Post.js) — here it pins flush under the 60px masthead. */}
         <div className={styles.cornerMask} aria-hidden="true">
-          <div className={styles.cornerMaskEdge} />
-          <div className={cx(styles.cornerCap, styles.cornerCapLeft)}>
-            <div className={styles.cornerCapBox} />
-          </div>
-          <div className={cx(styles.cornerCap, styles.cornerCapRight)}>
-            <div className={styles.cornerCapBox} />
+          <div className={styles.cornerMaskWindow}>
+            <div className={styles.cornerMaskShape} />
           </div>
         </div>
         {/* Elevated surface (thread-view style guide): one card holds compose +
@@ -311,6 +308,7 @@ function HomeNew() {
                   onClick={() => handlePostClick(post)}
                   onReplyClick={handleReplyPreviewClick}
                   onHashtagClick={handleHashtagClick}
+                  onEdited={(patch) => patchPostInFeed(patch.id, patch)}
                 />
               ))}
             </div>

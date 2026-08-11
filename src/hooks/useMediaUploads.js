@@ -162,13 +162,17 @@ export default function useMediaUploads() {
   // thread optimistically (media visible without a reload). Only successfully
   // confirmed files are included — a failed one is skipped (no broken media).
   //
+  // `itemsById` (optional Map<id, item>) supplies the CURRENT isSpoiler flag
+  // per file at confirm time — read live rather than baked in at upload start,
+  // so toggling the tile's spoiler menu any time before Send takes effect.
+  //
   // SERVER-SIDE NSFW CLASSIFICATION HOOKS IN HERE (future): the file is already
   // in R2 (after the upload above) but not yet attached. A server-side service
   // would classify the object between the R2 upload and this confirm, stamping
   // is_nsfw + score into the file's metadata. The frontend stays agnostic: it
   // sends no client verdict (isNsfw:false) and the server is the source of
   // truth. Plugging it in needs no FE rewrite.
-  const confirmAll = useCallback(async (threadUid) => {
+  const confirmAll = useCallback(async (threadUid, itemsById) => {
     const ready = uploadsRef.current.filter(
       (u) => u.status === "uploaded" && u.presign
     );
@@ -176,6 +180,7 @@ export default function useMediaUploads() {
     for (const upload of ready) {
       const params = paramsRef.current.get(upload.id) || {};
       const report = params.report || {};
+      const isSpoiler = !!itemsById?.get(upload.id)?.isSpoiler;
       try {
         // eslint-disable-next-line no-await-in-loop
         const record = await confirmThreadFile({
@@ -186,6 +191,7 @@ export default function useMediaUploads() {
           height: report.height || 0,
           targetColor: report.dominantColor || "161c1e",
           isNsfw: false, // client never classifies; server is source of truth
+          isSpoiler,
           metadata: params.metadata || {},
         });
         media.push({
@@ -193,6 +199,7 @@ export default function useMediaUploads() {
           type: record.is_video ? "video" : "image",
           url: record.public_url,
           isNsfw: !!record.is_nsfw,
+          isSpoiler: !!record.is_spoiler,
           // Real dimensions (image report / video probe) so the optimistic
           // just-posted media renders at its final aspect-ratio — no jump.
           width: report.width || 0,

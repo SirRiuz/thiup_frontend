@@ -1,0 +1,183 @@
+/* PostShareModal — share-to-platform panel, opened from the thread options
+ * menu. Warm palette (never #FFFFFF), Inter. Centered modal on desktop,
+ * bottom-sheet on mobile — mirrors ThreadDetailsModal (the app's canonical
+ * "details panel" shape). Chrome mirrors PostQrModal/EditHistoryModal: close
+ * button floats OUTSIDE the card over the backdrop (same floating
+ * dark-glass-disc family as ProfileAvatarModal's close), centered title
+ * (same 16/700 scale as the compose/reply dialogs), spring panel entrance on
+ * desktop. The mobile bottom-sheet keeps its own slide-up entrance
+ * (shareSheetIn) — a sheet motion, not a centered-dialog one. */
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  /* The app's ONE modal backdrop value — see CLAUDE.md "Translucent overlays". */
+  background: rgba(31, 26, 20, 0.62);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  animation: shareBackdropIn 180ms ease;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui,
+    Roboto, Helvetica, Arial, sans-serif;
+}
+
+.iconButton {
+  composes: iconButton from "./PostQrModal.module.css";
+}
+
+/* Single action here (no download pair) — same corner as
+   ProfileAvatarModal's/EditHistoryModal's lone close. */
+.closeButton {
+  top: 16px;
+  right: 16px;
+}
+
+.panel {
+  width: 100%;
+  max-width: 380px;
+  background: #fdfcf8;
+  border: 1px solid #e5e0d3;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 18px 50px rgba(26, 26, 26, 0.18);
+  outline: none;
+  transform-origin: center;
+  /* Same spring "alive" entrance as the QR card — an overshoot ease past
+     100% and back, not the old flat expo-out. */
+  animation: sharePanelIn 460ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Grabber — mobile sheet affordance only (hidden on desktop). */
+.grabber {
+  display: none;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+/* Same size/weight as the compose & reply-expand dialogs' title (16/700) —
+   one title scale across every dialog in the app. */
+.title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a1a1a;
+  text-align: center;
+}
+
+/* The platform row — evenly spaced, wraps if the panel gets narrow (a 5th
+   "More" option on top of the 4 requested platforms). */
+.grid {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  row-gap: 16px;
+}
+
+.option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 64px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+}
+
+/* Real brand color per platform (passed inline via style) — the ONE place
+   in the app a non-palette color is intentional: these are recognizable
+   third-party marks, not app chrome (see the component's own doc comment). */
+.badge {
+  width: 52px;
+  height: 52px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #fdfcf8;
+  box-shadow: 0 4px 12px rgba(26, 26, 26, 0.16);
+}
+
+.label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #6b6b6b;
+  text-align: center;
+  white-space: nowrap;
+}
+
+@keyframes shareBackdropIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes sharePanelIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ===== Mobile: bottom-sheet (matches the app's 700px breakpoint) ===== */
+@media (max-width: 700px) {
+  .backdrop {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .panel {
+    max-width: 100%;
+    border-radius: 16px 16px 0 0;
+    padding: 8px 20px calc(24px + env(safe-area-inset-bottom));
+    animation: shareSheetIn 220ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .grabber {
+    display: block;
+    width: 36px;
+    height: 4px;
+    border-radius: 999px;
+    background: #d5cfc0;
+    margin: 8px auto 10px;
+  }
+
+  .grid {
+    justify-content: space-around;
+  }
+}
+
+@keyframes shareSheetIn {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .backdrop,
+  .panel {
+    animation: none;
+  }
+}

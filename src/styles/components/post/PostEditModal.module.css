@@ -1,0 +1,121 @@
+/* PostEditModal — reuses ComposeModal's exact chrome (canonical modal:
+ * #fdfcf8 surface, #e5e0d3 border, radius 18, warm backdrop, mobile
+ * full-screen sheet) via `composes` — same dialog, seeded with existing
+ * content instead of empty. Only adds what ComposeModal has no equivalent
+ * of (there's no geolocation/area toggle here). */
+
+.backdrop {
+  composes: backdrop from "../compose/ComposeModal.module.css";
+}
+
+.modal {
+  composes: modal from "../compose/ComposeModal.module.css";
+}
+
+.header {
+  composes: header from "../compose/ComposeModal.module.css";
+}
+
+.cancelButton {
+  composes: cancelButton from "../compose/ComposeModal.module.css";
+}
+
+.title {
+  composes: title from "../compose/ComposeModal.module.css";
+}
+
+.headerSpacer {
+  composes: headerSpacer from "../compose/ComposeModal.module.css";
+}
+
+.body {
+  composes: body from "../compose/ComposeModal.module.css";
+}
+
+.identityRow {
+  composes: identityRow from "../compose/ComposeModal.module.css";
+}
+
+.avatarSlot {
+  composes: avatarSlot from "../compose/ComposeModal.module.css";
+}
+
+.avatarGhost {
+  composes: avatarGhost from "../compose/ComposeModal.module.css";
+}
+
+.contentCol {
+  composes: contentCol from "../compose/ComposeModal.module.css";
+}
+
+.identityLine {
+  composes: identityLine from "../compose/ComposeModal.module.css";
+}
+
+.maskId {
+  composes: maskId from "../compose/ComposeModal.module.css";
+}
+
+.textareaWrapper {
+  composes: textareaWrapper from "../compose/ComposeModal.module.css";
+}
+
+.highlightLayer {
+  composes: highlightLayer from "../compose/ComposeModal.module.css";
+}
+
+.highlightHashtag {
+  composes: highlightHashtag from "../compose/ComposeModal.module.css";
+}
+
+.input {
+  composes: input from "../compose/ComposeModal.module.css";
+}
+
+.hiddenFileInput {
+  composes: hiddenFileInput from "../compose/ComposeModal.module.css";
+}
+
+.footer {
+  composes: footer from "../compose/ComposeModal.module.css";
+}
+
+.toolButton {
+  composes: toolButton from "../compose/ComposeModal.module.css";
+}
+
+.toolButtonActive {
+  composes: toolButtonActive from "../compose/ComposeModal.module.css";
+}
+
+.toolLabel {
+  composes: toolLabel from "../compose/ComposeModal.module.css";
+}
+
+.footerSpacer {
+  composes: footerSpacer from "../compose/ComposeModal.module.css";
+}
+
+.overLimit {
+  composes: overLimit from "../compose/ComposeModal.module.css";
+}
+
+.postButton {
+  composes: postButton from "../compose/ComposeModal.module.css";
+}
+
+.postLabelHidden {
+  composes: postLabelHidden from "../compose/ComposeModal.module.css";
+}
+
+.spinner {
+  composes: spinner from "../compose/ComposeModal.module.css";
+}
+
+.rateLimitNotice {
+  composes: rateLimitNotice from "../compose/ComposeModal.module.css";
+}
+
+.errorNotice {
+  composes: errorNotice from "../compose/ComposeModal.module.css";
+}

@@ -9,9 +9,12 @@ import { isImageFile, isVideoFile } from "../services/media/allowedFormats";
 
 let idSeq = 0;
 
-// item: { id, file, name, size, kind: "image" | "video", thumbnail: string|null }
+// item: { id, file, name, size, kind: "image" | "video", thumbnail: string|null,
+//         isSpoiler: boolean }
 // (thumbnail is a local blob: URL for BOTH kinds — images render it in an
-// <img>; videos paint their first frame from it via a muted <video>.)
+// <img>; videos paint their first frame from it via a muted <video>.
+// isSpoiler is the deliberate, user-toggled flag from the tile's 3-dot menu —
+// separate from any automatic NSFW detection — carried through to confirm.)
 export default function useMediaItems() {
   const [items, setItems] = useState([]);
   const itemsRef = useRef(items);
@@ -32,6 +35,7 @@ export default function useMediaItems() {
         size: file.size,
         kind: video ? "video" : "image",
         thumbnail: URL.createObjectURL(file),
+        isSpoiler: false,
       });
     });
     if (added.length) setItems((prev) => [...prev, ...added]);
@@ -46,6 +50,15 @@ export default function useMediaItems() {
       }
       return prev.filter((x) => x.id !== id);
     });
+  }, []);
+
+  // Flips the deliberate spoiler flag for a pending attachment — read at
+  // confirm time (see useMediaComposer/useMediaUploads), so toggling it any
+  // time before Send is reflected in the confirm payload.
+  const toggleSpoiler = useCallback((id) => {
+    setItems((prev) =>
+      prev.map((x) => (x.id === id ? { ...x, isSpoiler: !x.isSpoiler } : x))
+    );
   }, []);
 
   const clear = useCallback(() => {
@@ -71,5 +84,5 @@ export default function useMediaItems() {
     []
   );
 
-  return { items, addFiles, removeItem, clear };
+  return { items, addFiles, removeItem, toggleSpoiler, clear };
 }

@@ -3,11 +3,15 @@
 .scrim {
   position: fixed;
   inset: 0;
-  z-index: 1000;
+  /* 1150: above ComposeModal/PostEditModal (1100) so PostOptionsPanel's
+     mobile sheet floats above its host modal — same tier as DiscardDialog.
+     Still above the base page's own 1000 baseline for PostOptionsMenu's
+     unmodaled usage. */
+  z-index: 1150;
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  background: rgba(26, 26, 26, 0.28);
+  background: rgba(31, 26, 20, 0.62);
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
   animation: scrimIn 200ms ease;

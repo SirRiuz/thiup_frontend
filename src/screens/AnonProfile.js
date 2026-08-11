@@ -88,6 +88,7 @@ function AnonProfile() {
     hasMore,
     loadMore,
     refetch,
+    patchPost,
   } = useAnonThreads(maskId);
 
   const sentinelRef = useInfiniteScroll({
@@ -235,12 +236,8 @@ function AnonProfile() {
       <main className={styles.main}>
         {appBar}
         <div className={styles.cornerMask} aria-hidden="true">
-          <div className={styles.cornerMaskEdge} />
-          <div className={cx(styles.cornerCap, styles.cornerCapLeft)}>
-            <div className={styles.cornerCapBox} />
-          </div>
-          <div className={cx(styles.cornerCap, styles.cornerCapRight)}>
-            <div className={styles.cornerCapBox} />
+          <div className={styles.cornerMaskWindow}>
+            <div className={styles.cornerMaskShape} />
           </div>
         </div>
 
@@ -447,6 +444,7 @@ function AnonProfile() {
                       // (same seeded navigation; the reply IS a post shape).
                       onReplyClick={handlePostClick}
                       onHashtagClick={handleHashtagClick}
+                      onEdited={(patch) => patchPost(patch.id, patch)}
                     />
                   ))}
                 </div>

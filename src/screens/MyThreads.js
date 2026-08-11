@@ -71,6 +71,7 @@ function MyThreads() {
     hasMore,
     loadMore,
     refetch,
+    patchPost,
   } = useMyThreads();
 
   const sentinelRef = useInfiniteScroll({
@@ -203,12 +204,8 @@ function MyThreads() {
         {/* Sticky corner mask (desktop): pins the surface card's rounded top
             under the masthead — same anatomy as home/search/thread. */}
         <div className={styles.cornerMask} aria-hidden="true">
-          <div className={styles.cornerMaskEdge} />
-          <div className={cx(styles.cornerCap, styles.cornerCapLeft)}>
-            <div className={styles.cornerCapBox} />
-          </div>
-          <div className={cx(styles.cornerCap, styles.cornerCapRight)}>
-            <div className={styles.cornerCapBox} />
+          <div className={styles.cornerMaskWindow}>
+            <div className={styles.cornerMaskShape} />
           </div>
         </div>
 
@@ -429,6 +426,7 @@ function MyThreads() {
                   // seeded navigation; the reply IS a post shape).
                   onReplyClick={handlePostClick}
                   onHashtagClick={handleHashtagClick}
+                  onEdited={(patch) => patchPost(patch.id, patch)}
                   // Every thread here is the user's own — the "Your thread" tag
                   // would be redundant on this screen.
                   hideMineTag

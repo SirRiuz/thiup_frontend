@@ -1,0 +1,25 @@
+services:
+  frontend:
+    image: thiup-frontend
+    container_name: thiup_frontend
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/app
+      - /app/node_modules
+    env_file:
+      - .env
+    environment:
+      - PORT=${PORT:-3000}
+      # CRA only inlines REACT_APP_* vars that exist in process.env at start,
+      # so they're spelled out here too (env_file alone already injects them,
+      # but this keeps them visible without opening .env).
+      - REACT_APP_API_URL=${REACT_APP_API_URL:-}
+      - REACT_APP_GATEWAY_SEED=${REACT_APP_GATEWAY_SEED:-}
+      # Uncomment if hot-reload doesn't pick up file changes (common on some
+      # Docker/WSL2 setups where inotify events don't cross the bind mount).
+      # - CHOKIDAR_USEPOLLING=true
+    ports:
+      - "${PORT:-3000}:${PORT:-3000}"
+    command: npm start

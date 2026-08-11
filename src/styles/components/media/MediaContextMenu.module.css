@@ -1,0 +1,12 @@
+/* MediaContextMenu — cursor-anchored variant of the canonical MenuSurface
+ * dropdown, used only inside the fullscreen media viewer. */
+
+.menu {
+  /* Above the viewer itself (z 1200) — this opens ON TOP of it. */
+  z-index: 1250;
+  /* Grows from the cursor point (top-left), not a trigger's right edge. */
+  transform-origin: top left;
+  /* Compact — two short rows, not the 240px full-width menu. */
+  width: max-content;
+  min-width: 180px;
+}

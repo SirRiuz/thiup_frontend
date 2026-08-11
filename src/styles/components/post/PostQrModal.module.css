@@ -1,0 +1,148 @@
+/* PostQrModal — the QR code IS the modal: no header bar, no text, no
+ * full-width button. Close/download float over the BACKDROP at the
+ * viewport's top corners — OUTSIDE the card itself — same idea as
+ * ProfileAvatarModal's close (viewport corner, not on the avatar) and
+ * MediaViewer's controlsTop bar (above the media stage, not on it). Same
+ * small centered dialog at EVERY breakpoint on purpose — there's too little
+ * content here to earn a mobile bottom-sheet treatment. */
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  /* Exact ProfileAvatarModal spec — a step darker than the standard modal
+     backdrop: this is a media stage, the page should recede further. */
+  background: rgba(31, 26, 20, 0.62);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  outline: none;
+  animation: qrBackdropIn 180ms ease;
+}
+
+.panel {
+  display: inline-flex;
+  border-radius: 28px;
+  overflow: hidden;
+  outline: none;
+  box-shadow: 0 22px 60px rgba(26, 26, 26, 0.22);
+  /* The springy "alive" entrance — an overshoot ease (a soft bounce past
+     100% and back), not the app's usual flat expo-out modals: this one is a
+     small delightful moment, not a form dialog. */
+  animation: qrPanelIn 460ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform-origin: center;
+}
+
+.canvas {
+  display: block;
+  width: min(76vw, 320px);
+  height: min(76vw, 320px);
+}
+
+/* The app's canonical "floating dark-glass disc over media" control — same
+   spec as ProfileAvatarModal's closeButton / MediaViewer's iconButton, used
+   verbatim here (not a bespoke light variant) so every floating control
+   over a media surface in the app reads as ONE family. */
+.iconButton {
+  position: absolute;
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(26, 26, 26, 0.5);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  color: #f7f5f0;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+@media (hover: hover) {
+  .iconButton:hover {
+    background: rgba(26, 26, 26, 0.72);
+  }
+}
+
+.iconButton:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* Both anchored to the BACKDROP (viewport corners), same as
+   ProfileAvatarModal's close — never on top of the card itself. Close reads
+   first (left → right), download second. */
+.closeButton {
+  top: 16px;
+  left: 16px;
+}
+
+.downloadButton {
+  top: 16px;
+  right: 16px;
+}
+
+.spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(247, 245, 240, 0.3);
+  border-top-color: #f7f5f0;
+  border-radius: 50%;
+  animation: qrSpin 700ms linear infinite;
+}
+
+@keyframes qrBackdropIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes qrPanelIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes qrSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .backdrop,
+  .panel {
+    animation: none;
+  }
+
+  .spinner {
+    animation: qrSpinReduced 1.4s ease-in-out infinite;
+  }
+}
+
+@keyframes qrSpinReduced {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}

@@ -86,6 +86,15 @@
   transform-origin: top left;
 }
 
+/* Smart open: applied instead of the base anchor when there isn't enough
+   room below the trigger (see recalcShift in PostSortMenu.js) — grows
+   UPWARD from the trigger's top edge instead of down past the viewport. */
+.wrapper .menuUp {
+  top: auto;
+  bottom: calc(100% + 6px);
+  transform-origin: bottom left;
+}
+
 /* Check stays in layout (visibility, not display) so rows never shift. */
 .check {
   visibility: hidden;

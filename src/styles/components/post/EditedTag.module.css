@@ -1,0 +1,12 @@
+/* EditedTag — the hover affordance must underline ONLY the "Edited" word,
+ * never the "·" divider glyph next to it. The divider is a sibling span
+ * (each caller's own dividerClassName); this module owns just the label
+ * span and the hover rule, applied alongside whatever className each
+ * caller (Post/PostReply/PostAncestor/HomeFeedCard) passes for color/size —
+ * .trigger carries no visual declarations of its own, it only anchors the
+ * :hover selector so the underline targets .label specifically. */
+
+.trigger:hover .label {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}

@@ -246,6 +246,20 @@
   backdrop-filter: blur(8px);
 }
 
+.iconButton:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.downloadSpinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(247, 245, 240, 0.3);
+  border-top-color: #f7f5f0;
+  border-radius: 50%;
+  animation: mediaViewerSpin 700ms linear infinite;
+}
+
 .counter {
   align-self: center;
   padding: 5px 11px;
@@ -308,7 +322,8 @@
     transition: none;
   }
   /* No spin — a gentle opacity pulse reads as "loading" without rotation. */
-  .spinner {
+  .spinner,
+  .downloadSpinner {
     animation: mediaViewerPulse 1.4s ease-in-out infinite;
   }
 }

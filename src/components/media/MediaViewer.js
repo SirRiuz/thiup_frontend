@@ -8,7 +8,10 @@ import {
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { useScrollLock } from "../../utils/scrollLock";
+import { useToast } from "../../contexts/ToastContext";
 import VideoPlayer from "./VideoPlayer";
+import MediaContextMenu from "./MediaContextMenu";
+import MediaDetailsModal from "./MediaDetailsModal";
 import cx from "../../utils/cx";
 import {
   setAudioOwner,
@@ -58,6 +61,139 @@ const normalizeColor = (c) => {
 
 const colorOf = (images, i) => normalizeColor(images[i]?.dominantColor);
 
+// Derive a safe download filename from the media URL's last path segment
+// (its real extension); falls back to a generic type-based name if the URL
+// is relative/unparseable or a presigned query string masks the segment.
+const filenameFor = (item) => {
+  try {
+    const { pathname } = new URL(item.url, window.location.href);
+    const base = decodeURIComponent(pathname.split("/").pop() || "");
+    if (base) return base;
+  } catch (err) {
+    /* fall through to the generic name */
+  }
+  return item.type === "video" ? "thiup-video.mp4" : "thiup-image.jpg";
+};
+
+/**
+ * Downloads the ORIGINAL file — the same source the viewer itself already
+ * displays/plays (never the CDN-optimized rendition). Fetches it as a blob
+ * first so the save is FORCED even cross-origin: a plain `<a download>` is
+ * only honored by the browser for same-origin URLs, and this app's media
+ * lives on a separate origin (S3/R2/CDN) from the SPA.
+ * HONESTIDAD: this only works if that origin answers the GET with a
+ * permissive CORS header — if it doesn't (blocked fetch), we fall back to
+ * opening the original in a new tab so the user can still save it manually
+ * (long-press / right-click "Save as") instead of failing silently.
+ */
+async function downloadMedia(item) {
+  const filename = filenameFor(item);
+  try {
+    // cache: "no-store" — an <img>/poster on the page (or an earlier attempt
+    // before a server-side CORS fix landed) may have already cached this
+    // EXACT url's response; the browser's HTTP cache isn't keyed by fetch
+    // mode, so a plain fetch() can silently reuse that older response and
+    // enforce CORS against ITS (possibly header-less) headers instead of
+    // asking the server again. Always hit the network fresh here — this is
+    // a rare, user-initiated action, not a hot path, so the cost is nothing.
+    const res = await fetch(item.url, { cache: "no-store" });
+    if (!res.ok) throw new Error(`E_DL${res.status}`);
+    const blob = await res.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = objectUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(objectUrl);
+  } catch (err) {
+    const a = document.createElement("a");
+    a.href = item.url;
+    a.download = filename;
+    a.target = "_blank";
+    a.rel = "noopener";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
+}
+
+// Re-encodes a blob to PNG via a canvas — the Clipboard API's cross-browser
+// safe type (Firefox/Safari reject the app's own WebP uploads; PNG is the
+// one every implementation accepts).
+function ensurePngBlob(blob) {
+  if (blob.type === "image/png") return Promise.resolve(blob);
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(blob);
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        canvas.getContext("2d").drawImage(img, 0, 0);
+        canvas.toBlob((out) => {
+          URL.revokeObjectURL(url);
+          if (out) resolve(out);
+          else reject(new Error("E_CLIP_CONVERT"));
+        }, "image/png");
+      } catch (err) {
+        URL.revokeObjectURL(url);
+        reject(err);
+      }
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("E_CLIP_CONVERT"));
+    };
+    img.src = url;
+  });
+}
+
+// The GET itself, converted to a ready-to-clipboard PNG blob. Same CORS
+// requirement as downloadMedia's fetch: the media origin must answer with a
+// permissive Access-Control-Allow-Origin header for the browser to let JS
+// read the bytes at all — a server that never sends it is a SERVER-side fix
+// (this app's local nginx /media/ location does send it now). What client
+// code CAN and must do is the no-store below: the browser's cache isn't
+// keyed by CORS mode, so a stale entry cached before that header existed
+// (or from a plain <img> load) would otherwise get reused for this fetch
+// and still fail CORS against its own old, header-less response.
+function fetchPngBlob(url) {
+  return fetch(url, { cache: "no-store" })
+    .then((res) => {
+      if (!res.ok) throw new Error(`E_CLIP_FETCH${res.status}`);
+      return res.blob();
+    })
+    .then(ensurePngBlob);
+}
+
+/**
+ * Copies the ORIGINAL image to the system clipboard (images only — the
+ * Clipboard API has no equivalent for video).
+ *
+ * The blob is handed to ClipboardItem as a PENDING PROMISE, not an already-
+ * awaited Blob: `clipboard.write()` must run while the click's "user
+ * activation" is still live, and Safari (and Chrome under stricter policies)
+ * reject it once a few `await`s have passed since the click — awaiting the
+ * fetch+decode FIRST and only THEN calling write() falls outside that
+ * window. Passing the promise directly keeps write() itself synchronous
+ * with the click while the browser awaits the promise internally.
+ */
+async function copyImageToClipboard(item) {
+  if (
+    !navigator.clipboard ||
+    !navigator.clipboard.write ||
+    typeof window.ClipboardItem === "undefined"
+  ) {
+    throw new Error("E_CLIP_UNSUPPORTED");
+  }
+  await navigator.clipboard.write([
+    new window.ClipboardItem({ "image/png": fetchPngBlob(item.url) }),
+  ]);
+}
+
 // Return focus to the opener for a11y. No ring-suppression dance needed: the
 // UA focus outline is disabled app-wide (see index.css), so the restore is
 // silent by default.
@@ -70,6 +206,15 @@ function CloseIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M18 6 6 18M6 6l12 12" />
+    </svg>
+  );
+}
+function DownloadIcon() {
+  return (
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 3v12" />
+      <path d="M7 10l5 5 5-5" />
+      <path d="M5 21h14" />
     </svg>
   );
 }
@@ -112,8 +257,15 @@ function PeekPlayIcon() {
  * on close, background scroll locked. Gesture follows via rAF; reduced-motion
  * keeps the direction but drops the elaborate animation.
  */
-function MediaViewer({ images, index: startIndex, onClose }) {
+function MediaViewer({
+  images,
+  index: startIndex,
+  onClose,
+  onIndexChange,
+  shareUrlBuilder,
+}) {
   const { t } = useTranslation();
+  const showToast = useToast();
   const [index, setIndexState] = useState(startIndex);
   const [bgColor, setBgColor] = useState(() => colorOf(images, startIndex));
   const [entered, setEntered] = useState(false);
@@ -124,6 +276,14 @@ function MediaViewer({ images, index: startIndex, onClose }) {
   const [mediaError, setMediaError] = useState(false);
   const [showSpinner, setShowSpinner] = useState(false);
   const [reloadKey, setReloadKey] = useState(0); // bump → remount media to retry
+  // Busy state for the download button — reset on navigation so a stale
+  // spinner never lingers for an item that's no longer shown (the fetch
+  // itself isn't aborted: it still completes and saves in the background).
+  const [downloading, setDownloading] = useState(false);
+  // Custom right-click / long-press menu (replaces the browser's native
+  // context menu, which exposes dev-tools entries) — { x, y } | null.
+  const [contextMenu, setContextMenu] = useState(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   const viewerRef = useRef(null);
   const stageRef = useRef(null);
@@ -267,6 +427,85 @@ function MediaViewer({ images, index: startIndex, onClose }) {
     setReloadKey((k) => k + 1);
   }, []);
 
+  useEffect(() => {
+    setDownloading(false);
+    setContextMenu(null);
+    setDetailsOpen(false);
+  }, [index]);
+
+  const handleDownload = useCallback(async () => {
+    const item = images[index];
+    if (!item || !item.url) return;
+    setDownloading(true);
+    try {
+      await downloadMedia(item);
+    } finally {
+      setDownloading(false);
+    }
+  }, [images, index]);
+
+  // Same action, reachable from the context menu without going back up to
+  // the top button — just also closes the menu first.
+  const handleDownloadFromMenu = useCallback(() => {
+    setContextMenu(null);
+    handleDownload();
+  }, [handleDownload]);
+
+  // Right-click / long-press on the CURRENT media: suppress the browser's
+  // native context menu (dev-tools entries and all) and open the custom one
+  // instead, anchored at the press point. Bails on the video's OWN controls
+  // (mute/progress) the same way the swipe gesture already does.
+  const handleContextMenu = useCallback((e) => {
+    if (e.target.closest && e.target.closest("[data-video-control]")) return;
+    e.preventDefault();
+    setContextMenu({ x: e.clientX, y: e.clientY });
+  }, []);
+
+  const closeContextMenu = useCallback(() => setContextMenu(null), []);
+
+  const handleCopyImage = useCallback(async () => {
+    setContextMenu(null);
+    const item = images[index];
+    if (!item || !item.url) return;
+    try {
+      await copyImageToClipboard(item);
+      // Copy confirmation: text only, no icon (consistent with link/id copy).
+      showToast({ type: "success", message: t("toast.imageCopied"), icon: "none" });
+    } catch (err) {
+      // Logged (not just the toast) — the most common cause is a CORS block
+      // on the media origin, which throws a generic opaque error the toast
+      // alone can't distinguish from "clipboard unsupported"/permission
+      // denied; the console message says which one it actually was.
+      console.error("[MediaViewer] copy image failed:", err);
+      showToast({ type: "error", message: t("toast.imageCopyFailed") });
+    }
+  }, [images, index, showToast, t]);
+
+  // The shareable link (no fetch/CORS involved — just a text copy, same as
+  // PostOptionsMenu's "Copy link"). `shareUrlBuilder` (set only for the
+  // thread's OWN/OP media — see Post.js) gives the app's deep link
+  // (/p/:id/m/:mediaId, opens straight into this viewer); everywhere else
+  // (replies, ancestors, the reply-dialog preview — no deep link resolves
+  // for those) it falls back to the file's own direct URL.
+  const handleCopyLink = useCallback(async () => {
+    setContextMenu(null);
+    const item = images[index];
+    if (!item) return;
+    const url = shareUrlBuilder ? shareUrlBuilder(item) : item.url;
+    if (!url) return;
+    try {
+      await navigator.clipboard.writeText(url);
+      showToast({ type: "success", message: t("toast.linkCopied"), icon: "none" });
+    } catch (err) {
+      showToast({ type: "error", message: t("toast.linkCopyFailed") });
+    }
+  }, [images, index, shareUrlBuilder, showToast, t]);
+
+  const handleViewDetails = useCallback(() => {
+    setContextMenu(null);
+    setDetailsOpen(true);
+  }, []);
+
   // Preload the adjacent images so the slide peek is instant (never load all).
   useEffect(() => {
     [index - 1, index + 1].forEach((i) => {
@@ -283,8 +522,12 @@ function MediaViewer({ images, index: startIndex, onClose }) {
       idxRef.current = n;
       setIndexState(n);
       setBgColor(colorOf(images, n));
+      // Only fires on an actual slide (keyboard/gesture nav) — the initial
+      // index comes straight from the `startIndex` prop/useState, never
+      // through here, so the caller isn't notified of its own starting value.
+      onIndexChange?.(n);
     },
-    [images]
+    [images, onIndexChange]
   );
 
   // After the index changes, re-center the track instantly (no transition) so
@@ -348,6 +591,25 @@ function MediaViewer({ images, index: startIndex, onClose }) {
   // Keyboard: Escape closes, ←/→ navigate, Tab is trapped.
   useEffect(() => {
     const onKey = (e) => {
+      // A sub-layer opened FROM the viewer (the right-click menu, or the
+      // details modal it opens) must own Escape while it's up — consumed
+      // HERE, not by a second document listener in the child, because BOTH
+      // this handler and the viewer's own gesture/nav would otherwise still
+      // react underneath it (this listener already wins the capture race
+      // against everything else via stopImmediatePropagation below, so a
+      // child's own capture listener could never out-race it — see the
+      // child components' comments). Tab is deliberately left alone here
+      // (only Escape is special-cased) so the details modal's own focus
+      // trap keeps working normally.
+      if (contextMenu || detailsOpen) {
+        if (e.key === "Escape") {
+          e.stopImmediatePropagation();
+          e.preventDefault();
+          if (contextMenu) setContextMenu(null);
+          else setDetailsOpen(false);
+        }
+        return;
+      }
       if (e.key === "Escape") {
         // The viewer is the TOPMOST layer (z 1200, above the reply dialog and
         // its discard confirm, which both listen for Escape on document too).
@@ -386,7 +648,7 @@ function MediaViewer({ images, index: startIndex, onClose }) {
     document.addEventListener("keydown", onKey, { capture: true });
     return () =>
       document.removeEventListener("keydown", onKey, { capture: true });
-  }, [animateClose, navTo]);
+  }, [animateClose, navTo, contextMenu, detailsOpen]);
 
   // Gesture: pointer-driven, rAF-coalesced. Locks to horizontal (slide between
   // items, on the TRACK) or vertical (dismiss, on the STAGE) on first
@@ -919,15 +1181,27 @@ function MediaViewer({ images, index: startIndex, onClose }) {
       else springBackX(speed);
     };
 
+    // Windows-only race (never seen on macOS): the browser's own "drag this
+    // image/video out" gesture recognizer works off the raw mouse movement,
+    // independently of our pointer handlers above, and can occasionally win
+    // the race against our setPointerCapture — `draggable={false}` +
+    // `-webkit-user-drag: none` (on the image/video) reduce it but aren't
+    // 100% reliable in that exact race on Chromium/Windows. This is the
+    // deterministic fix: cancel the native drag right as the browser decides
+    // to start it, whenever that happens — no more race to win or lose.
+    const onDragStart = (e) => e.preventDefault();
+
     stage.addEventListener("pointerdown", onDown);
     stage.addEventListener("pointermove", onMove);
     stage.addEventListener("pointerup", onUp);
     stage.addEventListener("pointercancel", onUp);
+    stage.addEventListener("dragstart", onDragStart);
     return () => {
       stage.removeEventListener("pointerdown", onDown);
       stage.removeEventListener("pointermove", onMove);
       stage.removeEventListener("pointerup", onUp);
       stage.removeEventListener("pointercancel", onUp);
+      stage.removeEventListener("dragstart", onDragStart);
       navCommitRef.current = null;
       if (st.raf) cancelAnimationFrame(st.raf);
       if (st.zraf) cancelAnimationFrame(st.zraf);
@@ -987,6 +1261,7 @@ function MediaViewer({ images, index: startIndex, onClose }) {
         className={styles.cell}
         style={{ ...baseStyle, backgroundColor: colorOf(images, i) }}
         aria-hidden={isCurrent ? undefined : "true"}
+        onContextMenu={isCurrent ? handleContextMenu : undefined}
       >
         {it.type === "video" ? (
           isCurrent ? (
@@ -1051,6 +1326,22 @@ function MediaViewer({ images, index: startIndex, onClose }) {
           onClick={animateClose}
         >
           <CloseIcon />
+        </button>
+        <button
+          type="button"
+          className={styles.iconButton}
+          aria-label={t(
+            downloading ? "media.viewer.downloading" : "media.viewer.download"
+          )}
+          aria-busy={downloading || undefined}
+          disabled={downloading}
+          onClick={handleDownload}
+        >
+          {downloading ? (
+            <span className={styles.downloadSpinner} aria-hidden="true" />
+          ) : (
+            <DownloadIcon />
+          )}
         </button>
       </div>
 
@@ -1124,6 +1415,28 @@ function MediaViewer({ images, index: startIndex, onClose }) {
             {t("common.tryAgain")}
           </button>
         </div>
+      )}
+
+      {contextMenu && (
+        <MediaContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          canCopy={current.type !== "video"}
+          onDownload={handleDownloadFromMenu}
+          onCopy={handleCopyImage}
+          onCopyLink={handleCopyLink}
+          onDetails={handleViewDetails}
+          onClose={closeContextMenu}
+        />
+      )}
+
+      {detailsOpen && (
+        <MediaDetailsModal
+          item={current}
+          index={index}
+          total={images.length}
+          onClose={() => setDetailsOpen(false)}
+        />
       )}
     </div>,
     document.body

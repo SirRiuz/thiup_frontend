@@ -454,7 +454,7 @@ function NavRail() {
       type="button"
       className={cx(styles.item, styles.createItem, "springPressIcon")}
       aria-label={t("nav.create")}
-      onClick={openCompose}
+      onClick={() => openCompose()}
     >
       <span className={styles.createPlate} aria-hidden="true" />
       <svg

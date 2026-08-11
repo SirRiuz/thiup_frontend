@@ -15,6 +15,12 @@
   animation: hoverCardAppear 180ms ease-out;
 }
 
+/* Same content, no floating-card chrome — the wrapping panel (e.g.
+   PostProfileMobileModal) supplies its own background/border/radius/shadow. */
+.cardBare {
+  text-align: start;
+}
+
 @keyframes hoverCardAppear {
   from {
     opacity: 0;

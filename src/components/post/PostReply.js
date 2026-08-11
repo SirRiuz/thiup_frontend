@@ -1,10 +1,12 @@
 import { useTranslation } from "react-i18next";
 import MaskAvatar from "../MaskAvatar";
 import PostOptionsMenu from "./PostOptionsMenu";
+import EditedTag from "./EditedTag";
 import PostProfileTrigger from "./PostProfileTrigger";
 import PostReactionPicker from "./PostReactionPicker";
 import ReactionStack from "./ReactionStack";
 import ThreadMedia from "../media/ThreadMedia";
+import useMediaViewerUrlSync from "../../hooks/useMediaViewerUrlSync";
 import { renderTextWithHashtags } from "../home/homeHelpers";
 import { fullDateTitle } from "../../utils/formatDate";
 import styles from "../../styles/components/post/PostReply.module.css";
@@ -32,6 +34,9 @@ function PostReply({
   publishedAt,
   media,
   isOp,
+  isMine,
+  isEdited,
+  editedAt,
   currentUserReaction,
   isLast = false,
   depth = 0,
@@ -42,8 +47,16 @@ function PostReply({
   onReaction,
   onReplyClick,
   onHashtagClick,
+  onEdited,
 }) {
   const { t, i18n } = useTranslation();
+  // This reply's OWN media, addressable at its own /p/:id — opening it
+  // navigates there (a real permalink, same as tapping the row itself),
+  // landing with the viewer already open. See useMediaViewerUrlSync.
+  const mediaSync = useMediaViewerUrlSync(id, media);
+  // Shared shape for both PostOptionsMenu (edit) and EditedTag (edit
+  // history) — same minimal post subset, built once.
+  const postForModals = { id, uid: id, repliesCount, reactions, publishedAt, mask, text, media, isMine };
   const replyClassName = `${styles.reply} ${
     dividerBelow ? styles.withDivider : ""
   } ${isLast ? styles.lastReply : ""} ${
@@ -91,14 +104,14 @@ function PostReply({
 
       <div className={styles.main}>
         <div className={styles.avatarCell}>
-          <PostProfileTrigger mask={mask}>
+          <PostProfileTrigger mask={mask} variant="avatar">
             <MaskAvatar seed={mask.id} size={36} online={mask.isOnline} />
           </PostProfileTrigger>
         </div>
 
         <div className={styles.contentCell}>
           <div className={styles.header}>
-            <PostProfileTrigger mask={mask}>
+            <PostProfileTrigger mask={mask} variant="hash">
               <span className={styles.maskId}>{mask.id}</span>
             </PostProfileTrigger>
             <span
@@ -110,16 +123,36 @@ function PostReply({
             {/* OP: this reply's author is the thread's Original Poster (is_op, a
                 backend boolean local to this thread). Threads-style "· Author"
                 meta instead of a badge. */}
-            {isOp && (
-              <span className={styles.authorTag} aria-label={t("post.opAuthor")}>
-                <span className={styles.authorDivider} aria-hidden="true">·</span>
-                {t("post.author")}
+            {(isOp || isEdited) && (
+              // Trailing meta tags get their OWN tighter gap (4px) instead of
+              // inheriting the header's primary 6px (Threads' documented
+              // single mask·time jump) — chaining "· Author · Edited" at 6px
+              // each compounded into visibly loose spacing with no direct
+              // Threads reference (Threads has no multi-tag chain like this).
+              <span className={styles.metaTrail}>
+                {isOp && (
+                  <span className={styles.authorTag} aria-label={t("post.opAuthor")}>
+                    <span className={styles.authorDivider} aria-hidden="true">·</span>
+                    {t("post.author")}
+                  </span>
+                )}
+                {isEdited && (
+                  <EditedTag
+                    post={postForModals}
+                    editedAt={editedAt}
+                    language={i18n.language}
+                    className={styles.editedTag}
+                    dividerClassName={styles.editedDivider}
+                  />
+                )}
               </span>
             )}
             <span className={styles.spacer} />
             <PostOptionsMenu
-              post={{ id, uid: id, repliesCount, reactions, publishedAt }}
+              post={postForModals}
               variant="inline"
+              onEdited={onEdited}
+              isReply
             />
           </div>
 
@@ -129,7 +162,9 @@ function PostReply({
             {renderTextWithHashtags(text, styles.hashtag, onHashtagClick)}
           </p>
 
-          {media && media.length > 0 && <ThreadMedia items={media} />}
+          {media && media.length > 0 && (
+            <ThreadMedia items={media} {...mediaSync} />
+          )}
 
           {/* FB-style stacked reaction summary above the action bar. */}
           <ReactionStack

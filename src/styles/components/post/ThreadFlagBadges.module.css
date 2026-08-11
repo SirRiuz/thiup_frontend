@@ -1,0 +1,24 @@
+/* Snap countdown — the one flag that's genuinely time-sensitive, so it gets
+   real visual weight instead of the quiet meta-text treatment ("Private"
+   keeps that, styled by the caller via className/dividerClassName). Same
+   warm accent (#b8845f) as the feed card's Snap ring/wash/header icon — one
+   consistent color for "this is temporary" across the whole app. */
+.snapChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(184, 132, 95, 0.1);
+  color: #b8845f;
+  cursor: default;
+}
+
+.snapText {
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}

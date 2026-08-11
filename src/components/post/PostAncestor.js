@@ -1,9 +1,11 @@
 import { useTranslation } from "react-i18next";
 import MaskAvatar from "../MaskAvatar";
 import PostOptionsMenu from "./PostOptionsMenu";
+import EditedTag from "./EditedTag";
 import PostProfileTrigger from "./PostProfileTrigger";
 import ReactionStack from "./ReactionStack";
 import ThreadMedia from "../media/ThreadMedia";
+import useMediaViewerUrlSync from "../../hooks/useMediaViewerUrlSync";
 import { renderTextWithHashtags } from "../home/homeHelpers";
 import { fullDateTitle } from "../../utils/formatDate";
 import cx from "../../utils/cx";
@@ -32,7 +34,13 @@ function PostAncestor({ post, isRoot = false, onOpen, onHashtagClick }) {
     reactions = [],
     media,
     isOp,
+    isEdited,
+    editedAt,
   } = post;
+  // This ancestor's OWN media, addressable at its own /p/:id — opening it
+  // navigates there, same as tapping the row itself. See
+  // useMediaViewerUrlSync.
+  const mediaSync = useMediaViewerUrlSync(post?.id || post?.uid, media);
 
   const handleNavKeyDown = (e) => {
     if (e.key === "Enter" || e.key === " ") {
@@ -66,7 +74,7 @@ function PostAncestor({ post, isRoot = false, onOpen, onHashtagClick }) {
 
       <div className={styles.grid}>
         <div className={styles.avatarCell}>
-          <PostProfileTrigger mask={mask}>
+          <PostProfileTrigger mask={mask} variant="avatar">
             <MaskAvatar seed={mask.id} size={36} online={mask.isOnline} />
           </PostProfileTrigger>
         </div>
@@ -76,7 +84,7 @@ function PostAncestor({ post, isRoot = false, onOpen, onHashtagClick }) {
               three-dots menu is a sibling control, never a button nested in a
               role=link. Row clicks still navigate (the guard excludes it). */}
           <header className={styles.header}>
-            <PostProfileTrigger mask={mask}>
+            <PostProfileTrigger mask={mask} variant="hash">
               <span className={styles.maskId}>{mask.id}</span>
             </PostProfileTrigger>
             <span
@@ -85,14 +93,30 @@ function PostAncestor({ post, isRoot = false, onOpen, onHashtagClick }) {
             >
               {time}
             </span>
-            {/* "· Author" only on intermediate ancestors authored by the
-                OP — on the root itself it's redundant (the root IS the OP). */}
-            {isOp && !isRoot && (
-              <span className={styles.authorTag} aria-label={t("post.opAuthor")}>
-                <span className={styles.authorDivider} aria-hidden="true">
-                  ·
-                </span>
-                {t("post.author")}
+            {((isOp && !isRoot) || isEdited) && (
+              // Trailing meta tags get their OWN tighter gap (4px) instead of
+              // the header's primary 6px — same pattern as PostReply, so an
+              // ancestor row reads identically to a reply row.
+              <span className={styles.metaTrail}>
+                {/* "· Author" only on intermediate ancestors authored by the
+                    OP — on the root itself it's redundant (the root IS the OP). */}
+                {isOp && !isRoot && (
+                  <span className={styles.authorTag} aria-label={t("post.opAuthor")}>
+                    <span className={styles.authorDivider} aria-hidden="true">
+                      ·
+                    </span>
+                    {t("post.author")}
+                  </span>
+                )}
+                {isEdited && (
+                  <EditedTag
+                    post={post}
+                    editedAt={editedAt}
+                    language={i18n.language}
+                    className={styles.editedTag}
+                    dividerClassName={styles.editedDivider}
+                  />
+                )}
               </span>
             )}
             <span className={styles.spacer} />
@@ -114,7 +138,9 @@ function PostAncestor({ post, isRoot = false, onOpen, onHashtagClick }) {
             </p>
           </div>
 
-          {media && media.length > 0 && <ThreadMedia items={media} />}
+          {media && media.length > 0 && (
+            <ThreadMedia items={media} {...mediaSync} />
+          )}
 
           {/* Quiet display-only stats (feed-card language): reaction cluster +
               replies count. Interactions live on each node's own page. */}

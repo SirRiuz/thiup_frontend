@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import MediaSpoilerMenu from "../media/MediaSpoilerMenu";
 import styles from "../../styles/components/post/PostScanResult.module.css";
 import cx from "../../utils/cx";
 import { DEBUG } from "../../settings";
@@ -177,11 +178,12 @@ function PostScanResult({
   upload,
   onRetry,
   onRemove,
+  onToggleSpoiler,
   detailsOpen = false,
   onToggleDetails,
 }) {
   const { t } = useTranslation();
-  const { id, name, size, kind, thumbnail } = item;
+  const { id, name, size, kind, thumbnail, isSpoiler } = item;
 
   const isImage = kind === "image";
   const detailsId = `scan-details-${id}`;
@@ -240,7 +242,7 @@ function PostScanResult({
           // actually paint the frame (it shows blank until a seek otherwise).
           <video
             src={`${thumbnail}#t=0.001`}
-            className={cx(styles.tileImage, styles.tileVideo)}
+            className={cx(styles.tileImage, styles.tileVideo, isSpoiler ? styles.tileImageBlurred : "")}
             muted
             playsInline
             preload="metadata"
@@ -248,7 +250,11 @@ function PostScanResult({
             aria-hidden="true"
           />
         ) : (
-          <img src={thumbnail} alt="" className={styles.tileImage} />
+          <img
+            src={thumbnail}
+            alt=""
+            className={cx(styles.tileImage, isSpoiler ? styles.tileImageBlurred : "")}
+          />
         )
       ) : (
         <span className={styles.tileKind} aria-hidden="true">
@@ -305,6 +311,14 @@ function PostScanResult({
       >
         <CloseIcon />
       </button>
+
+      {/* Spoiler toggle — top-left corner, the only free one (remove is
+          top-right, info is bottom-right). Available whenever there's
+          something to confirm (busy/error tiles can still be marked before
+          they finish). */}
+      {onToggleSpoiler && (
+        <MediaSpoilerMenu isSpoiler={!!isSpoiler} onToggle={(v) => onToggleSpoiler(id, v)} />
+      )}
 
       {/* Compression details toggle — quiet ⓘ disc, bottom-right. */}
       {canShowDetails && (

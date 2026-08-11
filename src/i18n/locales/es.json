@@ -1,10 +1,12 @@
 {
   "media": {
     "multipleIndicator": "Contiene más archivos",
-    "tapToView": "Toca para ver",
     "sensitiveTitle": "Contenido sensible",
-    "hideSensitive": "Ocultar contenido sensible",
+    "spoilerTitle": "Spoiler",
     "viewSensitive": "Ver contenido sensible",
+    "tileOptions": "Opciones del archivo",
+    "markSpoiler": "Marcar spoiler",
+    "unmarkSpoiler": "Quitar spoiler",
     "video": "Video",
     "mute": "Silenciar",
     "unmute": "Activar sonido",
@@ -19,7 +21,30 @@
       "previous": "Imagen anterior",
       "next": "Imagen siguiente",
       "position": "Imagen {{current}} de {{total}}",
-      "loadError": "No se pudo cargar el contenido"
+      "loadError": "No se pudo cargar el contenido",
+      "download": "Descargar",
+      "downloading": "Descargando…"
+    },
+    "contextMenu": {
+      "copyImage": "Copiar imagen",
+      "copyLink": "Copiar enlace",
+      "viewDetails": "Ver detalles"
+    },
+    "details": {
+      "title": "Detalles del archivo",
+      "close": "Cerrar",
+      "type": "Tipo",
+      "typeImage": "Imagen",
+      "typeVideo": "Video",
+      "format": "Formato",
+      "dimensions": "Dimensiones",
+      "aspectRatio": "Relación de aspecto",
+      "sensitive": "Contenido sensible",
+      "yes": "Sí",
+      "no": "No",
+      "position": "Posición",
+      "positionValue": "{{current}} de {{total}}",
+      "unknown": "Desconocido"
     }
   },
   "common": {
@@ -97,6 +122,12 @@
       }
     }
   },
+  "locationOptIn": {
+    "title": "Descubre lo que pasa cerca de ti",
+    "body": "Comparte tu zona aproximada (~5 km, difuminada) para ver y que te vean hilos cerca de ti. Nunca tu ubicación exacta — y puedes desactivarla cuando quieras.",
+    "enable": "Activar ubicación",
+    "notNow": "Ahora no"
+  },
   "home": {
     "tabForYou": "Para ti",
     "tabCloseYou": "Cerca de ti",
@@ -124,6 +155,8 @@
     "discard": "Descartar",
     "discardThreadTitle": "¿Descartar hilo?",
     "discardReplyTitle": "¿Descartar respuesta?",
+    "discardEditTitle": "¿Descartar cambios?",
+    "editSubmit": "Guardar",
     "mediaLabel": "Multimedia",
     "areaLabel": "Zona",
     "locationDefault": "Comparte tu zona aproximada al publicar (para Cerca de ti) — nunca tu ubicación exacta",
@@ -191,6 +224,7 @@
     "noReplies": "Aún no hay respuestas",
     "replyCount_one": "{{count}} respuesta",
     "replyCount_other": "{{count}} respuestas",
+    "loadingReplies": "Cargando respuestas",
     "reply": "Responder",
     "replies": "Respuestas",
     "opAuthor": "Autor del hilo",
@@ -211,6 +245,14 @@
     "replying": "Respondiendo…",
     "replyErrorTitle": "No se pudo publicar tu respuesta",
     "replyErrorDetail": "Inténtalo de nuevo.",
+    "repliesDisabledTitle": "Las respuestas están desactivadas",
+    "repliesDisabledNotice": "El autor desactivó las respuestas para este hilo.",
+    "privateBadge": "Privado",
+    "privateBadgeHint": "Solo visible para quien tenga el enlace",
+    "snapBadgeHint": "Este hilo desaparece automáticamente",
+    "snapExpiringSoon": "A punto de desaparecer",
+    "snapCountdownHours": "Desaparece en {{count}}h",
+    "snapCountdownMinutes": "Desaparece en {{count}}m",
     "attachErrorTitle": "No se puede adjuntar este archivo",
     "fileTooLarge": "{{name}} es demasiado grande (máx. 10MB)",
     "imageTooLarge": "Las imágenes no pueden superar 8 MB",
@@ -221,7 +263,14 @@
     "contentRejected": "El contenido del archivo no coincide con su tipo. Se omitió: {{names}}",
     "maxFiles": "Solo se permiten {{max}} archivos",
     "attachMedia": "Adjuntar imagen o video",
-    "expandComposer": "Expandir editor"
+    "dropToAttach": "Suelta aquí para adjuntar",
+    "expandComposer": "Expandir editor",
+    "edited": "Editado",
+    "editTitle": "Editar publicación",
+    "editErrorTitle": "Tu edición no pudo guardarse",
+    "editErrorGone": "Esta publicación ya no está disponible para editar",
+    "editErrorGoneDetail": "Puede haber sido eliminada, o ya no estás identificado como su autor.",
+    "undoRemove": "Deshacer"
   },
   "scan": {
     "queued": "En cola…",
@@ -270,8 +319,28 @@
   "threadOptions": {
     "more": "Más opciones",
     "viewDetails": "Ver detalles",
+    "share": "Compartir",
     "copyLink": "Copiar enlace",
+    "qrCode": "Código QR",
+    "edit": "Editar",
     "report": "Reportar"
+  },
+  "share": {
+    "title": "Compartir",
+    "close": "Cerrar",
+    "whatsapp": "WhatsApp",
+    "x": "X",
+    "facebook": "Facebook",
+    "email": "Correo",
+    "more": "Más",
+    "genericCaption": "Mira este hilo en Thiup",
+    "emailSubject": "Un hilo en Thiup"
+  },
+  "qrCode": {
+    "title": "Código QR",
+    "close": "Cerrar",
+    "download": "Descargar",
+    "downloadFailed": "No se pudo descargar el código QR"
   },
   "threadDetails": {
     "title": "Detalles del hilo",
@@ -291,9 +360,13 @@
     "idCopied": "ID copiado",
     "copied": "Copiado",
     "copyFailed": "No se pudo copiar",
+    "imageCopied": "Imagen copiada",
+    "imageCopyFailed": "No se pudo copiar la imagen",
     "publishing": "Publicando…",
     "posted": "Hilo publicado",
     "replyPosted": "Respuesta publicada",
+    "editing": "Guardando…",
+    "edited": "Publicación actualizada",
     "viewPost": "Ver"
   },
   "report": {
@@ -339,7 +412,9 @@
     "notFound": "Perfil no encontrado",
     "mediaEmptyTitle": "Aún no hay media",
     "mediaEmptyBody": "Las fotos y videos de los hilos de esta máscara aparecerán aquí.",
-    "avatarLabel": "Foto de perfil"
+    "avatarLabel": "Foto de perfil",
+    "previewLabel": "Vista previa del perfil",
+    "viewProfile": "Ver perfil"
   },
   "myThreads": {
     "title": "Mis hilos",
@@ -417,6 +492,27 @@
     "replyTitle": "Demasiadas respuestas seguidas",
     "replyWait": "Puedes responder de nuevo en {{seconds}} s",
     "replySoon": "Espera unos segundos e inténtalo de nuevo",
-    "replyReady": "Ya puedes responder de nuevo"
+    "replyReady": "Ya puedes responder de nuevo",
+    "editTitle": "Demasiadas ediciones seguidas",
+    "editWait": "Puedes editar de nuevo en {{seconds}} s",
+    "editSoon": "Espera unos segundos e inténtalo de nuevo",
+    "editReady": "Ya puedes editar de nuevo"
+  },
+  "postOptions": {
+    "title": "Opciones",
+    "private": "Privado",
+    "snap": "Snap",
+    "snapHint": "Se elimina solo en 24 horas",
+    "disableReplies": "Desactivar respuestas"
+  },
+  "editHistory": {
+    "title": "Historial de edición",
+    "empty": "Aún no hay ediciones",
+    "errorTitle": "No se pudo cargar el historial de edición",
+    "mediaAddedCount_one": "{{count}} archivo añadido",
+    "mediaAddedCount_other": "{{count}} archivos añadidos",
+    "mediaRemovedCount_one": "{{count}} archivo eliminado",
+    "mediaRemovedCount_other": "{{count}} archivos eliminados",
+    "loadMore": "Cargar más"
   }
 }

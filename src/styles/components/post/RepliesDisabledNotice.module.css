@@ -1,0 +1,66 @@
+/* RepliesDisabledNotice — occupies PostCommentBox's dock slot when the
+   thread owner turned replies off. .wrapper reuses its dock positioning
+   (desktop-inline / mobile-fixed-band) unmodified; .notice is the app's
+   "tactful note" anatomy (see ErrorNotice/RateLimitNotice: 40px dial +
+   title + detail) in the QUIET neutral palette — this is information, not
+   a danger/warning state. */
+
+.wrapper {
+  composes: wrapper from "./PostCommentBox.module.css";
+}
+
+.notice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: #f0ece3;
+  border: 1px solid #ebe7dd;
+  border-radius: 12px;
+}
+
+.dial {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  background: #fdfcf8;
+  border-radius: 50%;
+  color: #9b9591;
+}
+
+.text {
+  min-width: 0;
+}
+
+.title {
+  margin: 0 0 2px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b6b6b;
+}
+
+.detail {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: #9b9591;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .notice {
+    animation: repliesDisabledIn 200ms ease-out;
+  }
+}
+
+@keyframes repliesDisabledIn {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

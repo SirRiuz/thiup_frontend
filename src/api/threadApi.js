@@ -87,3 +87,66 @@ export function createReply({ parentId, text, content, media = [] }) {
     }),
   });
 }
+
+/**
+ * Edits the text and/or media of a thread OR reply the caller owns. ONE
+ * function for both — the backend endpoint (POST /threads/<uid>/edit/) and
+ * payload shape are identical either way (a reply IS a Thread here too).
+ *
+ * Ownership is enforced server-side (opaque 404 on mismatch) — `id` is
+ * simply the post's own uid, whether it's the OP or a reply.
+ *
+ * `isPrivate`/`repliesDisabled` are the two options editable anytime after
+ * publish (see PostOptionsPanel); omit either to leave it unchanged
+ * server-side. `isSnap` has NO corresponding field here on purpose — the
+ * backend's edit serializer never accepts it, so the flag is immutable once
+ * set at creation.
+ *
+ * @param {{ id: string, text: string, content: object, removeMedia?: string[], addMedia?: string[], isPrivate?: boolean, repliesDisabled?: boolean }} params
+ * @returns {Promise<object>}  The updated post (same backend shape as retrieve/create).
+ */
+export function editPost({
+  id,
+  text,
+  content,
+  removeMedia = [],
+  addMedia = [],
+  isPrivate,
+  repliesDisabled,
+}) {
+  const body = {
+    text,
+    content,
+    remove_media: removeMedia,
+    add_media: addMedia,
+  };
+  if (isPrivate !== undefined) body.is_private = isPrivate;
+  if (repliesDisabled !== undefined) body.replies_disabled = repliesDisabled;
+  return apiFetch(`${THREADS_ENDPOINT}${id}/edit/`, {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+/**
+ * Fetches the text-only edit history of a thread/reply, newest first.
+ * Public — no ownership check server-side, any viewer can call this.
+ *
+ * @param {string} postId
+ * @param {object} [options] { signal }
+ * @returns {Promise<{results: object[], next: string|null, count: number}>}
+ */
+export function getEditHistory(postId, options = {}) {
+  const url = `${THREADS_ENDPOINT}${postId}/edit-history/?_t=${Date.now()}`;
+  return apiFetch(url, { signal: options.signal });
+}
+
+/**
+ * Follows a `next` page URL from getEditHistory, same pattern as getThreadReplies.
+ *
+ * @param {string} nextUrl
+ * @param {object} [options] { signal }
+ */
+export function getEditHistoryPage(nextUrl, options = {}) {
+  return apiFetch(nextUrl, { signal: options.signal });
+}

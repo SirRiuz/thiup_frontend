@@ -31,6 +31,12 @@ const COPY = {
     soon: "rateLimit.replySoon",
     ready: "rateLimit.replyReady",
   },
+  edit: {
+    title: "rateLimit.editTitle",
+    wait: "rateLimit.editWait",
+    soon: "rateLimit.editSoon",
+    ready: "rateLimit.editReady",
+  },
 };
 
 /**
