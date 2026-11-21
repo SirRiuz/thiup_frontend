@@ -10,6 +10,7 @@ import PostEditModal from "./PostEditModal";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import useMenuVerticalFlip from "../../hooks/useMenuVerticalFlip";
 import { useToast } from "../../contexts/ToastContext";
+import { track } from "../../utils/engagementQueue";
 import MenuSurface, { menuStyles } from "../menu/MenuSurface";
 import styles from "../../styles/components/post/PostOptionsMenu.module.css";
 import cx from "../../utils/cx";
@@ -247,6 +248,7 @@ function PostOptionsMenu({
       const url = `${window.location.origin}/p/${post?.id || post?.uid || ""}`;
       try {
         await navigator.clipboard.writeText(url);
+        track("thread", post?.id || post?.uid, "link_copy");
         // Copy confirmation: text only, no icon (cleaner, Threads-like).
         showToast({ type: "success", message: t("toast.linkCopied"), icon: "none" });
       } catch (e) {

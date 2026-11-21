@@ -1,0 +1,682 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=1280" />
+<title>Perfil v2 · Thiup (maqueta)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
+<link rel="stylesheet" href="../assets/tokens.css" />
+<link rel="stylesheet" href="../assets/base.css" />
+<link rel="stylesheet" href="../assets/components.css" />
+<link rel="stylesheet" href="../assets/v2.css" />
+<!--
+  PROPUESTA v2 del perfil propio (sandbox — ver design/CLAUDE.md § Propuestas v2).
+  profile.html queda intacto para comparar. Misma tarjeta elevada y mismo
+  lenguaje de home-v2 / thread-v2 (assets/v2.css y v2.js).
+
+  Qué añade (la anatomía de perfil de X, con el lenguaje de Thiup):
+    · Portada, y la foto de perfil montada sobre su borde.
+    · Nombre para mostrar + @máscara (clic = copiar) + descripción + enlaces.
+    · "Editar perfil": un diálogo que ES la vista previa — cambias la portada
+      y la foto ahí mismo, con una bandeja de opciones bajo cada una, y los
+      campos (nombre, descripción, hasta 3 enlaces) con contador y validación
+      en línea. Guardar solo se activa si hay cambios válidos; cerrar con
+      cambios pregunta antes de descartarlos.
+    · Pestañas Hilos · Respuestas · Media, con la tarjeta de hilo compartida
+      (hilo fijado, temporal, cita…).
+  Lo propio de Thiup: por defecto tu foto es tu MÁSCARA (puedes elegir otra
+  o subir una imagen, con un aviso corto de privacidad).
+-->
+<style>
+  .v2-main { padding-bottom: 24px; }
+  @media (max-width: 700px) { .app-shell { padding-bottom: 0; } }
+
+  /* Título del masthead en dos capas: "Perfil" y, cuando tu nombre ya salió
+     de pantalla, tu nombre + cuántos hilos (igual que el título del hilo). */
+  .v2-mast { display: grid; justify-items: center; cursor: pointer; border: 0; background: transparent; padding: 0; }
+  .v2-mast > span { grid-area: 1 / 1; display: flex; flex-direction: column; align-items: center; line-height: 1.25; transition: opacity 0.2s ease, transform 0.3s var(--ease-expo-out); }
+  .v2-mast small { font-size: 12px; font-weight: 400; color: var(--text-tertiary); }
+  .v2-mast-pinned { opacity: 0; transform: translateY(8px); }
+  .is-pinned .v2-mast-rest { opacity: 0; transform: translateY(-8px); }
+  .is-pinned .v2-mast-pinned { opacity: 1; transform: none; }
+
+  /* ============================ CABECERA DEL PERFIL ============================ */
+  .v2-pf-cover {
+    position: relative;
+    display: block;
+    width: calc(100% + 48px);
+    height: 176px;
+    margin: -8px -24px 0;
+    padding: 0;
+    border: 0;
+    border-radius: 23px 23px 0 0; /* el radio de la tarjeta menos su borde */
+    overflow: hidden;
+    background: var(--bg-hover);
+    cursor: pointer;
+  }
+  .v2-pf-cover::after { content: ""; position: absolute; inset: auto 0 0; height: 0.5px; background: var(--hairline); }
+  /* La portada: una ilustración, una imagen subida o un degradado de la casa
+     con el trazo de la marca al fondo. */
+  .v2-cover-fill { position: absolute; inset: 0; }
+  .v2-cover-fill > svg, .v2-cover-fill > img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .v2-cover-fill .v2-cover-mark { position: absolute; right: 6%; top: 50%; height: 150%; width: auto; transform: translateY(-50%); }
+
+  .v2-pf-top { position: relative; display: flex; align-items: flex-end; justify-content: space-between; margin-top: -48px; }
+  .v2-pf-avatar {
+    flex: none;
+    display: block;
+    width: 96px;
+    height: 96px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: var(--bg-surface);
+    box-shadow: 0 0 0 4px var(--bg-surface); /* se recorta de la portada */
+    cursor: pointer;
+    transition: transform 0.2s ease;
+  }
+  .v2-pf-avatar:active { transform: scale(0.97); }
+  .v2-pf-actions { display: flex; align-items: center; gap: 8px; padding-bottom: 4px; }
+  .v2-btn-quiet { /* botón secundario: contorno fino, en píldora */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: 36px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    box-shadow: inset 0 0 0 1px rgba(26, 26, 26, 0.16);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.15s ease;
+  }
+  .v2-btn-quiet.is-icon { width: 36px; padding: 0; color: var(--text-secondary); }
+  .v2-btn-quiet:active { transform: scale(0.96); }
+  @media (hover: hover) { .v2-btn-quiet:hover { background: var(--fill-chip); } }
+
+  .v2-pf-name { margin: 12px 0 0; font-size: 22px; font-weight: 700; line-height: 28px; letter-spacing: -0.02em; color: var(--text-primary); }
+  .v2-pf-handle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: -6px;
+    padding: 1px 6px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+  .v2-pf-handle svg { opacity: 0; transition: opacity 0.2s ease; }
+  .v2-pf-handle:is(:hover, :focus-visible) { background: var(--fill-chip); color: var(--text-secondary); }
+  .v2-pf-handle:is(:hover, :focus-visible) svg { opacity: 1; }
+  .v2-pf-bio { margin: 12px 0 0; font-size: 15px; line-height: 1.45; letter-spacing: -0.006em; color: var(--text-primary); white-space: pre-wrap; overflow-wrap: break-word; }
+  .v2-pf-prompt { margin: 12px 0 0; padding: 0; border: 0; background: transparent; font-size: 15px; color: var(--brand-terracotta); cursor: pointer; }
+  .v2-pf-prompt:hover { text-decoration: underline; text-underline-offset: 2px; }
+  .v2-pf-links { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+  .v2-pf-links:empty { display: none; }
+  .v2-pf-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    max-width: 100%;
+    height: 28px;
+    padding: 0 11px 0 8px;
+    border-radius: var(--radius-pill);
+    background: var(--fill-chip);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    transition: background 0.2s ease, transform 0.15s ease;
+  }
+  .v2-pf-link svg { flex: none; width: 15px; height: 15px; color: var(--brand-terracotta); }
+  .v2-pf-link span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .v2-pf-link:active { transform: scale(0.96); }
+  @media (hover: hover) { .v2-pf-link:hover { background: var(--fill-chip-hover); } }
+  /* Dos líneas, como en X: la fecha de ingreso y, debajo, las cifras. */
+  .v2-pf-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 18px; margin: 14px 0 0; font-size: 14px; line-height: 20px; color: var(--text-tertiary); }
+  .v2-pf-meta > span { display: inline-flex; align-items: center; gap: 6px; }
+  .v2-pf-meta.is-stats { margin: 10px 0 16px; }
+  .v2-pf-meta b { font-weight: 600; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+
+  /* ============================ MEDIA ============================ */
+  .v2-pf-tile { position: relative; }
+  .v2-pf-tile > svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .v2-pf-tile::after { content: ""; position: absolute; inset: 0; box-shadow: inset 0 0 0 0.5px var(--hairline); pointer-events: none; }
+  .v2-pf-tile .v2-qm-play { width: 36px; height: 36px; }
+  .v2-pf-empty { padding: 56px 20px; text-align: center; font-size: 14px; color: var(--text-tertiary); }
+
+  /* ============================ EDITAR PERFIL ============================ */
+  .v2-ed-card { overflow: hidden; }
+  .v2-ed-head { flex: none; position: relative; height: 56px; border-bottom: 0.5px solid var(--divider-feed); }
+  .v2-ed-head > div { position: absolute; inset: 0; display: flex; align-items: center; gap: 12px; padding: 0 12px 0 8px; transition: opacity 0.18s ease, transform 0.25s var(--ease-expo-out); }
+  .v2-ed-head h2 { flex: 1; margin: 0; font-size: 16px; font-weight: 600; letter-spacing: -0.01em; color: var(--text-primary); }
+  /* Cerrar con cambios sin guardar: la propia cabecera pregunta (sin otro diálogo encima). */
+  .v2-ed-confirm { opacity: 0; transform: translateY(6px); pointer-events: none; }
+  .v2-ed-confirm span { flex: 1; padding-left: 12px; font-size: 15px; font-weight: 600; color: var(--text-primary); }
+  .is-asking .v2-ed-main { opacity: 0; transform: translateY(-6px); pointer-events: none; }
+  .is-asking .v2-ed-confirm { opacity: 1; transform: none; pointer-events: auto; }
+  .v2-ed-text {
+    height: 36px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    font-size: 15px;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+  .v2-ed-text:hover { background: var(--fill-chip); }
+  .v2-ed-text.is-danger { font-weight: 600; color: var(--danger); }
+  .v2-ed-text.is-danger:hover { background: rgba(197, 48, 48, 0.07); }
+
+  .v2-ed-body { padding: 0 0 20px; }
+  .v2-ed-cover { position: relative; height: 150px; background: var(--bg-hover); }
+  .v2-ed-avatar-row { position: relative; height: 44px; padding: 0 20px; }
+  .v2-ed-avatar {
+    position: absolute;
+    left: 20px;
+    top: -42px;
+    width: 84px;
+    height: 84px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: var(--bg-surface);
+    box-shadow: 0 0 0 4px var(--bg-surface);
+    cursor: pointer;
+  }
+  /* El control para cambiar va SOBRE lo que cambia: un disco con la cámara. */
+  .v2-ed-cam {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(26, 26, 26, 0.55);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    color: var(--bg-surface);
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.15s ease;
+  }
+  .v2-ed-avatar .v2-ed-cam { width: 36px; height: 36px; pointer-events: none; }
+  .v2-ed-cam:active { transform: scale(0.92); }
+  :is(.v2-ed-cover, .v2-ed-avatar):hover .v2-ed-cam { background: rgba(26, 26, 26, 0.7); }
+  :is(.v2-ed-cover > .v2-ed-cam, .v2-ed-avatar)[aria-expanded="true"] { box-shadow: 0 0 0 4px var(--bg-surface), 0 0 0 6px var(--brand-sand); }
+  .v2-ed-cover > .v2-ed-cam[aria-expanded="true"] { box-shadow: 0 0 0 2px var(--brand-sand); }
+
+  /* Bandeja de opciones: aparece bajo la portada/foto que estás cambiando. */
+  .v2-ed-tray { margin: 4px 20px 0; padding: 12px; border-radius: var(--radius-media); background: var(--fill-recessed); box-shadow: inset 0 0 0 0.5px var(--hairline); animation: v2-fade 0.2s ease; }
+  .v2-ed-tray h3 { margin: 0 0 10px; font-size: 13px; font-weight: 600; color: var(--text-secondary); }
+  .v2-ed-opts { display: flex; flex-wrap: wrap; gap: 8px; }
+  .v2-ed-opt {
+    position: relative;
+    flex: none;
+    padding: 0;
+    border: 0;
+    overflow: hidden;
+    background: var(--bg-hover);
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.2s ease;
+  }
+  .v2-ed-opt:active { transform: scale(0.95); }
+  .v2-ed-opt.is-cover { width: 98px; height: 44px; border-radius: 8px; }
+  .v2-ed-opt.is-mask { width: 48px; height: 48px; border-radius: 50%; }
+  .v2-ed-opt.is-mask > svg, .v2-ed-opt.is-mask > img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .v2-ed-opt[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--fill-recessed), 0 0 0 4px var(--brand-terracotta); }
+  .v2-ed-opt.is-upload { display: grid; place-items: center; background: transparent; box-shadow: inset 0 0 0 1px var(--border-dashed); color: var(--text-secondary); }
+  .v2-ed-opt.is-upload:hover { background: var(--fill-chip); color: var(--text-primary); }
+  .v2-ed-opt.is-upload > svg { width: 20px; height: 20px; } /* el icono no se estira al tamaño de la opción */
+  .v2-ed-note { margin: 10px 0 0; font-size: 12.5px; line-height: 1.4; color: var(--text-tertiary); }
+
+  /* Campos: caja con su etiqueta arriba y el contador a la derecha. */
+  .v2-ed-fields { display: grid; gap: 12px; padding: 16px 20px 0; }
+  .v2-field {
+    position: relative;
+    display: block;
+    padding: 8px 12px 9px;
+    border-radius: var(--radius-lg);
+    background: var(--bg-surface);
+    box-shadow: inset 0 0 0 1px var(--border-surface);
+    cursor: text;
+    transition: box-shadow 0.2s ease;
+  }
+  .v2-field:focus-within { box-shadow: inset 0 0 0 2px var(--brand-sand); }
+  .v2-field-label { display: flex; justify-content: space-between; font-size: 12px; line-height: 16px; color: var(--text-tertiary); transition: color 0.2s ease; }
+  .v2-field:focus-within .v2-field-label > :first-child { color: var(--brand-umber); }
+  .v2-field-label i { font-style: normal; font-variant-numeric: tabular-nums; opacity: 0; transition: opacity 0.2s ease; }
+  .v2-field:focus-within .v2-field-label i { opacity: 1; }
+  .v2-field input, .v2-field textarea {
+    display: block;
+    width: 100%;
+    margin-top: 1px;
+    padding: 0;
+    border: 0;
+    outline: none;
+    resize: none;
+    background: transparent;
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 22px;
+    letter-spacing: -0.006em;
+    color: var(--text-primary);
+  }
+  .v2-field :is(input, textarea)::placeholder { color: var(--text-quaternary); }
+  .v2-field.is-error { box-shadow: inset 0 0 0 1.5px rgba(197, 48, 48, 0.55); }
+  .v2-field.is-error .v2-field-label > :first-child { color: var(--danger); }
+
+  .v2-ed-section { display: flex; align-items: baseline; justify-content: space-between; margin-top: 6px; }
+  .v2-ed-section h3 { margin: 0; font-size: 15px; font-weight: 600; color: var(--text-primary); }
+  .v2-ed-section small { font-size: 12.5px; color: var(--text-tertiary); }
+  .v2-ed-link { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr) 32px; gap: 8px; align-items: center; animation: v2-fade 0.2s ease; }
+  .v2-ed-x { display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--text-tertiary); cursor: pointer; transition: background 0.2s ease, color 0.2s ease; }
+  .v2-ed-x:hover { background: rgba(197, 48, 48, 0.08); color: var(--danger); }
+  .v2-ed-error { grid-column: 1 / -1; margin: -2px 0 0 2px; font-size: 12.5px; color: var(--danger); }
+  .v2-ed-add {
+    justify-self: start;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 32px;
+    margin-left: -8px;
+    padding: 0 12px 0 8px;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--brand-terracotta);
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+  .v2-ed-add:hover { background: var(--brand-wash); }
+  .v2-ed-add svg { width: 16px; height: 16px; }
+
+  :is(.v2-btn-quiet, .v2-pf-handle, .v2-pf-link, .v2-ed-text, .v2-ed-cam, .v2-ed-opt, .v2-ed-x, .v2-ed-add, .v2-mast):focus-visible { box-shadow: 0 0 0 2px var(--brand-sand); }
+  .v2-pf-avatar:focus-visible, .v2-ed-avatar:focus-visible { box-shadow: 0 0 0 4px var(--bg-surface), 0 0 0 6px var(--brand-sand); }
+  .v2-pf-cover:focus-visible { box-shadow: inset 0 0 0 3px var(--brand-sand); }
+</style>
+</head>
+<body>
+  <div class="app-shell" id="shell">
+    <div id="nav-rail-mount"></div>
+
+    <div class="screen-page">
+      <main class="screen-main v2-main">
+        <header class="masthead" id="masthead">
+          <button type="button" class="v2-mast masthead-title" id="mast" aria-label="Volver arriba">
+            <span class="v2-mast-rest">Perfil</span>
+            <span class="v2-mast-pinned" id="mast-pinned"></span>
+          </button>
+        </header>
+        <div class="corner-mask" aria-hidden="true">
+          <div class="corner-mask-window"><div class="corner-mask-shape"></div></div>
+        </div>
+
+        <div class="surface">
+          <section id="pf" aria-label="Tu perfil"></section>
+
+          <div class="tabs" data-tabs="profile">
+            <button type="button" class="tab is-active" data-tab="threads">Hilos</button>
+            <button type="button" class="tab" data-tab="replies">Respuestas</button>
+            <button type="button" class="tab" data-tab="media">Media</button>
+            <span class="tab-indicator"></span>
+          </div>
+
+          <section data-tab-panel-group="profile" data-tab-panel="threads" id="threads-mount" aria-label="Tus hilos"></section>
+          <section data-tab-panel-group="profile" data-tab-panel="replies" id="replies-mount" aria-label="Tus respuestas" hidden></section>
+          <section data-tab-panel-group="profile" data-tab-panel="media" hidden>
+            <div class="media-grid-mosaic is-flush" id="media-mount"></div>
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Editar perfil: fuera de .app-shell para poder dejar el resto inerte mientras está abierto. -->
+  <div class="v2-ex" id="ed" inert>
+    <div class="v2-ex-card v2-ed-card" id="ed-card" role="dialog" aria-modal="true" aria-labelledby="ed-title">
+      <header class="v2-ed-head" id="ed-head">
+        <div class="v2-ed-main">
+          <button type="button" class="v2-ed-text" data-ed-close>Cancelar</button>
+          <h2 id="ed-title">Editar perfil</h2>
+          <button type="button" class="v2-ex-send" id="ed-save" disabled>Guardar</button>
+        </div>
+        <div class="v2-ed-confirm" role="alert" aria-hidden="true">
+          <span>¿Descartar los cambios?</span>
+          <button type="button" class="v2-ed-text" data-ed-keep>Seguir editando</button>
+          <button type="button" class="v2-ed-text is-danger" data-ed-discard>Descartar</button>
+        </div>
+      </header>
+      <div class="v2-ex-body v2-ed-body" id="ed-body">
+        <div class="v2-ed-cover" id="ed-cover">
+          <div class="v2-cover-fill" id="ed-cover-fill"></div>
+          <button type="button" class="v2-ed-cam" data-ed-tray="cover" aria-expanded="false" aria-controls="tray-cover" aria-label="Cambiar la portada" title="Cambiar la portada"></button>
+        </div>
+        <div class="v2-ed-avatar-row">
+          <button type="button" class="v2-ed-avatar" data-ed-tray="avatar" aria-expanded="false" aria-controls="tray-avatar" aria-label="Cambiar la foto de perfil" title="Cambiar la foto de perfil">
+            <span id="ed-avatar-fill"></span>
+            <span class="v2-ed-cam" aria-hidden="true"></span>
+          </button>
+        </div>
+        <div class="v2-ed-tray" id="tray-cover" hidden></div>
+        <div class="v2-ed-tray" id="tray-avatar" hidden></div>
+        <input type="file" accept="image/*" id="ed-file" hidden />
+
+        <div class="v2-ed-fields">
+          <label class="v2-field">
+            <span class="v2-field-label"><span>Nombre</span><i id="ed-name-n"></i></span>
+            <input id="ed-name" maxlength="30" placeholder="Cómo quieres que te vean" autocomplete="off" />
+          </label>
+          <label class="v2-field">
+            <span class="v2-field-label"><span>Descripción</span><i id="ed-bio-n"></i></span>
+            <textarea id="ed-bio" maxlength="160" rows="3" placeholder="Cuenta algo de ti, si quieres"></textarea>
+          </label>
+          <div class="v2-ed-section"><h3>Enlaces</h3><small id="ed-links-n"></small></div>
+          <div id="ed-links" style="display:grid;gap:10px;"></div>
+          <button type="button" class="v2-ed-add" id="ed-add"></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../assets/icons.js"></script>
+  <script src="../assets/avatar.js"></script>
+  <script src="../assets/reaction-emoji.js"></script>
+  <script src="../assets/illustrations.js"></script>
+  <script src="../assets/mock-data.js"></script>
+  <script src="../assets/app.js"></script>
+  <script src="../assets/v2.js"></script>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const clone = (o) => JSON.parse(JSON.stringify(o));
+    const data = MockData.profileV2;
+
+    /* ---------- Estado del perfil (lo que se edita) ---------- */
+    let profile = {
+      name: data.name,
+      bio: data.bio,
+      links: clone(data.links),
+      cover: { key: data.cover },       // { key } = una de las de la casa · { url } = imagen subida
+      avatar: { seed: me.id },          // { seed } = una máscara · { url } = imagen subida
+    };
+
+    /* ---------- Portadas y fotos ---------- */
+    const COVERS = [
+      { key: "papel", name: "Papel", css: "linear-gradient(120deg, #f3e3d3, #e3caa6)", mark: "rgba(168, 84, 50, 0.16)" },
+      { key: "terracota", name: "Terracota", css: "linear-gradient(120deg, #c98a66, #a85432)", mark: "rgba(253, 252, 248, 0.2)" },
+      { key: "tinta", name: "Tinta", css: "linear-gradient(120deg, #4a4038, #1f1b17)", mark: "rgba(253, 252, 248, 0.12)" },
+      { key: "montana", name: "Montañas" }, { key: "playa", name: "Playa" }, { key: "bosque", name: "Bosque" },
+      { key: "ciudad", name: "Ciudad" }, { key: "carretera", name: "Carretera" },
+    ];
+    // El trazo de la marca, grande y tenue, sobre los degradados de la casa.
+    const coverMark = (color) => `<svg class="v2-cover-mark" viewBox="13 12 44 44" aria-hidden="true"><path d="M24 17.5 Q46 25.75 24 34 Q46 42.25 24 50.5" fill="none" stroke="${color}" stroke-width="5.5" stroke-linecap="round"/><circle cx="44.5" cy="19" r="4.5" fill="${color}"/></svg>`;
+    function coverInner(cover) {
+      if (cover.url) return `<img src="${cover.url}" alt="" />`;
+      const c = COVERS.find((x) => x.key === cover.key) || COVERS[0];
+      return c.css ? `<div style="position:absolute;inset:0;background:${c.css}"></div>${coverMark(c.mark)}` : illustrationSVG(c.key);
+    }
+    const MASK_SEEDS = [me.id, "a1c3e5", "7b20d4", "c5a572", "3e9f10", "d04b6a", "58e1d4", "0f9d2c"];
+    const maskBase = maskAvatarSVG;
+    const avatarInner = (av, size) => av.url
+      ? `<img src="${av.url}" alt="" width="${size}" height="${size}" style="display:block;border-radius:50%;object-fit:cover;outline:0.5px solid rgba(0,0,0,0.15);outline-offset:-0.5px;" />`
+      : maskBase(av.seed, size);
+    // Tu foto elegida se ve en TODA la pantalla (rail, tarjetas…), no solo en la cabecera.
+    maskAvatarSVG = (seed, size = 32, opts = {}) =>
+      seed !== me.id ? maskBase(seed, size, opts) : profile.avatar.url ? avatarInner(profile.avatar, size) : maskBase(profile.avatar.seed, size, opts);
+
+    /* ---------- Cabecera del perfil ---------- */
+    const linkHref = (url) => (/^https?:\/\//i.test(url) ? url : `https://${url}`);
+    const linkLabel = (l) => l.label.trim() || l.url.replace(/^https?:\/\//i, "").replace(/\/.*$/, "");
+    function renderProfile() {
+      const s = data.stats;
+      $("pf").innerHTML = `
+        <button type="button" class="v2-pf-cover" data-edit="cover" aria-label="Cambiar la portada"><span class="v2-cover-fill">${coverInner(profile.cover)}</span></button>
+        <div class="v2-pf-top">
+          <button type="button" class="v2-pf-avatar" data-edit="avatar" aria-label="Cambiar la foto de perfil">${avatarInner(profile.avatar, 96)}</button>
+          <div class="v2-pf-actions">
+            <button type="button" class="v2-btn-quiet is-icon" data-copy-link aria-label="Copiar el enlace a tu perfil" title="Copiar enlace">${MENU_ICONS.link}</button>
+            <button type="button" class="v2-btn-quiet" data-edit="fields" id="edit-btn">Editar perfil</button>
+          </div>
+        </div>
+        <h1 class="v2-pf-name" id="pf-name">${esc(profile.name || "Anónimo")}</h1>
+        <button type="button" class="v2-pf-handle" id="pf-handle" aria-label="Copiar tu máscara @${me.id}">@${me.id}${Icons.copy()}</button>
+        ${profile.bio
+          ? `<p class="v2-pf-bio">${renderTextWithHashtags(esc(profile.bio))}</p>`
+          : `<button type="button" class="v2-pf-prompt" data-edit="bio">Añade una descripción</button>`}
+        <div class="v2-pf-links">${profile.links.map((l) => `<a class="v2-pf-link" href="${esc(linkHref(l.url))}" target="_blank" rel="noopener nofollow" title="${esc(l.url)}">${MENU_ICONS.link}<span>${esc(linkLabel(l))}</span></a>`).join("")}</div>
+        <div class="v2-pf-meta"><span>${Icons.calendar()}Se unió en ${data.joined}</span></div>
+        <div class="v2-pf-meta is-stats"><span><b>${s.threads}</b> hilos</span><span><b>${s.replies}</b> respuestas</span></div>`;
+      $("mast-pinned").innerHTML = `${esc(profile.name || "Anónimo")}<small>${s.threads} hilos</small>`;
+    }
+
+    /* ---------- Pestañas: hilos, respuestas, media ---------- */
+    function renderFeeds() {
+      $("threads-mount").innerHTML = data.threads.map((p) => cardHTML(register(p))).join("");
+      $("replies-mount").innerHTML = data.replies.map((p) => cardHTML(register(p))).join("");
+      const tiles = data.threads.flatMap((p) => (p.media || []).map((m, i) => ({ m, p, extra: i === 0 ? p.media.length - 1 : -1 }))).filter((t) => t.extra >= 0);
+      $("media-mount").innerHTML = tiles.length
+        ? tiles.map(({ m, p, extra }) => `
+            <button type="button" class="mosaic-tile v2-pf-tile" data-nav-href="thread-v2.html?id=${p.uid}" aria-label="Abrir el hilo">
+              ${illustrationSVG(m.illo)}
+              ${m.type === "video" ? `<span class="v2-qm-play" aria-hidden="true">${Icons.play()}</span>` : ""}
+              ${extra > 0 ? `<span class="v2-qm-dur" style="left:auto;right:6px;top:6px;bottom:auto;">+${extra}</span>` : ""}
+            </button>`).join("")
+        : `<p class="v2-pf-empty" style="grid-column:1/-1;">Aún no has compartido fotos ni videos.</p>`;
+    }
+
+    renderRailV2("profile");
+    renderProfile();
+    renderFeeds();
+    V2Profile.online = (maskId) => Object.values(V2Items).some((it) => it.mask && it.mask.id === maskId && it.mask.isOnline);
+
+    // Título del masthead: pasa a tu nombre cuando este sale de pantalla. Clic = arriba.
+    let ticking = false;
+    window.addEventListener("scroll", () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => { ticking = false; $("masthead").classList.toggle("is-pinned", $("pf-name").getBoundingClientRect().bottom < 60); });
+    }, { passive: true });
+    $("mast").addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
+
+    /* ---------- Editar perfil ---------- */
+    const ed = $("ed");
+    const URL_OK = /^(https?:\/\/)?[\w-]+(\.[\w-]+)+(\/\S*)?$/i;
+    const MAX_LINKS = 3;
+    let draft = null, openTray = null, uploadFor = null;
+    const cam = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l1.6-2.4h6.8L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1Z"/><circle cx="12" cy="13.2" r="3.4"/></svg>`;
+    document.querySelectorAll(".v2-ed-cam").forEach((el) => (el.innerHTML = cam));
+    $("ed-add").innerHTML = `${Icons.create()}Añadir enlace`;
+
+    // Un enlace con algo escrito cuenta; una fila vacía se ignora al guardar.
+    const cleanLinks = (links) => links.map((l) => ({ label: l.label.trim(), url: l.url.trim() })).filter((l) => l.label || l.url);
+    const snapshot = (p) => JSON.stringify({ ...p, name: p.name.trim(), bio: p.bio.trim(), links: cleanLinks(p.links) });
+    const isDirty = () => snapshot(draft) !== snapshot(profile);
+    const isValid = () => cleanLinks(draft.links).every((l) => URL_OK.test(l.url));
+
+    function trayHTML(kind) {
+      const up = (cls, label) => `<button type="button" class="v2-ed-opt ${cls} is-upload" data-ed-upload="${kind}" aria-label="${label}" title="${label}">${cam}</button>`;
+      if (kind === "cover") {
+        return `<h3>Elige una portada</h3>
+          <div class="v2-ed-opts">
+            ${draft.cover.url ? `<button type="button" class="v2-ed-opt is-cover" aria-pressed="true" aria-label="Tu imagen"><span class="v2-cover-fill">${coverInner(draft.cover)}</span></button>` : ""}
+            ${COVERS.map((c) => `<button type="button" class="v2-ed-opt is-cover" data-ed-cover="${c.key}" aria-pressed="${draft.cover.key === c.key}" aria-label="${c.name}" title="${c.name}"><span class="v2-cover-fill">${coverInner(c)}</span></button>`).join("")}
+            ${up("is-cover", "Subir una imagen")}
+          </div>`;
+      }
+      return `<h3>Elige tu máscara</h3>
+        <div class="v2-ed-opts">
+          ${draft.avatar.url ? `<button type="button" class="v2-ed-opt is-mask" aria-pressed="true" aria-label="Tu imagen">${avatarInner(draft.avatar, 48)}</button>` : ""}
+          ${MASK_SEEDS.map((seed, i) => `<button type="button" class="v2-ed-opt is-mask" data-ed-mask="${seed}" aria-pressed="${draft.avatar.seed === seed}" aria-label="Máscara ${i + 1}">${maskBase(seed, 48)}</button>`).join("")}
+          ${up("is-mask", "Subir una foto")}
+        </div>
+        <p class="v2-ed-note">Una foto real puede identificarte. Tu máscara, no.</p>`;
+    }
+    function linksHTML() {
+      return draft.links.map((l, i) => `
+        <div class="v2-ed-link" data-link="${i}">
+          <label class="v2-field"><span class="v2-field-label"><span>Título</span></span><input data-link-f="label" maxlength="24" placeholder="Mi blog" value="${esc(l.label)}" autocomplete="off" /></label>
+          <label class="v2-field"><span class="v2-field-label"><span>Enlace</span></span><input data-link-f="url" inputmode="url" maxlength="120" placeholder="tusitio.com" value="${esc(l.url)}" autocomplete="off" spellcheck="false" /></label>
+          <button type="button" class="v2-ed-x" data-link-x aria-label="Quitar este enlace" title="Quitar">${Icons.close()}</button>
+        </div>`).join("");
+    }
+    // Pinta lo que cambia a menudo (vista previa, contadores, botón) sin tocar los campos con foco.
+    function syncEdit() {
+      $("ed-cover-fill").innerHTML = coverInner(draft.cover);
+      $("ed-avatar-fill").innerHTML = avatarInner(draft.avatar, 84);
+      $("ed-name-n").textContent = `${draft.name.length} / 30`;
+      $("ed-bio-n").textContent = `${draft.bio.length} / 160`;
+      $("ed-links-n").textContent = `${draft.links.length} de ${MAX_LINKS}`;
+      $("ed-add").hidden = draft.links.length >= MAX_LINKS;
+      $("ed-save").disabled = !isDirty() || !isValid();
+      const bio = $("ed-bio");
+      bio.style.height = "auto";
+      bio.style.height = `${bio.scrollHeight}px`;
+    }
+    function setTray(kind) {
+      openTray = openTray === kind ? null : kind;
+      ["cover", "avatar"].forEach((k) => {
+        const on = openTray === k, tray = $(`tray-${k}`);
+        tray.hidden = !on;
+        if (on) tray.innerHTML = trayHTML(k);
+        document.querySelector(`[data-ed-tray="${k}"]`).setAttribute("aria-expanded", on);
+      });
+    }
+    function openEdit(from, focus) {
+      draft = clone(profile);
+      openTray = null;
+      $("ed-head").classList.remove("is-asking");
+      $("ed-name").value = draft.name;
+      $("ed-bio").value = draft.bio;
+      $("ed-links").innerHTML = linksHTML();
+      ["cover", "avatar"].forEach((k) => { $(`tray-${k}`).hidden = true; document.querySelector(`[data-ed-tray="${k}"]`).setAttribute("aria-expanded", "false"); });
+      // Nace de lo que tocaste (la portada, la foto o el botón).
+      const o = from.getBoundingClientRect(), card = $("ed-card");
+      card.style.transformOrigin = `${o.left + o.width / 2 - card.offsetLeft}px ${o.top + o.height / 2 - card.offsetTop}px`;
+      const sb = window.innerWidth - document.documentElement.clientWidth;
+      document.documentElement.style.overflow = "hidden"; // bloquea el fondo sin que la página salte
+      document.body.style.paddingRight = `${sb}px`;
+      $("shell").inert = true;
+      ed.inert = false;
+      ed.classList.add("is-open");
+      $("ed-body").scrollTop = 0;
+      syncEdit();
+      if (focus === "cover" || focus === "avatar") setTray(focus);
+      const target = focus === "bio" ? $("ed-bio") : focus === "fields" ? $("ed-name") : document.querySelector(`[data-ed-tray="${focus}"]`);
+      target.focus();
+      if (target.setSelectionRange) target.setSelectionRange(target.value.length, target.value.length);
+    }
+    function closeEdit() {
+      ed.classList.remove("is-open");
+      ed.inert = true;
+      $("shell").inert = false;
+      document.documentElement.style.overflow = "";
+      document.body.style.paddingRight = "";
+      $("edit-btn").focus();
+    }
+    // Cerrar con cambios pendientes: la cabecera pregunta. Sin cambios, cierra sin más.
+    function requestClose() {
+      if (!isDirty()) return closeEdit();
+      $("ed-head").classList.add("is-asking");
+      document.querySelector("[data-ed-keep]").focus();
+    }
+    function save() {
+      if (!isDirty() || !isValid()) return;
+      profile = { ...clone(draft), name: draft.name.trim(), bio: draft.bio.trim(), links: cleanLinks(draft.links) };
+      closeEdit();
+      renderRailV2("profile");
+      renderProfile();
+      renderFeeds();
+      $("edit-btn").focus();
+      showToast("Perfil actualizado");
+    }
+
+    $("ed-name").addEventListener("input", (e) => { draft.name = e.target.value; syncEdit(); });
+    $("ed-bio").addEventListener("input", (e) => { draft.bio = e.target.value; syncEdit(); });
+    $("ed-links").addEventListener("input", (e) => {
+      const row = e.target.closest("[data-link]");
+      if (!row) return;
+      draft.links[+row.dataset.link][e.target.dataset.linkF] = e.target.value;
+      // El error se retira en cuanto lo corriges; no aparece mientras escribes por primera vez.
+      if (e.target.dataset.linkF === "url" && URL_OK.test(e.target.value.trim())) markLink(row, false);
+      syncEdit();
+    });
+    // Validación en línea: al salir del campo, no al pulsar Guardar.
+    function markLink(row, bad) {
+      row.querySelector('[data-link-f="url"]').closest(".v2-field").classList.toggle("is-error", bad);
+      const msg = row.querySelector(".v2-ed-error");
+      if (bad && !msg) row.insertAdjacentHTML("beforeend", `<p class="v2-ed-error" role="alert">Escribe un enlace válido, como tusitio.com</p>`);
+      if (!bad && msg) msg.remove();
+    }
+    $("ed-links").addEventListener("focusout", (e) => {
+      if (e.target.dataset.linkF !== "url") return;
+      const row = e.target.closest("[data-link]"), l = draft.links[+row.dataset.link];
+      markLink(row, !!l.url.trim() && !URL_OK.test(l.url.trim()));
+    });
+    $("ed-file").addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      draft[uploadFor] = { url: URL.createObjectURL(file) }; // imagen local: no sale del navegador
+      e.target.value = "";
+      $(`tray-${uploadFor}`).innerHTML = trayHTML(uploadFor);
+      syncEdit();
+    });
+    document.addEventListener("keydown", (e) => {
+      if (!ed.classList.contains("is-open")) return;
+      if (e.key === "Escape") {
+        e.stopImmediatePropagation();
+        if ($("ed-head").classList.contains("is-asking")) $("ed-head").classList.remove("is-asking"); // Escape = seguir editando
+        else requestClose();
+      }
+      if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); save(); }
+    }, true);
+
+    // Registrado antes que el listener genérico de app.js (ver v2.js).
+    document.addEventListener("click", (e) => {
+      const hit = (sel) => e.target.closest(sel);
+      const done = () => e.stopImmediatePropagation();
+      let el;
+      if ((el = hit("[data-edit]"))) { openEdit(el, el.dataset.edit); return done(); }
+      if (hit("#pf-handle")) { showToast(`Copiado: @${me.id}`); return done(); }
+      if (!ed.classList.contains("is-open")) return;
+      if (hit("[data-ed-close]") || e.target === ed) { requestClose(); return done(); }
+      if (hit("[data-ed-keep]")) { $("ed-head").classList.remove("is-asking"); return done(); }
+      if (hit("[data-ed-discard]")) { closeEdit(); return done(); }
+      if (hit("#ed-save")) { save(); return done(); }
+      if ((el = hit("[data-ed-upload]"))) { uploadFor = el.dataset.edUpload; $("ed-file").click(); return done(); }
+      if ((el = hit("[data-ed-cover]"))) { draft.cover = { key: el.dataset.edCover }; $("tray-cover").innerHTML = trayHTML("cover"); syncEdit(); return done(); }
+      if ((el = hit("[data-ed-mask]"))) { draft.avatar = { seed: el.dataset.edMask }; $("tray-avatar").innerHTML = trayHTML("avatar"); syncEdit(); return done(); }
+      if ((el = hit("[data-ed-tray]"))) { setTray(el.dataset.edTray); return done(); }
+      if (hit("#ed-add")) {
+        draft.links.push({ label: "", url: "" });
+        $("ed-links").innerHTML = linksHTML();
+        syncEdit();
+        $("ed-links").lastElementChild.querySelector("input").focus();
+        return done();
+      }
+      if ((el = hit("[data-link-x]"))) {
+        draft.links.splice(+el.closest("[data-link]").dataset.link, 1);
+        $("ed-links").innerHTML = linksHTML();
+        syncEdit();
+        return done();
+      }
+    });
+  </script>
+</body>
+</html>

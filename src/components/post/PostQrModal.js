@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useScrollLock } from "../../utils/scrollLock";
 import { useToast } from "../../contexts/ToastContext";
 import { drawQrCard } from "../../services/qrCode";
+import { track } from "../../utils/engagementQueue";
 import cx from "../../utils/cx";
 import styles from "../../styles/components/post/PostQrModal.module.css";
 
@@ -52,6 +53,8 @@ function PostQrModal({ post, onClose }) {
   useLayoutEffect(() => {
     if (!url || !canvasRef.current) return;
     drawQrCard(canvasRef.current, url);
+    if (threadId) track("thread", threadId, "qr");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [url]);
 
   useEffect(() => {
@@ -101,6 +104,7 @@ function PostQrModal({ post, onClose }) {
         showToast({ type: "error", message: t("qrCode.downloadFailed") });
         return;
       }
+      track("thread", threadId, "download");
       const objectUrl = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = objectUrl;

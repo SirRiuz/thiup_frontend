@@ -40,6 +40,7 @@ export function dispatchRequest({
   gateway,
   signal,
   extraHeaders,
+  keepalive,
 }) {
   const headers = { Accept: "*/*", ...(extraHeaders || {}) };
   if (assertion) headers["client-assertion"] = assertion;
@@ -72,6 +73,7 @@ export function dispatchRequest({
       headers,
       body: envelope.data,
       signal,
+      keepalive,
     });
   }
 
@@ -84,5 +86,6 @@ export function dispatchRequest({
     headers,
     body: body == null ? undefined : body,
     signal,
+    keepalive,
   });
 }

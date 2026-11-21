@@ -24,6 +24,7 @@ import AppShell from "./components/nav/AppShell";
 import { FeedProvider } from "./contexts/FeedContext";
 import { ComposeProvider } from "./contexts/ComposeContext";
 import { CurrentUserProvider } from "./contexts/CurrentUserContext";
+import { NotificationsProvider } from "./contexts/NotificationsContext";
 import { ThreadCacheProvider } from "./contexts/ThreadCacheContext";
 import { SearchCacheProvider } from "./contexts/SearchCacheContext";
 import {
@@ -104,6 +105,7 @@ export default function App() {
             }}
           >
             <CurrentUserProvider>
+              <NotificationsProvider>
               <FeedProvider>
                 <ThreadCacheProvider>
                   <SearchCacheProvider>
@@ -173,6 +175,7 @@ export default function App() {
                   </SearchCacheProvider>
                 </ThreadCacheProvider>
               </FeedProvider>
+              </NotificationsProvider>
             </CurrentUserProvider>
           </BrowserRouter>
           </ToastProvider>

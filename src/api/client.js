@@ -134,6 +134,11 @@ export async function apiFetch(url, options = {}) {
         gateway: shouldUseGateway(),
         signal: options.signal,
         extraHeaders,
+        // `sendBeacon` can't carry custom headers (this app's writes need
+        // client-assertion/X-Request-Payload), so a tab-hide flush uses
+        // `fetch(..., {keepalive:true})` instead — threaded straight through
+        // to the underlying fetch call (see engagementQueue.js).
+        keepalive: options.keepalive,
       });
     } catch (err) {
       // "Encrypted or nothing" policy: if the envelope couldn't be

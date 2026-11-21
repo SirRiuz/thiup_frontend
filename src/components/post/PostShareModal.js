@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { useScrollLock } from "../../utils/scrollLock";
+import { track } from "../../utils/engagementQueue";
 import cx from "../../utils/cx";
 import styles from "../../styles/components/post/PostShareModal.module.css";
 
@@ -225,7 +226,10 @@ function PostShareModal({ post, onClose }) {
               key={opt.key}
               type="button"
               className={cx(styles.option, "springPress")}
-              onClick={opt.onSelect}
+              onClick={() => {
+                track("thread", threadId, "share");
+                opt.onSelect();
+              }}
             >
               <span className={styles.badge} style={{ background: opt.bg }}>
                 {opt.icon}

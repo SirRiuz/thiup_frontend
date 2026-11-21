@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=1280" />
+<title>Sin conexión · Thiup (maqueta)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
+<link rel="stylesheet" href="../assets/tokens.css" />
+<link rel="stylesheet" href="../assets/base.css" />
+<link rel="stylesheet" href="../assets/components.css" />
+</head>
+<body>
+  <div class="error-screen">
+    <main class="error-content" role="alert">
+      <div id="illustration"></div>
+      <h1 class="error-title-lg">Sin conexión</h1>
+      <p class="error-subtitle">Parece que te quedaste sin internet. Revisa tu conexión wifi o de datos e inténtalo de nuevo.</p>
+      <button type="button" class="error-btn-dark" id="retry-btn">
+        <span id="reload-icon"></span>
+        Reintentar
+      </button>
+      <p class="error-meta">Sin conexión de red</p>
+    </main>
+  </div>
+  <script src="../assets/icons.js"></script>
+  <script>
+    document.getElementById("illustration").innerHTML = Icons.wifiOff();
+    document.getElementById("reload-icon").innerHTML = Icons.reload();
+  </script>
+</body>
+</html>

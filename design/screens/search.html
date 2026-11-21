@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=1280" />
+<title>Buscar · Thiup (maqueta)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
+<link rel="stylesheet" href="../assets/tokens.css" />
+<link rel="stylesheet" href="../assets/base.css" />
+<link rel="stylesheet" href="../assets/components.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div id="nav-rail-mount"></div>
+
+    <div class="screen-page">
+      <header class="masthead" style="position:sticky;top:0;">
+        <span class="masthead-title">Buscar</span>
+      </header>
+
+      <main class="screen-main">
+        <div class="corner-mask" aria-hidden="true">
+          <div class="corner-mask-window"><div class="corner-mask-shape"></div></div>
+        </div>
+
+        <div class="surface">
+          <div class="search-box">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7.5"/><line x1="21" y1="21" x2="16.4" y2="16.4"/></svg>
+            <input type="search" id="search-input" placeholder="Buscar en Thiup" />
+          </div>
+
+          <!-- Landing: tendencias + temas -->
+          <div id="landing-view">
+            <h2 style="margin:0;padding:14px 0 6px;font-size:15px;font-weight:600;color:var(--text-primary);">Tendencias</h2>
+            <section id="trending-mount"></section>
+
+            <h2 style="margin:0;padding:14px 0 6px;font-size:15px;font-weight:600;color:var(--text-primary);">Explora temas</h2>
+            <div id="topics-mount" style="display:flex;flex-wrap:wrap;gap:8px;padding:4px 0 16px;"></div>
+          </div>
+
+          <!-- Vista de resultados (oculta hasta que se escriba algo) -->
+          <div id="results-view" hidden>
+            <div class="tabs" data-tabs="search">
+              <button type="button" class="tab is-active" data-tab="top">Destacados</button>
+              <button type="button" class="tab" data-tab="latest">Recientes</button>
+              <button type="button" class="tab" data-tab="people">Personas</button>
+              <button type="button" class="tab" data-tab="tags">Etiquetas</button>
+              <button type="button" class="tab" data-tab="media">Media</button>
+              <span class="tab-indicator"></span>
+            </div>
+
+            <section class="feed-items" data-tab-panel-group="search" data-tab-panel="top" id="results-mount"></section>
+            <section data-tab-panel-group="search" data-tab-panel="latest" hidden style="padding:40px 0;text-align:center;color:var(--text-tertiary);font-size:13px;">Mismos resultados, ordenados del más nuevo al más viejo.</section>
+            <section data-tab-panel-group="search" data-tab-panel="people" hidden style="padding:40px 0;text-align:center;color:var(--text-tertiary);font-size:13px;">Sin personas que coincidan en esta maqueta.</section>
+            <section data-tab-panel-group="search" data-tab-panel="tags" hidden id="tags-mount"></section>
+            <section data-tab-panel-group="search" data-tab-panel="media" hidden>
+              <div class="media-grid-mosaic is-flush" id="media-mount"></div>
+            </section>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="../assets/icons.js"></script>
+  <script src="../assets/avatar.js"></script>
+  <script src="../assets/reaction-emoji.js"></script>
+  <script src="../assets/illustrations.js"></script>
+  <script src="../assets/mock-data.js"></script>
+  <script src="../assets/app.js"></script>
+  <script>
+    renderNavRail("search");
+
+    document.getElementById("trending-mount").innerHTML = MockData.trending.map((t, i) => renderTrendRow(t, i + 1)).join("");
+    document.getElementById("topics-mount").innerHTML = MockData.topics
+      .map((t) => `<button type="button" class="chip" onclick="document.getElementById('search-input').value='#${t}';document.getElementById('search-input').dispatchEvent(new Event('input'))"><span class="chip-hash">#</span>${t}</button>`)
+      .join("");
+
+    document.getElementById("results-mount").innerHTML = MockData.searchResults
+      .map((p, i) => renderFeedCard(p, { isLast: i === MockData.searchResults.length - 1 }))
+      .join("");
+    document.getElementById("tags-mount").innerHTML = MockData.trending.map((t, i) => renderTrendRow(t, i + 1)).join("");
+    document.getElementById("media-mount").innerHTML = Array.from({ length: 9 })
+      .map((_, i) => `<button type="button" class="mosaic-tile" style="background:${i % 2 ? "#f3efe6" : "linear-gradient(135deg,#efe6d6,#e2d3b8)"}"></button>`)
+      .join("");
+
+    const input = document.getElementById("search-input");
+    const landing = document.getElementById("landing-view");
+    const results = document.getElementById("results-view");
+    input.addEventListener("input", () => {
+      const hasQuery = input.value.trim().length > 0;
+      landing.hidden = hasQuery;
+      results.hidden = !hasQuery;
+    });
+
+    const params = new URLSearchParams(location.search);
+    if (params.get("q")) {
+      input.value = params.get("q");
+      input.dispatchEvent(new Event("input"));
+    }
+  </script>
+</body>
+</html>

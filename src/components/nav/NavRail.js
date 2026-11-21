@@ -6,7 +6,9 @@ import WelcomeModal from "../WelcomeModal";
 import BrandLogo from "../BrandLogo";
 import MenuSurface, { menuStyles } from "../menu/MenuSurface";
 import { useCompose } from "../../contexts/ComposeContext";
+import { useNotifications } from "../../contexts/NotificationsContext";
 import { useKeyboardOpen } from "../../hooks/useKeyboardOpen";
+import { formatBadgeCount } from "../../utils/formatBadgeCount";
 import styles from "../../styles/components/nav/NavRail.module.css";
 import cx from "../../utils/cx";
 
@@ -365,6 +367,7 @@ function NavRail() {
   // On iOS the keyboard pushes a fixed bottom bar up on top of itself; hide it
   // while typing (it isn't usable then) and bring it back when the keyboard closes.
   const keyboardOpen = useKeyboardOpen();
+  const { unreadCount } = useNotifications();
   // Item whose tooltip is SUPPRESSED after a click (the pointer is still
   // over it → :hover would leave it stuck). It clears on the next mouseenter
   // — normal hover is not affected.
@@ -393,11 +396,14 @@ function NavRail() {
   }, [navigate]);
 
   // The mobile header (☰ + centered logo) appears on the top-level feed-like
-  // screens: home AND search (search's own "Search" masthead is desktop-only —
-  // on mobile this bar replaces it). The thread view and the profile keep
-  // their own contextual back bars, so we don't stack a second one there.
+  // screens: home, search AND notifications (their own text masthead —
+  // "Search"/"Notifications" — is desktop-only; on mobile this bar replaces
+  // it). The thread view and the profile keep their own contextual back
+  // bars, so we don't stack a second one there.
   const showMobileHeader =
-    pathname.startsWith("/home") || pathname.startsWith("/search");
+    pathname.startsWith("/home") ||
+    pathname.startsWith("/search") ||
+    pathname.startsWith("/notifications");
 
   // useRailIcons: the desktop sidebar renders Threads' exact 24px glyphs
   // (railIcon); the mobile bottom bar keeps the original stroke set (icon).
@@ -435,11 +441,29 @@ function NavRail() {
             setTipOffItem((v) => (v === item.to ? null : v))
           }
         >
-          {/* Desktop rail glyph + the mobile bar's idle/active pair — CSS
-              shows exactly one per context (see .railGlyph/.barGlyph*). */}
-          {item.railIcon}
-          {item.barIconIdle}
-          {item.barIconActive}
+          {/* A tight 24×24 box around the glyph — NOT .item itself — is
+              what the badge anchors to (see .iconBox/.badge). .item's own
+              box varies by context (a fixed 46px square on the desktop
+              rail, but "auto" filling its whole bottom-bar grid cell on
+              mobile — see .bottomBar .item): anchoring the badge straight
+              to .item put it flush with the ICON's corner on desktop by
+              coincidence (the two boxes are nearly the same size there)
+              but pulled it deep into the icon's face on mobile, where the
+              icon sits centered inside a much bigger box. A dedicated
+              same-size-everywhere wrapper removes that guesswork — same
+              CSS offset works identically at both breakpoints. */}
+          <span className={styles.iconBox}>
+            {/* Desktop rail glyph + the mobile bar's idle/active pair — CSS
+                shows exactly one per context (see .railGlyph/.barGlyph*). */}
+            {item.railIcon}
+            {item.barIconIdle}
+            {item.barIconActive}
+            {item.to === "/notifications" && unreadCount > 0 && (
+              <span className={styles.badge} aria-hidden="true">
+                {formatBadgeCount(unreadCount)}
+              </span>
+            )}
+          </span>
           <span className={styles.tooltip}>{label}</span>
         </Link>
       );

@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useLocation, useNavigate } from "react-router-dom";
 import PostProfileHoverCard from "./PostProfileHoverCard";
 import PostProfileMobileModal from "./PostProfileMobileModal";
 import { useCurrentUser } from "../../contexts/CurrentUserContext";
 import { useIsMobile } from "../../hooks/useIsMobile";
+import useMenuVerticalFlip from "../../hooks/useMenuVerticalFlip";
 import styles from "../../styles/components/post/PostProfileTrigger.module.css";
 
 const SHOW_DELAY_MS = 300;
@@ -44,12 +46,30 @@ function PostProfileTrigger({ mask, children, className, variant = "hash" }) {
   // listener per trigger meant hundreds firing on every scroll).
   const [isArmed, setIsArmed] = useState(false);
   const [mobileModalOpen, setMobileModalOpen] = useState(false);
+  // Fixed-viewport coords for the portaled card (see the render below) —
+  // set once, right when the show timer fires, from the trigger's OWN
+  // position at that moment (matches PostOptionsMenu's desktop popover:
+  // a one-time snapshot on open, not tracked live — scroll instead HIDES
+  // the card via the existing armed/scroll effect below, same as before).
+  const [pos, setPos] = useState(null);
   const showTimerRef = useRef(null);
   const hideTimerRef = useRef(null);
+  const triggerRef = useRef(null);
+  const cardRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
   const { currentUserMask } = useCurrentUser();
   const isMobile = useIsMobile();
+
+  // Smart open: flips the card ABOVE the trigger instead of below when
+  // there isn't room (a mask mention near the bottom of the viewport used
+  // to get the card clipped by the screen edge) — same hook PostOptionsMenu
+  // already uses for its desktop popover.
+  const correctedTop = useMenuVerticalFlip({
+    open: isVisible && !isMobile,
+    triggerRef,
+    menuRef: cardRef,
+  });
 
   // Click on the avatar/mask → the anonymous profile (your own mask goes to
   // /profile, the private version). stopPropagation: the trigger lives inside
@@ -120,6 +140,11 @@ function PostProfileTrigger({ mask, children, className, variant = "hash" }) {
     if (isVisible) return;
     setIsArmed(true);
     showTimerRef.current = setTimeout(() => {
+      // Snapshot the trigger's viewport position right as the card is about
+      // to mount — the portal below renders it at document.body, so it no
+      // longer inherits position from the DOM tree here.
+      const r = triggerRef.current?.getBoundingClientRect();
+      if (r) setPos({ top: r.bottom + 8, left: r.left });
       setIsVisible(true);
       showTimerRef.current = null;
     }, SHOW_DELAY_MS);
@@ -143,6 +168,7 @@ function PostProfileTrigger({ mask, children, className, variant = "hash" }) {
 
   return (
     <span
+      ref={triggerRef}
       className={wrapperClassName}
       role="link"
       tabIndex={0}
@@ -155,17 +181,38 @@ function PostProfileTrigger({ mask, children, className, variant = "hash" }) {
       onMouseLeave={isMobile ? undefined : handleMouseLeave}
     >
       {children}
-      {!isMobile && isVisible && (
-        // data-hover-card: lets clickable ancestors (the feed card's whole-row
-        // navigation) ignore clicks landing on the floating profile card.
-        <div className={styles.cardContainer} data-hover-card="">
-          <PostProfileHoverCard
-            mask={mask}
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
-          />
-        </div>
-      )}
+      {!isMobile &&
+        isVisible &&
+        pos &&
+        createPortal(
+          // Portaled to document.body (was an inline `position: absolute`
+          // child of the trigger) — an in-tree card is trapped inside
+          // whatever stacking context its ancestors happen to create
+          // (position+z-index, transform, opacity<1…), so unrelated
+          // elements elsewhere on the page could end up rendering on top of
+          // it depending on where the trigger happened to sit. Portaling
+          // escapes that entirely, matching every other trigger-anchored
+          // popover in the app (PostOptionsMenu's desktop popover,
+          // MediaContextMenu) and this component's OWN mobile sibling
+          // (PostProfileMobileModal, already portaled).
+          // data-hover-card: lets clickable ancestors (the feed card's
+          // whole-row navigation) ignore clicks landing on the card — moot
+          // for DOM bubbling now that it's portaled out of that subtree,
+          // kept for anything still querying the attribute directly.
+          <div
+            ref={cardRef}
+            className={styles.cardContainer}
+            data-hover-card=""
+            style={{ top: correctedTop ?? pos.top, left: pos.left }}
+          >
+            <PostProfileHoverCard
+              mask={mask}
+              onMouseEnter={handleMouseEnter}
+              onMouseLeave={handleMouseLeave}
+            />
+          </div>,
+          document.body
+        )}
       {isMobile && variant === "avatar" && mobileModalOpen && (
         <PostProfileMobileModal
           mask={mask}

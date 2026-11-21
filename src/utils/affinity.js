@@ -8,6 +8,15 @@
  * from a tag search. If the server is compromised, there is no profile to
  * leak.
  *
+ * Distinct from engagementQueue.js (utils/engagementQueue.js): that module
+ * DOES send data to the backend — anonymous, best-effort CONTENT analytics
+ * (view/QR/download/share counts on a thread or profile, never tied to a
+ * per-tag interest profile or a persistent identity graph). This file's
+ * "never leaves the device" rule is about the AFFINITY map specifically,
+ * not a blanket statement that Thiup sends nothing to the server — it's a
+ * conscious product line: personalization profile stays local, content
+ * engagement stats are server-side and aggregate.
+ *
  * Defensive localStorage access throughout: it can be disabled or full —
  * the app never breaks because of that.
  */

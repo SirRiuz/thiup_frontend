@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=1280" />
+<title>404 · Thiup (maqueta)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
+<link rel="stylesheet" href="../assets/tokens.css" />
+<link rel="stylesheet" href="../assets/base.css" />
+<link rel="stylesheet" href="../assets/components.css" />
+</head>
+<body>
+  <div class="error-screen">
+    <main class="error-content" role="alert">
+      <div id="illustration"></div>
+      <p class="error-title-404">404</p>
+      <h1 class="error-title">Aquí no hay nada</h1>
+      <p class="error-subtitle">Esta página se perdió en el vacío. Vamos a llevarte de vuelta.</p>
+      <button type="button" class="error-btn-light" onclick="location.href='home.html'">Volver al inicio</button>
+    </main>
+  </div>
+  <script src="../assets/icons.js"></script>
+  <script>document.getElementById("illustration").innerHTML = Icons.ghostCards();</script>
+</body>
+</html>

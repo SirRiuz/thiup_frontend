@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Thiup — Maqueta de diseño</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" />
+<link rel="stylesheet" href="assets/tokens.css" />
+<link rel="stylesheet" href="assets/base.css" />
+<link rel="stylesheet" href="assets/components.css" />
+<style>
+  .doc { max-width: 980px; margin: 0 auto; padding: 64px 24px 120px; }
+  .cover { padding: 48px 0 40px; border-bottom: 1px solid var(--border-default); }
+  .cover-eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--brand-terracotta); }
+  .cover h1 { font-size: 46px; font-weight: 800; margin: 10px 0 14px; letter-spacing: -0.02em; }
+  .cover p { font-size: 15px; line-height: 1.7; color: var(--text-secondary); max-width: 640px; }
+  .cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 40px; }
+  .card-go { display: flex; flex-direction: column; gap: 10px; padding: 24px; border-radius: 18px; background: var(--bg-surface); border: 1px solid var(--border-surface); text-decoration: none; min-height: 150px; transition: border-color .2s ease, box-shadow .2s ease; }
+  .card-go:hover { border-color: var(--text-primary); box-shadow: var(--shadow-hover-card); }
+  .card-go h2 { font-size: 17px; margin: 0; color: var(--text-primary); }
+  .card-go p { margin: 0; font-size: 13px; color: var(--text-tertiary); line-height: 1.6; flex: 1; }
+  .card-go .go { font-size: 13px; font-weight: 600; color: var(--brand-terracotta); }
+  .screens { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 16px; }
+  .screens a { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 14px; background: var(--bg-surface); border: 1px solid var(--border-default); text-decoration: none; }
+  .screens a:hover { border-color: var(--text-primary); }
+  .screens .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  .screens b { font-size: 14px; color: var(--text-primary); display: block; }
+  .screens small { font-size: 12px; color: var(--text-tertiary); }
+  section.doc-sec { margin-top: 48px; }
+  section.doc-sec h2 { font-size: 18px; color: var(--text-primary); margin-bottom: 4px; }
+  .foot-note { margin-top: 56px; font-size: 12px; color: var(--text-quaternary); line-height: 1.7; }
+</style>
+</head>
+<body style="background: var(--bg-page);">
+<div class="doc">
+  <header class="cover">
+    <p class="cover-eyebrow">Maqueta de solo-diseño · no toca la app real</p>
+    <h1>Thiup</h1>
+    <p>Copia visual estática del diseño que la app YA tiene — HTML, CSS y JS puros, sin build, sin llamadas de red, con datos 100% inventados. Sirve para jugar y proponer cambios de diseño sin arriesgar <code>src/</code>. Las 9 pantallas están en versión de escritorio.</p>
+  </header>
+
+  <div class="cards">
+    <a class="card-go" href="sistema-de-diseno.html">
+      <h2>Sistema de diseño</h2>
+      <p>Color, tipografía, espaciado/radios/sombra, botones, tabs, menú flotante, reacciones, avatar procedural, nav, avisos, modal/toast e iconografía — tal como existen hoy en el código.</p>
+      <span class="go">Ver el sistema →</span>
+    </a>
+    <a class="card-go" href="screens/home.html">
+      <h2>Las 9 pantallas</h2>
+      <p>Copias exactas (colores, medidas, tipografía) de Inicio, Hilo, Buscar, Perfil, Perfil público, Notificaciones y los 3 estados de error — navegables entre sí.</p>
+      <span class="go">Empezar por Inicio →</span>
+    </a>
+  </div>
+
+  <section class="doc-sec">
+    <h2>Cada pantalla por separado</h2>
+    <p style="font-size:13px;color:var(--text-tertiary);">Escritorio, 1280px+. Comparten los mismos assets (<code>assets/tokens.css</code>, <code>components.css</code>, <code>app.js</code>) — cambia un token y se propaga a las 9.</p>
+    <div class="screens">
+      <a href="screens/home.html"><span class="dot" style="background:#a85432"></span><span><b>Inicio</b><small>Feed · compose · tabs</small></span></a>
+      <a href="screens/home-v2.html"><span class="dot" style="background:#b8845f"></span><span><b>Inicio v2 (propuesta)</b><small>Una fila de acciones · crear hilo · esqueletos al cargar</small></span></a>
+      <a href="screens/thread.html"><span class="dot" style="background:#a85432"></span><span><b>Hilo</b><small>OP · respuestas anidadas · reacciones</small></span></a>
+      <a href="screens/thread-v2.html"><span class="dot" style="background:#b8845f"></span><span><b>Hilo v2 (propuesta)</b><small>Mapa del hilo · ramas plegables · composer acoplado</small></span></a>
+      <a href="screens/search.html"><span class="dot" style="background:#a85432"></span><span><b>Buscar</b><small>Tendencias · tabs · media</small></span></a>
+      <a href="screens/profile.html"><span class="dot" style="background:#a85432"></span><span><b>Mis hilos</b><small>Perfil propio</small></span></a>
+      <a href="screens/profile-v2.html"><span class="dot" style="background:#b8845f"></span><span><b>Perfil v2 (propuesta)</b><small>Portada · descripción · enlaces · editar perfil</small></span></a>
+      <a href="screens/public-profile.html"><span class="dot" style="background:#a85432"></span><span><b>Perfil público</b><small>/m/:maskId</small></span></a>
+      <a href="screens/notifications.html"><span class="dot" style="background:#a85432"></span><span><b>Notificaciones</b><small>Lista + vacío</small></span></a>
+      <a href="screens/not-found.html"><span class="dot" style="background:#9b9591"></span><span><b>404</b><small>No encontrada</small></span></a>
+      <a href="screens/server-error.html"><span class="dot" style="background:#9b9591"></span><span><b>Error de servidor</b><small>503</small></span></a>
+      <a href="screens/network-error.html"><span class="dot" style="background:#9b9591"></span><span><b>Sin conexión</b><small>Offline</small></span></a>
+    </div>
+  </section>
+
+  <p class="foot-note">
+    HTML + CSS + JS puro, se abre con doble clic o un servidor estático cualquiera. Ningún dato, usuario, hash ni cifra es real — ver <code>assets/mock-data.js</code>. No hay <code>fetch</code> ni dependencia de red salvo la fuente Inter de Google Fonts (cámbiala por un <code>@font-face</code> local si necesitas trabajar sin internet). Ver <code>design/CLAUDE.md</code> para las reglas de este directorio.
+  </p>
+</div>
+</body>
+</html>

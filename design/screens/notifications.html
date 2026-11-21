@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=1280" />
+<title>Notificaciones · Thiup (maqueta)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
+<link rel="stylesheet" href="../assets/tokens.css" />
+<link rel="stylesheet" href="../assets/base.css" />
+<link rel="stylesheet" href="../assets/components.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div id="nav-rail-mount"></div>
+
+    <div class="screen-page">
+      <header class="masthead" style="position:sticky;top:0;">
+        <span class="masthead-title">Notificaciones</span>
+      </header>
+
+      <main class="screen-main">
+        <div class="corner-mask" aria-hidden="true">
+          <div class="corner-mask-window"><div class="corner-mask-shape"></div></div>
+        </div>
+
+        <div class="surface" id="notif-surface"></div>
+      </main>
+    </div>
+  </div>
+
+  <script src="../assets/icons.js"></script>
+  <script src="../assets/avatar.js"></script>
+  <script src="../assets/reaction-emoji.js"></script>
+  <script src="../assets/illustrations.js"></script>
+  <script src="../assets/mock-data.js"></script>
+  <script src="../assets/app.js"></script>
+  <script>
+    renderNavRail("notifications");
+
+    // Deja ambos estados a mano para jugar con el diseño: la lista con
+    // ejemplos y el vacío real que ve casi todo el mundo hoy (CLAUDE.md:
+    // "placeholder noindex hasta que el backend tenga actividad real").
+    const SHOW_EMPTY = false;
+
+    const surface = document.getElementById("notif-surface");
+    if (SHOW_EMPTY) {
+      surface.innerHTML = `
+        <div class="notif-empty">
+          <div class="notif-empty-icon">${Icons.heart()}</div>
+          <p style="margin:0 0 6px;font-size:16px;font-weight:600;color:var(--text-primary);">Aún no hay notificaciones</p>
+          <p style="margin:0;font-size:13px;color:var(--text-secondary);">Te avisaremos cuando alguien interactúe contigo.</p>
+        </div>`;
+    } else {
+      surface.innerHTML = MockData.notifications.map(renderNotification).join("");
+    }
+  </script>
+</body>
+</html>

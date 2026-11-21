@@ -1,0 +1,912 @@
+/* =========================================================================
+   THIUP MOCKUP — V2 (compartido por las propuestas screens/*-v2.html)
+   El lenguaje de la segunda pasada: rail con palabras, una sola fila de
+   acciones (chips de reacción + Responder), botón ⋯ y menú, tarjeta de
+   perfil al hover, esqueletos de carga y el editor ampliado. Solo tokens
+   existentes. Las pantallas originales NO cargan este archivo.
+   Ver design/CLAUDE.md § Propuestas v2.
+   ========================================================================= */
+
+/* ============================ RAIL ============================ */
+/* Rail propio de las v2 (renderRailV2 en v2.js). Mismo sitio y ancho (76px)
+   que el original, pero diseñado como una sola pieza: TODOS los destinos
+   comparten la misma anatomía — una cápsula de 52×32 que lleva el icono y,
+   debajo, su palabra — así nada baila de tamaño ni se pisa.
+     · Reposo: icono y palabra en gris medio (antes #b8b8b8: casi invisible).
+     · Encima: la cápsula se tiñe y todo pasa a tinta.
+     · Activo: cápsula terracota clara + icono terracota + palabra en tinta.
+     · Crear: la MISMA cápsula, rellena de tinta — la acción principal.
+     · Perfil: tu máscara, no una silueta genérica.
+   El grupo va centrado; el logo arriba y "Más" abajo anclan los extremos. */
+.v2-rail { gap: 0; padding: 10px 0 12px; }
+.v2-rail .nav-rail-logo { padding: 14px 0; }
+.v2-rail-items { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: auto 0; }
+.v2-rail-more { position: relative; }
+.v2-rail-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 68px;
+  padding: 2px 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  text-decoration: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.v2-rail-pill {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 32px;
+  border-radius: 16px;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+.v2-rail-pill > svg { width: 22px; height: 22px; }
+.v2-rail-word {
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 14px;
+  letter-spacing: 0.005em;
+  transition: color 0.2s ease;
+}
+/* Respuesta al toque en la cápsula (lo que se pulsa), no en toda la celda. */
+.v2-rail-item:active .v2-rail-pill { transform: scale(0.92); }
+@media (hover: hover) {
+  .v2-rail-item:hover { color: var(--text-primary); }
+  .v2-rail-item:hover .v2-rail-pill { background: rgba(26, 26, 26, 0.06); }
+}
+.v2-rail-item.is-active { color: var(--text-primary); }
+.v2-rail-item.is-active .v2-rail-word { font-weight: 600; }
+.v2-rail-item.is-active .v2-rail-pill,
+.v2-rail-item.is-active:hover .v2-rail-pill { background: var(--brand-tint); color: var(--brand-terracotta); }
+
+.v2-rail-item.is-create .v2-rail-pill,
+.v2-rail-item.is-create:hover .v2-rail-pill { background: var(--text-primary); color: var(--bg-surface); }
+.v2-rail-item.is-create .v2-rail-pill > svg { width: 18px; height: 18px; }
+@media (hover: hover) { .v2-rail-item.is-create:hover .v2-rail-pill { transform: scale(1.05); } }
+.v2-rail-item.is-create:active .v2-rail-pill { transform: scale(0.94); }
+
+/* Perfil: la máscara; activa, lleva el aro terracota en vez de teñir la cápsula. */
+.v2-rail-pill > svg.is-avatar,
+.v2-rail-pill > .is-avatar svg { width: 24px; height: 24px; }
+.v2-rail-item.is-active .v2-rail-pill .is-avatar { box-shadow: 0 0 0 2px var(--brand-tint), 0 0 0 3.5px var(--brand-terracotta); border-radius: 50%; }
+
+.v2-rail-badge {
+  position: absolute;
+  top: 0;
+  left: calc(50% + 3px);
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4.5px;
+  border-radius: var(--radius-pill);
+  background: var(--brand-terracotta);
+  box-shadow: 0 0 0 2px var(--bg-page); /* se recorta del fondo del rail */
+  color: var(--bg-surface);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.v2-rail-item:focus-visible { box-shadow: none; }
+.v2-rail-item:focus-visible .v2-rail-pill { box-shadow: 0 0 0 2px var(--brand-sand); }
+.v2-rail-more .menu-surface.v2-menu { transform-origin: -12px calc(100% - 20px); }
+
+/* ============================ ACCIONES (una sola fila) ============================ */
+.v2-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.v2-chips { display: contents; }
+/* Pastillas RELLENAS (antes: contorno gris sobre crema, que se leía a
+   maqueta). En reposo son un objeto cálido; la tuya se enciende en terracota
+   con un aro fino. */
+.v2-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 28px;
+  padding: 0 11px 0 8px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--fill-chip);
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+}
+.v2-chip:active { transform: scale(0.94); }
+.v2-chip.is-mine {
+  background: var(--brand-tint);
+  box-shadow: inset 0 0 0 1px rgba(168, 84, 50, 0.32);
+  color: var(--brand-terracotta);
+}
+.v2-chip.is-pop .rx-root { animation: v2-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+/* La cifra "cae" a su nuevo valor (el contador se siente vivo, no se limita a cambiar). */
+.v2-chip.is-pop span { display: inline-block; animation: v2-tick 0.32s var(--ease-expo-out); }
+@media (hover: hover) {
+  .v2-chip:hover { background: var(--fill-chip-hover); color: var(--text-primary); }
+  .v2-chip.is-mine:hover { background: #ecd9c4; color: var(--brand-terracotta); }
+}
+.v2-reply-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 28px;
+  padding: 0 10px 0 8px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.2s ease, color 0.2s ease;
+}
+.v2-reply-btn svg { width: 16px; height: 16px; }
+/* Cuántas respuestas directas tiene: la cifra va con la acción. */
+.v2-reply-n { color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
+.v2-reply-n:empty { display: none; }
+.v2-reply-btn:active { transform: scale(0.96); }
+@media (hover: hover) {
+  .v2-reply-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+}
+/* Tras elegir una cara, el popover se retira aunque el mouse siga encima. */
+.reaction-picker-wrap.v2-picked .reaction-popover {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+/* En el OP las acciones pesan un poco más. */
+.v2-op .v2-chip, .v2-op .v2-reply-btn { height: 32px; }
+.v2-op .reaction-trigger-compact { width: 32px; height: 32px; }
+
+/* ============================ CARGA AL CAMBIAR DE ORDEN ============================ */
+/* Reordenar no es instantáneo: mientras llega, la lista se reemplaza por
+   esqueletos con la MISMA anatomía de una respuesta (avatar, nombre, dos
+   líneas) que respiran en cascada, y el chevron del selector pasa a
+   ser un aro girando — el propio control dice que está trabajando. */
+.v2-skel-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  column-gap: 12px;
+  padding: 16px 0 12px;
+  animation: v2-rise 0.3s var(--ease-expo-out) backwards, v2-breathe 1.4s ease-in-out infinite;
+}
+.v2-skel-row:nth-child(2) { animation-delay: 0.06s, 0.18s; }
+.v2-skel-row:nth-child(3) { animation-delay: 0.12s, 0.36s; }
+.v2-skel-row + .v2-skel-row::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -16px;
+  right: -16px;
+  height: 0.5px;
+  background: var(--divider-feed);
+}
+.v2-skel-row i { display: block; height: 10px; border-radius: var(--radius-pill); background: var(--border-default); }
+.v2-skel-row .is-avatar { width: 36px; height: 36px; border-radius: 50%; }
+.v2-skel-row .is-name { width: 84px; margin: 6px 0 12px; }
+.v2-skel-row .is-line { margin-bottom: 9px; }
+@keyframes v2-breathe { 50% { opacity: 0.45; } }
+
+.v2-sort-spin {
+  display: none;
+  width: 12px;
+  height: 12px;
+  border: 1.5px solid var(--brand-sand);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: feedSpin 0.7s linear infinite;
+}
+.sort-trigger.is-loading > svg:last-of-type { display: none; }
+.sort-trigger.is-loading .v2-sort-spin { display: block; }
+
+/* ============================ BOTÓN ⋯ ============================ */
+/* El de thread.html (.action-btn con padding:0) no centra el glifo: el
+   lavado del hover quedaba corrido. Aquí es un círculo de 36px con el
+   glifo centrado; el margen negativo alinea los puntos con el borde del
+   contenido sin crecer la fila. */
+.v2-menu-wrap {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  margin: -8px -8px -8px 0;
+}
+.v2-dots {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+.v2-dots:active { transform: scale(0.9); }
+@media (hover: hover) {
+  .v2-dots:hover { background: var(--bg-hover); color: var(--text-primary); }
+}
+/* Mientras su menú está abierto, el botón se queda "encendido". */
+.v2-menu-wrap:has(.menu-surface:not([hidden])) .v2-dots { background: var(--bg-hover); color: var(--text-primary); }
+.v2-dots:focus-visible { box-shadow: inset 0 0 0 2px var(--brand-sand); }
+
+/* ============================ MENÚ ============================ */
+/* Una capa de material que nace del botón que la abrió: translúcida,
+   sombra corta y cálida (antes: halo de 80px), texto a peso de lectura
+   (antes 15/600) y el icono a la derecha, todos del mismo trazo. */
+.menu-surface.v2-menu {
+  width: 216px;
+  padding: 6px;
+  border-radius: var(--radius-2xl);
+  background: rgba(253, 252, 248, 0.84);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+  outline: 0.5px solid var(--border-surface);
+  box-shadow: 0 12px 36px rgba(26, 26, 26, 0.12), 0 2px 6px rgba(26, 26, 26, 0.05);
+  transform-origin: calc(100% - 18px) -12px; /* el centro del botón ⋯ */
+  animation: v2-menu-in 0.22s var(--ease-expo-out);
+}
+.v2-menu .menu-item {
+  justify-content: space-between;
+  height: 40px;
+  padding: 0 10px 0 12px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: -0.006em;
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+.v2-menu .menu-item:active { transform: scale(0.98); }
+.v2-menu .menu-item svg { flex: none; color: var(--text-tertiary); transition: color 0.2s ease; }
+.v2-menu .menu-item:is(:hover, :focus-visible) { background: rgba(26, 26, 26, 0.05); }
+.v2-menu .menu-item:is(:hover, :focus-visible) svg { color: var(--text-primary); }
+.v2-menu .menu-divider { height: 0.5px; margin: 6px 12px; background: var(--divider-feed); }
+.v2-menu .menu-item.is-danger,
+.v2-menu .menu-item.is-danger svg { color: var(--danger); }
+.v2-menu .menu-item.is-danger:is(:hover, :focus-visible) { background: rgba(197, 48, 48, 0.07); }
+.v2-menu .menu-item-icon { margin: 0; }
+.v2-sort-wrap .v2-menu { transform-origin: calc(100% - 40px) -12px; }
+@keyframes v2-menu-in { from { opacity: 0; transform: scale(0.86); } }
+@media (prefers-reduced-transparency: reduce) {
+  .menu-surface.v2-menu { background: var(--bg-surface); -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
+
+/* ============================ TARJETA DE PERFIL (hover) ============================ */
+/* Rediseño de PostProfileHoverCard. Qué cambia y por qué:
+   - El título era "Anónimo" (igual para todos = cero información) y la
+     identidad real iba en una pastilla monoespaciada diminuta. Ahora el
+     nombre de la máscara ES el título, en Inter.
+   - El avatar va a la IZQUIERDA y la tarjeta se alinea para que caiga justo
+     bajo el avatar que señalaste: la tarjeta nace de él (escala desde ahí).
+   - "En línea" se dice con palabras + un punto pequeño (el punto verde de
+     16px sobre el avatar gritaba).
+   - Dos cifras grandes, sin cajas; la fecha de ingreso va al pie.
+   - Tiene salida: "Ver perfil".
+   Misma capa translúcida que el menú ⋯ (un solo material para todo lo que flota). */
+.v2-pcard {
+  position: absolute;
+  top: 0; /* sin esto, cerrada se apoyaba al final del body y alargaba la página */
+  left: 0;
+  z-index: 1100;
+  width: 280px;
+  padding: 16px 16px 8px;
+  border-radius: 20px;
+  /* Más opaca que el menú: aquí hay texto pequeño y el de atrás no debe transparentarse. */
+  background: rgba(253, 252, 248, 0.95);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+  outline: 0.5px solid var(--border-surface);
+  box-shadow: 0 12px 36px rgba(26, 26, 26, 0.12), 0 2px 6px rgba(26, 26, 26, 0.05);
+  opacity: 0;
+  visibility: hidden;
+  transform: scale(0.92);
+  /* Transiciones (no keyframes): si vuelves a entrar mientras se cierra,
+     retoma desde donde va en vez de saltar. */
+  transition: opacity 0.14s ease, transform 0.2s ease, visibility 0s 0.14s;
+}
+.v2-pcard.is-open {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition: opacity 0.16s ease, transform 0.32s var(--ease-expo-out), visibility 0s;
+}
+.v2-pcard-top { display: flex; align-items: center; gap: 12px; }
+.v2-pcard-top svg { flex: none; }
+.v2-pcard-name {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+  color: var(--text-primary);
+}
+.v2-pcard-sub {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 3px 0 0;
+  font-size: 13px;
+  line-height: 1.3;
+  color: var(--text-secondary);
+}
+.v2-pcard-live { flex: none; width: 7px; height: 7px; border-radius: 50%; background: rgb(94, 231, 71); }
+.v2-pcard-sub .meta-dot { color: var(--separator-glyph); }
+/* Cifras: tipografía, no cajas. Dos números grandes alineados al borde
+   izquierdo (el mismo eje del avatar), con su palabra debajo — sin
+   bandeja gris, sin columnas centradas, sin divisores. La fecha NO es una
+   cifra: baja al pie como un susurro, junto a la salida. */
+.v2-pcard-stats { display: flex; gap: 28px; margin: 18px 0 16px; }
+.v2-pcard-stat { display: flex; flex-direction: column; gap: 1px; }
+.v2-pcard-stat b {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.022em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+.v2-pcard-stat span { font-size: 12px; line-height: 1.35; color: var(--text-tertiary); }
+.v2-pcard-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 8px;
+  border-top: 0.5px solid var(--divider-feed);
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+.v2-pcard-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 32px;
+  margin-right: -8px;
+  padding: 0 6px 0 10px;
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+.v2-pcard-cta svg { color: var(--text-tertiary); transform: rotate(-90deg); transition: transform 0.25s var(--ease-expo-out), color 0.2s ease; }
+.v2-pcard-cta:active { transform: scale(0.96); }
+.v2-pcard-cta:is(:hover, :focus-visible) { background: rgba(26, 26, 26, 0.05); }
+.v2-pcard-cta:is(:hover, :focus-visible) svg { color: var(--text-primary); transform: translateX(2px) rotate(-90deg); }
+[data-profile] { cursor: pointer; }
+@media (prefers-reduced-transparency: reduce) {
+  .v2-pcard { background: var(--bg-surface); -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
+
+/* ============================ EDITOR AMPLIADO ============================ */
+/* Rediseño de PostReplyExpandModal. Es el MISMO borrador que el composer
+   acoplado visto más grande (el texto se comparte en vivo), así que:
+   - Nace del composer y vuelve a él (la escala parte del pill): se entiende
+     que es el mismo campo, no otra pantalla.
+   - No hay "Cancelar" ni "¿Descartar?": contraer nunca pierde nada, por eso
+     Escape, clic fuera y el botón de arriba hacen lo mismo — contraer.
+   - El título dice a QUIÉN respondes; el mensaje original queda en gris
+     (contexto) y lo que escribes es lo único en tinta (protagonista).
+   - El contador solo aparece cuando hace falta (un aro; el número, al final). */
+.v2-ex {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: grid;
+  /* Fila acotada al alto disponible: sin esto, max-height:100% de la tarjeta
+     no tiene contra qué medirse y un texto largo la saca de la pantalla. */
+  grid-template-rows: minmax(0, 1fr);
+  place-items: center;
+  padding: 48px 24px;
+  background: var(--modal-backdrop);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, visibility 0s 0.2s;
+}
+.v2-ex.is-open { opacity: 1; visibility: visible; transition: opacity 0.22s ease, visibility 0s; }
+.v2-ex-card {
+  display: flex;
+  flex-direction: column;
+  width: min(600px, 100%);
+  max-height: 100%;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-surface);
+  border-radius: var(--radius-modal);
+  box-shadow: var(--shadow-modal);
+  opacity: 0;
+  transform: scale(0.88);
+  transition: transform 0.22s ease, opacity 0.14s ease;
+}
+.v2-ex.is-open .v2-ex-card { opacity: 1; transform: none; transition: transform 0.42s var(--ease-expo-out), opacity 0.2s ease; }
+.v2-ex-head {
+  flex: none;
+  display: grid;
+  grid-template-columns: 36px 1fr 36px;
+  align-items: center;
+  height: 56px;
+  padding: 0 10px;
+}
+.v2-ex-title {
+  margin: 0;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.v2-ex-title b { font-weight: 600; color: var(--text-primary); }
+.v2-ex-collapse {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+.v2-ex-collapse:active { transform: scale(0.9); }
+.v2-ex-collapse:is(:hover, :focus-visible) { background: var(--bg-hover); color: var(--text-primary); }
+.v2-ex-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+  padding: 4px 20px 8px;
+}
+.v2-ex-body::-webkit-scrollbar { display: none; }
+.v2-ex-rowgrid { display: grid; grid-template-columns: 36px minmax(0, 1fr); column-gap: 12px; }
+.v2-ex-lane { display: flex; flex-direction: column; align-items: center; }
+/* La MISMA línea de continuidad del hilo (.v2-trunk): 2px, mismo tono,
+   misma punta redondeada, y 4px de aire en AMBOS avatares. Para que el
+   tramo llegue hasta tu avatar, el aire entre filas vive en la columna de
+   contenido (no en la fila): así el carril mide la fila completa. */
+.v2-ex-trunk { flex: 1; width: 2px; min-height: 14px; margin: 4px 0; border-radius: 2px 2px 0 0; background: var(--border-surface); }
+.v2-ex-parent > div:last-child { padding-bottom: 16px; }
+.v2-ex-parent p {
+  margin: 2px 0 0;
+  font-size: 14px;
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+  color: var(--text-secondary);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  overflow: hidden;
+}
+.v2-ex-thumbs { display: flex; gap: 6px; margin-top: 10px; }
+.v2-ex-thumb {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  border-radius: 10px;
+  overflow: hidden;
+}
+/* Mismo contorno que las fotos del hilo: pintado ENCIMA de la imagen. */
+.v2-ex-thumb::after { content: ""; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.15); pointer-events: none; }
+.v2-ex-thumb svg { width: 100%; height: 100%; }
+.v2-ex-self textarea {
+  display: block;
+  width: 100%;
+  min-height: 120px;
+  max-height: none;
+  margin-top: 2px;
+  padding: 0;
+  border: 0;
+  outline: none;
+  resize: none;
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.5;
+  letter-spacing: -0.008em;
+  color: var(--text-primary);
+}
+.v2-ex-self textarea::placeholder { color: var(--text-tertiary); }
+.v2-ex-foot {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px 14px 12px;
+}
+.v2-ex-tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 36px;
+  padding: 0 12px 0 10px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.2s ease, color 0.2s ease;
+}
+.v2-ex-tool:active { transform: scale(0.96); }
+.v2-ex-tool:is(:hover, :focus-visible) { background: var(--bg-hover); color: var(--text-primary); }
+/* Contador: un aro que se llena; invisible hasta que escribes, el número
+   solo aparece en los últimos 20 y pasa a rojo si te pasas. */
+.v2-ex-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-tertiary);
+  opacity: 0;
+  transition: opacity 0.2s ease, color 0.2s ease;
+}
+.v2-ex-count.is-on { opacity: 1; }
+.v2-ex-count circle { fill: none; stroke-width: 2.5; }
+.v2-ex-count .is-track { stroke: var(--border-default); }
+.v2-ex-count .is-fill { stroke: currentColor; stroke-linecap: round; transition: stroke-dashoffset 0.2s ease; }
+.v2-ex-count.is-near { color: var(--brand-terracotta); }
+.v2-ex-count.is-over { color: var(--danger); }
+.v2-ex-send {
+  height: 36px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: var(--radius-pill); /* las acciones principales son píldoras, como chips y Responder */
+  background: var(--text-primary);
+  color: var(--bg-surface);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s ease, opacity 0.2s ease;
+}
+.v2-ex-send:not(:disabled):active { transform: scale(0.96); }
+.v2-ex-send:disabled { opacity: 0.3; cursor: default; }
+.v2-ex-send:focus-visible, .v2-ex-collapse:focus-visible, .v2-ex-tool:focus-visible { box-shadow: 0 0 0 2px var(--brand-sand); }
+
+/* ============================ MOVIMIENTO ============================ */
+@keyframes v2-rise { from { opacity: 0; transform: translateY(8px); } }
+@keyframes v2-fade { from { opacity: 0; } }
+@keyframes v2-slide-in { from { opacity: 0; transform: translateX(-10px); } }
+@keyframes v2-pop { 40% { transform: scale(1.4); } }
+/* Mismo lenguaje que la app real: un brillo interior que se recoge en un
+   contorno fino, se sostiene y se apaga. Todo es inset: nada sale de la placa. */
+@keyframes v2-flash {
+  0% { background-color: var(--brand-wash); box-shadow: inset 0 0 0 14px rgba(168, 84, 50, 0.1); }
+  18%, 45% { background-color: var(--brand-wash); box-shadow: inset 0 0 0 1px rgba(168, 84, 50, 0.4); }
+  100% { background-color: transparent; box-shadow: inset 0 0 0 1px transparent; }
+}
+
+/* ============================ VIDEO ============================ */
+/* Controles de video: disco claro de reproducir al centro y, abajo, la
+   barra de progreso con su tirador y los tiempos (transcurrido · total).
+   Reemplaza en las pantallas v2 al disco oscuro + pastilla de silencio. La
+   maqueta no reproduce video real: el progreso es simulado, pero se puede
+   reproducir, pausar y arrastrar. */
+.v2-vid {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--bg-surface);
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.v2-vid::after { /* velo inferior: la barra y los tiempos se leen sobre cualquier imagen */
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 88px;
+  background: linear-gradient(to top, rgba(26, 26, 26, 0.6), rgba(26, 26, 26, 0));
+  pointer-events: none;
+}
+.v2-vid-play {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(253, 252, 248, 0.94);
+  color: var(--text-primary);
+  box-shadow: 0 2px 10px rgba(26, 26, 26, 0.18);
+  cursor: pointer;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+.v2-vid-play:active { transform: scale(0.92); }
+.v2-vid-play .is-pause { display: none; }
+.v2-vid.is-playing .v2-vid-play .is-play { display: none; }
+.v2-vid.is-playing .v2-vid-play .is-pause { display: block; }
+/* Reproduciendo, el disco se retira; vuelve al pasar el cursor o con el foco. */
+.v2-vid.is-playing .v2-vid-play { opacity: 0; transform: scale(0.85); }
+.v2-vid.is-playing:hover .v2-vid-play,
+.v2-vid.is-playing .v2-vid-play:focus-visible { opacity: 1; transform: none; }
+.v2-vid-play:focus-visible { box-shadow: 0 0 0 2px var(--brand-sand); }
+.v2-vid-bar { position: absolute; z-index: 1; left: 12px; right: 12px; bottom: 8px; }
+.v2-vid-track { /* zona de toque de 16px alrededor de una línea de 3px */
+  position: relative;
+  height: 16px;
+  cursor: pointer;
+  touch-action: none;
+}
+.v2-vid-track::before,
+.v2-vid-fill {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  height: 3px;
+  margin-top: -1.5px;
+  border-radius: 3px;
+  transition: height 0.15s ease, margin-top 0.15s ease;
+}
+.v2-vid-track::before { right: 0; background: rgba(253, 252, 248, 0.38); }
+.v2-vid-fill { width: var(--p, 0%); background: var(--bg-surface); }
+.v2-vid-knob {
+  position: absolute;
+  left: var(--p, 0%);
+  top: 50%;
+  width: 11px;
+  height: 11px;
+  margin: -5.5px 0 0 -5.5px;
+  border-radius: 50%;
+  background: var(--bg-surface);
+  box-shadow: 0 1px 3px rgba(26, 26, 26, 0.3);
+  transition: transform 0.15s ease;
+}
+.v2-vid-track:is(:hover, .is-dragging, :focus-visible)::before,
+.v2-vid-track:is(:hover, .is-dragging, :focus-visible) .v2-vid-fill { height: 5px; margin-top: -2.5px; }
+.v2-vid-track:is(:hover, .is-dragging, :focus-visible) .v2-vid-knob { transform: scale(1.25); }
+.v2-vid-times {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 2px rgba(26, 26, 26, 0.35);
+}
+
+/* ============================ REPOST ============================ */
+/* El botón vive en la fila de acciones con la misma anatomía que
+   "Responder" (icono + palabra + cifra). Abre un menú corto: Repostear /
+   Citar. Hecho, se queda en terracota y dice "Reposteado". */
+.v2-rp-wrap { position: relative; display: inline-flex; }
+/* Hecho = musgo (no terracota: la terracota ya significa "tu reacción"). */
+.v2-reply-btn.is-on { color: var(--accent-moss); font-weight: 600; }
+.v2-reply-btn.is-on .v2-reply-n { color: inherit; }
+.v2-reply-btn.is-spin svg { animation: v2-spin 0.5s var(--ease-expo-out); }
+@media (hover: hover) {
+  .v2-rp-wrap .v2-reply-btn:hover { background: var(--accent-moss-wash); color: var(--accent-moss); }
+}
+.menu-surface.v2-menu.v2-rp-menu { width: 196px; transform-origin: 24px -12px; }
+
+/* ============================ AJUSTES DE SISTEMA (pasada "viva") ============================ */
+/* Pequeños cambios de forma y color sobre lo que ya había; nada se mueve de sitio. */
+
+/* Fotos y video: esquinas un punto más suaves (8 → 12), y la misma línea fina
+   que usa el bloque citado. */
+.tm-frame { border-radius: var(--radius-media); }
+.tm-frame::after { box-shadow: inset 0 0 0 0.5px var(--hairline); }
+
+/* "Autor" / "Tú": el único dato de la cabecera que merece color. */
+.v2-role { color: var(--brand-terracotta); font-weight: 500; }
+
+@keyframes v2-tick { from { opacity: 0; transform: translateY(7px); } }
+@keyframes v2-spin { from { transform: rotate(-180deg); } }
+
+/* ============================ HILO TEMPORAL ============================ */
+/* "Se borra en 6 h": pastilla cálida junto a la hora, con un aro que muestra
+   cuánta vida le queda al hilo. Reemplaza al aro del avatar. */
+.v2-ttl {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 20px;
+  margin-left: 2px;
+  padding: 0 8px 0 4px;
+  border-radius: var(--radius-pill);
+  background: rgba(184, 132, 95, 0.14);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 20px;
+  white-space: nowrap;
+  color: var(--brand-umber);
+}
+.v2-ttl circle { fill: none; stroke-width: 2; }
+.v2-ttl .is-track { stroke: currentColor; opacity: 0.25; }
+.v2-ttl .is-left { stroke: currentColor; stroke-linecap: round; }
+.v2-ttl.is-soon { background: var(--brand-wash); color: var(--brand-terracotta); } /* queda menos de una hora */
+
+/* ===== Tarjeta de hilo del feed (Inicio y Perfil): placa, repost, cita, toques de color ===== */
+/* ============================ TARJETA DE HILO ============================ */
+/* La tarjeta es su propia "placa" de resaltado (igual que las filas del
+   hilo): borde transparente de 4px + background-clip dejan el lavado
+   SIEMPRE dentro de la tarjeta — a 4px del divisor, a 8px del borde de la
+   superficie. Los márgenes negativos compensan: el contenido no se mueve. */
+.v2-card {
+  position: relative;
+  margin: 0 -12px;
+  padding: 8px;
+  border: 4px solid transparent;
+  border-radius: 16px;
+  background-clip: padding-box;
+}
+.v2-card + .v2-card::before { /* divisor entre tarjetas, de borde a borde de la superficie */
+  content: "";
+  position: absolute;
+  top: -4px;
+  left: -16px;
+  right: -16px;
+  height: 0.5px;
+  background: var(--divider-feed);
+}
+.v2-card.is-flash { animation: v2-flash 2.4s ease-out; }
+.v2-card .row-header { padding-right: 0; }
+.v2-card .nav-zone { border-radius: 6px; }
+/* El carrusel compartido sangra hasta el borde de la superficie contando
+   con el padding de esta (24px); la placa no añade ni quita nada. */
+
+/* ============================ REPOST EN EL FEED ============================ */
+/* Repost simple: una línea de contexto sobre el hilo ("X reposteó"), con
+   el icono en el carril del avatar y el texto alineado con el nombre. */
+.v2-card-context {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  column-gap: 0; /* icono y texto pegados (antes 12px, como el carril del avatar) */
+  align-items: center;
+  margin: 2px 0 10px; /* aire sobre el hilo: es contexto, no parte de su cabecera */
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+  color: var(--text-secondary);
+}
+/* Contraste por jerarquía, no por volumen: el icono en musgo (el color del
+   repost), quién reposteó en tinta, y el verbo en gris medio. */
+.v2-card-context > svg { justify-self: center; /* sobre el eje del avatar de abajo (antes pegado a la derecha del carril: se veía corrido) */ width: 16px; height: 16px; color: var(--accent-moss); } /* musgo = repost, en todo el sistema */
+.v2-card-context .mask-id { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+
+/* Cita: el hilo original como un bloque HUNDIDO dentro de la tarjeta.
+   Antes era una caja con borde beige de 1px y radio 16 (el mismo de la
+   placa que la contiene): caja dentro de caja, y la esquina del borde
+   peleaba con la foto. Ahora es un relleno un tono más bajo que la
+   superficie, radio 12 (el de las fotos), y UNA línea fina pintada encima
+   de todo — texto y foto — igual que el contorno de cualquier foto. */
+.v2-quote {
+  position: relative;
+  display: block;
+  margin-top: 10px;
+  border-radius: var(--radius-media);
+  background: var(--fill-recessed);
+  overflow: hidden;
+  transition: background-color 0.2s ease;
+}
+.v2-quote::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 0.5px var(--hairline);
+  pointer-events: none;
+}
+.v2-quote-body { padding: 10px 14px 12px; }
+.v2-quote-head { display: flex; align-items: center; gap: 7px; margin-bottom: 3px; line-height: 20px; }
+.v2-quote-head svg { flex: none; }
+.v2-quote .row-body { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+@media (hover: hover) { .v2-quote.nav-zone:hover { background-color: var(--fill-chip); } }
+.v2-quote.nav-zone:focus-visible { box-shadow: 0 0 0 2px var(--brand-sand); }
+#ex-quote .v2-quote { margin: 12px 0 4px; }
+/* Citando, el campo arranca corto: el hilo citado queda pegado a tu comentario. */
+.v2-ex-self:has(#ex-quote .v2-quote) textarea { min-height: 52px; }
+
+/* Adjuntos del hilo citado. Una pieza principal y, si hay más, dos
+   apiladas a su derecha: se lee como "una foto y hay más", no como una
+   tira de tres iguales. */
+.v2-qm {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 100%;
+  gap: 2px;
+  height: 200px;
+}
+.v2-qm[style*="--n:2"] { grid-template-columns: 1fr 1fr; }
+.v2-qm[style*="--n:3"] { grid-template-columns: 2fr 1fr; grid-template-rows: 1fr 1fr; }
+.v2-qm[style*="--n:3"] .v2-qm-tile:first-child { grid-row: 1 / 3; }
+.v2-qm-tile { position: relative; min-width: 0; min-height: 0; background: var(--bg-hover); }
+/* La imagen rellena la pieza sin dictar su alto (si no, la fila crecía y el
+   disco de video y la duración quedaban recortados fuera del mosaico). */
+.v2-qm-tile > svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.v2-qm-play {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(253, 252, 248, 0.94);
+  color: var(--text-primary);
+  box-shadow: 0 2px 8px rgba(26, 26, 26, 0.18);
+}
+.v2-qm-play svg { width: 18px; height: 18px; }
+.v2-qm-dur {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+  padding: 1px 7px;
+  border-radius: var(--radius-pill);
+  background: rgba(26, 26, 26, 0.6);
+  color: var(--bg-surface);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 17px;
+  font-variant-numeric: tabular-nums;
+}
+.v2-qm-more {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(26, 26, 26, 0.5);
+  color: var(--bg-surface);
+  font-size: 17px;
+  font-weight: 600;
+}
+
+/* Respuesta destacada (segunda historia de la tarjeta). */
+.v2-card-reply { margin-top: 12px; }
+
+/* "Responder N" en el feed es un enlace al hilo. */
+a.v2-reply-btn { text-decoration: none; }
+
+/* ============================ PEQUEÑOS GOLPES DE COLOR Y FORMA ============================ */
+/* Publicar: la acción principal de Inicio, en tinta y en píldora (antes un contorno). */
+.compose-post-btn {
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--text-primary);
+  color: var(--bg-surface);
+  transition: transform 0.15s ease, opacity 0.2s ease;
+}
+.compose-post-btn:hover { background: var(--text-primary); opacity: 0.88; }
+.compose-post-btn:active { transform: scale(0.96); }
+/* Pestaña activa: una barrita corta en terracota en vez de una raya negra de lado a lado. */
+.tab-indicator { height: 3px; background: transparent; }
+.tab-indicator::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 52px;
+  height: 3px;
+  margin-left: -26px;
+  border-radius: 3px 3px 0 0;
+  background: var(--brand-terracotta);
+}
+.v2-card-context.is-pin > svg { color: var(--text-tertiary); }

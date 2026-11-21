@@ -17,6 +17,7 @@ import AnonProfileHeader from "../components/me/AnonProfileHeader";
 import { useAnonThreads } from "../hooks/useAnonThreads";
 import { useInfiniteScroll } from "../hooks/useInfiniteScroll";
 import { useCurrentUser } from "../contexts/CurrentUserContext";
+import { track } from "../utils/engagementQueue";
 import BrandLogo from "../components/BrandLogo";
 import usePageTitle from "../hooks/usePageTitle";
 import useMobileSurfacePage from "../hooks/useMobileSurfacePage";
@@ -78,6 +79,15 @@ function AnonProfile() {
       navigate("/profile", { replace: true });
     }
   }, [maskId, currentUserMask, navigate]);
+
+  // Engagement telemetry: only OTHER people's profiles — never your own
+  // (the effect above already redirects that case away, but currentUserMask
+  // may still be loading on first render, so the check is repeated here).
+  useEffect(() => {
+    if (!maskId) return;
+    if (currentUserMask?.id && maskId === currentUserMask.id) return;
+    track("mask", maskId, "view");
+  }, [maskId, currentUserMask]);
 
   const {
     posts,
