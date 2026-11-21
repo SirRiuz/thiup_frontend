@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=1280" />
+<title>Algo salió mal · Thiup (maqueta)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
+<link rel="stylesheet" href="../assets/tokens.css" />
+<link rel="stylesheet" href="../assets/base.css" />
+<link rel="stylesheet" href="../assets/components.css" />
+</head>
+<body>
+  <div class="error-screen">
+    <main class="error-content" role="alert">
+      <div id="illustration"></div>
+      <h1 class="error-title-lg">Algo salió mal</h1>
+      <p class="error-subtitle">Nuestros servidores están teniendo un momento. Es cosa nuestra, no tuya — inténtalo de nuevo en un rato.</p>
+      <button type="button" class="error-btn-dark" id="retry-btn">
+        <span id="reload-icon"></span>
+        Intentar de nuevo
+      </button>
+      <p class="error-meta">Error 503 · servicio no disponible</p>
+    </main>
+  </div>
+  <script src="../assets/icons.js"></script>
+  <script>
+    document.getElementById("illustration").innerHTML = Icons.racks();
+    document.getElementById("reload-icon").innerHTML = Icons.reload();
+    document.getElementById("retry-btn").addEventListener("click", (e) => {
+      const btn = e.currentTarget;
+      const icon = btn.querySelector("#reload-icon svg");
+      icon.style.animation = "serverErrorSpin 900ms linear infinite";
+      setTimeout(() => (icon.style.animation = ""), 900);
+    });
+  </script>
+  <style>
+    @keyframes serverErrorSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  </style>
+</body>
+</html>

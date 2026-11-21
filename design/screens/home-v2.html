@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=1280" />
+<title>Inicio v2 · Thiup (maqueta)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
+<link rel="stylesheet" href="../assets/tokens.css" />
+<link rel="stylesheet" href="../assets/base.css" />
+<link rel="stylesheet" href="../assets/components.css" />
+<link rel="stylesheet" href="../assets/v2.css" />
+<!--
+  PROPUESTA v2 de Inicio (sandbox — ver design/CLAUDE.md § Propuestas v2).
+  home.html queda intacto para comparar. Es el MISMO Inicio (masthead,
+  tarjeta elevada, fila de compose, tabs, columna de 640px) con el lenguaje
+  que se afinó en thread-v2.html; lo compartido vive en assets/v2.css y v2.js.
+
+  Qué cambia respecto a home.html:
+    1. Rail con una palabra bajo cada icono.
+    2. Cada tarjeta tiene UNA fila de acciones: reacciones como chips de un
+       toque + cara para añadir + "Responder N" (antes: resumen de reacciones
+       arriba y otra fila de iconos abajo).
+    3. Mismo botón ⋯ y mismo menú que el hilo (sin "Compartir"); sin botón
+       "Seguir" (la feature no existe).
+    4. Tarjeta de perfil al pasar por un avatar o un nombre.
+    5. Crear un hilo funciona: el editor nace de la fila de compose, y el
+       hilo publicado entra arriba con el resaltado contenido en su tarjeta.
+    6. Cargar más muestra esqueletos de tarjeta en vez de una ruedita.
+    7. Sin animaciones de entrada al cargar.
+-->
+<style>
+  /* Aire bajo la tarjeta: 24px; y sin los 64px que el shell reserva en
+     ventanas ≤700px para una barra inferior móvil que esta maqueta no tiene. */
+  .v2-main { padding-bottom: 24px; }
+  @media (max-width: 700px) { .app-shell { padding-bottom: 0; } }
+
+  /* ============================ CARGAR MÁS ============================ */
+  .v2-feed-loading { position: relative; }
+  .v2-feed-loading::before,
+  .v2-feed-loading .v2-skel-row + .v2-skel-row::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -24px;
+    right: -24px;
+    height: 0.5px;
+    background: var(--divider-feed);
+  }
+
+  /* ============================ EDITOR (nuevo hilo) ============================ */
+  .v2-ex-tools { display: flex; align-items: center; gap: 2px; }
+  .v2-ex-tool svg { width: 20px; height: 20px; }
+
+  :is(.v2-card .mask-id, a.v2-reply-btn):focus-visible { box-shadow: inset 0 0 0 2px var(--brand-sand); border-radius: 6px; }
+  /* Sin composer acoplado aquí: el toast vuelve a su sitio. */
+</style>
+</head>
+<body>
+  <div class="app-shell" id="shell">
+    <div id="nav-rail-mount"></div>
+
+    <div class="screen-page">
+      <main class="screen-main v2-main">
+        <h1 class="visually-hidden">Inicio</h1>
+        <header class="masthead">
+          <span class="masthead-title">Inicio</span>
+        </header>
+        <div class="corner-mask" aria-hidden="true">
+          <div class="corner-mask-window"><div class="corner-mask-shape"></div></div>
+        </div>
+
+        <div class="surface">
+          <!-- Fila de compose: abre el editor de "Nuevo hilo" (nace de aquí). -->
+          <div class="compose-row" id="compose-row" data-compose-open>
+            <span style="display:inline-flex" id="compose-avatar"></span>
+            <button type="button" class="compose-prompt">¿Qué hay de nuevo?</button>
+            <button type="button" class="compose-post-btn">Publicar</button>
+          </div>
+
+          <div class="tabs" data-tabs="home">
+            <button type="button" class="tab is-active" data-tab="foryou">Para ti</button>
+            <button type="button" class="tab" data-tab="closeyou">Cerca de ti</button>
+            <span class="tab-indicator"></span>
+          </div>
+
+          <div data-tab-panel-group="home" data-tab-panel="foryou">
+            <section id="feed-mount" aria-label="Hilos para ti"></section>
+            <div class="v2-feed-loading" id="feed-loading" hidden aria-hidden="true"></div>
+            <span class="visually-hidden" role="status" id="feed-status"></span>
+            <div id="feed-sentinel" aria-hidden="true"></div>
+          </div>
+
+          <section data-tab-panel-group="home" data-tab-panel="closeyou" hidden style="padding:48px 20px;text-align:center;color:var(--text-tertiary);font-size:13px;">
+            "Cerca de ti" pide acceso a tu ubicación aproximada para mostrar hilos cercanos — queda fuera de esta maqueta estática.
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Editor de nuevo hilo: fuera de .app-shell para poder dejar el resto inerte mientras está abierto. -->
+  <div class="v2-ex" id="ex" inert>
+    <div class="v2-ex-card" id="ex-card" role="dialog" aria-modal="true" aria-labelledby="ex-title">
+      <header class="v2-ex-head">
+        <button type="button" class="v2-ex-collapse" data-ex-close aria-label="Cerrar; tu borrador se conserva" title="Cerrar">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 14h6v6"/><path d="M20 10h-6V4"/><path d="M14 10l7-7"/><path d="M3 21l7-7"/></svg>
+        </button>
+        <h2 class="v2-ex-title" id="ex-title"><b>Nuevo hilo</b></h2>
+        <span></span>
+      </header>
+      <div class="v2-ex-body" id="ex-body">
+        <div class="v2-ex-rowgrid v2-ex-self">
+          <span id="ex-avatar"></span>
+          <div>
+            <span class="mask-id" id="ex-me" style="cursor:default;text-decoration:none;"></span>
+            <textarea id="ex-text" placeholder="¿Qué hay de nuevo?" aria-label="Tu hilo"></textarea>
+            <div id="ex-quote"></div>
+          </div>
+        </div>
+      </div>
+      <footer class="v2-ex-foot">
+        <div class="v2-ex-tools">
+          <button type="button" class="v2-ex-tool" id="ex-media"></button>
+          <button type="button" class="v2-ex-tool" id="ex-area">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>Área
+          </button>
+        </div>
+        <span style="flex:1"></span>
+        <span class="v2-ex-count" id="ex-count" aria-live="polite">
+          <span id="ex-count-num"></span>
+          <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><circle class="is-track" cx="11" cy="11" r="9"/><circle class="is-fill" id="ex-ring" cx="11" cy="11" r="9" transform="rotate(-90 11 11)" stroke-dasharray="56.55" stroke-dashoffset="56.55"/></svg>
+        </span>
+        <button type="button" class="v2-ex-send" id="ex-send" disabled>Publicar</button>
+      </footer>
+    </div>
+  </div>
+
+  <script src="../assets/icons.js"></script>
+  <script src="../assets/avatar.js"></script>
+  <script src="../assets/reaction-emoji.js"></script>
+  <script src="../assets/illustrations.js"></script>
+  <script src="../assets/mock-data.js"></script>
+  <script src="../assets/app.js"></script>
+  <script src="../assets/v2.js"></script>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    renderRailV2("home");
+    $("compose-avatar").innerHTML = maskAvatarSVG(me.id, 36);
+
+    const feedMount = $("feed-mount");
+    // Antes de pintar: con este gancho el menú de repost ofrece "Citar".
+    V2Repost.onQuote = (id, from) => openCompose(from, V2Items[id]);
+    // Los ejemplos de repost (una variante por tipo de adjunto, simples y citas)
+    // se intercalan uno a uno con los hilos normales.
+    const feed = [];
+    for (let i = 0; i < Math.max(MockData.feed.length, MockData.reposts.length); i++) {
+      if (MockData.feed[i]) feed.push(MockData.feed[i]);
+      if (MockData.reposts[i]) feed.push(MockData.reposts[i]);
+    }
+    feedMount.innerHTML = feed.map((p) => cardHTML(register(p))).join("");
+
+    /* ---------- Repost (v2.js pone el botón y el menú; aquí, qué pasa en el feed) ---------- */
+    V2Repost.onToggle = (id, on) => {
+      // Tu repost vuelve a pintar el MISMO hilo arriba, bajo el id "<uid>~rp".
+      // shortcut: comparte el objeto (cifras al día), pero los chips de la otra
+      // copia no se repintan solos — en la app real serían un mismo estado.
+      const base = id.replace(/~rp$/, ""), copy = `${base}~rp`;
+      const old = $(`c-${copy}`);
+      if (on) {
+        V2Items[copy] = V2Items[base];
+        feedMount.insertAdjacentHTML("afterbegin", cardHTML(V2Items[base], { uid: copy, by: me }));
+        $(`c-${copy}`).classList.add("is-flash");
+      } else if (old) {
+        old.remove();
+        delete V2Items[copy];
+      }
+      repostRefresh(base);
+    };
+
+    // Tarjeta de perfil (v2.js): quién está en línea lo sabe el feed.
+    V2Profile.online = (maskId) => Object.values(V2Items).some((it) => it.mask && it.mask.id === maskId && it.mask.isOnline);
+
+    /* ---------- Cargar más (scroll infinito con esqueletos) ----------
+       Recorre MockData.morePosts en bucle; cada vuelta sufija el uid
+       (mp3 → mp3·2) para que los ids de menú/reacción nunca choquen. */
+    const loadingEl = $("feed-loading");
+    const sentinel = $("feed-sentinel");
+    loadingEl.innerHTML = [88, 62]
+      .map((w) => `<div class="v2-skel-row"><i class="is-avatar"></i><div><i class="is-name"></i><i class="is-line"></i><i class="is-line" style="width:${w}%"></i></div></div>`)
+      .join("");
+    const pool = MockData.morePosts;
+    const BATCH = 3, TRIGGER_DISTANCE = 800;
+    let cursor = 0, lap = 1, loading = false;
+
+    function nextBatch() {
+      const batch = [];
+      for (let i = 0; i < BATCH; i++) {
+        const base = pool[cursor % pool.length];
+        batch.push({ ...base, uid: lap === 1 ? base.uid : `${base.uid}·${lap}`, reactions: (base.reactions || []).map((r) => ({ ...r })) });
+        cursor += 1;
+        if (cursor % pool.length === 0) lap += 1;
+      }
+      return batch;
+    }
+    // El observer solo avisa al CRUZAR la frontera; si tras un lote el sentinel
+    // sigue cerca, hay que encadenar otra carga a mano (ver design/CLAUDE.md).
+    const sentinelNear = () => sentinel.getBoundingClientRect().top < window.innerHeight + TRIGGER_DISTANCE;
+    function loadMore() {
+      if (loading) return;
+      loading = true;
+      loadingEl.hidden = false;
+      $("feed-status").textContent = "Cargando más hilos…";
+      setTimeout(() => { // demora simulada — en la app real es la respuesta de red
+        feedMount.insertAdjacentHTML("beforeend", nextBatch().map((p) => cardHTML(register(p))).join(""));
+        loadingEl.hidden = true;
+        $("feed-status").textContent = "";
+        loading = false;
+        if (sentinelNear()) loadMore();
+      }, 900);
+    }
+    new IntersectionObserver((entries) => entries.forEach((e) => e.isIntersecting && loadMore()), { rootMargin: `${TRIGGER_DISTANCE}px 0px` }).observe(sentinel);
+
+    /* ---------- Nuevo hilo ---------- */
+    const MAX_CHARS = 500; // el límite real de la app
+    const ex = $("ex"), exText = $("ex-text");
+    let mineCount = 0;
+    $("ex-avatar").innerHTML = maskAvatarSVG(me.id, 36);
+    $("ex-me").textContent = me.id;
+    $("ex-media").innerHTML = `${Icons.attach()}Multimedia`;
+
+    function syncCompose() {
+      const body = $("ex-body");
+      exText.style.height = "auto";
+      exText.style.height = `${exText.scrollHeight}px`;
+      if (exText.selectionStart >= exText.value.length) body.scrollTop = body.scrollHeight; // el cursor siempre a la vista
+      const len = exText.value.length, left = MAX_CHARS - len;
+      const count = $("ex-count");
+      count.classList.toggle("is-on", len > 0);
+      count.classList.toggle("is-near", left <= 20 && left >= 0);
+      count.classList.toggle("is-over", left < 0);
+      $("ex-count-num").textContent = left <= 20 ? left : "";
+      $("ex-ring").setAttribute("stroke-dashoffset", (56.55 * (1 - Math.min(len / MAX_CHARS, 1))).toFixed(2));
+      $("ex-send").disabled = !exText.value.trim() || left < 0;
+    }
+    let quoting = null; // el hilo que estás citando, si abriste desde "Citar"
+    function openCompose(from, quote = null) {
+      quoting = quote;
+      $("ex-quote").innerHTML = quote ? quoteHTML(quote, true) : "";
+      $("ex-title").innerHTML = `<b>${quote ? "Citar hilo" : "Nuevo hilo"}</b>`;
+      exText.placeholder = quote ? "Añade un comentario" : "¿Qué hay de nuevo?";
+      // Nace del control que lo abrió (la fila de compose o el "+" del rail).
+      const o = from.getBoundingClientRect(), card = $("ex-card");
+      card.style.transformOrigin = `${o.left + o.width / 2 - card.offsetLeft}px ${o.top + o.height / 2 - card.offsetTop}px`;
+      const sb = window.innerWidth - document.documentElement.clientWidth;
+      document.documentElement.style.overflow = "hidden"; // bloquea el fondo sin que la página salte
+      document.body.style.paddingRight = `${sb}px`;
+      $("shell").inert = true; // el foco no sale del editor
+      ex.inert = false;
+      ex.classList.add("is-open");
+      syncCompose();
+      exText.focus();
+    }
+    // Cerrar NO descarta: el borrador sigue ahí la próxima vez que abras.
+    function closeCompose() {
+      if (!ex.classList.contains("is-open")) return;
+      ex.classList.remove("is-open");
+      ex.inert = true;
+      $("shell").inert = false;
+      document.documentElement.style.overflow = "";
+      document.body.style.paddingRight = "";
+    }
+    function publish() {
+      const text = exText.value.trim();
+      if (!text || text.length > MAX_CHARS) return;
+      const post = register({ uid: `mine${++mineCount}`, mask: me, time: "ahora", text, repliesCount: 0, reactions: [], media: [], isMine: true, quote: quoting });
+      if (quoting) { // citar también cuenta como repost del original
+        quoting.reposts = (quoting.reposts || 0) + 1;
+        repostRefresh(quoting.uid);
+        quoting = null;
+      }
+      exText.value = "";
+      closeCompose();
+      // Vuelve a "Para ti" si estabas en otra pestaña, y el hilo entra arriba.
+      document.querySelector('[data-tab="foryou"]').click();
+      feedMount.insertAdjacentHTML("afterbegin", cardHTML(post));
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      $(`c-${post.uid}`).classList.add("is-flash");
+      showToast("Hilo publicado");
+    }
+    exText.addEventListener("input", syncCompose);
+    exText.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); publish(); }
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && ex.classList.contains("is-open")) { e.stopImmediatePropagation(); closeCompose(); }
+    }, true);
+    // Registrado antes que el listener genérico de app.js (ver v2.js).
+    document.addEventListener("click", (e) => {
+      const opener = e.target.closest('[data-compose-open], [data-modal-open="compose-modal"]');
+      if (opener) { openCompose(opener); return e.stopImmediatePropagation(); }
+      if (e.target.closest("[data-ex-close]") || e.target === ex) { closeCompose(); return e.stopImmediatePropagation(); }
+      if (e.target.closest("#ex-send")) { publish(); return e.stopImmediatePropagation(); }
+    });
+  </script>
+</body>
+</html>

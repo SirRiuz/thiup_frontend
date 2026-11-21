@@ -1,0 +1,978 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=1280" />
+<title>Hilo v2 · Thiup (maqueta)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
+<link rel="stylesheet" href="../assets/tokens.css" />
+<link rel="stylesheet" href="../assets/base.css" />
+<link rel="stylesheet" href="../assets/components.css" />
+<link rel="stylesheet" href="../assets/v2.css" />
+<!--
+  PROPUESTA v2 de la vista de hilo (sandbox — ver design/CLAUDE.md § thread-v2).
+  Lo propio de esta pantalla vive en ESTE archivo; lo que comparte con
+  home-v2.html está en assets/v2.css y assets/v2.js (prefijo .v2-).
+  thread.html y las demás pantallas no se tocan. Solo tokens existentes.
+
+  Qué cambia respecto a thread.html, y por qué (feedback: "la navegación es
+  aburrida y no se entiende"):
+    1. Dónde estoy / cómo salgo  → botón Atrás con el NOMBRE del lugar del que
+       vienes + el rail marca ese lugar; al bajar, el título se convierte en
+       el hilo que estás leyendo (clic = volver arriba).
+    2. Qué hay aquí              → mapa del hilo (caras a la derecha): una por
+       conversación, marca la que estás leyendo, clic = saltar.
+    3. Quién le habla a quién    → ramas plegables (clic en la línea o en el
+       pill "N respuestas"), divisor entre conversaciones.
+    4. Menos ruido, más vida     → una sola fila de acciones: reacciones como
+       chips de un toque + Responder (antes: 2 filas de texto por respuesta).
+    5. Responder sin perderte    → composer siempre a mano, dice a quién le
+       respondes y la respuesta aparece en su sitio.
+    6. Nunca un callejón sin salida → "Sigue leyendo" al final.
+-->
+<style>
+  /* ============================ APP BAR ============================ */
+  .v2-back {
+    justify-self: start;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 32px;
+    padding: 0 13px 0 10px;
+    background: var(--bg-surface);
+    border: 0.5px solid var(--border-surface);
+    border-radius: var(--radius-pill);
+    box-shadow: var(--shadow-float);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    animation: v2-slide-in 0.45s var(--ease-expo-out) backwards;
+  }
+  .v2-back:active { transform: scale(0.96); }
+  @media (hover: hover) {
+    .v2-back svg { transition: transform 0.2s ease; }
+    .v2-back:hover svg { transform: translateX(-2px); } /* insinúa hacia dónde vas */
+  }
+
+  /* Título: dos capas en la misma celda — "Hilo" en reposo, y el hilo que
+     estás leyendo cuando el OP ya salió de pantalla. */
+  .v2-title {
+    display: grid;
+    justify-items: center;
+    align-items: center;
+    min-width: 0;
+    height: 44px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: var(--radius-lg);
+    background: transparent;
+    cursor: default;
+    animation: v2-rise 0.45s var(--ease-expo-out) 70ms backwards;
+  }
+  .v2-title > * {
+    grid-area: 1 / 1;
+    min-width: 0;
+    max-width: 100%;
+    transition: opacity 0.25s ease, transform 0.35s var(--ease-expo-out);
+  }
+  .v2-title-pinned {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  .v2-title-pinned b { color: var(--text-primary); font-weight: 600; }
+  .v2-title-pinned .v2-ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 330px; }
+  .is-pinned .v2-title { cursor: pointer; }
+  .is-pinned .v2-title-rest { opacity: 0; transform: translateY(-8px); }
+  .is-pinned .v2-title-pinned { opacity: 1; transform: none; }
+  @media (hover: hover) {
+    .v2-title { transition: background 0.2s ease; }
+    .is-pinned .v2-title:hover { background: var(--bg-hover); }
+  }
+
+  /* Aire bajo la tarjeta: 24px (antes 70px). Y en ventanas ≤700px el shell
+     reservaba 64px más para la barra inferior móvil, que esta maqueta de
+     escritorio no tiene: sumaban ~134px de vacío bajo el composer. */
+  .v2-main { padding-bottom: 24px; }
+  @media (max-width: 700px) { .app-shell { padding-bottom: 0; } }
+
+  /* ============================ OP (protagonista) ============================ */
+  .v2-surface { padding-bottom: 0; }
+  .v2-op { padding-bottom: 16px; }
+  /* El texto que abre el hilo es lo más importante de la pantalla: un paso
+     más grande que las respuestas (17px, la talla de "énfasis" del sistema),
+     con el tracking y el interlineado ajustados a ese tamaño. */
+  .v2-op .op-body {
+    font-size: 17px;
+    line-height: 1.45;
+    letter-spacing: -0.014em;
+    margin: 2px 0 14px;
+  }
+
+  /* ============================ BARRA DE RESPUESTAS ============================ */
+  .v2-bar-title {
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--text-primary);
+  }
+  .v2-sort-wrap { position: relative; margin-inline-end: -8px; }
+  .v2-sort-wrap .sort-trigger { margin-inline-start: 0; }
+
+  /* ============================ ÁRBOL DE RESPUESTAS ============================ */
+  .v2-node { position: relative; scroll-margin-top: 68px; }
+  /* Divisor entre CONVERSACIONES (ramas de primer nivel): cada bloque es una. */
+  #replies > .v2-node + .v2-node::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -16px;
+    right: -16px;
+    height: 0.5px;
+    background: var(--divider-feed);
+  }
+  /* La fila es su propia "placa" de resaltado: un borde transparente de 4px
+     + background-clip hacen que el lavado (nueva respuesta / salto / "estás
+     respondiendo a") quede SIEMPRE dentro de la fila — a 4px de los
+     divisores, a 8px del borde de la tarjeta y sin pisar las líneas del
+     hilo. Los márgenes negativos compensan, así el contenido no se mueve. */
+  .v2-row {
+    position: relative;
+    margin: 0 -12px 0 -8px;
+    padding: 8px 8px 8px 4px;
+    border: 4px solid transparent;
+    border-radius: 16px;
+    background-clip: padding-box;
+  }
+  /* Fotos en respuestas. El carrusel compartido sangra 48px hacia la
+     izquierda (carril del avatar) pensando en el feed; dentro del árbol eso
+     lo metería bajo las líneas del hilo y el control de plegar. Aquí arranca
+     en el borde del texto y solo sangra a la derecha, hasta el borde de la
+     tarjeta (señal de "hay más, desliza"). */
+  .v2-node .tm-carousel { margin-inline-start: 0; padding-inline-start: 0; }
+  .v2-node .tm-wrapper { margin-bottom: 2px; }
+
+  .v2-row.is-flash { animation: v2-flash 1.8s ease-out; }
+  /* Mientras escribes, la respuesta a la que contestas queda señalada. */
+  .v2-row { transition: background-color 0.2s ease, box-shadow 0.2s ease; }
+  .v2-row.is-target { background-color: var(--bg-page); box-shadow: inset 0 0 0 1px var(--border-default); }
+
+  .v2-trunk {
+    position: absolute;
+    left: 21px;   /* carril del avatar, medido desde la placa (4px más afuera) */
+    top: 52px;
+    bottom: -4px;
+    width: 2px;
+    border-radius: 2px 2px 0 0;
+    background: var(--border-surface);
+    transition: background 0.2s ease;
+  }
+  .v2-kids {
+    display: grid;
+    grid-template-rows: 1fr;
+    transition: grid-template-rows 0.4s var(--ease-expo-out), opacity 0.25s ease;
+  }
+  /* El margen/padding derecho deja sitio a la placa y al botón ⋯ cuando la rama recorta al plegarse. */
+  .v2-kids-inner { min-height: 0; padding: 0 12px 0 36px; margin-right: -12px; }
+  .v2-kids.is-clipping > .v2-kids-inner { overflow: hidden; }
+  .v2-node.is-collapsed > .v2-kids { grid-template-rows: 0fr; opacity: 0; }
+
+  /* Líneas de continuidad de cada hijo: codo hacia su avatar + (si no es el
+     último) el tramo que sigue bajando hacia sus hermanos. */
+  .v2-kids-inner > .v2-node::before {
+    content: "";
+    position: absolute;
+    left: -19px;
+    top: 0;
+    width: 15px;
+    height: 34px;
+    border-left: 2px solid var(--border-surface);
+    border-bottom: 2px solid var(--border-surface);
+    border-bottom-left-radius: 12px;
+    transition: border-color 0.2s ease;
+  }
+  .v2-kids-inner > .v2-node:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    left: -19px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--border-surface);
+    transition: background 0.2s ease;
+  }
+
+  /* La línea ES el control de plegar (zona de toque de 24px sobre el carril). */
+  .v2-fold {
+    position: absolute;
+    left: 6px;
+    top: 56px;
+    bottom: 0;
+    width: 24px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    z-index: 1;
+  }
+  .v2-node:not(.has-kids) > .v2-fold,
+  .v2-node:not(.has-kids) > .v2-row > .v2-trunk,
+  .v2-node.is-collapsed > .v2-fold { display: none; }
+  .v2-node:has(> .v2-fold:is(:hover, :focus-visible)) > .v2-row > .v2-trunk,
+  .v2-node:has(> .v2-fold:is(:hover, :focus-visible)) > .v2-kids > .v2-kids-inner > .v2-node::after { background: var(--brand-warm); }
+  .v2-node:has(> .v2-fold:is(:hover, :focus-visible)) > .v2-kids > .v2-kids-inner > .v2-node::before { border-color: var(--brand-warm); }
+
+  /* Rama plegada → pill "N respuestas" con las caras de quienes hablan. */
+  .v2-more {
+    position: relative;
+    display: none;
+    align-items: center;
+    gap: 7px;
+    height: 28px;
+    margin: 0 0 12px 36px;
+    padding: 0 10px 0 5px;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-pill);
+    background: transparent;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: transform 0.15s ease, background 0.2s ease, color 0.2s ease;
+  }
+  .v2-more::before {
+    content: "";
+    position: absolute;
+    left: -20px;
+    top: -1px;
+    width: 15px;
+    height: 15px;
+    border-left: 2px solid var(--border-surface);
+    border-bottom: 2px solid var(--border-surface);
+    border-bottom-left-radius: 12px;
+  }
+  .v2-node.is-collapsed > .v2-more { display: inline-flex; animation: v2-rise 0.3s var(--ease-expo-out); }
+  .v2-more:active { transform: scale(0.96); }
+  .v2-more svg { color: var(--text-tertiary); }
+  @media (hover: hover) {
+    .v2-more:hover { background: var(--bg-hover); color: var(--text-primary); }
+  }
+  .v2-faces { display: inline-flex; }
+  .v2-faces > * + * { margin-left: -6px; }
+  .v2-faces svg { box-shadow: 0 0 0 1.5px var(--bg-surface); }
+
+  .v2-enter { animation: v2-rise 0.5s var(--ease-expo-out) backwards; }
+
+  /* ============================ MAPA DEL HILO ============================ */
+  /* Una cara por conversación, en el margen derecho de la tarjeta. Marca la
+     que estás leyendo; clic = saltar a ella. Sin texto: se lee de un vistazo. */
+  .v2-map {
+    position: fixed;
+    top: 50%;
+    left: calc(50% + var(--column-max) / 2 + 20px);
+    transform: translateY(-50%);
+    z-index: 7;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 4px;
+  }
+  .v2-map::before { /* el hilo que une las caras */
+    content: "";
+    position: absolute;
+    top: 18px;
+    bottom: 18px;
+    left: 50%;
+    width: 2px;
+    margin-left: -1px;
+    border-radius: 2px;
+    background: var(--border-surface);
+  }
+  .v2-map-dot {
+    position: relative;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: var(--bg-page);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0.75;
+    transform: scale(0.82);
+    transition: transform 0.35s var(--ease-expo-out), opacity 0.25s ease, box-shadow 0.25s ease;
+  }
+  .v2-map-dot.is-active {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 0 0 2px var(--brand-terracotta);
+  }
+  .v2-map-dot:active { transform: scale(0.9); }
+  .v2-map-sep { position: relative; width: 12px; height: 2px; border-radius: 2px; background: var(--border-surface); margin: 2px 0; }
+  .v2-map-tip {
+    position: absolute;
+    left: calc(100% + 12px);
+    top: 50%;
+    transform: translate(-4px, -50%);
+    max-width: 220px;
+    padding: 6px 10px;
+    border-radius: var(--radius-md);
+    background: var(--text-primary);
+    color: var(--bg-page);
+    font-size: 12px;
+    line-height: 1.35;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease, transform 0.2s ease;
+  }
+  .v2-map-tip b { font-weight: 600; }
+  @media (hover: hover) {
+    .v2-map-dot:hover { opacity: 1; transform: scale(1); }
+    .v2-map-dot:hover .v2-map-tip { opacity: 1; transform: translate(0, -50%); }
+  }
+  .v2-map-dot:focus-visible { opacity: 1; box-shadow: 0 0 0 2px var(--brand-sand); }
+  /* shortcut: sin sitio para el mapa en ventanas angostas se oculta; en móvil
+     tocará otra forma (p. ej. tira horizontal bajo el app bar). */
+  @media (max-width: 1040px) { .v2-map { display: none; } }
+
+  /* ============================ SIGUE LEYENDO ============================ */
+  .v2-next { position: relative; padding: 18px 0 8px; margin-top: 4px; }
+  .v2-next::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -16px;
+    right: -16px;
+    height: 0.5px;
+    background: var(--divider-feed);
+  }
+  .v2-next-title { margin: 0 0 6px; font-size: 15px; font-weight: 600; letter-spacing: -0.01em; color: var(--text-primary); } /* mismo peso que "N respuestas" */
+  .v2-next-row {
+    display: grid;
+    grid-template-columns: 36px minmax(0, 1fr) 16px;
+    column-gap: 12px;
+    align-items: center;
+    margin: 0 -8px;
+    padding: 10px 8px;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+  .v2-next-row .row-body {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+  }
+  .v2-next-meta { margin-top: 3px; font-size: 13px; color: var(--text-tertiary); }
+  /* OJO: el selector apunta SOLO al chevron. Antes era `.v2-next-row > svg`
+     y también atrapaba al avatar cuando este es un <svg> suelto (sin punto
+     de "en línea", que lo envuelve en un <span>): esas filas giraban y movían
+     el avatar, y las que tenían el punto no animaban nada. */
+  .v2-next-chev { display: inline-flex; color: var(--separator-glyph); transform: rotate(-90deg); transition: transform 0.25s var(--ease-expo-out), color 0.2s ease; }
+  .v2-next-row:active { background: var(--bg-hover); }
+  @media (hover: hover) {
+    .v2-next-row:hover { background: var(--bg-page); }
+    .v2-next-row:hover .v2-next-chev { color: var(--text-secondary); transform: translateX(3px) rotate(-90deg); }
+  }
+
+  /* ============================ COMPOSER (siempre a mano) ============================ */
+  /* Pegado al borde inferior de la ventana mientras lees. Sin divisor duro:
+     el contenido se desvanece bajo él (borde de scroll) y el pill es una
+     capa translúcida que flota encima. */
+  .v2-dock {
+    position: sticky;
+    bottom: 0;
+    z-index: 8;
+    margin: auto -16px 0;
+    padding: 28px 16px 12px;
+    border-radius: 0 0 23px 23px;
+    background: linear-gradient(to bottom, rgba(253, 252, 248, 0), var(--bg-surface) 55%);
+    pointer-events: none;
+  }
+  .v2-dock-pill {
+    pointer-events: auto;
+    border: 0.5px solid var(--border-surface);
+    border-radius: 24px;
+    background: rgba(253, 252, 248, 0.86);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    backdrop-filter: blur(20px) saturate(180%);
+    box-shadow: var(--shadow-hover-card);
+    transition: box-shadow 0.25s ease, border-color 0.25s ease;
+  }
+  /* Con el editor ampliado abierto, el composer "se fue" hacia él: no debe
+     verse detrás repitiendo lo que escribes. */
+  .v2-dock-pill { transition: box-shadow 0.25s ease, border-color 0.25s ease, opacity 0.15s ease; }
+  .v2-dock.is-away .v2-dock-pill { opacity: 0; }
+  .v2-dock-pill:focus-within {
+    border-color: var(--brand-sand);
+    box-shadow: var(--shadow-popover);
+  }
+  .v2-dock-pill .compose-pill { border: 0; }
+  /* Iconos del composer en el acento cálido (antes gris neutro #999). */
+  .v2-dock-pill .toolbar-icon-btn { color: var(--brand-warm); transition: transform 0.15s ease, color 0.2s ease; }
+  .v2-dock-pill .toolbar-icon-btn:hover { color: var(--brand-terracotta); }
+  .v2-dock-pill textarea { max-height: 160px; }
+  .v2-dock-pill textarea::placeholder { color: var(--text-tertiary); }
+  .v2-replyto {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 10px 10px 2px 16px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    animation: v2-rise 0.3s var(--ease-expo-out);
+  }
+  .v2-replyto b { color: var(--text-primary); font-weight: 600; }
+  .v2-replyto-x {
+    margin-left: auto;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--text-tertiary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+  .v2-replyto-x svg { width: 14px; height: 14px; }
+  .v2-replyto-x:hover { background: var(--bg-hover); color: var(--text-primary); }
+  .v2-send {
+    transition: transform 0.18s cubic-bezier(0.17, 0.84, 0.44, 1), opacity 0.18s ease;
+  }
+  .v2-send:not(.is-in) { transform: scale(0); opacity: 0; pointer-events: none; }
+  /* Vacío, el disco de enviar no debe ocupar NADA: además de ancho 0 hay que
+     cancelar el gap de 12px del toolbar que le tocaba (era el hueco extra a
+     la derecha). El último icono queda a 14px del borde del pill — la misma
+     medida que su separación vertical — en vez de a 18px. */
+  .v2-send { padding: 0; } /* el padding por defecto de <button> le dejaba 12px de ancho aun con width:0 */
+  .v2-send:not(.is-in) { width: 0; margin: 0 0 0 -12px; }
+  .v2-dock .compose-toolbar:has(.v2-send:not(.is-in)) { padding-right: 8px; }
+  @media (prefers-reduced-transparency: reduce) {
+    .v2-dock-pill { background: var(--bg-surface); -webkit-backdrop-filter: none; backdrop-filter: none; }
+  }
+
+  /* El toast no debe tapar el composer acoplado. */
+  .toast-viewport { bottom: 96px; }
+
+  /* Anillo de foco cálido en los controles nuevos (el outline nativo está apagado). */
+  :is(.v2-back, .v2-title, .v2-chip, .v2-reply-btn, .v2-more, .v2-next-row, .v2-replyto-x):focus-visible {
+    box-shadow: inset 0 0 0 2px var(--brand-sand);
+  }
+
+</style>
+</head>
+<body>
+  <div class="app-shell">
+    <div id="nav-rail-mount"></div>
+
+    <div class="screen-page">
+      <header class="thread-appbar" id="appbar">
+        <div class="thread-appbar-inner">
+          <a class="v2-back" id="back" href="home.html">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true"><path d="M1 6h10M1 6l4-4M1 6l4 4" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"/></svg>
+            <span id="back-label">Inicio</span>
+          </a>
+          <button type="button" class="v2-title" id="title" aria-label="Volver al inicio del hilo">
+            <span class="thread-title-block v2-title-rest">
+              <span class="thread-title">Hilo</span>
+              <span class="thread-subtitle" data-count-label></span>
+            </span>
+            <span class="v2-title-pinned" id="title-pinned"></span>
+          </button>
+          <span></span>
+        </div>
+      </header>
+
+      <main class="screen-main v2-main">
+        <h1 class="visually-hidden">Hilo</h1>
+        <div class="corner-mask" aria-hidden="true">
+          <div class="corner-mask-window"><div class="corner-mask-shape"></div></div>
+        </div>
+
+        <div class="thread-surface v2-surface">
+          <section class="op-section v2-op v2-node" id="n-op" data-id="op"></section>
+
+          <div class="replies-bar">
+            <span class="v2-bar-title" data-count-label></span>
+            <!-- El menú va como HERMANO del botón (regla 10: nunca button dentro de button). -->
+            <div class="v2-sort-wrap">
+              <button type="button" class="sort-trigger" data-menu-toggle="sort-menu" aria-haspopup="menu" id="sort-trigger"></button>
+              <div class="menu-surface v2-menu" data-menu="sort-menu" role="menu" hidden style="top:calc(100% + 6px);right:0;width:200px;">
+                <button type="button" class="menu-item" role="menuitemradio" data-sort="top">Destacados<span class="menu-item-icon is-right menu-check is-visible"></span></button>
+                <button type="button" class="menu-item" role="menuitemradio" data-sort="recent">Recientes<span class="menu-item-icon is-right menu-check"></span></button>
+              </div>
+            </div>
+          </div>
+
+          <section class="replies-list" id="replies" aria-label="Respuestas"></section>
+          <div id="replies-skel" hidden aria-hidden="true"></div>
+          <span class="visually-hidden" role="status" id="sort-status"></span>
+
+          <section class="v2-next" aria-labelledby="next-title">
+            <h2 class="v2-next-title" id="next-title">Sigue leyendo</h2>
+            <div id="next-mount"></div>
+          </section>
+
+          <div class="v2-dock">
+            <div class="v2-dock-pill">
+              <div class="v2-replyto" id="replyto" hidden></div>
+              <div class="compose-pill">
+                <span id="comment-avatar" style="flex:none;"></span>
+                <div class="field">
+                  <textarea id="composer" rows="1" placeholder="Responde a este hilo..." aria-label="Escribe una respuesta"></textarea>
+                  <div class="compose-toolbar">
+                    <button type="button" class="toolbar-icon-btn" id="attach-btn" aria-label="Adjuntar imagen o video"></button>
+                    <button type="button" class="toolbar-icon-btn" id="expand-btn" aria-label="Ampliar editor" title="Ampliar editor"></button>
+                    <button type="button" class="send-disc v2-send" id="send" aria-label="Responder" tabindex="-1"></button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <nav class="v2-map" id="map" aria-label="Mapa del hilo"></nav>
+
+  <!-- Editor ampliado: fuera de .app-shell para poder dejar el resto inerte mientras está abierto. -->
+  <div class="v2-ex" id="ex" inert>
+    <div class="v2-ex-card" id="ex-card" role="dialog" aria-modal="true" aria-labelledby="ex-title">
+      <header class="v2-ex-head">
+        <button type="button" class="v2-ex-collapse" data-ex-close aria-label="Contraer editor" title="Contraer">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 14h6v6"/><path d="M20 10h-6V4"/><path d="M14 10l7-7"/><path d="M3 21l7-7"/></svg>
+        </button>
+        <h2 class="v2-ex-title" id="ex-title"></h2>
+        <span></span>
+      </header>
+      <div class="v2-ex-body" id="ex-body">
+        <div class="v2-ex-rowgrid v2-ex-parent" id="ex-parent"></div>
+        <div class="v2-ex-rowgrid v2-ex-self">
+          <span id="ex-avatar"></span>
+          <div>
+            <span class="mask-id" id="ex-me" style="cursor:default;text-decoration:none;"></span>
+            <textarea id="ex-text" placeholder="Escribe tu respuesta..." aria-label="Tu respuesta"></textarea>
+          </div>
+        </div>
+      </div>
+      <footer class="v2-ex-foot">
+        <button type="button" class="v2-ex-tool" id="ex-media"></button>
+        <span style="flex:1"></span>
+        <span class="v2-ex-count" id="ex-count" aria-live="polite">
+          <span id="ex-count-num"></span>
+          <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><circle class="is-track" cx="11" cy="11" r="9"/><circle class="is-fill" id="ex-ring" cx="11" cy="11" r="9" transform="rotate(-90 11 11)" stroke-dasharray="56.55" stroke-dashoffset="56.55"/></svg>
+        </span>
+        <button type="button" class="v2-ex-send" id="ex-send" disabled>Responder</button>
+      </footer>
+    </div>
+  </div>
+
+  <script src="../assets/icons.js"></script>
+  <script src="../assets/avatar.js"></script>
+  <script src="../assets/reaction-emoji.js"></script>
+  <script src="../assets/illustrations.js"></script>
+  <script src="../assets/mock-data.js"></script>
+  <script src="../assets/app.js"></script>
+  <script src="../assets/v2.js"></script>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const snippet = (s, n) => (s.length > n ? s.slice(0, n).trimEnd() + "…" : s);
+
+    const thread = MockData.threadV2;
+
+    /* ---------- De dónde vienes: nombra el Atrás y marca el rail ---------- */
+    const ORIGINS = { home: "Inicio", search: "Buscar", notifications: "Notificaciones", profile: "Mis hilos" };
+    const cameFrom = (document.referrer.match(/(home|search|notifications|profile)\.html/) || [])[1];
+    const origin = cameFrom || "home";
+    renderRailV2(origin);
+    $("back-label").textContent = ORIGINS[origin];
+    $("back").href = `${origin}.html`;
+    $("back").setAttribute("aria-label", `Volver a ${ORIGINS[origin]}`);
+    // Con historial real, Atrás restaura el scroll del lugar anterior.
+    if (cameFrom) $("back").addEventListener("click", (e) => { e.preventDefault(); history.back(); });
+
+    /* ---------- Índice del árbol (id → nodo, con puntero al padre) ---------- */
+    const byId = V2Items; // el registro compartido de reacciones (v2.js) ES el índice del árbol
+    byId.op = thread;
+    (function index(list, parent) {
+      list.forEach((n) => { byId[n.id] = n; n.parent = parent; index(n.kids, n); });
+    })(thread.kids, null);
+    const descendants = (n) => n.kids.reduce((acc, k) => acc.concat(k, descendants(k)), []);
+    const total = () => descendants(thread).length;
+
+    // "Responder" con su cifra de respuestas directas: la cola de la fila de acciones.
+    const replyBtn = (id) => `<button type="button" class="v2-reply-btn" data-v2-reply="${id}">${Icons.reply()}Responder<span class="v2-reply-n" data-rc="${id}">${id !== "op" && byId[id].kids.length ? byId[id].kids.length : ""}</span></button>`;
+
+    /* ---------- Render ---------- */
+    function nodeHTML(n) {
+      const tag = n.isMine ? "Tú" : n.isOp ? "Autor" : "";
+      return `
+        <div class="v2-node ${n.kids.length ? "has-kids" : ""}" id="n-${n.id}" data-id="${n.id}">
+          <div class="v2-row">
+            <div class="v2-trunk" aria-hidden="true"></div>
+            <div class="reply-main">
+              <div class="avatar-cell"><span data-profile="${n.mask.id}">${maskAvatarSVG(n.mask.id, 36, { online: n.mask.isOnline })}</span></div>
+              <div class="content-cell">
+                <header class="row-header" style="padding-right:0;">
+                  <a class="mask-id" href="${profileHref(n.mask.id)}" data-profile="${n.mask.id}">${n.mask.id}</a>
+                  <span class="timestamp">${n.time}</span>
+                  ${tag ? `<span class="author-tag"><span class="meta-dot">·</span><span class="v2-role">${tag}</span></span>` : ""}
+                  ${n.isEdited ? `<span class="author-tag"><span class="meta-dot">·</span>Editado</span>` : ""}
+                  <span style="flex:1"></span>
+                  ${dotsBtn(n.id)}
+                </header>
+                <p class="reply-body">${renderTextWithHashtags(esc(n.text))}</p>
+                ${renderMedia(n.media)}
+                ${actionsHTML(n.id, replyBtn(n.id))}
+              </div>
+            </div>
+          </div>
+          <button type="button" class="v2-fold" data-v2-fold="${n.id}" aria-expanded="true" aria-label="Ocultar las respuestas a ${n.mask.id}" title="Ocultar respuestas"></button>
+          <div class="v2-kids"><div class="v2-kids-inner">${n.kids.map(nodeHTML).join("")}</div></div>
+          <button type="button" class="v2-more" data-v2-fold="${n.id}" aria-expanded="false"></button>
+        </div>`;
+    }
+    function updateMore(n) {
+      const el = $(`n-${n.id}`).querySelector(":scope > .v2-more");
+      const all = descendants(n);
+      const faces = [...new Set(all.map((d) => d.mask.id))].slice(0, 3);
+      el.innerHTML = `<span class="v2-faces">${faces.map((f) => maskAvatarSVG(f, 18)).join("")}</span>${plural(all.length)}${Icons.chevronDown()}`;
+    }
+    function updateCounts() {
+      document.querySelectorAll("[data-count-label]").forEach((el) => (el.textContent = plural(total())));
+    }
+
+    $("n-op").innerHTML = `
+      <div class="op-header">
+        <a class="op-identity" href="${profileHref(thread.mask.id)}" data-profile="${thread.mask.id}">
+          ${maskAvatarSVG(thread.mask.id, 36, { online: thread.mask.isOnline })}
+          <span class="op-mask-id">${thread.mask.id}</span>
+        </a>
+        <span class="op-meta">${thread.time}</span>
+        <span class="op-spacer"></span>
+        ${dotsBtn("op")}
+      </div>
+      <p class="op-body">${renderTextWithHashtags(esc(thread.text))}</p>
+      ${actionsHTML("op", replyBtn("op") + repostBtn("op"))}`;
+
+    $("replies").innerHTML = thread.kids.map(nodeHTML).join("");
+    Object.values(byId).forEach((n) => n !== thread && n.kids.length && updateMore(n));
+    updateCounts();
+
+    $("title-pinned").innerHTML = `${maskAvatarSVG(thread.mask.id, 20)}<b>${thread.mask.id}</b><span class="v2-ellipsis">${esc(snippet(thread.text, 60))}</span>`;
+    $("sort-trigger").innerHTML = `${Icons.sort()}<span id="sort-label">Destacados</span>${Icons.chevronDown()}<span class="v2-sort-spin" aria-hidden="true"></span>`;
+    $("replies-skel").innerHTML = [92, 64, 78]
+      .map((w) => `<div class="v2-skel-row"><i class="is-avatar"></i><div><i class="is-name"></i><i class="is-line"></i><i class="is-line" style="width:${w}%"></i></div></div>`)
+      .join("");
+    document.querySelectorAll(".menu-check").forEach((el) => (el.innerHTML = Icons.check()));
+    $("comment-avatar").innerHTML = maskAvatarSVG(me.id, 36);
+    $("attach-btn").innerHTML = Icons.attach();
+    $("expand-btn").innerHTML = Icons.expand();
+    $("send").innerHTML = Icons.send();
+
+    // "Sigue leyendo": el final del hilo no es un callejón sin salida.
+    $("next-mount").innerHTML = MockData.feed
+      .filter((p) => p.type !== "poll" && p.uid !== thread.id)
+      .slice(0, 3)
+      .map((p) => {
+        const rx = (p.reactions || []).reduce((s, r) => s + r.count, 0);
+        return `
+          <div class="v2-next-row" role="link" tabindex="0" data-nav-href="thread-v2.html?id=${p.uid}">
+            ${maskAvatarSVG(p.mask.id, 36, { online: p.mask.isOnline })}
+            <div style="min-width:0;">
+              <p class="row-body">${renderTextWithHashtags(esc(p.text))}</p>
+              <div class="v2-next-meta">${rx} reacciones · ${plural(p.repliesCount)}</div>
+            </div>
+            <span class="v2-next-chev" aria-hidden="true">${Icons.chevronDown()}</span>
+          </div>`;
+      })
+      .join("");
+
+    /* ---------- Mapa del hilo ---------- */
+    const mapTargets = () => ["op", ...[...document.querySelectorAll("#replies > .v2-node")].map((el) => el.dataset.id)];
+    function buildMap() {
+      $("map").innerHTML = mapTargets()
+        .map((id, i) => {
+          const n = byId[id];
+          const more = id !== "op" && n.kids.length ? ` · ${plural(descendants(n).length)}` : "";
+          return `${i === 1 ? '<span class="v2-map-sep" aria-hidden="true"></span>' : ""}
+            <button type="button" class="v2-map-dot" data-jump="${id}" aria-label="Ir a ${id === "op" ? "el inicio del hilo" : "la respuesta de " + n.mask.id}">
+              ${maskAvatarSVG(n.mask.id, 22)}
+              <span class="v2-map-tip"><b>${n.mask.id}</b>${more} — ${esc(snippet(n.text, 34))}</span>
+            </button>`;
+        })
+        .join("");
+      syncScroll();
+    }
+    // shortcut: una cara por conversación; con >12 se sale del alto de la
+    // ventana — ahí habrá que agrupar o ventanear el mapa.
+
+    function jump(id) {
+      const el = $(`n-${id}`);
+      if (id === "op") window.scrollTo({ top: 0, behavior: "smooth" });
+      else el.scrollIntoView({ behavior: "smooth", block: "start" });
+      flash(el);
+    }
+    function flash(el) {
+      const row = el.querySelector(":scope > .v2-row");
+      if (!row) return;
+      row.classList.remove("is-flash");
+      void row.offsetWidth; // reinicia la animación si ya estaba corriendo
+      row.classList.add("is-flash");
+    }
+
+    /* ---------- Scroll: título contextual + cara activa del mapa ---------- */
+    let ticking = false;
+    function syncScroll() {
+      ticking = false;
+      $("appbar").classList.toggle("is-pinned", $("n-op").getBoundingClientRect().bottom < 64);
+      const ids = mapTargets();
+      let active = "op";
+      const atEnd = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2;
+      if (atEnd && window.scrollY > 0) active = ids[ids.length - 1];
+      else ids.forEach((id) => { if ($(`n-${id}`).getBoundingClientRect().top <= 150) active = id; });
+      document.querySelectorAll(".v2-map-dot").forEach((d) => d.classList.toggle("is-active", d.dataset.jump === active));
+    }
+    window.addEventListener("scroll", () => { if (!ticking) { ticking = true; requestAnimationFrame(syncScroll); } }, { passive: true });
+    $("title").addEventListener("click", () => $("appbar").classList.contains("is-pinned") && jump("op"));
+
+    /* ---------- Plegar / desplegar una rama ---------- */
+    function setCollapsed(id, collapsed) {
+      const node = $(`n-${id}`);
+      const kids = node.querySelector(":scope > .v2-kids");
+      kids.classList.add("is-clipping"); // recorta SOLO mientras anima (si no, cortaría menús y popovers)
+      node.classList.toggle("is-collapsed", collapsed);
+      kids.inert = collapsed;
+      clearTimeout(kids._t);
+      if (!collapsed) kids._t = setTimeout(() => kids.classList.remove("is-clipping"), 420);
+    }
+
+    /* ---------- Composer: a quién respondes + publicar en su sitio ---------- */
+    const composer = $("composer");
+    let replyTarget = null;
+    let sortMode = "top";
+    let newCount = 0;
+
+    function setReplyTarget(id) {
+      replyTarget = id && id !== "op" ? id : null;
+      document.querySelectorAll(".v2-row.is-target").forEach((r) => r.classList.remove("is-target"));
+      if (replyTarget) $(`n-${replyTarget}`).querySelector(":scope > .v2-row").classList.add("is-target");
+      const box = $("replyto");
+      box.hidden = !replyTarget;
+      if (replyTarget) {
+        const n = byId[replyTarget];
+        box.innerHTML = `${maskAvatarSVG(n.mask.id, 18)}<span>Respondiendo a <b>${n.mask.id}</b></span>
+          <button type="button" class="v2-replyto-x" data-v2-reply-clear aria-label="Responder al hilo en vez de a ${n.mask.id}">${Icons.close()}</button>`;
+      }
+      composer.placeholder = replyTarget ? "Escribe tu respuesta..." : "Responde a este hilo...";
+      composer.focus();
+    }
+    function syncComposer() {
+      composer.style.height = "auto";
+      composer.style.height = `${composer.scrollHeight}px`;
+      const ready = composer.value.trim().length > 0;
+      $("send").classList.toggle("is-in", ready);
+      $("send").tabIndex = ready ? 0 : -1;
+      $("attach-btn").hidden = ready; // con texto: ampliar · enviar (igual que la app real)
+      syncExpand();
+    }
+    composer.addEventListener("input", syncComposer);
+    composer.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); submit(); }
+      if (e.key === "Escape" && replyTarget) { e.stopPropagation(); setReplyTarget(null); }
+    });
+
+    /* ---------- Editor ampliado: el mismo borrador, más grande ---------- */
+    const MAX_CHARS = 500; // el límite real de la app
+    const ex = $("ex"), exText = $("ex-text");
+    $("ex-avatar").innerHTML = maskAvatarSVG(me.id, 36);
+    $("ex-me").textContent = me.id;
+    $("ex-media").innerHTML = `${Icons.attach()}Multimedia`;
+
+    function syncExpand() {
+      if (exText.value !== composer.value) exText.value = composer.value;
+      // El campo crece con el texto; la tarjeta crece con él hasta el alto de
+      // la ventana y a partir de ahí se desplaza el cuerpo (el pie no se mueve).
+      const body = $("ex-body");
+      const atEnd = exText.selectionStart >= exText.value.length;
+      const keep = body.scrollTop;
+      exText.style.height = "auto";
+      exText.style.height = `${exText.scrollHeight}px`;
+      body.scrollTop = atEnd ? body.scrollHeight : keep; // escribiendo al final, el cursor siempre a la vista
+      const len = composer.value.length, left = MAX_CHARS - len;
+      const count = $("ex-count");
+      count.classList.toggle("is-on", len > 0);
+      count.classList.toggle("is-near", left <= 20 && left >= 0);
+      count.classList.toggle("is-over", left < 0);
+      $("ex-count-num").textContent = left <= 20 ? left : "";
+      $("ex-ring").setAttribute("stroke-dashoffset", (56.55 * (1 - Math.min(len / MAX_CHARS, 1))).toFixed(2));
+      $("ex-send").disabled = !composer.value.trim() || left < 0;
+    }
+    function openExpand() {
+      const target = replyTarget ? byId[replyTarget] : thread;
+      $("ex-title").innerHTML = replyTarget ? `Responder a <b>${target.mask.id}</b>` : "Responder al hilo";
+      const media = target.media || [];
+      $("ex-parent").innerHTML = `
+        <div class="v2-ex-lane">${maskAvatarSVG(target.mask.id, 36)}<span class="v2-ex-trunk" aria-hidden="true"></span></div>
+        <div>
+          <span class="mask-id" style="cursor:default;text-decoration:none;">${target.mask.id}</span> <span class="timestamp">${target.time}</span>
+          <p>${esc(target.text)}</p>
+          ${media.length ? `<div class="v2-ex-thumbs">${media.map((m) => `<span class="v2-ex-thumb">${illustrationSVG(m.illo)}</span>`).join("")}</div>` : ""}
+        </div>`;
+      // Nace del composer: el origen de la escala es el centro del pill acoplado.
+      const pill = document.querySelector(".v2-dock-pill").getBoundingClientRect();
+      const card = $("ex-card");
+      card.style.transformOrigin = `${pill.left + pill.width / 2 - card.offsetLeft}px ${pill.top + pill.height / 2 - card.offsetTop}px`;
+      // Bloquea el scroll de fondo sin que la página salte por la barra de scroll.
+      const sb = window.innerWidth - document.documentElement.clientWidth;
+      document.documentElement.style.overflow = "hidden";
+      document.body.style.paddingRight = `${sb}px`;
+      document.querySelector(".app-shell").inert = true; // el foco no sale del editor
+      $("map").inert = true;
+      document.querySelector(".v2-dock").classList.add("is-away");
+      ex.inert = false;
+      ex.classList.add("is-open");
+      syncExpand();
+      exText.focus();
+      exText.setSelectionRange(exText.value.length, exText.value.length);
+      $("ex-body").scrollTop = $("ex-body").scrollHeight;
+    }
+    function closeExpand() {
+      if (!ex.classList.contains("is-open")) return;
+      ex.classList.remove("is-open");
+      ex.inert = true;
+      document.querySelector(".v2-dock").classList.remove("is-away");
+      document.querySelector(".app-shell").inert = false;
+      $("map").inert = false;
+      document.documentElement.style.overflow = "";
+      document.body.style.paddingRight = "";
+      composer.focus(); // vuelves al mismo campo, con el mismo texto
+    }
+    exText.addEventListener("input", () => { composer.value = exText.value; syncComposer(); });
+    exText.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) { e.preventDefault(); $("ex-send").click(); }
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && ex.classList.contains("is-open")) { e.stopImmediatePropagation(); closeExpand(); }
+    }, true);
+
+    function submit() {
+      const text = composer.value.trim();
+      if (!text || text.length > MAX_CHARS) return;
+      const parent = replyTarget ? byId[replyTarget] : null;
+      const n = { id: `new${++newCount}`, mask: me, time: "ahora", mins: 0, isMine: true, text, reactions: [], kids: [], parent };
+      byId[n.id] = n;
+      (parent ? parent.kids : thread.kids).push(n);
+
+      if (parent) {
+        const pEl = $(`n-${parent.id}`);
+        pEl.classList.add("has-kids");
+        setCollapsed(parent.id, false);
+        pEl.querySelector(":scope > .v2-kids > .v2-kids-inner").insertAdjacentHTML("beforeend", nodeHTML(n));
+        pEl.querySelector(`[data-rc="${parent.id}"]`).textContent = parent.kids.length;
+        for (let a = parent; a; a = a.parent) updateMore(a);
+      } else {
+        $("replies").insertAdjacentHTML(sortMode === "recent" ? "afterbegin" : "beforeend", nodeHTML(n));
+      }
+      composer.value = "";
+      syncComposer();
+      setReplyTarget(null);
+      composer.blur();
+      updateCounts();
+      buildMap();
+      const el = $(`n-${n.id}`);
+      el.classList.add("v2-enter");
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      flash(el);
+      showToast("Respuesta publicada");
+    }
+
+    // Demora simulada — en la app real es la respuesta de red (un par de segundos).
+    const SORT_DELAY = 1400;
+    let sortTimer = null;
+    function sortBy(mode) {
+      if (mode === sortMode && !sortTimer) return;
+      sortMode = mode;
+      // El control responde al instante (etiqueta + check); la lista llega después.
+      $("sort-label").textContent = mode === "recent" ? "Recientes" : "Destacados";
+      document.querySelectorAll("[data-sort]").forEach((b) => {
+        b.setAttribute("aria-checked", b.dataset.sort === mode);
+        b.querySelector(".menu-check").classList.toggle("is-visible", b.dataset.sort === mode);
+      });
+      $("sort-trigger").classList.add("is-loading");
+      $("replies").hidden = true;
+      $("replies-skel").hidden = false;
+      $("sort-status").textContent = "Ordenando respuestas…";
+      clearTimeout(sortTimer); // cambiar de idea a mitad de carga solo reinicia la espera
+      sortTimer = setTimeout(() => {
+        sortTimer = null;
+        const order = sortMode === "recent" ? [...thread.kids].sort((a, b) => a.mins - b.mins) : thread.kids;
+        order.forEach((n, i) => {
+          const el = $(`n-${n.id}`);
+          el.classList.remove("v2-enter");
+          el.style.animationDelay = `${Math.min(i, 6) * 45}ms`;
+          $("replies").appendChild(el);
+        });
+        $("replies-skel").hidden = true;
+        $("replies").hidden = false;
+        void $("replies").offsetWidth; // reinicia la entrada en cascada
+        order.forEach((n) => $(`n-${n.id}`).classList.add("v2-enter"));
+        $("sort-trigger").classList.remove("is-loading");
+        $("sort-status").textContent = "Respuestas ordenadas";
+        buildMap();
+      }, SORT_DELAY);
+    }
+
+    /* ---------- Clics de esta pantalla ----------
+       Este listener se registra ANTES que el de app.js (que espera a
+       DOMContentLoaded); lo que se resuelve aquí corta con
+       stopImmediatePropagation para que el genérico no cierre lo recién abierto. */
+    document.addEventListener("click", (e) => {
+      const hit = (sel) => e.target.closest(sel);
+      const done = () => e.stopImmediatePropagation();
+      let el;
+      if ((el = hit("[data-v2-reply]"))) { setReplyTarget(el.dataset.v2Reply); return done(); }
+      if (hit("[data-v2-reply-clear]")) { setReplyTarget(null); return done(); }
+      if ((el = hit("[data-v2-fold]"))) {
+        const id = el.dataset.v2Fold;
+        setCollapsed(id, !$(`n-${id}`).classList.contains("is-collapsed"));
+        return done();
+      }
+      if ((el = hit("[data-jump]"))) { jump(el.dataset.jump); return done(); }
+      if ((el = hit("[data-sort]"))) sortBy(el.dataset.sort); // el genérico cierra el menú
+      if (hit("#expand-btn")) { openExpand(); return done(); }
+      if (hit("[data-ex-close]") || e.target === ex) { closeExpand(); return done(); }
+      if (hit("#ex-send")) { closeExpand(); submit(); return done(); }
+      if (hit("#send")) submit();
+    });
+
+    // Tarjeta de perfil (v2.js): lo que solo esta pantalla sabe.
+    V2Profile.online = (maskId) => Object.values(byId).some((n) => n.mask.id === maskId && n.mask.isOnline);
+    V2Profile.role = (maskId) => (maskId === thread.mask.id ? "Autor del hilo" : "");
+    V2Profile.bottomInset = 96; // el composer acoplado
+
+    buildMap();
+    syncComposer();
+  </script>
+</body>
+</html>

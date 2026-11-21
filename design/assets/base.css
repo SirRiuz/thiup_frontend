@@ -1,0 +1,156 @@
+/* =========================================================================
+   THIUP MOCKUP — BASE
+   Reset + utilidades globales (springPress/springPressIcon de Threads-exact
+   press feedback) + foco. Ver sistema-de-diseno.html para la referencia
+   completa de cada patrón.
+   ========================================================================= */
+
+* {
+  box-sizing: border-box;
+}
+
+/* Sin esto, cualquier `display:flex` propio (.modal-backdrop,
+   .reaction-popover...) le gana al atributo [hidden] por orden de cascada
+   (misma especificidad, la regla de autor llega después que la del user
+   agent) y el elemento "oculto" se queda visible. */
+[hidden] {
+  display: none !important;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--bg-page);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--fs-14);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+button,
+input,
+textarea {
+  font-family: inherit;
+  color: inherit;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* La app desactiva el outline nativo del navegador en toda la app (decisión
+   de producto) y dibuja su propio anillo cálido donde hace falta. */
+:focus,
+:focus-visible {
+  outline: none;
+}
+
+.focus-ring:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--brand-sand);
+  border-radius: var(--radius-sm);
+}
+
+/* Scrollbar + selección — calcado 1:1 de src/styles/index.css (la app real
+   usa estos grises neutros aquí, NO la paleta cálida — ver CLAUDE.md raíz
+   § "Inconsistencias a corregir al tocarlas": #1a1a1a es el texto canónico,
+   pero el scrollbar/::selection quedaron en gris neutro desde siempre). */
+::selection {
+  background: rgba(0, 0, 0, 0.1);
+  color: #0f0f0f;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #e5e5e5;
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9b9a97;
+}
+
+/* ---- Press feedback Threads-exact (ver CLAUDE.md "Press feedback") ---- */
+.spring-press {
+  transition: transform 0.15s ease, background 0.2s ease, color 0.2s ease, opacity 0.2s ease;
+}
+.spring-press-icon {
+  transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease, opacity 0.2s ease;
+}
+.spring-press:not(:disabled):active {
+  transform: scale(0.96);
+}
+.spring-press-icon:not(:disabled):active {
+  transform: scale(0.9);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spring-press,
+  .spring-press-icon {
+    transition: background 0.2s ease, color 0.2s ease, opacity 0.2s ease;
+  }
+  .spring-press:active,
+  .spring-press-icon:active {
+    transform: none;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ---- Utilidades de maqueta (SOLO para este directorio de diseño) ---- */
+
+/* Marco de "frame" para enseñar una pantalla dentro de index.html/sistema
+   de diseño sin necesitar un iframe (no usado por las pantallas reales). */
+.mock-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  border-radius: var(--radius-pill);
+  background: var(--brand-tint);
+  color: var(--brand-terracotta);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

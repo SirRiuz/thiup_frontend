@@ -1,0 +1,101 @@
+/* =========================================================================
+   THIUP — DESIGN TOKENS
+   Fuente de verdad: CLAUDE.md del repo (verificado contra el CSS real de la
+   app). La app real NO usa custom properties — cada módulo .module.css trae
+   el valor hardcodeado. Aquí SÍ los convertimos en variables porque este
+   directorio es un mockup de solo-diseño: queremos poder tocar un color o
+   una medida en un solo lugar y verlo propagarse por las 9 pantallas.
+   No inventes tokens nuevos sin verlos primero en sistema-de-diseno.html.
+   ========================================================================= */
+
+:root {
+  /* ---- Core (superficies y texto) ---- */
+  --bg-page: #f7f5f0;        /* fondo de página / shell / splash */
+  --bg-surface: #fdfcf8;     /* tarjetas, rails, modales, inputs — el "blanco" de Thiup. #FFFFFF está PROHIBIDO */
+  --bg-hover: #f0ece3;       /* hover/selección neutra sobre controles transparentes */
+  --text-primary: #1a1a1a;
+  --text-secondary: #6b6b6b;
+  --text-tertiary: #9b9591;  /* meta, timestamps, "· Autor" */
+  --text-quaternary: #a3a3a3;
+  --charcoal-action: #424242; /* iconos/label de la barra de acciones (React/Reply) */
+  --hint: #a3a3a3;
+
+  --border-default: #ebe7dd;   /* chrome: cabeceras/pies de modal, filas de menú */
+  --border-surface: #e5e0d3;   /* contorno de modal/rail/input/superficie elevada */
+  --separator-glyph: #c4bfb1;  /* "·" inline */
+  --border-dashed: #d5cfc0;    /* placeholders punteados, ilustraciones vacías */
+  --divider-feed: rgba(0, 0, 0, 0.15); /* 0.5px — divisor EXACTO de Threads entre filas */
+
+  /* ---- Marca y acentos cálidos ---- */
+  --brand-terracotta: #a85432;  /* acento de marca único: logo, nav activo */
+  --brand-warm: #b8845f;        /* iconos secundarios, acentos cálidos */
+  --brand-sand: #c5a572;        /* anillo de foco, rellenos de ilustración */
+  --brand-umber: #8b6f47;       /* tagline, texto cálido profundo */
+  --brand-tint: #f3e3d3;        /* fondo de chips/tags, blob activo */
+  --danger: #c53030;            /* errores, "trending" */
+  --danger-menu: #ff3040;       /* filas destructivas del menú ⋯ (exacto Threads) */
+
+  /* ---- Añadidos de la pasada v2 (solo los usan screens/*-v2.html) ---- */
+  --accent-moss: #5f7a4c;                    /* segundo acento, SOLO para repost (hecho / "X reposteó"): un verde musgo que convive con la terracota */
+  --accent-moss-wash: rgba(95, 122, 76, 0.13);
+  --fill-chip: #f1ede4;                      /* relleno de pastillas en reposo (chips de reacción): objeto, no contorno */
+  --fill-chip-hover: #e9e4d8;
+  --fill-recessed: #f6f3ec;                  /* bloque hundido dentro de una tarjeta (hilo citado) */
+  --hairline: rgba(0, 0, 0, 0.12);           /* línea fina pintada ENCIMA del contenido (fotos, bloque citado) */
+  --radius-media: 12px;                      /* fotos, video y bloque citado: un mismo radio interior (la placa exterior es 16) */
+
+  /* ---- Overlays ---- */
+  --shadow-ink: 26, 26, 26;     /* rgb base para sombras cálidas */
+  --modal-backdrop: rgba(31, 26, 20, 0.62);
+  --brand-wash: rgba(168, 84, 50, 0.1);
+
+  /* ---- Tipografía ---- */
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  --fs-11: 11px;
+  --fs-13: 13px;
+  --fs-14: 14px; /* cuerpo e identidad — tamaño fijo en toda la app */
+  --fs-15: 15px;
+  --fs-17: 17px;
+  --fs-20: 20px;
+  --fs-22: 22px;
+  --fs-40: 40px;
+
+  --fw-400: 400;
+  --fw-500: 500;
+  --fw-600: 600;
+  --fw-700: 700;
+
+  /* ---- Radios ---- */
+  --radius-xs: 3px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 14px;
+  --radius-2xl: 16px;
+  --radius-modal: 18px;
+  --radius-card: 24px;
+  --radius-popover: 28px;
+  --radius-pill: 999px;
+
+  /* ---- Sombras ---- */
+  --shadow-hover-card: 0 4px 20px rgba(26, 26, 26, 0.06);
+  --shadow-popover: 0 8px 24px rgba(26, 26, 26, 0.08);
+  --shadow-modal: 0 18px 50px rgba(26, 26, 26, 0.18);
+  --shadow-float: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-menu: 0 0 80px rgba(0, 0, 0, 0.25), 1px 1px 2px rgba(0, 0, 0, 0.05), 0 8px 16px rgba(0, 0, 0, 0.06);
+
+  /* ---- Layout ---- */
+  --column-max: 640px;
+  --pad-feed: 24px;   /* inset Threads de pantallas tipo feed (home/search/profile) */
+  --pad-post: 16px;   /* inset de la vista de hilo */
+  --rail-width: 76px;
+  --appbar-height: 60px;
+
+  /* ---- Easing compartido ---- */
+  --ease-expo-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Reconstrucción de "#FFFFFF está prohibido": cualquier intento de usar
+   blanco puro en este directorio debe pasar por --bg-surface (#fdfcf8). */

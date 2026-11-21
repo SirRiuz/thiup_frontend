@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=1280" />
+<title>Hilo · Thiup (maqueta)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
+<link rel="stylesheet" href="../assets/tokens.css" />
+<link rel="stylesheet" href="../assets/base.css" />
+<link rel="stylesheet" href="../assets/components.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div id="nav-rail-mount"></div>
+
+    <div class="screen-page">
+      <header class="thread-appbar">
+        <div class="thread-appbar-inner">
+          <button type="button" class="back-button" onclick="history.length>1?history.back():location.href='home.html'" aria-label="Atrás">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1 6h10M1 6l4-4M1 6l4 4" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"/></svg>
+          </button>
+          <div class="thread-title-block">
+            <span class="thread-title">Hilo</span>
+            <span class="thread-subtitle" id="replies-count-label"></span>
+          </div>
+          <span></span>
+        </div>
+      </header>
+
+      <main class="screen-main" style="padding-bottom:70px;">
+        <div class="corner-mask" aria-hidden="true">
+          <div class="corner-mask-window"><div class="corner-mask-shape"></div></div>
+        </div>
+
+        <div class="thread-surface">
+          <!-- OP -->
+          <section class="op-section" id="op-mount"></section>
+
+          <!-- Barra de orden + "ver actividad" -->
+          <div class="replies-bar">
+            <button type="button" class="sort-trigger" data-menu-toggle="sort-menu" id="sort-trigger"></button>
+            <button type="button" class="view-activity">
+              Ver actividad
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M14.293 3.29297C14.6835 2.90245 15.3165 2.90245 15.707 3.29297C16.0976 3.68349 16.0976 4.31651 15.707 4.70703L8.41406 12L15.707 19.293C16.0976 19.6835 16.0976 20.3165 15.707 20.707C15.3165 21.0976 14.6835 21.0976 14.293 20.707L6.29297 12.707C5.90245 12.3165 5.90245 11.6835 6.29297 11.293L14.293 3.29297Z"/></svg>
+            </button>
+          </div>
+
+          <!-- Respuestas (anidadas) -->
+          <section class="replies-list" id="replies-mount"></section>
+
+          <!-- Composer -->
+          <div class="comment-box">
+            <div class="compose-pill">
+              <span id="comment-avatar" style="flex:none;"></span>
+              <div class="field">
+                <div style="flex:1;min-width:0;">
+                  <div class="compose-textarea-fake">Responde a este hilo...</div>
+                </div>
+                <div class="compose-toolbar">
+                  <button type="button" class="toolbar-icon-btn" id="attach-btn" aria-label="Adjuntar imagen o video"></button>
+                  <button type="button" class="toolbar-icon-btn" id="expand-btn" aria-label="Expandir editor"></button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="../assets/icons.js"></script>
+  <script src="../assets/avatar.js"></script>
+  <script src="../assets/reaction-emoji.js"></script>
+  <script src="../assets/illustrations.js"></script>
+  <script src="../assets/mock-data.js"></script>
+  <script src="../assets/app.js"></script>
+  <script>
+    renderNavRail(null);
+    const thread = MockData.thread;
+
+    document.getElementById("replies-count-label").textContent = `${thread.replies.length} respuestas`;
+
+    document.getElementById("op-mount").innerHTML = `
+      <div class="op-header">
+        <span class="op-identity">
+          ${maskAvatarSVG(thread.mask.id, 36, { online: thread.mask.isOnline })}
+          <span class="op-mask-id">${thread.mask.id}</span>
+        </span>
+        <span class="op-meta">${thread.time}</span>
+        <span class="op-spacer"></span>
+        <button type="button" class="action-btn spring-press-icon" style="padding:0;width:36px;height:36px;margin:-6px;" data-menu-toggle="op-menu" aria-label="Más opciones">${Icons.dots()}</button>
+        ${renderOptionsMenu("op-menu")}
+      </div>
+      <p class="op-body">${renderTextWithHashtags(thread.text)}</p>
+      ${renderMedia(thread.media)}
+      <div style="margin:4px 0 0;">${renderReactionStack(thread.reactions)}</div>
+      <div class="action-bar">
+        ${renderReactionPicker("op")}
+        <button type="button" class="action-btn">${Icons.reply()}Responder</button>
+      </div>`;
+
+    // Barra de orden (Destacados/Recientes) — trigger real con icono + label.
+    document.getElementById("sort-trigger").innerHTML = `
+      ${Icons.sort()}<span>Destacados</span>${Icons.chevronDown()}
+      <div class="menu-surface" data-menu="sort-menu" hidden style="top:calc(100% + 6px);left:0;width:200px;">
+        <button type="button" class="menu-item">Destacados<span class="menu-item-icon is-right menu-check is-visible">${Icons.check()}</span></button>
+        <button type="button" class="menu-item">Recientes<span class="menu-item-icon is-right menu-check">${Icons.check()}</span></button>
+      </div>`;
+
+    document.getElementById("replies-mount").innerHTML = thread.replies.map(renderReply).join("");
+    document.getElementById("comment-avatar").innerHTML = maskAvatarSVG(MockData.currentUser.id, 36);
+    document.getElementById("attach-btn").innerHTML = Icons.attach();
+    document.getElementById("expand-btn").innerHTML = Icons.expand();
+  </script>
+</body>
+</html>

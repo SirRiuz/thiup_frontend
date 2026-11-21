@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sistema de diseño · Thiup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" />
+<link rel="stylesheet" href="assets/tokens.css" />
+<link rel="stylesheet" href="assets/base.css" />
+<link rel="stylesheet" href="assets/components.css" />
+<style>
+  .doc { max-width: 980px; margin: 0 auto; padding: 56px 24px 120px; }
+  .doc-header { margin-bottom: 48px; }
+  .doc-eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--brand-terracotta); }
+  .doc-title { font-size: 34px; font-weight: 700; margin: 8px 0 10px; color: var(--text-primary); }
+  .doc-lead { font-size: 15px; line-height: 1.6; color: var(--text-secondary); max-width: 640px; }
+  .doc-nav { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 20px; }
+  .doc-nav a { font-size: 13px; color: var(--brand-terracotta); font-weight: 600; }
+  section.doc-sec { margin-top: 56px; padding-top: 32px; border-top: 1px solid var(--border-default); }
+  .doc-sec h2 { font-size: 20px; margin: 0 0 6px; color: var(--text-primary); }
+  .doc-sec .sec-note { font-size: 13px; color: var(--text-tertiary); margin: 0 0 24px; max-width: 620px; line-height: 1.6; }
+  .swatch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; }
+  .swatch { border: 1px solid var(--border-default); border-radius: var(--radius-lg); overflow: hidden; background: var(--bg-surface); }
+  .swatch-color { height: 64px; }
+  .swatch-meta { padding: 8px 10px; }
+  .swatch-name { font-size: 12px; font-weight: 600; color: var(--text-primary); }
+  .swatch-hex { font-family: var(--font-mono); font-size: 11px; color: var(--text-tertiary); }
+  .type-row { display: flex; align-items: baseline; gap: 20px; padding: 14px 0; border-bottom: 1px solid var(--border-default); }
+  .type-row:last-child { border-bottom: 0; }
+  .type-meta { width: 180px; flex: none; font-family: var(--font-mono); font-size: 11px; color: var(--text-tertiary); }
+  .component-demo { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 24px; background: var(--bg-page); border: 1px solid var(--border-default); border-radius: var(--radius-lg); }
+  .component-demo.is-dark-ok { position: relative; }
+  .tile-sample { width: 72px; height: 72px; border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center; }
+  .token-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .token-table th, .token-table td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border-default); }
+  .token-table th { color: var(--text-tertiary); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .icon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 12px; }
+  .icon-tile { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 6px; border: 1px solid var(--border-default); border-radius: var(--radius-md); color: var(--text-secondary); }
+  .icon-tile span { font-size: 10px; color: var(--text-tertiary); }
+  .brand-demo { display: flex; gap: 24px; flex-wrap: wrap; }
+  .brand-demo .cell { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .brand-demo .cell span { font-size: 12px; color: var(--text-tertiary); }
+  .back-link { display:inline-flex; align-items:center; gap:6px; font-size: 13px; color: var(--text-tertiary); margin-bottom: 24px; }
+</style>
+</head>
+<body style="background: var(--bg-page);">
+<div class="doc">
+  <a class="back-link" href="index.html">← Volver al índice</a>
+  <header class="doc-header">
+    <p class="doc-eyebrow">Sistema de diseño · Thiup</p>
+    <h1 class="doc-title">Cálido, sobrio, hecho a mano</h1>
+    <p class="doc-lead">Esta página documenta el lenguaje visual que YA tiene la app (no es una propuesta nueva): tokens extraídos de <code>CLAUDE.md</code> y de los CSS Modules reales. La app real no usa variables CSS — cada valor va cableado por componente — así que aquí los convertimos en custom properties (<code>assets/tokens.css</code>) solo para poder jugar y proponer cambios sin tocar el código fuente.</p>
+    <nav class="doc-nav">
+      <a href="#color">Color</a>
+      <a href="#type">Tipografía</a>
+      <a href="#spacing">Espaciado y radios</a>
+      <a href="#buttons">Botones y chips</a>
+      <a href="#tabs">Tabs</a>
+      <a href="#menu">Menú flotante</a>
+      <a href="#reactions">Reacciones</a>
+      <a href="#avatar">Avatar / máscara</a>
+      <a href="#images">Imágenes de ejemplo</a>
+      <a href="#nav">Navegación</a>
+      <a href="#notices">Avisos y estados</a>
+      <a href="#modal">Modal y toast</a>
+      <a href="#icons">Iconografía</a>
+      <a href="#brand">Marca</a>
+    </nav>
+  </header>
+
+  <section class="doc-sec" id="color">
+    <h2>Color</h2>
+    <p class="sec-note">El blanco puro (#FFFFFF) está PROHIBIDO en toda la app — la superficie "blanca" es <code>#fdfcf8</code>. Terracota es el único acento de marca; el resto son grises cálidos.</p>
+    <h3 style="font-size:13px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.04em;">Núcleo</h3>
+    <div class="swatch-grid" id="core-swatches"></div>
+    <h3 style="font-size:13px;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:.04em;margin-top:24px;">Marca y acentos cálidos</h3>
+    <div class="swatch-grid" id="brand-swatches"></div>
+  </section>
+
+  <section class="doc-sec" id="type">
+    <h2>Tipografía</h2>
+    <p class="sec-note">Inter en toda la app (cuerpo e identidad fijos a 14px — Threads renderiza 15px del sistema, pero la x-height de Inter es mayor y 14px es el match visual). Mono solo para lo que se copia: hashes, IDs, contadores técnicos.</p>
+    <div id="type-rows"></div>
+  </section>
+
+  <section class="doc-sec" id="spacing">
+    <h2>Espaciado, radios y sombra</h2>
+    <p class="sec-note">Múltiplos informales de ~2/4px. Radio 24px para las tarjetas de pantalla completa (el "column" de Threads), 999px para píldoras y avatares.</p>
+    <table class="token-table">
+      <thead><tr><th>Token</th><th>Valor</th><th>Uso</th></tr></thead>
+      <tbody>
+        <tr><td><code>--radius-sm</code></td><td>6px</td><td>chips pequeños</td></tr>
+        <tr><td><code>--radius-md</code></td><td>8px</td><td>inputs, tiles de media</td></tr>
+        <tr><td><code>--radius-lg</code></td><td>12px</td><td>botones</td></tr>
+        <tr><td><code>--radius-xl</code></td><td>14px</td><td>ítems de nav</td></tr>
+        <tr><td><code>--radius-2xl</code></td><td>16px</td><td>menú flotante, search box</td></tr>
+        <tr><td><code>--radius-modal</code></td><td>18px</td><td>modales</td></tr>
+        <tr><td><code>--radius-card</code></td><td>24px</td><td>tarjetas de pantalla (.surface)</td></tr>
+        <tr><td><code>--radius-popover</code></td><td>28px</td><td>picker de reacciones</td></tr>
+        <tr><td><code>--shadow-popover</code></td><td>0 8px 24px rgba(26,26,26,.08)</td><td>popovers</td></tr>
+        <tr><td><code>--shadow-modal</code></td><td>0 18px 50px rgba(26,26,26,.18)</td><td>modales / sheets</td></tr>
+        <tr><td><code>--modal-backdrop</code></td><td>rgba(31,26,20,.62) + blur(8px)</td><td>fondo de TODO modal/dialog/sheet</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="doc-sec" id="buttons">
+    <h2>Botones, chips e inputs</h2>
+    <p class="sec-note">Relleno oscuro + texto crema — nunca blanco sobre blanco. El anillo de foco es siempre el cálido <code>#c5a572</code> (la app desactiva el outline nativo del navegador).</p>
+    <div class="component-demo">
+      <button class="compose-post-btn spring-press">Publicar</button>
+      <button class="modal-primary-btn spring-press">Responder</button>
+      <button class="error-btn-dark spring-press">Intentar de nuevo</button>
+      <button class="chip spring-press"><span class="chip-hash">#</span>privacidad</button>
+      <button class="you-badge" style="border:0;">Tú</button>
+      <div class="search-box" style="width:260px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7.5"/><line x1="21" y1="21" x2="16.4" y2="16.4"/></svg><input placeholder="Buscar en Thiup" /></div>
+    </div>
+  </section>
+
+  <section class="doc-sec" id="tabs">
+    <h2>Tabs (filtro de feed)</h2>
+    <p class="sec-note">Celdas iguales, 48px, subrayado deslizante de 1px que se mide e interpola entre pestañas (expo-out, nunca rebota).</p>
+    <div class="component-demo" style="padding:0;overflow:hidden;">
+      <div class="tabs" data-tabs="demo-tabs" style="width:100%;margin:0;">
+        <button type="button" class="tab is-active" data-tab="a">Para ti</button>
+        <button type="button" class="tab" data-tab="b">Cerca de ti</button>
+        <span class="tab-indicator"></span>
+      </div>
+    </div>
+  </section>
+
+  <section class="doc-sec" id="menu">
+    <h2>Menú flotante (MenuSurface)</h2>
+    <p class="sec-note">Panel único reutilizado por el menú ⋯ de cada publicación y el ☰ de navegación: 240px, radio 16, sombra triple, aparición con pop desde la esquina de origen.</p>
+    <div class="component-demo" style="justify-content:flex-start;">
+      <div class="menu-surface" style="position:static;animation:none;" id="menu-demo"></div>
+    </div>
+  </section>
+
+  <section class="doc-sec" id="reactions">
+    <h2>Reacciones</h2>
+    <p class="sec-note">Seis reacciones fijas (payload estable en inglés: love/laugh/wow/sad/angry/applause). El picker se abre desde la barra de acciones; el resumen tipo Facebook muestra hasta 3 burbujas + el total.</p>
+    <div class="component-demo">
+      <div class="reaction-picker-wrap" style="position:static;">
+        <button type="button" class="action-btn" style="pointer-events:none;" id="reaction-trigger-demo"></button>
+      </div>
+      <div class="reaction-popover" style="position:static;animation:none;" id="reaction-demo"></div>
+      <span id="reaction-stack-demo"></span>
+    </div>
+  </section>
+
+  <section class="doc-sec" id="avatar">
+    <h2>Avatar / máscara</h2>
+    <p class="sec-note">Identicon procedural: la misma semilla produce siempre el mismo avatar. Cuatro arquetipos (coil simple, doble coil, serpentina de marca, orbit) sobre 10 duotonos cálidos curados.</p>
+    <div class="component-demo" id="avatar-demo"></div>
+  </section>
+
+  <section class="doc-sec" id="images">
+    <h2>Imágenes de ejemplo</h2>
+    <p class="sec-note">La app real sirve fotos/video subidos por la gente — esta maqueta no tiene archivos reales que mostrar. En vez de una caja beige con texto "foto 1", cada media item de <code>mock-data.js</code> dibuja una escena vectorial plana en la paleta cálida (misma técnica que ilustraciones de referencia: gradiente de cielo + siluetas en capas). 100% inventado, cero fotografía — ver <code>assets/illustrations.js</code>.</p>
+    <div class="component-demo" id="illustrations-demo" style="gap:12px;"></div>
+  </section>
+
+  <section class="doc-sec" id="nav">
+    <h2>Navegación (rail de escritorio)</h2>
+    <p class="sec-note">Cápsula translúcida fija a la izquierda, 76px, con blob terracota en la ruta activa. El botón + siempre lleva una placa visible detrás del glifo.</p>
+    <div class="component-demo" style="background:#efece3;position:relative;height:140px;">
+      <div style="position:relative;display:flex;flex-direction:column;gap:4px;background:rgba(247,245,240,.85);padding:10px;border-radius:16px;">
+        <span class="nav-item is-active" style="position:relative;">home</span>
+        <span class="nav-item" style="position:relative;">search</span>
+        <span class="nav-item is-create" style="position:relative;"><span class="nav-create-plate"></span>+</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="doc-sec" id="notices">
+    <h2>Avisos y estados</h2>
+    <p class="sec-note">El rate-limit (429) NUNCA usa la paleta de peligro — es una espera, no un error. El error real sí usa el rojo suavizado.</p>
+    <div class="component-demo" style="flex-direction:column;align-items:stretch;gap:10px;">
+      <div style="display:flex;gap:10px;align-items:center;padding:10px 14px;border-radius:12px;background:rgba(168,84,50,.05);border:1px solid #dcc0ad;">
+        <strong style="color:var(--brand-terracotta);font-size:12.5px;">Vas muy rápido</strong>
+        <span style="color:var(--text-secondary);font-size:12.5px;">Podrás volver a publicar en 0:42</span>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;padding:10px 14px;border-radius:12px;background:rgba(197,48,48,.04);border:1px solid rgba(197,48,48,.22);">
+        <strong style="color:var(--danger);font-size:12.5px;">No se pudo publicar</strong>
+        <span style="color:var(--text-secondary);font-size:12.5px;">Revisa tu conexión e inténtalo de nuevo</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="doc-sec" id="modal">
+    <h2>Modal y toast</h2>
+    <div class="component-demo" style="background:#2b251e;">
+      <div class="modal" style="max-width:360px;">
+        <div class="modal-header"><button class="modal-text-btn">Cancelar</button><span class="modal-title">Nuevo hilo</span><span style="width:60px"></span></div>
+        <div class="modal-body" style="font-size:13px;color:var(--text-tertiary);">¿Qué hay de nuevo?</div>
+        <div class="modal-footer"><span></span><button class="modal-primary-btn">Publicar</button></div>
+      </div>
+      <div class="toast">Enlace copiado</div>
+    </div>
+  </section>
+
+  <section class="doc-sec" id="icons">
+    <h2>Iconografía</h2>
+    <p class="sec-note">SVG en línea, sin librería (estilo Feather/Lucide, <code>viewBox 0 0 24 24</code>, <code>stroke-width 1.5–1.8</code>). Los de navegación y menú son los glifos exactos de Threads, calcados verbatim.</p>
+    <div class="icon-grid" id="icon-grid"></div>
+  </section>
+
+  <section class="doc-sec" id="brand">
+    <h2>Marca</h2>
+    <p class="sec-note">El glifo es un hilo serpenteante con un punto (quien empieza el hilo). Nunca se recolorea ni se usa el relleno terracota en el nav.</p>
+    <div class="brand-demo">
+      <div class="cell"><div id="brand-plain"></div><span>plain — nav</span></div>
+      <div class="cell"><div id="brand-tile"></div><span>tile — splash / bienvenida</span></div>
+    </div>
+  </section>
+</div>
+
+<script src="assets/icons.js"></script>
+<script src="assets/avatar.js"></script>
+<script src="assets/reaction-emoji.js"></script>
+<script src="assets/illustrations.js"></script>
+<script src="assets/app.js"></script>
+<script>
+  const coreTokens = [
+    ["Page background", "#f7f5f0"], ["Surface", "#fdfcf8"], ["Hover neutro", "#f0ece3"],
+    ["Texto primario", "#1a1a1a"], ["Texto secundario", "#6b6b6b"], ["Texto terciario", "#9b9591"],
+    ["Charcoal acción", "#424242"], ["Texto cuaternario", "#a3a3a3"], ["Borde default", "#ebe7dd"],
+    ["Borde superficie", "#e5e0d3"], ["Separador ·", "#c4bfb1"], ["Dashed/ghost", "#d5cfc0"],
+  ];
+  const brandTokens = [
+    ["Terracotta", "#a85432"], ["Warm", "#b8845f"], ["Sand", "#c5a572"], ["Umber", "#8b6f47"],
+    ["Tint", "#f3e3d3"], ["Danger", "#c53030"], ["Danger menú", "#ff3040"],
+  ];
+  const swatch = ([name, hex]) => `<div class="swatch"><div class="swatch-color" style="background:${hex}"></div><div class="swatch-meta"><div class="swatch-name">${name}</div><div class="swatch-hex">${hex}</div></div></div>`;
+  document.getElementById("core-swatches").innerHTML = coreTokens.map(swatch).join("");
+  document.getElementById("brand-swatches").innerHTML = brandTokens.map(swatch).join("");
+
+  const typeRows = [
+    ["11px / 400", "11px", "Captions, timestamps, badges"],
+    ["14px / 400–600", "14px", "Cuerpo e identidad (fijo en toda la app)"],
+    ["15px / 600", "15px", "Títulos de appbar, botones de modal"],
+    ["17px / 600", "17px", "Énfasis / section titles"],
+    ["22px / 700", "22px", "Títulos de pantallas de error"],
+    ["40px / 700", "40px", "Numeral hero (404)"],
+  ];
+  document.getElementById("type-rows").innerHTML = typeRows
+    .map(([meta, size, label]) => `<div class="type-row"><span class="type-meta">${meta}</span><span style="font-size:${size};font-weight:600;">${label}</span></div>`)
+    .join("");
+
+  document.getElementById("menu-demo").innerHTML = `
+    <button type="button" class="menu-item">${Icons.info()}Ver detalles</button>
+    <button type="button" class="menu-item">${Icons.share()}Compartir</button>
+    <button type="button" class="menu-item">${Icons.link()}Copiar enlace</button>
+    <div class="menu-divider"></div>
+    <button type="button" class="menu-item is-danger">${Icons.flag()}Reportar</button>`;
+
+  document.getElementById("reaction-trigger-demo").innerHTML = `${Icons.react()}<span>Reaccionar</span>`;
+  document.getElementById("reaction-demo").innerHTML = ["love","laugh","wow","sad","angry","applause"]
+    .map((id) => `<button type="button" class="reaction-option">${reactionEmojiSVG(id, 26, true)}</button>`).join("");
+  document.getElementById("reaction-stack-demo").innerHTML = renderReactionStack([
+    { name: "love", count: 22 }, { name: "applause", count: 9 }, { name: "wow", count: 3 },
+  ]);
+
+  const seeds = ["6be4a5", "0c88de", "f3a921", "9d1c73", "2e7fb0", "c41a88", "4f3a91", "aa11bb"];
+  document.getElementById("avatar-demo").innerHTML = seeds
+    .map((s) => `<div style="text-align:center;"><div>${maskAvatarSVG(s, 56)}</div><div style="font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);margin-top:4px;">${s}</div></div>`)
+    .join("");
+
+  const illoKeys = ["escritorio", "montana", "carretera", "ciudad", "generica"];
+  document.getElementById("illustrations-demo").innerHTML = illoKeys
+    .map((k) => `<div style="text-align:center;"><div style="width:140px;height:100px;border-radius:8px;overflow:hidden;border:1px solid var(--border-default);">${illustrationSVG(k)}</div><div style="font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);margin-top:4px;">${k}</div></div>`)
+    .join("");
+
+  const iconList = [
+    ["home", "Inicio"], ["search", "Buscar"], ["heart", "Notificaciones"], ["profile", "Perfil"],
+    ["create", "Nuevo hilo"], ["more", "Menú ☰"], ["dots", "Opciones ⋯"], ["reply", "Responder"],
+    ["react", "Reaccionar"], ["back", "Atrás"], ["sort", "Ordenar"], ["chevronDown", "Chevron"],
+    ["check", "Check"], ["info", "Info"], ["link", "Copiar enlace"], ["flag", "Reportar"],
+    ["share", "Compartir"], ["qr", "QR"], ["edit", "Editar"], ["attach", "Adjuntar"],
+    ["expand", "Expandir"], ["send", "Enviar"], ["calendar", "Calendario"], ["copy", "Copiar"],
+  ];
+  document.getElementById("icon-grid").innerHTML = iconList
+    .map(([key, label]) => `<div class="icon-tile">${Icons[key]()}<span>${label}</span></div>`)
+    .join("");
+
+  document.getElementById("brand-plain").innerHTML = Icons.brand(48, "plain");
+  document.getElementById("brand-tile").innerHTML = Icons.brand(48, "tile");
+</script>
+</body>
+</html>

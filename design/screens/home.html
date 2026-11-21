@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=1280" />
+<title>Inicio · Thiup (maqueta)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
+<link rel="stylesheet" href="../assets/tokens.css" />
+<link rel="stylesheet" href="../assets/base.css" />
+<link rel="stylesheet" href="../assets/components.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div id="nav-rail-mount"></div>
+
+    <div class="screen-page">
+      <main class="screen-main">
+        <header class="masthead">
+          <span class="masthead-title">Inicio</span>
+        </header>
+        <div class="corner-mask" aria-hidden="true">
+          <div class="corner-mask-window"><div class="corner-mask-shape"></div></div>
+        </div>
+
+        <div class="surface">
+          <!-- Compose row (abre el modal "Nuevo hilo") -->
+          <div class="compose-row" data-modal-open="compose-modal">
+            <span style="display:inline-flex" id="compose-avatar"></span>
+            <button type="button" class="compose-prompt">¿Qué hay de nuevo?</button>
+            <button type="button" class="compose-post-btn">Publicar</button>
+          </div>
+
+          <!-- Tabs: Para ti / Cerca de ti -->
+          <div class="tabs" data-tabs="home">
+            <button type="button" class="tab is-active" data-tab="foryou">Para ti</button>
+            <button type="button" class="tab" data-tab="closeyou">Cerca de ti</button>
+            <span class="tab-indicator"></span>
+          </div>
+
+          <div data-tab-panel-group="home" data-tab-panel="foryou">
+            <section class="feed-items" id="feed-mount"></section>
+            <!-- Scroll infinito (experimento de "vida", sandbox): sentinel
+                 invisible que un IntersectionObserver vigila — al entrar en
+                 pantalla carga el siguiente lote. Mismo patrón que
+                 useInfiniteScroll de la app real (sentinel + observer), solo
+                 que acá "carga" del pool local en vez de la red. -->
+            <div class="feed-loading" id="feed-loading" hidden>
+              <span class="feed-spinner" aria-hidden="true"></span>
+            </div>
+            <div id="feed-sentinel" aria-hidden="true"></div>
+          </div>
+
+          <section data-tab-panel-group="home" data-tab-panel="closeyou" hidden style="padding:48px 20px;text-align:center;color:var(--text-tertiary);font-size:13px;">
+            "Cerca de ti" pide acceso a tu ubicación aproximada para mostrar hilos cercanos — queda fuera de esta maqueta estática.
+          </section>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- ===== Modal: nuevo hilo (ComposeModal) ===== -->
+  <div class="modal-backdrop" id="compose-modal" hidden>
+    <div class="modal">
+      <div class="modal-header">
+        <button type="button" class="modal-text-btn" data-modal-close>Cancelar</button>
+        <span class="modal-title">Nuevo hilo</span>
+        <span style="width:60px"></span>
+      </div>
+      <div class="modal-body">
+        <div style="display:flex;gap:12px;">
+          <span id="compose-modal-avatar"></span>
+          <textarea placeholder="¿Qué hay de nuevo?" rows="5" style="flex:1;border:0;outline:none;resize:none;font-family:inherit;font-size:15px;line-height:1.4;background:transparent;color:var(--text-primary);"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <div class="modal-footer-left">
+          <button type="button" class="modal-tool-btn">🖼️ Media</button>
+          <button type="button" class="modal-tool-btn">📍 Área</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span style="font-family:var(--font-mono);font-size:11px;color:var(--text-quaternary);">500</span>
+          <button type="button" class="modal-primary-btn" disabled>Publicar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../assets/icons.js"></script>
+  <script src="../assets/avatar.js"></script>
+  <script src="../assets/reaction-emoji.js"></script>
+  <script src="../assets/illustrations.js"></script>
+  <script src="../assets/mock-data.js"></script>
+  <script src="../assets/app.js"></script>
+  <script>
+    renderNavRail("home");
+    document.getElementById("compose-avatar").innerHTML = maskAvatarSVG(MockData.currentUser.id, 36);
+    document.getElementById("compose-modal-avatar").innerHTML = maskAvatarSVG(MockData.currentUser.id, 36);
+
+    const feedMount = document.getElementById("feed-mount");
+    feedMount.innerHTML = MockData.feed.map((post) => renderFeedCard(post)).join("");
+
+    // ---- Scroll infinito (experimento de "vida", sandbox) ----
+    // Recorre MockData.morePosts en bucle (vuelve al principio al agotarlo)
+    // para simular carga infinita real sin escribir cientos de posts a
+    // mano; cada vuelta sufija el uid (mp3 → mp3·2) así los ids de
+    // menú/reacción/encuesta nunca chocan entre copias.
+    const loadingEl = document.getElementById("feed-loading");
+    const sentinel = document.getElementById("feed-sentinel");
+    const pool = MockData.morePosts;
+    let cursor = 0;
+    let lap = 1;
+    let loading = false;
+    const BATCH = 3;
+
+    function nextBatch() {
+      const batch = [];
+      for (let i = 0; i < BATCH; i++) {
+        const base = pool[cursor % pool.length];
+        const suffixed = lap === 1 ? base.uid : `${base.uid}·${lap}`;
+        batch.push({ ...base, uid: suffixed });
+        cursor += 1;
+        if (cursor % pool.length === 0) lap += 1;
+      }
+      return batch;
+    }
+
+    // ¿Sigue el sentinel a distancia de disparo? El IntersectionObserver de
+    // abajo solo reavisa en un CRUCE de frontera (de no-intersecta a
+    // intersecta): si cada lote nuevo deja al sentinel TODAVÍA dentro del
+    // rootMargin (lotes cortos + margen grande, como aquí), nunca vuelve a
+    // cruzar esa frontera y el scroll infinito se detiene tras un solo
+    // lote. Revisar la posición a mano tras cada carga —y encadenar otra si
+    // sigue cerca— es lo que lo hace de verdad infinito.
+    const TRIGGER_DISTANCE = 800;
+    function sentinelNearViewport() {
+      return sentinel.getBoundingClientRect().top < window.innerHeight + TRIGGER_DISTANCE;
+    }
+
+    function loadMore() {
+      if (loading) return;
+      loading = true;
+      loadingEl.hidden = false;
+      // Demora simulada — en la app real esto sería la respuesta de red.
+      setTimeout(() => {
+        const html = nextBatch().map((post) => renderFeedCard(post)).join("");
+        feedMount.insertAdjacentHTML("beforeend", html);
+        loadingEl.hidden = true;
+        loading = false;
+        if (sentinelNearViewport()) loadMore();
+      }, 550);
+    }
+
+    const io = new IntersectionObserver(
+      (entries) => entries.forEach((e) => e.isIntersecting && loadMore()),
+      { rootMargin: `${TRIGGER_DISTANCE}px 0px` }
+    );
+    io.observe(sentinel);
+  </script>
+</body>
+</html>

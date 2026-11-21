@@ -1,19 +1,92 @@
-/* Notifications — placeholder screen (the feature is not wired to the backend
-   yet; the sidebar heart needs a real destination). Warm empty state on the
-   640px column, same language as the other *EmptyState components. */
+/* Notifications — the fifth canonical "surface" screen (same guide as
+   /home, /search, /profile and /p/:id, see CLAUDE.md "Elevated surface
+   screens"): ONE elevated #fdfcf8 card, radius 24, 1px #e5e0d3 border, the
+   feed's 24px inset (--layout-pad-x drives the divider/media-bleed
+   contract). Mobile dissolves the card onto a full-bleed #fdfcf8 sheet
+   (useMobileSurfacePage), 16px inset — the same recipe as MyThreads. */
+
+.page {
+  background: #f7f5f0;
+  min-height: 100vh;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* Threads' masthead: 60px solid bar, centered title — SAME anatomy as
+   SearchNew's .appBar/.mastheadTitle. Desktop-only: on mobile the shared
+   NavRail app bar (☰ + centered logo) takes over, same as home/search. */
+.appBar {
+  position: sticky;
+  top: var(--kb-top, 0px);
+  z-index: 10;
+  background: #f7f5f0;
+}
+
+.appBarInner {
+  max-width: 640px;
+  margin: 0 auto;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mastheadTitle {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+/* Sticky corner mask (desktop): pins the surface card's rounded top under
+   the 60px masthead — same anatomy as home/search/thread. */
+.cornerMask {
+  position: sticky;
+  top: 60px;
+  height: 0;
+  z-index: 5;
+  max-width: 640px;
+  margin: 0 auto;
+  pointer-events: none;
+}
+
+.cornerMaskWindow {
+  position: absolute;
+  top: -14px;
+  left: 0;
+  right: 0;
+  height: 39px;
+  overflow: hidden;
+}
+
+.cornerMaskShape {
+  position: absolute;
+  top: 14px;
+  left: 0;
+  right: 0;
+  height: 48px;
+  border: 1px solid #e5e0d3;
+  border-radius: 24px 24px 0 0;
+  box-shadow: 0 0 0 48px #f7f5f0;
+}
 
 .main {
   max-width: 640px;
   margin: 0 auto;
-  padding: 24px 0 60px;
+  padding: 0 0 60px;
+}
+
+.surface {
+  background: #fdfcf8;
+  border: 1px solid #e5e0d3;
+  border-radius: 24px;
+  padding: 8px 24px 0;
+  --layout-pad-x: 24px;
+  min-height: calc(100vh - 60px);
 }
 
 .empty {
   padding: 72px 20px;
   text-align: center;
-  background: #fdfcf8;
-  border: 1px solid #e5e0d3;
-  border-radius: 16px;
 }
 
 .iconWrap {
@@ -41,19 +114,304 @@
   margin: 0;
 }
 
-/* Visually-hidden landmark heading (CLAUDE.md a11y recommendation). */
-.srOnly {
+@media (max-width: 700px) {
+  .page {
+    background: #fdfcf8;
+  }
+
+  /* The "Notifications" masthead is DESKTOP-ONLY: on mobile the shared
+     NavRail app bar (☰ + centered logo) renders here too and replaces it —
+     same rule as /search. */
+  .appBar {
+    display: none;
+  }
+
+  .cornerMask {
+    display: none;
+  }
+
+  .main {
+    /* The NavRail mobile app bar is FIXED (60px) and reserves no flow
+       space — offset the content by its height, clear the fixed bottom
+       nav bar at the other end. */
+    padding: 60px 0 80px;
+  }
+
+  .surface {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    /* Mobile sheet inset: 16px — same shared edge as home/search/profile
+       (HARD RULE: --layout-pad-x MUST mirror the real padding here, or
+       every child bleed calc assumes an inset that was never actually
+       applied — this was the bug: padding was 0 while the variable still
+       claimed 16px, so nothing had real left/right margin on mobile). */
+    padding: 0 16px;
+    --layout-pad-x: 16px;
+    min-height: 0;
+  }
+}
+
+/* ===== Inbox list — same row anatomy as HomeFeedCard/SearchUserCard:
+   no own horizontal padding (the surface's --layout-pad-x provides it),
+   quiet rows (no hover wash), full-bleed hairline divider between rows. */
+
+.list {
+  display: flex;
+  flex-direction: column;
+}
+
+.row {
+  position: relative;
+  /* Establishes its OWN stacking context (position + an explicit z-index,
+     even 0 — "auto" does NOT create one) so .rowNew::before's z-index:-1
+     stays scoped to THIS row's content. Without it, -1 escaped all the way
+     up to the nearest ancestor that DOES create a stacking context — the
+     .surface card — and painted behind ITS opaque background, hiding the
+     tint completely instead of just sitting behind this row's own content. */
+  z-index: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 0;
+  color: inherit;
+  cursor: pointer;
+  /* Whatever's actually behind the avatar separation ring (see
+     .avatarWrap below) — read by it instead of a hardcoded color, so the
+     ring keeps blending in even when .rowNew overrides this to the
+     unread tint. */
+  --row-bg: #fdfcf8;
+}
+
+.row::after {
+  content: "";
   position: absolute;
-  width: 1px;
-  height: 1px;
+  left: calc(-1 * var(--layout-pad-x, 0px));
+  right: calc(-1 * var(--layout-pad-x, 0px));
+  bottom: 0;
+  height: 0.5px;
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.row:last-child::after {
+  display: none;
+}
+
+/* Entrance for rows that were unread when the tray opened (see
+   Notifications.js's newKeys snapshot) — a quiet rise-in instead of the
+   list just abruptly appearing/updating. Staggered per row (animationDelay
+   set inline, capped at 8 rows) so several new notifications cascade in
+   rather than popping together. `backwards` fill-mode holds the `from`
+   state during that delay instead of flashing the final state first. */
+@keyframes notificationRowIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.rowNew {
+  animation: notificationRowIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rowNew {
+    animation: none;
+  }
+}
+
+/* Warm background wash on unread rows — full-bleed into the surface's own
+   side padding (same negative-offset trick as .row::after's divider), so
+   it reads as the WHOLE row being highlighted, not a box floating inside
+   it. z-index: -1 is required, not decorative: a POSITIONED element with
+   z-index:auto still paints AFTER (on top of) normal in-flow content
+   regardless of DOM order — without this, the tint covered the dot/avatar/
+   text (all plain flex items, never positioned) and only .closeButton
+   (also position: absolute) stayed visible above it. */
+.rowNew::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(-1 * var(--layout-pad-x, 0px));
+  right: calc(-1 * var(--layout-pad-x, 0px));
+  z-index: -1;
+  /* Warm tint (CLAUDE.md palette) — same family already used for "active"/
+     highlighted states elsewhere (e.g. the composer's area chip), not an
+     invented color. */
+  background: #f3e3d3;
+  pointer-events: none;
+}
+
+/* When the FIRST row in the list is unread, its tint stopped exactly at
+   the row's own top edge — the .surface card's 8px top padding above it
+   stayed plain white, showing as an ugly seam between the card's rounded
+   top and the tint. Bleed the same 8px upward for that one row only
+   (matches .surface's own padding-top; harmless on mobile, where the
+   dissolved surface has no padding/background boundary to seam against). */
+.list > .rowNew:first-child::before {
+  top: -8px;
+}
+
+.rowNew {
+  --row-bg: #f3e3d3;
+}
+
+/* Unread indicator — a normal flex item at the very START of the row
+   (dot · avatar · content · … · close), not an absolute corner badge. */
+.unreadDot {
+  flex-shrink: 0;
+  /* Extra breathing room from the avatar on top of the row's own 12px
+     gap — still read as glued at 4px, widened further. */
+  margin-right: 10px;
+  align-self: center;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  pointer-events: none;
+  /* App's danger/attention red (CLAUDE.md palette), same family as the
+     nav badge and the trending-post glyph — not the brand terracotta,
+     which reads as decorative rather than "new". */
+  background: #c53030;
+}
+
+.avatars {
+  display: flex;
+  flex-shrink: 0;
+  padding-top: 4px;
+}
+
+.avatarWrap {
+  position: relative;
+  display: inline-flex;
+  /* Explicit square box matching the 24px avatar exactly — this wraps
+     PostProfileTrigger's own inline-flex span, and without a fixed size
+     here the outer <span> (inline by default) shrink-wraps its nested
+     content instead of guaranteeing a perfect square, which made the
+     border-radius/box-shadow ring render as an imprecise, uneven edge
+     rather than a clean circle. */
+  width: 24px;
+  height: 24px;
+  margin-left: -8px;
+  border-radius: 50%;
+}
+
+.avatarWrap:first-child {
+  margin-left: 0;
+}
+
+/* Separation ring — on every avatar EXCEPT the last one in the stack (the
+   card's own surface color, same trick as MaskAvatar's activity-dot ring,
+   same 24px/−8px/2px-ring recipe as the app's other facepiles). DOM order
+   is z-index 3,2,1 (first-child drawn ON TOP), so it's the FIRST/MIDDLE
+   avatars that sit in front of and overlap another one and need the ring
+   to read as separated — the LAST one has nothing behind it to separate
+   from, and it's the only one where MaskAvatar's own hairline ring would
+   otherwise double up (a lone avatar is simultaneously first AND last
+   child, so this correctly gives it no extra ring either). */
+.avatarWrap:not(:last-child) {
+  box-shadow: 0 0 0 2px var(--row-bg);
+}
+
+.rowBody {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+  /* Room for the dismiss button's hit area riding the row's right edge —
+     text never runs underneath it (the unread dot moved to the row's
+     start, before the avatar). */
+  padding-right: 32px;
+  outline: none;
+  border-radius: 8px;
+}
+
+.rowBody:focus-visible {
+  outline: 2px solid #c5a572;
+  outline-offset: 2px;
+}
+
+.rowText {
+  font-size: 14px;
+  line-height: 21px;
+  color: #1a1a1a;
+}
+
+/* Thiup's own reaction icon (ReactionEmoji, inline SVG — never a native
+   emoji glyph, which renders inconsistently per platform), prefixed before
+   the sentence on a `reaction` notification. ReactionEmoji's root is
+   `display: block` (correct everywhere else it's used — always inside a
+   flex container) — here it sits directly in inline text flow, so a bare
+   block child forces a line break before/after it. This wrapper is
+   `inline-flex` instead: an inline-level box the icon can live inside as a
+   flex item, without ever leaving the single text line. Nudged to sit on
+   the text baseline instead of the SVG's own top-aligned box. */
+.rowReactionIcon {
+  display: inline-flex;
+  vertical-align: -3px;
+  margin-right: 4px;
+}
+
+/* The actor mention inside the sentence — highlighted + hoverable (the
+   SAME PostProfileTrigger/hover-card the rest of the app uses on every
+   mask mention), not plain body text. */
+.actorName {
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.actorName:hover {
+  text-decoration: underline;
+}
+
+.rowSnippet {
+  font-size: 13px;
+  color: #6b6b6b;
   overflow: hidden;
-  clip: rect(0, 0, 0, 0);
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-@media (max-width: 700px) {
-  .main {
-    /* Clear the fixed 60px mobile app bar (rendered on nav-item screens). */
-    padding: 84px 16px 80px;
-  }
+.rowMeta {
+  font-size: 12px;
+  color: #9b9591;
+}
+
+/* Dismiss ("X") — FE preview only for now, no backend yet. ALWAYS visible
+   (not hover-revealed): touch devices have no hover, so a hover-only
+   affordance would be unreachable on mobile. 32px hit area (WCAG/HIG-ish
+   touch-target size) around a visually smaller 14px glyph — easy to tap on
+   small screens without looking oversized in the row. */
+.closeButton {
+  position: absolute;
+  top: 50%;
+  right: -4px;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #9b9591;
+  cursor: pointer;
+  transition: background 0.15s ease-out, color 0.15s ease-out;
+}
+
+.closeButton:hover,
+.closeButton:focus-visible {
+  background: #f0ece3;
+  color: #1a1a1a;
+}
+
+.sentinel {
+  height: 1px;
 }

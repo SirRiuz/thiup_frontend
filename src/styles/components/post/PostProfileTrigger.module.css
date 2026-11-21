@@ -1,4 +1,4 @@
-/* PostProfileTrigger — wrapper that anchors the absolute hover card */
+/* PostProfileTrigger — wrapper that anchors the portaled hover card */
 
 .trigger {
   position: relative;
@@ -20,9 +20,15 @@
   cursor: pointer;
 }
 
+/* Portaled to document.body (see PostProfileTrigger.js) — position: fixed
+   in viewport coordinates, top/left set inline from a getBoundingClientRect
+   snapshot of the trigger. z-index matches the app's portaled-popover tier
+   (MenuSurface's own 1000; this component's mobile sibling
+   PostProfileMobileModal sits at 1300) rather than a small in-flow value:
+   escaping ALL ancestor stacking contexts is the point, not just picking a
+   bigger local number, which would NOT actually fix elements from unrelated
+   stacking contexts covering it. */
 .cardContainer {
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 0;
-  z-index: 20;
+  position: fixed;
+  z-index: 1000;
 }

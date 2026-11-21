@@ -220,6 +220,45 @@
   z-index: 50;
 }
 
+/* Tight 24×24 box around the glyph — the SAME size regardless of .item's
+   own box (a fixed 46px square on the desktop rail; "auto", filling its
+   whole grid cell, on the mobile bottom bar — see .bottomBar .item). The
+   badge anchors to THIS, not .item, so one offset works identically at
+   both breakpoints instead of the badge's exact position depending on how
+   .item happens to be sized in each context. */
+.iconBox {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+}
+
+/* Unread notifications badge — IG/Twitter-style red pill, sitting mostly
+   OUTSIDE the icon's top-right corner (negative offset — only its own
+   inner edge grazes the glyph, not sitting on top of it). App's danger/
+   attention red (CLAUDE.md palette), not an invented hex — same family as
+   the trending-post glyph. */
+.badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 3px;
+  border-radius: 999px;
+  background: #c53030;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+  box-shadow: 0 0 0 2px #fdfcf8;
+  pointer-events: none;
+  z-index: 5;
+}
+
 /* HOVER-INTENT delay: the tooltip appears only after the cursor RESTS on an
    item (~450ms) — sweeping down the rail no longer flashes a parade of
    pills. Hiding stays immediate (the base rule has no delay). */
@@ -447,7 +486,10 @@
   /* Bottom bar items = Threads' exact cell anatomy: each item FILLS its 20%
      grid cell minus a 4px margin (their inset hover/active plate — ~42px
      tall, radius 8, nearly cell-wide), icon 24px centered. Idle = grey
-     (shared nav idle with the app bar buttons). */
+     (shared nav idle with the app bar buttons). .item growing to fill the
+     whole cell here (vs. a tight 46px square on the desktop rail) no
+     longer needs a badge-position override — .badge anchors to .iconBox,
+     a dedicated 24×24 wrapper that's the same size at both breakpoints. */
   .bottomBar .item {
     width: auto;
     height: auto;
